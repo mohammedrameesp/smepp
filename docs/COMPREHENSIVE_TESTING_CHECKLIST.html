@@ -546,27 +546,31 @@ const T = {
             ["Success state after accepting", "Successfully accept invitation", "Shows 'Welcome to {orgName}!' with green checkmark", "src/app/invite/[token]/page.tsx", "Critical", "E2E"],
             ["Success state shows redirect message", "After accepting", "Shows 'Redirecting to your dashboard...'", "src/app/invite/[token]/page.tsx", "Medium", "E2E"]
         ],
-        "Account Creation (from invite)": [
-            ["Signup pre-fills email from invite", "Navigate from invitation to /signup", "Email field pre-populated and read-only", "src/app/(auth)/signup/page.tsx", "Critical", "E2E"],
-            ["Password requirements enforced", "Enter weak password", "Shows password requirements error", "src/lib/security/password-validation.ts", "Critical", "Automated"],
-            ["Successful signup returns to invite", "Complete signup", "Redirects back to /invite/[token]", "src/app/(auth)/signup/page.tsx", "Critical", "E2E"],
-            ["OAuth signup works from invite", "Use Google/Microsoft OAuth", "Account created, returns to /invite/[token]", "src/lib/oauth/google.ts", "High", "E2E"]
+        "Account Creation (/signup with invite)": [
+            ["Signup page shows 'Complete Your Signup'", "Navigate to /signup?invite=...", "Shows signup form with heading", "src/app/signup/page.tsx", "Critical", "E2E"],
+            ["Email pre-filled and locked", "View signup form", "Email field shows invited email, read-only", "src/app/signup/page.tsx", "Critical", "E2E"],
+            ["Name pre-filled if provided", "Invitation has name, view form", "Name field pre-populated", "src/app/signup/page.tsx", "Medium", "E2E"],
+            ["Password field auto-focused", "View signup form", "Password field has focus", "src/app/signup/page.tsx", "Low", "E2E"],
+            ["Password strength indicator", "Type password", "Shows 4-bar strength meter (Weak/Fair/Good/Strong)", "src/app/signup/page.tsx", "Medium", "E2E"],
+            ["Confirm password shows checkmark", "Passwords match", "Green checkmark appears", "src/app/signup/page.tsx", "Medium", "E2E"],
+            ["Password mismatch error", "Enter different confirm password", "Shows 'Passwords do not match' error", "src/app/signup/page.tsx", "Critical", "Automated"],
+            ["Password minimum 8 chars", "Enter short password", "Shows 'Password must be at least 8 characters'", "src/app/signup/page.tsx", "Critical", "Automated"],
+            ["Shows 'Already have an account?' link", "View signup form", "Link to /login with callbackUrl", "src/app/signup/page.tsx", "Medium", "E2E"]
         ],
-        "Invitation Acceptance (POST /api/invitations/[token])": [
-            ["Accept button visible when logged in", "View invitation while authenticated", "Shows 'Accept Invitation' or 'Join Organization' button", "src/app/invite/[token]/page.tsx", "Critical", "E2E"],
-            ["Accept creates TeamMember record", "Click accept invitation", "TeamMember created in database", "src/app/api/invitations/[token]/route.ts", "Critical", "E2E"],
-            ["First user becomes owner", "Accept first invitation for org", "isOwner=true, isAdmin=true on TeamMember", "src/app/api/invitations/[token]/route.ts", "Critical", "E2E"],
-            ["Employee code generated if isEmployee", "Accept as employee", "Employee code generated (ORG-YYYY-NNN format)", "src/app/api/invitations/[token]/route.ts", "High", "E2E"],
-            ["Invitation marked as accepted", "Accept invitation", "acceptedAt timestamp set on invitation", "src/app/api/invitations/[token]/route.ts", "High", "E2E"],
-            ["Email mismatch rejected", "Logged in as different email", "Returns 403 error", "src/app/api/invitations/[token]/route.ts", "Critical", "E2E"],
-            ["Already member handled gracefully", "Accept when already a member", "Returns success with alreadyMember=true", "src/app/api/invitations/[token]/route.ts", "High", "E2E"],
-            ["Concurrent acceptance prevented", "Two users accept simultaneously", "Only one succeeds, other gets 410", "src/app/api/invitations/[token]/route.ts", "High", "E2E"]
+        "Signup Submission (POST /api/auth/signup)": [
+            ["Signup creates User record", "Submit valid form", "User created in database", "src/app/api/auth/signup/route.ts", "Critical", "E2E"],
+            ["Signup auto-accepts invitation", "Submit with invite token", "TeamMember created, invitation.acceptedAt set", "src/app/api/auth/signup/route.ts", "Critical", "E2E"],
+            ["Owner role assigned correctly", "Signup for self-registered org", "TeamMember has isOwner=true, isAdmin=true", "src/app/api/auth/signup/route.ts", "Critical", "E2E"],
+            ["User auto-signed in after signup", "Complete signup", "Session created automatically", "src/app/api/auth/signup/route.ts", "Critical", "E2E"],
+            ["Owner redirected to /setup", "Complete signup as owner", "Redirects to {org-subdomain}/setup", "src/app/signup/page.tsx", "Critical", "E2E"],
+            ["Duplicate email rejected", "Signup with existing email", "Shows 'Email already registered' error", "src/app/api/auth/signup/route.ts", "Critical", "E2E"],
+            ["Expired invitation rejected", "Signup with expired token", "Shows 'Invitation has expired' error", "src/app/api/auth/signup/route.ts", "Critical", "E2E"],
+            ["Already accepted invitation rejected", "Signup with used token", "Shows 'Invitation already accepted' error", "src/app/api/auth/signup/route.ts", "Critical", "E2E"]
         ],
-        "Post-Acceptance Redirect": [
-            ["Redirects to org subdomain", "Accept invitation", "Redirects to https://{slug}.{domain}/admin", "src/app/invite/[token]/page.tsx", "Critical", "E2E"],
-            ["New org goes to setup wizard", "First login to new org", "Redirected to /setup if setup incomplete", "src/middleware.ts", "Critical", "E2E"],
-            ["Existing org goes to dashboard", "Accept invite to configured org", "Redirected to /admin dashboard", "src/middleware.ts", "High", "E2E"],
-            ["Session includes organizationId", "Accept and check session", "Session updated with new organizationId", "src/lib/core/auth.ts", "Critical", "E2E"]
+        "Post-Signup Redirect": [
+            ["Owner goes directly to setup wizard", "Complete signup as owner", "Redirects to https://{slug}.{domain}/setup", "src/app/signup/page.tsx", "Critical", "E2E"],
+            ["Session includes organizationId", "After signup redirect", "Session has organizationId set", "src/lib/core/auth.ts", "Critical", "E2E"],
+            ["Setup wizard loads on org subdomain", "After redirect", "Shows /setup page with org context", "src/app/setup/page.tsx", "Critical", "E2E"]
         ]
     },
     "2. Password Setup & Account Activation": {
