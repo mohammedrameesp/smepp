@@ -89,6 +89,121 @@ export async function createBulkNotifications(
 }
 
 /**
+ * Admin notification input structure.
+ */
+export interface NotifyAdminsInput {
+  type: NotificationType;
+  title: string;
+  message: string;
+  link?: string;
+  entityType?: string;
+  entityId?: string;
+  /** Member ID to exclude from notifications (typically the actor who triggered the action) */
+  excludeMemberId?: string;
+}
+
+/**
+ * Send notifications to all admin users in a tenant.
+ * Non-blocking: failures are logged but don't break operations.
+ *
+ * @param db - Prisma client (tenant-scoped or global)
+ * @param tenantId - Required tenant ID for multi-tenancy isolation
+ * @param input - Notification details
+ * @returns Number of notifications sent
+ *
+ * @example
+ * ```typescript
+ * // Notify all admins about a new leave request (excluding the requester)
+ * await notifyAdmins(prisma, tenantId, {
+ *   type: 'LEAVE_REQUEST_SUBMITTED',
+ *   title: 'New Leave Request',
+ *   message: `${requesterName} submitted a ${leaveType} request for ${totalDays} days.`,
+ *   link: `/admin/leave/requests/${requestId}`,
+ *   entityType: 'LeaveRequest',
+ *   entityId: requestId,
+ *   excludeMemberId: requesterId, // Don't notify the requester
+ * });
+ * ```
+ */
+export async function notifyAdmins(
+  db: typeof prisma,
+  tenantId: string,
+  input: NotifyAdminsInput
+): Promise<number> {
+  if (!tenantId) {
+    console.error('notifyAdmins called without tenantId - this is a multi-tenancy violation');
+    return 0;
+  }
+
+  try {
+    // Get all admin team members for this tenant
+    const admins = await db.teamMember.findMany({
+      where: {
+        tenantId,
+        isAdmin: true,
+        isDeleted: false,
+        ...(input.excludeMemberId ? { NOT: { id: input.excludeMemberId } } : {}),
+      },
+      select: { id: true },
+    });
+
+    if (admins.length === 0) {
+      return 0;
+    }
+
+    // Create notifications for all admins
+    const notifications: CreateNotificationInput[] = admins.map((admin) => ({
+      recipientId: admin.id,
+      type: input.type,
+      title: input.title,
+      message: input.message,
+      link: input.link,
+      entityType: input.entityType,
+      entityId: input.entityId,
+    }));
+
+    return await createBulkNotifications(notifications, tenantId);
+  } catch (error) {
+    console.error('Failed to notify admins:', error);
+    return 0;
+  }
+}
+
+/**
+ * Get all admin member IDs for a tenant.
+ * Useful when you need both the IDs and to perform additional operations.
+ *
+ * @param db - Prisma client
+ * @param tenantId - Tenant ID
+ * @param excludeMemberId - Optional member ID to exclude
+ * @returns Array of admin member records with id and email
+ */
+export async function getAdminMembers(
+  db: typeof prisma,
+  tenantId: string,
+  excludeMemberId?: string
+): Promise<{ id: string; email: string }[]> {
+  if (!tenantId) {
+    return [];
+  }
+
+  try {
+    return await db.teamMember.findMany({
+      where: {
+        tenantId,
+        isAdmin: true,
+        isDeleted: false,
+        ...(excludeMemberId ? { NOT: { id: excludeMemberId } } : {}),
+      },
+      select: { id: true, email: true },
+    });
+  } catch (error) {
+    console.error('Failed to get admin members:', error);
+    return [];
+  }
+}
+
+/**
  * Helper templates for common notification scenarios.
  * Returns the input object for createNotification().
  */

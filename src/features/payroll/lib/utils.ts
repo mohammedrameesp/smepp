@@ -241,16 +241,8 @@ export function canTransitionTo(currentStatus: PayrollStatus, newStatus: Payroll
   return transitions[currentStatus]?.includes(newStatus) || false;
 }
 
-/**
- * Format currency for display
- */
-export function formatCurrency(amount: number, currency = 'QAR'): string {
-  return new Intl.NumberFormat('en-QA', {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 2,
-  }).format(amount);
-}
+// Re-export formatCurrency from central currency utility
+export { formatCurrency } from '@/lib/core/currency';
 
 /**
  * Get month name

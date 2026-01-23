@@ -211,22 +211,8 @@ export function calculateTeamMemberProfileCompletion<T extends Record<string, un
 // UTILITY FUNCTIONS
 // ============================================================================
 
-/**
- * Safely parse a JSON array string (commonly used for languages, skills, etc.)
- * @param value - JSON string, array, or null
- * @returns Parsed array or empty array
- */
-export function parseJsonArray(value: string | string[] | null | undefined): string[] {
-  if (!value) return [];
-  if (Array.isArray(value)) return value;
-
-  try {
-    const parsed = JSON.parse(value);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
+// Re-export parseJsonArray from central JSON utilities
+export { parseJsonArray } from '@/lib/utils/json-utils';
 
 /**
  * Format a date for use in date picker inputs (YYYY-MM-DD)
