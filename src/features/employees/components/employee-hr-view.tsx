@@ -8,7 +8,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { formatDate } from '@/lib/core/datetime';
-import { parseJsonArray, getExpiryStatus } from '@/features/employees/lib/hr-utils';
+import { parseJsonArray } from '@/lib/utils/json-utils';
+import { getExpiryStatus } from '@/features/employees/lib/hr-utils';
 import { ExpiryDateDisplay, DocumentLink } from '@/components/domains/hr/profile';
 import { EmployeeNoticePeriod } from './employee-notice-period';
 import {

@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/select';
 import { Loader2, Calculator, Settings2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { formatCurrency } from '@/features/payroll/lib/utils';
+import { formatCurrency } from '@/lib/core/currency';
 
 interface Employee {
   id: string;

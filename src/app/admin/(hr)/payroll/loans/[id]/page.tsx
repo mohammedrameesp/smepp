@@ -26,7 +26,7 @@ import {
   Clock,
 } from 'lucide-react';
 import { PageHeader, PageContent, PageHeaderButton } from '@/components/ui/page-header';
-import { formatCurrency } from '@/features/payroll/lib/utils';
+import { formatCurrency } from '@/lib/core/currency';
 import { LoanActions } from '@/features/payroll/components';
 import { DetailCard } from '@/components/ui/detail-card';
 import { InfoField, InfoFieldGrid } from '@/components/ui/info-field';

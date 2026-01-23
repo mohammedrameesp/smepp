@@ -16,7 +16,8 @@ import {
   Plus,
   ArrowRight,
 } from 'lucide-react';
-import { formatCurrency, getMonthName, getPayrollStatusText, getPayrollStatusColor } from '@/features/payroll/lib/utils';
+import { formatCurrency } from '@/lib/core/currency';
+import { getMonthName, getPayrollStatusText, getPayrollStatusColor } from '@/features/payroll/lib/utils';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 

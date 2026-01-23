@@ -16,7 +16,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Download, Eye, Clock, AlertCircle, CreditCard, CalendarOff } from 'lucide-react';
-import { formatCurrency, getMonthName, getPayrollStatusText } from '@/features/payroll/lib/utils';
+import { formatCurrency } from '@/lib/core/currency';
+import { getMonthName, getPayrollStatusText } from '@/features/payroll/lib/utils';
 import { PayrollWorkflowActions } from '@/features/payroll/components';
 import { calculatePayrollPreview } from '@/features/payroll/lib/preview';
 import { StatsCard, StatsCardGrid } from '@/components/ui/stats-card';

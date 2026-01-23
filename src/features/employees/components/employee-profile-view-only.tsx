@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { formatDate } from '@/lib/core/datetime';
-import { parseJsonArray } from '@/features/employees/lib/hr-utils';
+import { parseJsonArray } from '@/lib/utils/json-utils';
 import { ExpiryDateDisplay, DocumentLink } from '@/components/domains/hr/profile';
 import { EmployeeNoticePeriod } from './employee-notice-period';
 import {

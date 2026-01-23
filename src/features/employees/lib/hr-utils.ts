@@ -211,9 +211,6 @@ export function calculateTeamMemberProfileCompletion<T extends Record<string, un
 // UTILITY FUNCTIONS
 // ============================================================================
 
-// Re-export parseJsonArray from central JSON utilities
-export { parseJsonArray } from '@/lib/utils/json-utils';
-
 /**
  * Format a date for use in date picker inputs (YYYY-MM-DD)
  * @param date - Date object, string, or null

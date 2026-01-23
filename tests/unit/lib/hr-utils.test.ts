@@ -9,7 +9,6 @@ import {
   getDaysRemaining,
   getOverallExpiryStatus,
   calculateProfileCompletion,
-  parseJsonArray,
   formatDateForPicker,
   calculateTenure,
   getRoleBadgeVariant,
@@ -18,6 +17,7 @@ import {
   PROFILE_COMPLETION_THRESHOLD,
   HR_REQUIRED_FIELDS,
 } from '@/features/employees/lib/hr-utils';
+import { parseJsonArray } from '@/lib/utils/json-utils';
 
 describe('HR Utilities', () => {
   describe('Constants', () => {

@@ -241,9 +241,6 @@ export function canTransitionTo(currentStatus: PayrollStatus, newStatus: Payroll
   return transitions[currentStatus]?.includes(newStatus) || false;
 }
 
-// Re-export formatCurrency from central currency utility
-export { formatCurrency } from '@/lib/core/currency';
-
 /**
  * Get month name
  */

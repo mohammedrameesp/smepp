@@ -15,7 +15,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Plus, Eye, FileText, Users, DollarSign } from 'lucide-react';
-import { formatCurrency } from '@/features/payroll/lib/utils';
+import { formatCurrency } from '@/lib/core/currency';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 

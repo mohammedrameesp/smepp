@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Calculator } from 'lucide-react';
 import { toast } from 'sonner';
-import { formatCurrency } from '@/features/payroll/lib/utils';
+import { formatCurrency } from '@/lib/core/currency';
 
 interface SalaryStructure {
   id: string;

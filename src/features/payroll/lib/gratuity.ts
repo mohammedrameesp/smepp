@@ -145,7 +145,7 @@ export function projectGratuity(
  * Format gratuity amount for display
  * Uses shared formatCurrency for consistency
  */
-export { formatCurrency as formatGratuityAmount } from './utils';
+export { formatCurrency as formatGratuityAmount } from '@/lib/core/currency';
 
 /**
  * Get service duration text

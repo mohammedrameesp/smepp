@@ -13,7 +13,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { calculateGratuity, getServiceDurationText } from '@/features/payroll/lib/gratuity';
-import { formatCurrency } from '@/features/payroll/lib/utils';
+import { formatCurrency } from '@/lib/core/currency';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 import { FileText, Users, DollarSign } from 'lucide-react';

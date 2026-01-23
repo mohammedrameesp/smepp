@@ -16,7 +16,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Eye, Search, FileText, Users, Calculator } from 'lucide-react';
-import { formatCurrency, getMonthName, getPayrollStatusColor } from '@/features/payroll/lib/utils';
+import { formatCurrency } from '@/lib/core/currency';
+import { getMonthName, getPayrollStatusColor } from '@/features/payroll/lib/utils';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 

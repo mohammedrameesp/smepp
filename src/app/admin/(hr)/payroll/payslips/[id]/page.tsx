@@ -14,7 +14,8 @@ import {
   Banknote,
 } from 'lucide-react';
 import { PageHeader, PageContent, PageHeaderButton } from '@/components/ui/page-header';
-import { formatCurrency, getMonthName } from '@/features/payroll/lib/utils';
+import { formatCurrency } from '@/lib/core/currency';
+import { getMonthName } from '@/features/payroll/lib/utils';
 import { DetailCard } from '@/components/ui/detail-card';
 import { InfoField, InfoFieldGrid } from '@/components/ui/info-field';
 

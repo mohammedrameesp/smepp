@@ -13,12 +13,12 @@ import {
   getDaysRemaining,
   getOverallExpiryStatus,
   calculateProfileCompletion,
-  parseJsonArray,
   formatDateForPicker,
   calculateTenure,
   getRoleBadgeVariant,
   maskSensitiveData,
 } from '@/features/employees/lib/hr-utils';
+import { parseJsonArray } from '@/lib/utils/json-utils';
 
 describe('HR Utility Functions', () => {
   // ═══════════════════════════════════════════════════════════════════════════
