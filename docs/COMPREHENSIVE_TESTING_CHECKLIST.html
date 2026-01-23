@@ -580,15 +580,18 @@ const T = {
     },
     "2. Admin-Initiated Team Invitations": {
         "Admin Add Member Form (/admin/employees/new)": [
-            ["Navigate to add member page", "Click 'Add Member' button in employees page", "Shows add member form", "src/app/admin/(hr)/employees/new/page.tsx", "Critical", "E2E"],
+            ["Navigate to add member page", "Click 'Add Member' button in employees page", "Shows member type selection (Employee or Service Account)", "src/app/admin/(hr)/employees/new/page.tsx", "Critical", "E2E"],
+            ["Select Employee type", "Click 'Employee' option", "Shows employee form with HR fields", "src/app/admin/(hr)/employees/new/page.tsx", "Critical", "E2E"],
+            ["Select Service Account type", "Click 'Service Account' option", "Shows simplified form (no HR fields)", "src/app/admin/(hr)/employees/new/page.tsx", "Critical", "E2E"],
             ["Full name required", "Leave name empty, submit", "Validation error shown", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
-            ["Email required when canLogin enabled", "Enable system access, leave email empty", "Validation error shown", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
+            ["Email required", "Leave email empty, submit", "Validation error shown", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
             ["Email format validation", "Enter invalid email format", "Validation error shown", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
             ["Email availability check", "Enter email of existing member", "Shows 'Email already in use' error", "src/app/api/admin/team/check-email/route.ts", "High", "E2E"],
             ["Role selection", "Select role (Admin/Manager/Member)", "Role saved correctly", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
-            ["System access toggle (canLogin)", "Toggle system access on/off", "Enables/disables login capability", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
-            ["Employee settings shown when isEmployee", "Enable employee toggle", "Shows employee code, department, designation fields", "src/app/admin/(hr)/employees/new/page.tsx", "Medium", "E2E"],
-            ["Employee code auto-generated", "Enable employee toggle", "Employee code auto-generated from org prefix", "src/app/admin/(hr)/employees/new/page.tsx", "Medium", "E2E"]
+            ["Employee: shows HR fields", "Select Employee type", "Shows employee code, department, designation, date of joining", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
+            ["Employee: code auto-generated", "View employee form", "Employee code auto-generated from org prefix", "src/app/admin/(hr)/employees/new/page.tsx", "Medium", "E2E"],
+            ["Employee: manager assignment (Reports To)", "Select manager from dropdown", "Manager assigned to employee", "src/app/admin/(hr)/employees/new/page.tsx", "Medium", "E2E"],
+            ["Service Account: no HR fields", "Select Service Account type", "No employee code, department, or HR fields shown", "src/app/admin/(hr)/employees/new/page.tsx", "Medium", "E2E"]
         ],
         "Member Creation (POST /api/users)": [
             ["Creates TeamMember record", "Submit valid form", "TeamMember created in database", "src/app/api/users/route.ts", "Critical", "E2E"],
