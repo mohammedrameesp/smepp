@@ -566,14 +566,14 @@ const T = {
         ],
         "Setup Wizard (/setup)": [
             ["Setup wizard loads on org subdomain", "After signup redirect", "Shows Step 1 of setup wizard", "src/app/setup/page.tsx", "Critical", "E2E"],
-            ["Incomplete setup blocks /admin access", "Try to access /admin", "Redirected back to /setup", "src/middleware.ts", "Critical", "E2E"],
+            ["Skip setup entirely option available", "View setup wizard", "Shows 'Skip setup' link at top", "src/app/setup/components/SetupWizardClient.tsx", "Medium", "E2E"],
             ["Step 1: Organization Name & Code Prefix", "Enter org name and code prefix", "Validated and saved, proceed to Step 2", "src/app/setup/components/steps/OrgNameStep.tsx", "High", "E2E"],
             ["Step 2: Currencies", "Select primary and additional currencies", "Currencies saved, proceed to Step 3", "src/app/setup/components/steps/CurrencyStep.tsx", "Medium", "E2E"],
-            ["Step 3: Logo Upload", "Upload company logo image", "Logo saved to storage, proceed to Step 4", "src/app/setup/components/steps/LogoStep.tsx", "Medium", "E2E"],
-            ["Step 4: Brand Colors", "Select primary and secondary colors", "Colors saved, proceed to Step 5", "src/app/setup/components/steps/ColorStep.tsx", "Medium", "E2E"],
-            ["Step 5: Module Selection", "Select which modules to enable", "Modules saved, proceed to Step 6", "src/app/setup/components/steps/ModuleStep.tsx", "High", "E2E"],
+            ["Step 3: Logo Upload (skippable)", "Upload logo or click 'Skip for now'", "Logo saved or skipped, proceed to Step 4", "src/app/setup/components/steps/LogoStep.tsx", "Medium", "E2E"],
+            ["Step 4: Brand Colors (skippable)", "Select colors or skip", "Colors saved or defaults kept, proceed to Step 5", "src/app/setup/components/steps/ColorStep.tsx", "Medium", "E2E"],
+            ["Step 5: Module Selection (required)", "Select which modules to enable", "Modules saved, proceed to Step 6", "src/app/setup/components/steps/ModuleStep.tsx", "High", "E2E"],
             ["Step 6: Complete", "Click 'Complete Setup'", "profileComplete=true, redirected to /admin", "src/app/setup/components/SetupWizardClient.tsx", "Critical", "E2E"],
-            ["Skip setup option", "Click 'Skip for now' link", "Defaults applied, redirected to /admin", "src/app/setup/components/SetupWizardClient.tsx", "Medium", "E2E"],
+            ["Skip setup entirely", "Click 'Skip setup' link", "Redirects to /admin with defaults (profileComplete stays false)", "src/app/setup/components/SetupWizardClient.tsx", "Medium", "E2E"],
             ["Back button preserves data", "Click back on Step 3", "Returns to Step 2 with data preserved", "src/app/setup/components/SetupWizardClient.tsx", "Medium", "E2E"]
         ],
         "Dashboard Access (End of Flow)": [
