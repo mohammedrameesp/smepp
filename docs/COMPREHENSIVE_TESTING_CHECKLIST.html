@@ -562,11 +562,27 @@ const T = {
             ["Invitation auto-accepted", "Signup completes", "TeamMember created, invitation.acceptedAt set", "src/app/api/auth/signup/route.ts", "Critical", "E2E"],
             ["Owner role assigned", "Signup for self-registered org", "TeamMember has isOwner=true, isAdmin=true", "src/app/api/auth/signup/route.ts", "Critical", "E2E"],
             ["User auto-signed in", "Signup completes", "Session created, user logged in automatically", "src/app/api/auth/signup/route.ts", "Critical", "E2E"],
-            ["Redirect to org subdomain /setup", "After successful signup", "Browser redirects to https://{slug}.{domain}/setup", "src/app/signup/page.tsx", "Critical", "E2E"],
-            ["Setup wizard loads", "After redirect completes", "Shows setup wizard on org subdomain", "src/app/setup/page.tsx", "Critical", "E2E"]
+            ["Redirect to org subdomain /setup", "After successful signup", "Browser redirects to https://{slug}.{domain}/setup", "src/app/signup/page.tsx", "Critical", "E2E"]
+        ],
+        "Setup Wizard (/setup)": [
+            ["Setup wizard loads on org subdomain", "After signup redirect", "Shows Step 1 of setup wizard", "src/app/setup/page.tsx", "Critical", "E2E"],
+            ["Incomplete setup blocks /admin access", "Try to access /admin", "Redirected back to /setup", "src/middleware.ts", "Critical", "E2E"],
+            ["Step 1: Organization Name & Code Prefix", "Enter org name and code prefix", "Validated and saved, proceed to Step 2", "src/app/setup/components/steps/OrgNameStep.tsx", "High", "E2E"],
+            ["Step 2: Currencies", "Select primary and additional currencies", "Currencies saved, proceed to Step 3", "src/app/setup/components/steps/CurrencyStep.tsx", "Medium", "E2E"],
+            ["Step 3: Logo Upload", "Upload company logo image", "Logo saved to storage, proceed to Step 4", "src/app/setup/components/steps/LogoStep.tsx", "Medium", "E2E"],
+            ["Step 4: Brand Colors", "Select primary and secondary colors", "Colors saved, proceed to Step 5", "src/app/setup/components/steps/ColorStep.tsx", "Medium", "E2E"],
+            ["Step 5: Module Selection", "Select which modules to enable", "Modules saved, proceed to Step 6", "src/app/setup/components/steps/ModuleStep.tsx", "High", "E2E"],
+            ["Step 6: Complete", "Click 'Complete Setup'", "profileComplete=true, redirected to /admin", "src/app/setup/components/SetupWizardClient.tsx", "Critical", "E2E"],
+            ["Skip setup option", "Click 'Skip for now' link", "Defaults applied, redirected to /admin", "src/app/setup/components/SetupWizardClient.tsx", "Medium", "E2E"],
+            ["Back button preserves data", "Click back on Step 3", "Returns to Step 2 with data preserved", "src/app/setup/components/SetupWizardClient.tsx", "Medium", "E2E"]
+        ],
+        "Dashboard Access (End of Flow)": [
+            ["Admin dashboard loads", "After setup complete", "Shows /admin dashboard on org subdomain", "src/app/admin/page.tsx", "Critical", "E2E"],
+            ["Navigation shows enabled modules", "View sidebar", "Only enabled modules shown in navigation", "src/components/layout/admin-sidebar.tsx", "High", "E2E"],
+            ["Organization branding applied", "View dashboard", "Logo and colors from setup are applied", "src/components/layout/admin-header.tsx", "Medium", "E2E"]
         ]
     },
-    "2. Password Setup & Account Activation": {
+    "2. Admin-Initiated Team Invitations": {
         "Setup Token Validation": [
             ["Valid setup token shows form", "Navigate to /set-password?token=valid", "Shows password setup form", "src/app/set-password/[token]/page.tsx", "Critical", "E2E"],
             ["Expired token (>7 days) shows error", "Navigate to /set-password?token=expired", "Shows 'Token expired' error with contact admin message", "src/app/api/auth/set-password/route.ts", "Critical", "E2E"],
@@ -592,32 +608,7 @@ const T = {
             ["Admin can view pending invitations", "View team invitations page", "List of pending invites shown", "src/app/admin/(system)/team/invitations/page.tsx", "High", "E2E"]
         ]
     },
-    "3. Organization Setup": {
-        "Setup Wizard Access": [
-            ["Owner redirected to setup after accepting invitation", "Accept invite for new org, get redirected", "Redirected to /setup wizard on org subdomain", "src/middleware.ts", "Critical", "E2E"],
-            ["Setup triggered by incomplete OrganizationSetupProgress", "Accept invite, check setupProgress.profileComplete=false", "Redirected to /setup", "src/middleware.ts", "Critical", "E2E"],
-            ["Incomplete setup blocks dashboard access", "Try to access /admin before completing setup", "Redirected back to /setup", "src/middleware.ts", "Critical", "E2E"],
-            ["Non-owner cannot access /setup", "Member tries to access /setup", "Redirected to dashboard", "src/middleware.ts", "High", "E2E"],
-            ["Setup only accessible on org subdomain", "Try to access /setup on main domain", "Redirected to login", "src/middleware.ts", "High", "E2E"]
-        ],
-        "Setup Wizard Steps": [
-            ["Step 1: Organization Name & Code Prefix", "Enter org name and code prefix", "Name and prefix validated and saved", "src/app/setup/components/steps/OrgNameStep.tsx", "High", "E2E"],
-            ["Step 2: Currencies", "Select primary and additional currencies", "Currencies configured for org", "src/app/setup/components/steps/CurrencyStep.tsx", "Medium", "E2E"],
-            ["Step 3: Logo Upload", "Upload company logo image", "Logo saved to storage, URL stored in org", "src/app/setup/components/steps/LogoStep.tsx", "Medium", "E2E"],
-            ["Step 4: Brand Colors", "Select primary and secondary colors", "Colors saved to organization settings", "src/app/setup/components/steps/ColorStep.tsx", "Medium", "E2E"],
-            ["Step 5: Module Selection", "Select which modules to enable", "Selected modules enabled for org", "src/app/setup/components/steps/ModuleStep.tsx", "High", "E2E"],
-            ["Step 6: Complete", "Click complete/finish", "profileComplete=true, redirected to /admin", "src/app/setup/components/SetupWizardClient.tsx", "Critical", "E2E"],
-            ["Skip setup entirely", "Click skip setup link", "Defaults applied, redirected to /admin dashboard", "src/app/setup/components/SetupWizardClient.tsx", "Medium", "E2E"],
-            ["Step progress indicator", "View setup wizard", "Shows current step number and total steps", "src/app/setup/components/SetupWizardClient.tsx", "Medium", "E2E"],
-            ["Back button between steps", "Click back on step 3", "Returns to step 2 with data preserved", "src/app/setup/components/SetupWizardClient.tsx", "Medium", "E2E"]
-        ],
-        "Resume Setup": [
-            ["Resume incomplete setup on login", "Login to org with incomplete setup", "Redirected to setup wizard", "src/middleware.ts", "High", "E2E"],
-            ["Track setup progress in database", "Complete some steps, return later", "OrganizationSetupProgress tracks completion", "src/app/api/organizations/setup-progress/route.ts", "Medium", "E2E"],
-            ["Resume starts from last incomplete step", "Complete steps 1-3, logout, login", "Wizard opens at step 4", "src/app/setup/components/SetupWizardClient.tsx", "Medium", "E2E"]
-        ]
-    },
-    "4. Authentication & Session": {
+    "3. Authentication & Session": {
         "Login Functionality": [
             ["Email/password login with valid credentials", "Enter valid email and password", "User logged in, redirected to dashboard", "src/lib/core/auth.ts", "Critical", "Automated"],
             ["Email/password login with invalid email format", "Enter malformed email", "Validation error shown", "src/lib/core/auth.ts", "High", "Automated"],
@@ -773,7 +764,7 @@ const T = {
             ["Session concurrent limit", "Test multiple logins", "No concurrent session limit - all sessions work simultaneously", "src/app", "Medium", "Manual"]
         ]
     },
-    "5. Multi-Tenant Isolation": {
+    "4. Multi-Tenant Isolation": {
         "Data Isolation": [
             ["User can only see data from their organization", "Query any tenant-scoped model", "Only own org's data returned", "src/lib/core/prisma-tenant.ts", "Critical", "Automated"],
             ["Assets filtered by tenantId automatically", "List assets", "Only tenant's assets shown", "src/lib/core/prisma-tenant.ts", "Critical", "Automated"],
@@ -813,7 +804,7 @@ const T = {
             ["Missing tenant context returns 401/403", "Request without auth/tenant", "Appropriate error returned", "src/lib/http/handler.ts", "Critical", "Automated"]
         ]
     },
-    "6. RBAC & Permissions": {
+    "5. RBAC & Permissions": {
         "Team Member Roles": [
             ["ADMIN can access all admin routes", "Login as admin, access any admin route", "Access granted", "src/middleware.ts", "Critical", "E2E"],
             ["ADMIN can manage users", "Admin adds/removes team members", "Operations succeed", "src/app/api/admin/team/route.ts", "Critical", "E2E"],
@@ -844,7 +835,7 @@ const T = {
             ["canApprove enables approval functionality", "User without canApprove", "Cannot approve requests", "src/features/approvals/lib/approval-engine.ts", "High", "Automated"]
         ]
     },
-    "7. Assets Module": {
+    "6. Assets Module": {
         "Asset Creation": [
             ["Asset tag auto-generates if empty", "Create asset without tag", "Tag generated: ORG-CAT-YYSEQ", "src/features/assets/lib/asset-tag.ts", "High", "Automated"],
             ["Asset tag uniqueness within org", "Create asset with duplicate tag", "Error: tag already exists", "src/app/api/assets/route.ts", "Critical", "Automated"],
@@ -998,7 +989,7 @@ const T = {
             ["Unassignment notification", "Unassign asset", "Employee notified of removal", "src/app", "Medium", "Manual"]
         ]
     },
-    "8. Subscriptions Module": {
+    "7. Subscriptions Module": {
         "Subscription Creation": [
             ["Service name required (1-255 chars)", "Create without service name", "Validation error", "src/features/subscriptions/validations/subscriptions.ts", "Critical", "Automated"],
             ["Billing cycle required", "Create without billing cycle", "Validation error", "src/features/subscriptions/validations/subscriptions.ts", "Critical", "Automated"],
@@ -1058,7 +1049,7 @@ const T = {
             ["Clear filters", "Clear all filters", "Shows all subscriptions", "src/app", "Medium", "Manual"]
         ]
     },
-    "9. Suppliers Module": {
+    "8. Suppliers Module": {
         "Supplier Creation": [
             ["Name required", "Create without name", "Validation error", "src/features/suppliers/validations/suppliers.ts", "Critical", "Automated"],
             ["Category required", "Create without category", "Validation error", "src/features/suppliers/validations/suppliers.ts", "Critical", "Automated"],
@@ -1123,7 +1114,7 @@ const T = {
             ["Reject registration", "Admin rejects", "Supplier rejected", "src/app", "Medium", "Manual"]
         ]
     },
-    "10. Employees Module": {
+    "9. Employees Module": {
         "Employee HR Profile - Personal": [
             ["Date of birth optional", "Leave DOB empty", "Saved as null", "src/features/employees/validations/hr-profile.ts", "Low", "Automated"],
             ["Gender optional", "Leave gender empty", "Saved as null", "src/features/employees/validations/hr-profile.ts", "Low", "Automated"],
@@ -1376,7 +1367,7 @@ const T = {
             ["Department head count", "View department", "Shows employee count", "src/app", "Medium", "Manual"]
         ]
     },
-    "11. Leave Management": {
+    "10. Leave Management": {
         "Leave Type Configuration": [
             ["Name required (1-100 chars)", "Create leave type without name", "Validation error", "src/features/leave/validations/leave.ts", "Critical", "Automated"],
             ["Color hex format #RRGGBB", "Enter invalid color", "Validation error", "src/features/leave/validations/leave.ts", "Medium", "Automated"],
@@ -1518,7 +1509,7 @@ const T = {
             ["Negative pending balance", "Cancel approved, pending goes negative", "Handled correctly", "src/app", "Medium", "Manual"]
         ]
     },
-    "12. Payroll Module": {
+    "11. Payroll Module": {
         "Salary Structure": [
             ["User ID required", "Create without user", "Validation error", "src/features/payroll/validations/payroll.ts", "Critical", "Automated"],
             ["Basic salary: 0-999,999,999", "Enter negative salary", "Validation error", "src/features/payroll/validations/payroll.ts", "Critical", "Automated"],
@@ -1656,7 +1647,7 @@ const T = {
             ["Payslip history", "View past payslips", "All months available", "src/app", "Medium", "Manual"]
         ]
     },
-    "13. Purchase Requests": {
+    "12. Purchase Requests": {
         "Request Creation": [
             ["Title required (1-200 chars)", "Create without title", "Validation error", "src/features/purchase-requests/validations/purchase-request.ts", "Critical", "Automated"],
             ["At least 1 item required", "Create without items", "Validation error", "src/features/purchase-requests/validations/purchase-request.ts", "Critical", "Automated"],
@@ -1714,7 +1705,7 @@ const T = {
             ["Reopen completed PR", "Try to modify COMPLETED", "Not allowed or creates new", "src/app", "Medium", "Manual"]
         ]
     },
-    "14. Approval Workflows": {
+    "13. Approval Workflows": {
         "Approval Policy": [
             ["Name required (1-100 chars)", "Create policy without name", "Validation error", "src/features/approvals/validations/approvals.ts", "High", "Automated"],
             ["Module: LEAVE_REQUEST/PURCHASE_REQUEST/ASSET_REQUEST", "Create with invalid module", "Validation error", "src/features/approvals/validations/approvals.ts", "High", "Automated"],
@@ -1831,7 +1822,7 @@ const T = {
             ["Audit trail", "Check audit log", "All actions logged", "src/app", "Medium", "Manual"]
         ]
     },
-    "15. Notifications": {
+    "14. Notifications": {
         "In-App Notifications": [
             ["Leave submitted notification", "Submit leave request", "Approvers get notification", "src/lib/domains/system/notifications/notification-service.ts", "High", "Automated"],
             ["Leave approved notification", "Approve leave request", "Requester gets notification", "src/lib/domains/system/notifications/notification-service.ts", "High", "Automated"],
@@ -1848,7 +1839,7 @@ const T = {
             ["One-time use token", "Use same token twice", "Second use fails", "src/lib/whatsapp/tokens.ts", "Critical", "Automated"]
         ]
     },
-    "16. Company Documents": {
+    "15. Company Documents": {
         "Document Management": [
             ["Document type name required", "Create without type name", "Validation error", "src/app/api/company-documents/route.ts", "Critical", "Automated"],
             ["Expiry date required", "Create without expiry", "Validation error", "src/app/api/company-documents/route.ts", "Critical", "Automated"],
@@ -1875,7 +1866,7 @@ const T = {
             ["Bulk expiry view", "View all expiring docs", "Shows sorted by expiry", "src/app", "Medium", "Manual"]
         ]
     },
-    "17. Settings & Configuration": {
+    "16. Settings & Configuration": {
         "Organization Settings": [
             ["Update org name", "Change org name", "Name updated", "src/app/api/admin/organization/route.ts", "High", "E2E"],
             ["Update timezone", "Change timezone", "Timezone updated", "src/app/api/admin/organization/route.ts", "Medium", "E2E"],
@@ -1900,7 +1891,7 @@ const T = {
             ["Update exchange rate", "Update USD to QAR rate", "Rate updated", "src/app/api/settings/exchange-rate/route.ts", "Medium", "E2E"]
         ]
     },
-    "18. Super Admin": {
+    "17. Super Admin": {
         "Super Admin Authentication": [
             ["Super admin login", "Enter super admin credentials", "Access granted to /super-admin", "src/app/super-admin/layout.tsx", "Critical", "Manual"],
             ["Invalid credentials rejected", "Enter wrong credentials", "Access denied", "src/app/super-admin/layout.tsx", "Critical", "Manual"],
@@ -1951,7 +1942,7 @@ const T = {
             ["Onboarding funnel", "Check funnel", "Shows conversion rates", "src/app", "Medium", "Manual"]
         ]
     },
-    "19. UI/UX Testing": {
+    "18. UI/UX Testing": {
         "Form Behavior": [
             ["Double submit prevention", "Click submit twice quickly", "Only one request sent", "src/components/ui/button.tsx", "High", "E2E"],
             ["Loading state on submit", "Submit form", "Button shows loading spinner", "src/components/ui/button.tsx", "Medium", "E2E"],
@@ -1985,7 +1976,7 @@ const T = {
             ["Color contrast meets WCAG", "Check contrast ratios", "Meets WCAG AA", "src/styles/globals.css", "Medium", "Manual"]
         ]
     },
-    "20. Edge Cases & Error Handling": {
+    "19. Edge Cases & Error Handling": {
         "Input Validation Boundaries": [
             ["Empty string on required field", "Submit empty required field", "Validation error with field name", "src/lib/http/responses.ts", "Critical", "Automated"],
             ["Max length boundary exact", "Enter exactly max chars", "Accepted", "src/features/assets/validations/assets.ts", "High", "Automated"],
@@ -2038,7 +2029,7 @@ const T = {
             ["Concurrent profile updates", "Two updates to same employee", "Last write wins or conflict detection", "src/app/api/users/[id]/hr-profile/route.ts", "Medium", "Manual"]
         ]
     },
-    "21. File Upload & Storage": {
+    "20. File Upload & Storage": {
         "File Upload Validation": [
             ["Upload valid PDF", "Upload .pdf file", "File uploaded, URL returned", "src/app/api/upload/route.ts", "High", "E2E"],
             ["Upload valid PNG image", "Upload .png file", "File uploaded successfully", "src/app/api/upload/route.ts", "High", "E2E"],
@@ -2069,7 +2060,7 @@ const T = {
             ["Delete uploaded image", "Delete image from asset", "Image removed from storage", "src/app/api/upload/route.ts", "Medium", "E2E"]
         ]
     },
-    "22. Scheduled Tasks (Cron)": {
+    "21. Scheduled Tasks (Cron)": {
         "Cleanup Jobs": [
             ["Deleted assets cleanup after 30 days", "Wait for retention period", "Soft-deleted assets purged", "src/app/api/cron/cleanup-deleted-assets/route.ts", "High", "Manual"],
             ["Deleted users cleanup after retention", "Wait for retention period", "Soft-deleted users purged", "src/app/api/cron/cleanup-deleted-users/route.ts", "High", "Manual"],
@@ -2095,7 +2086,7 @@ const T = {
             ["Cron idempotency on duplicate trigger", "Trigger same job twice", "Second run is no-op", "src/app/api/cron/depreciation/route.ts", "High", "Manual"]
         ]
     },
-    "23. Data Integrity": {
+    "22. Data Integrity": {
         "Referential Integrity": [
             ["Delete employee unassigns assets first", "Delete employee with assigned assets", "Assets unassigned, then employee deleted", "src/app/api/users/[id]/route.ts", "Critical", "Automated"],
             ["Delete supplier cascades engagements", "Delete supplier with engagements", "Engagements deleted or blocked", "src/app/api/suppliers/[id]/route.ts", "High", "Automated"],
@@ -2118,7 +2109,7 @@ const T = {
             ["Asset assignment is atomic", "Assign asset, simulate failure", "No partial assignment state", "src/app/api/assets/[id]/assign/route.ts", "Critical", "Automated"]
         ]
     },
-    "24. Performance & Browser Tests": {
+    "23. Performance & Browser Tests": {
         "Performance Benchmarks": [
             ["Page load time <3 seconds", "Navigate to dashboard", "Page interactive in <3s", "src/app/admin/dashboard/page.tsx", "High", "Manual"],
             ["List 100 assets <1 second", "Load assets page with 100 items", "Response in <1s", "src/app/api/assets/route.ts", "High", "Manual"],
@@ -2142,7 +2133,7 @@ const T = {
             ["Slow network handling", "Throttle to 3G speed", "Loading states shown, no timeout errors", "src/components/ui/skeleton.tsx", "Low", "Manual"]
         ]
     },
-    "25. Security Specific Tests": {
+    "24. Security Specific Tests": {
         "CSRF Protection": [
             ["CSRF token required for mutations", "POST without CSRF token", "403 Forbidden", "src/lib/security/csrf.ts", "Critical", "Automated"],
             ["CSRF token validated per request", "POST with old/invalid token", "403 Forbidden", "src/lib/security/csrf.ts", "Critical", "Automated"],
@@ -2169,7 +2160,7 @@ const T = {
             ["Database errors don't expose schema", "Trigger DB constraint error", "Generic error message", "src/lib/http/handler.ts", "Critical", "Automated"]
         ]
     },
-    "26. Team Management": {
+    "25. Team Management": {
         "Team Invitations": [
             ["Create invitation with valid email", "Enter email, send invite", "Invitation created, email sent", "src/app/api/admin/team/invitations/route.ts", "High", "E2E"],
             ["Duplicate email rejected", "Invite already-invited email", "Error: already invited", "src/app/api/admin/team/invitations/route.ts", "High", "Automated"],
@@ -2196,7 +2187,7 @@ const T = {
             ["Restore deleted member", "Restore soft-deleted user", "User restored, can login again", "src/app/api/users/[id]/restore/route.ts", "High", "E2E"]
         ]
     },
-    "27. Reports & Analytics": {
+    "26. Reports & Analytics": {
         "Report Generation": [
             ["Asset summary report", "Generate asset report", "Shows asset statistics", "src/app/admin/(reports)/reports/page.tsx", "Medium", "E2E"],
             ["Leave summary report", "Generate leave report", "Shows leave statistics by type", "src/app/admin/(reports)/reports/page.tsx", "Medium", "E2E"],
@@ -2218,7 +2209,7 @@ const T = {
             ["HR reports need HR access", "Non-HR tries HR report", "Access denied or limited", "src/middleware.ts", "High", "E2E"]
         ]
     },
-    "28. Activity & Audit Logs": {
+    "27. Activity & Audit Logs": {
         "Activity Logging": [
             ["Login activity logged", "User logs in", "Login action recorded with IP", "src/app/api/activity/route.ts", "High", "Automated"],
             ["Create actions logged", "Create any entity", "CREATE action recorded", "src/lib/core/activity.ts", "High", "Automated"],
