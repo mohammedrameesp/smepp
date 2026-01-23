@@ -582,7 +582,8 @@ const T = {
         "Admin Add Member Form (/admin/employees/new)": [
             ["Navigate to add member page", "Click 'Add Member' button in employees page", "Shows member type selection (Employee or Service Account)", "src/app/admin/(hr)/employees/new/page.tsx", "Critical", "E2E"],
             ["Select Employee type", "Click 'Employee' option", "Shows employee form with HR fields", "src/app/admin/(hr)/employees/new/page.tsx", "Critical", "E2E"],
-            ["Select Service Account type", "Click 'Service Account' option", "Shows simplified form (no HR fields)", "src/app/admin/(hr)/employees/new/page.tsx", "Critical", "E2E"],
+            ["Select Service Account type", "Click 'Service Account' option", "Shows 'Add Member' button", "src/app/admin/(hr)/employees/new/page.tsx", "Critical", "E2E"],
+            ["Click Add Member after type selection", "Click 'Add Member' button", "Shows form fields (name, email, role)", "src/app/admin/(hr)/employees/new/page.tsx", "Critical", "E2E"],
             ["Full name required", "Leave name empty, submit", "Validation error shown", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
             ["Email required", "Leave email empty, submit", "Validation error shown", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
             ["Email format validation", "Enter invalid email format", "Validation error shown", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
