@@ -9,6 +9,7 @@ import { prisma } from '@/lib/core/prisma';
 import { createUserSchema, ROLE_PERMISSIONS, type UserRole } from '@/features/users/validations/users';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { invalidBodyResponse } from '@/lib/http/responses';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { sendEmail } from '@/lib/core/email';
 import { handleEmailFailure } from '@/lib/core/email-failure-handler';
@@ -95,10 +96,7 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
   const validation = createUserSchema.safeParse(body);
 
   if (!validation.success) {
-    return NextResponse.json({
-      error: 'Invalid request body',
-      details: validation.error.issues
-    }, { status: 400 });
+    return invalidBodyResponse(validation.error);
   }
 
   const {
@@ -196,7 +194,7 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
       department: isEmployee ? (department || null) : null,
       // Admin-set employment fields
       dateOfJoining: isEmployee ? parsedDateOfJoining : null,
-      workLocation: isEmployee ? (workLocation as 'OFFICE' | 'REMOTE' | 'HYBRID' | undefined) : null,
+      workLocation: isEmployee && workLocation ? (workLocation as 'OFFICE' | 'REMOTE' | 'HYBRID') : null,
       probationEndDate: isEmployee ? parsedProbationEndDate : null,
       noticePeriodDays: isEmployee ? (noticePeriodDays ?? 30) : null,
       sponsorshipType: isEmployee ? (sponsorshipType || null) : null,
