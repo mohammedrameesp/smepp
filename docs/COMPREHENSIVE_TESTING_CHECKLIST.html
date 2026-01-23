@@ -557,20 +557,13 @@ const T = {
             ["Password minimum 8 chars", "Enter short password", "Shows 'Password must be at least 8 characters'", "src/app/signup/page.tsx", "Critical", "Automated"],
             ["Shows 'Already have an account?' link", "View signup form", "Link to /login with callbackUrl", "src/app/signup/page.tsx", "Medium", "E2E"]
         ],
-        "Signup Submission (POST /api/auth/signup)": [
-            ["Signup creates User record", "Submit valid form", "User created in database", "src/app/api/auth/signup/route.ts", "Critical", "E2E"],
-            ["Signup auto-accepts invitation", "Submit with invite token", "TeamMember created, invitation.acceptedAt set", "src/app/api/auth/signup/route.ts", "Critical", "E2E"],
-            ["Owner role assigned correctly", "Signup for self-registered org", "TeamMember has isOwner=true, isAdmin=true", "src/app/api/auth/signup/route.ts", "Critical", "E2E"],
-            ["User auto-signed in after signup", "Complete signup", "Session created automatically", "src/app/api/auth/signup/route.ts", "Critical", "E2E"],
-            ["Owner redirected to /setup", "Complete signup as owner", "Redirects to {org-subdomain}/setup", "src/app/signup/page.tsx", "Critical", "E2E"],
-            ["Duplicate email rejected", "Signup with existing email", "Shows 'Email already registered' error", "src/app/api/auth/signup/route.ts", "Critical", "E2E"],
-            ["Expired invitation rejected", "Signup with expired token", "Shows 'Invitation has expired' error", "src/app/api/auth/signup/route.ts", "Critical", "E2E"],
-            ["Already accepted invitation rejected", "Signup with used token", "Shows 'Invitation already accepted' error", "src/app/api/auth/signup/route.ts", "Critical", "E2E"]
-        ],
-        "Post-Signup Redirect": [
-            ["Owner goes directly to setup wizard", "Complete signup as owner", "Redirects to https://{slug}.{domain}/setup", "src/app/signup/page.tsx", "Critical", "E2E"],
-            ["Session includes organizationId", "After signup redirect", "Session has organizationId set", "src/lib/core/auth.ts", "Critical", "E2E"],
-            ["Setup wizard loads on org subdomain", "After redirect", "Shows /setup page with org context", "src/app/setup/page.tsx", "Critical", "E2E"]
+        "Signup & Redirect to Setup": [
+            ["Submit creates User record", "Fill form, click 'Complete Signup'", "User created in database with hashed password", "src/app/api/auth/signup/route.ts", "Critical", "E2E"],
+            ["Invitation auto-accepted", "Signup completes", "TeamMember created, invitation.acceptedAt set", "src/app/api/auth/signup/route.ts", "Critical", "E2E"],
+            ["Owner role assigned", "Signup for self-registered org", "TeamMember has isOwner=true, isAdmin=true", "src/app/api/auth/signup/route.ts", "Critical", "E2E"],
+            ["User auto-signed in", "Signup completes", "Session created, user logged in automatically", "src/app/api/auth/signup/route.ts", "Critical", "E2E"],
+            ["Redirect to org subdomain /setup", "After successful signup", "Browser redirects to https://{slug}.{domain}/setup", "src/app/signup/page.tsx", "Critical", "E2E"],
+            ["Setup wizard loads", "After redirect completes", "Shows setup wizard on org subdomain", "src/app/setup/page.tsx", "Critical", "E2E"]
         ]
     },
     "2. Password Setup & Account Activation": {
