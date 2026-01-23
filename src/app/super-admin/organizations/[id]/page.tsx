@@ -1159,10 +1159,20 @@ export default function OrganizationDetailPage() {
           <div>
             <h1 className="text-2xl font-bold">{org.name}</h1>
             <p className="text-muted-foreground font-mono">{org.slug}.{APP_DOMAIN.split(':')[0]}</p>
-            <div className="flex items-center gap-3 mt-2">
+            <div className="flex items-center gap-3 mt-2 flex-wrap">
               <Badge variant={org.subscriptionTier === 'FREE' ? 'secondary' : 'default'}>
                 {org.subscriptionTier}
               </Badge>
+              {org.industry && (
+                <Badge variant="outline" className="text-muted-foreground">
+                  {org.industry}
+                </Badge>
+              )}
+              {org.companySize && (
+                <Badge variant="outline" className="text-muted-foreground">
+                  {org.companySize}
+                </Badge>
+              )}
               <span className="text-sm text-muted-foreground flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
                 Created {formatDistanceToNow(new Date(org.createdAt), { addSuffix: true })}
