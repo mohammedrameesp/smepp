@@ -579,29 +579,64 @@ const T = {
         ]
     },
     "2. Admin-Initiated Team Invitations": {
-        "Setup Token Validation": [
-            ["Valid setup token shows form", "Navigate to /set-password?token=valid", "Shows password setup form", "src/app/set-password/[token]/page.tsx", "Critical", "E2E"],
-            ["Expired token (>7 days) shows error", "Navigate to /set-password?token=expired", "Shows 'Token expired' error with contact admin message", "src/app/api/auth/set-password/route.ts", "Critical", "E2E"],
-            ["Already-used token shows error", "Navigate to /set-password?token=used", "Shows 'Password already set' message", "src/app/api/auth/set-password/route.ts", "Critical", "E2E"],
-            ["Invalid/fake token shows error", "Navigate to /set-password?token=fake", "Shows 'Invalid token' error", "src/app/api/auth/set-password/route.ts", "Critical", "E2E"]
+        "Admin Add Member Form (/admin/employees/new)": [
+            ["Navigate to add member page", "Click 'Add Member' button in employees page", "Shows add member form", "src/app/admin/(hr)/employees/new/page.tsx", "Critical", "E2E"],
+            ["Full name required", "Leave name empty, submit", "Validation error shown", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
+            ["Email required when canLogin enabled", "Enable system access, leave email empty", "Validation error shown", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
+            ["Email format validation", "Enter invalid email format", "Validation error shown", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
+            ["Email availability check", "Enter email of existing member", "Shows 'Email already in use' error", "src/app/api/admin/team/check-email/route.ts", "High", "E2E"],
+            ["Role selection", "Select role (Admin/Manager/Member)", "Role saved correctly", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
+            ["System access toggle (canLogin)", "Toggle system access on/off", "Enables/disables login capability", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
+            ["Employee settings shown when isEmployee", "Enable employee toggle", "Shows employee code, department, designation fields", "src/app/admin/(hr)/employees/new/page.tsx", "Medium", "E2E"],
+            ["Employee code auto-generated", "Enable employee toggle", "Employee code auto-generated from org prefix", "src/app/admin/(hr)/employees/new/page.tsx", "Medium", "E2E"]
         ],
-        "Password Setup Form": [
-            ["Set password with valid token", "Enter valid password, submit", "Password saved, emailVerified set to true", "src/app/api/auth/set-password/route.ts", "Critical", "E2E"],
-            ["Password must meet complexity requirements", "Enter weak password", "Shows validation error with requirements", "src/lib/security/password-validation.ts", "Critical", "Automated"],
-            ["Confirm password must match", "Enter different confirm password", "Shows 'Passwords do not match' error", "src/app/set-password/[token]/page.tsx", "Critical", "Automated"],
-            ["After successful setup redirects to login", "Complete password setup", "Redirected to /login with success message", "src/app/set-password/[token]/page.tsx", "Critical", "E2E"]
+        "Member Creation (POST /api/users)": [
+            ["Creates TeamMember record", "Submit valid form", "TeamMember created in database", "src/app/api/users/route.ts", "Critical", "E2E"],
+            ["Sends password setup email (credentials org)", "Submit form for credentials-only org", "Email sent with /set-password link", "src/app/api/users/route.ts", "Critical", "E2E"],
+            ["Success message shown", "Submit valid form", "Shows success toast with member name", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
+            ["Redirects to employees list", "Submit valid form", "Redirects back to /admin/employees", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"]
         ],
-        "Admin Resend Setup Email": [
-            ["Admin can resend setup email", "Click resend in team management", "New setup email sent to user", "src/app/api/admin/team/[memberId]/resend/route.ts", "High", "E2E"],
-            ["New token generated on resend", "Resend setup email", "New token created, old token invalidated", "src/app/api/admin/team/[memberId]/resend/route.ts", "High", "Automated"],
-            ["Only admins can resend", "Non-admin tries to resend", "Permission denied error", "src/app/api/admin/team/[memberId]/resend/route.ts", "High", "Automated"]
+        "Credentials Flow: Password Setup Email": [
+            ["Email contains password setup link", "Check invited user email", "Contains link to /set-password?token=...", "src/lib/core/email.ts", "Critical", "E2E"],
+            ["Email shows organization name", "Check email content", "Organization name displayed", "src/lib/core/email.ts", "Medium", "E2E"],
+            ["Token expires in 7 days", "Check setupTokenExpiry", "Token valid for 7 days", "src/app/api/users/route.ts", "High", "E2E"]
         ],
-        "Admin-Initiated Team Invitations": [
-            ["Admin sends team invitation", "Admin adds member from team settings", "Invitation created and email sent", "src/app/api/admin/team/invitations/route.ts", "Critical", "E2E"],
-            ["Invited member receives email", "Check invited user email", "Contains invite link to /invite/[token]", "src/lib/core/email.ts", "Critical", "E2E"],
-            ["Member invite uses same token flow", "Member clicks invite link", "Goes to /invite/[token] page", "src/app/invite/[token]/page.tsx", "Critical", "E2E"],
-            ["Admin can cancel pending invitation", "Delete invitation from team settings", "Invitation deleted, token invalidated", "src/app/api/admin/team/invitations/[id]/route.ts", "High", "E2E"],
-            ["Admin can view pending invitations", "View team invitations page", "List of pending invites shown", "src/app/admin/(system)/team/invitations/page.tsx", "High", "E2E"]
+        "Credentials Flow: Password Setup Page (/set-password)": [
+            ["Valid token shows password form", "Navigate to /set-password?token=valid", "Shows password setup form", "src/app/set-password/page.tsx", "Critical", "E2E"],
+            ["Expired token shows error", "Navigate with expired token", "Shows 'Token expired' error with contact admin message", "src/app/api/auth/set-password/route.ts", "Critical", "E2E"],
+            ["Already-used token shows error", "Navigate with used token", "Shows 'Password already set' message", "src/app/api/auth/set-password/route.ts", "Critical", "E2E"],
+            ["Invalid token shows error", "Navigate with fake token", "Shows 'Invalid token' error", "src/app/api/auth/set-password/route.ts", "Critical", "E2E"],
+            ["Password complexity requirements", "Enter weak password", "Shows validation error with requirements", "src/lib/security/password-validation.ts", "Critical", "E2E"],
+            ["Confirm password must match", "Enter different confirm password", "Shows 'Passwords do not match' error", "src/app/set-password/page.tsx", "Critical", "E2E"],
+            ["Successful password setup", "Enter valid password, submit", "Password saved, emailVerified set to true", "src/app/api/auth/set-password/route.ts", "Critical", "E2E"],
+            ["Redirects to login after setup", "Complete password setup", "Redirected to /login with success message", "src/app/set-password/page.tsx", "Critical", "E2E"]
+        ],
+        "Admin Invitation Management": [
+            ["View pending invitations tab", "Go to employees page, view pending", "Shows list of pending invitations", "src/app/admin/(hr)/employees/team-client.tsx", "High", "E2E"],
+            ["Shows invitation email and role", "View pending invitation", "Email and assigned role displayed", "src/app/admin/(hr)/employees/team-client.tsx", "Medium", "E2E"],
+            ["Shows expiry date", "View pending invitation", "Expiry date shown", "src/app/admin/(hr)/employees/team-client.tsx", "Medium", "E2E"],
+            ["Resend invitation", "Click resend button", "New token generated, email resent", "src/app/api/admin/team/[memberId]/resend/route.ts", "High", "E2E"],
+            ["Cancel invitation", "Click cancel/remove button", "Invitation deleted, token invalidated", "src/app/api/admin/team/[memberId]/route.ts", "High", "E2E"],
+            ["Only admins can manage invitations", "Non-admin tries to resend/cancel", "Permission denied error", "src/app/api/admin/team/[memberId]/resend/route.ts", "High", "E2E"]
+        ],
+        "SSO Flow: Invitation Email (requires super admin SSO setup)": [
+            ["Email contains invite link for SSO org", "Check invited user email", "Contains link to /invite/[token]", "src/lib/core/email.ts", "Critical", "E2E"],
+            ["Email shows organization name and role", "Check email content", "Organization name and assigned role displayed", "src/lib/core/email.ts", "Medium", "E2E"],
+            ["Token expires in 7 days", "Check invitation record", "expiresAt set to 7 days from creation", "src/app/api/users/route.ts", "High", "E2E"]
+        ],
+        "SSO Flow: Invitation Acceptance (/invite/[token])": [
+            ["Valid token shows invitation page", "Navigate to /invite/[token]", "Shows 'You're Invited!' page with org details", "src/app/invite/[token]/page.tsx", "Critical", "E2E"],
+            ["Shows organization name", "View invitation page", "Organization name displayed", "src/app/invite/[token]/page.tsx", "High", "E2E"],
+            ["Shows assigned role", "View invitation page", "Role (Admin/Manager/Member) shown", "src/app/invite/[token]/page.tsx", "High", "E2E"],
+            ["Not logged in: shows signup/signin options", "View page when not logged in", "Shows 'Create Account & Join' and 'Sign In' buttons", "src/app/invite/[token]/page.tsx", "Critical", "E2E"],
+            ["Create Account routes to signup", "Click 'Create Account & Join'", "Redirects to /signup with email pre-filled", "src/app/invite/[token]/page.tsx", "Critical", "E2E"],
+            ["Sign In routes to login", "Click 'Sign In'", "Redirects to /login with callback to invite page", "src/app/invite/[token]/page.tsx", "High", "E2E"],
+            ["Logged in: shows Accept button", "View page when logged in with matching email", "Shows 'Accept Invitation' button", "src/app/invite/[token]/page.tsx", "Critical", "E2E"],
+            ["Accept creates TeamMember", "Click 'Accept Invitation'", "TeamMember created, invitation marked accepted", "src/app/api/invitations/[token]/route.ts", "Critical", "E2E"],
+            ["Redirects to org subdomain after accept", "Accept invitation", "Redirects to https://{slug}.domain/admin", "src/app/invite/[token]/page.tsx", "Critical", "E2E"],
+            ["Expired token shows error", "Navigate with expired token", "Shows 'Invitation expired' message", "src/app/invite/[token]/page.tsx", "Critical", "E2E"],
+            ["Already accepted token shows error", "Navigate with used token", "Shows 'Already accepted' message", "src/app/invite/[token]/page.tsx", "Critical", "E2E"],
+            ["Invalid token shows error", "Navigate with fake token", "Shows 'Invalid invitation' message", "src/app/invite/[token]/page.tsx", "Critical", "E2E"]
         ]
     },
     "3. Authentication & Session": {
