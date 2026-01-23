@@ -95,6 +95,7 @@ export function SetupWizardClient() {
 
   // Step 5: Modules
   const [selectedModules, setSelectedModules] = useState<string[]>([
+    'employees', // Core module - always enabled
     'assets',
     'subscriptions',
     'suppliers',

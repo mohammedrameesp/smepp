@@ -133,7 +133,7 @@ export const MODULE_REGISTRY: Record<string, ModuleDefinition> = {
     adminRoutes: ['/admin/employees'],
     employeeRoutes: [], // Note: /profile is accessible to all users, HR content is conditionally shown
     apiRoutes: ['/api/employees'],
-    isCore: false,
+    isCore: true, // Core module - always enabled, can't be uninstalled
     isBeta: false,
     isDeprecated: false,
   },
@@ -305,7 +305,7 @@ export function getCoreModules(): ModuleDefinition[] {
  * Get default enabled modules for new organizations
  */
 export function getDefaultEnabledModules(): string[] {
-  return ['assets', 'subscriptions', 'suppliers'];
+  return ['employees', 'assets', 'subscriptions', 'suppliers'];
 }
 
 /**

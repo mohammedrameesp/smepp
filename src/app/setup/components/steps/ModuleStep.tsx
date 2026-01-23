@@ -17,6 +17,8 @@ import {
   Check,
   Blocks,
   AlertCircle,
+  Users,
+  Lock,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -38,7 +40,13 @@ interface Section {
   subtitle: string;
   color: string;
   modules: Module[];
+  isCore?: boolean; // Core modules can't be toggled
 }
+
+// Core module: always enabled, can't be disabled
+const CORE_MODULES: Module[] = [
+  { id: 'employees', name: 'Employees', description: 'Employee profiles & organization structure', icon: Users },
+];
 
 // Default modules: pre-selected for new organizations
 const DEFAULT_MODULES: Module[] = [
@@ -57,6 +65,13 @@ const ADDON_MODULES: Module[] = [
 
 const SECTIONS: Section[] = [
   {
+    title: 'Core Module',
+    subtitle: 'Always enabled for all organizations',
+    color: '#6366f1',
+    modules: CORE_MODULES,
+    isCore: true,
+  },
+  {
     title: 'Default Modules',
     subtitle: 'Essential modules to get started. Recommended for most organizations.',
     color: '#3b82f6',
@@ -70,10 +85,13 @@ const SECTIONS: Section[] = [
   },
 ];
 
-const ALL_MODULES = [...DEFAULT_MODULES, ...ADDON_MODULES];
+const ALL_TOGGLEABLE_MODULES = [...DEFAULT_MODULES, ...ADDON_MODULES];
 
 export function ModuleStep({ selected, onChange }: ModuleStepProps) {
   const toggleModule = (id: string) => {
+    // Don't allow toggling core modules
+    if (CORE_MODULES.some(m => m.id === id)) return;
+
     onChange(
       selected.includes(id)
         ? selected.filter((m) => m !== id)
@@ -82,7 +100,10 @@ export function ModuleStep({ selected, onChange }: ModuleStepProps) {
   };
 
   const selectAll = () => {
-    onChange(ALL_MODULES.map((m) => m.id));
+    // Include core modules + all toggleable modules
+    const coreIds = CORE_MODULES.map(m => m.id);
+    const toggleableIds = ALL_TOGGLEABLE_MODULES.map(m => m.id);
+    onChange([...coreIds, ...toggleableIds]);
   };
 
   return (
@@ -112,20 +133,29 @@ export function ModuleStep({ selected, onChange }: ModuleStepProps) {
                   style={{ backgroundColor: section.color }}
                 />
                 {section.title}
+                {section.isCore && (
+                  <Lock className="w-3 h-3 text-slate-400" />
+                )}
               </h3>
               <p className="text-xs text-slate-400 mt-0.5">{section.subtitle}</p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {section.modules.map((module) => {
-                const isSelected = selected.includes(module.id);
+                const isCore = section.isCore;
+                const isSelected = isCore || selected.includes(module.id);
                 const Icon = module.icon;
 
                 return (
                   <button
                     key={module.id}
-                    onClick={() => toggleModule(module.id)}
-                    className={`bg-white border-2 rounded-xl p-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-md ${
-                      isSelected ? 'border-slate-900 bg-slate-50' : 'border-slate-200'
+                    onClick={() => !isCore && toggleModule(module.id)}
+                    disabled={isCore}
+                    className={`bg-white border-2 rounded-xl p-3 text-left transition-all ${
+                      isCore
+                        ? 'border-indigo-200 bg-indigo-50/50 cursor-default'
+                        : 'hover:-translate-y-0.5 hover:shadow-md'
+                    } ${
+                      !isCore && isSelected ? 'border-slate-900 bg-slate-50' : !isCore ? 'border-slate-200' : ''
                     }`}
                   >
                     <div className="flex items-start justify-between mb-2">
@@ -140,13 +170,20 @@ export function ModuleStep({ selected, onChange }: ModuleStepProps) {
                       >
                         <Icon className="w-4 h-4" />
                       </div>
-                      <div
-                        className={`w-5 h-5 rounded-full flex items-center justify-center ${
-                          isSelected ? 'bg-slate-900' : 'border-2 border-slate-300'
-                        }`}
-                      >
-                        {isSelected && <Check className="w-3 h-3 text-white" />}
-                      </div>
+                      {isCore ? (
+                        <div className="flex items-center gap-1 text-xs text-indigo-600 font-medium">
+                          <Lock className="w-3 h-3" />
+                          Always on
+                        </div>
+                      ) : (
+                        <div
+                          className={`w-5 h-5 rounded-full flex items-center justify-center ${
+                            isSelected ? 'bg-slate-900' : 'border-2 border-slate-300'
+                          }`}
+                        >
+                          {isSelected && <Check className="w-3 h-3 text-white" />}
+                        </div>
+                      )}
                     </div>
                     <h4 className="font-semibold text-slate-900 text-sm mb-0.5">
                       {module.name}
@@ -167,25 +204,20 @@ export function ModuleStep({ selected, onChange }: ModuleStepProps) {
       </div>
 
       {/* Selection summary */}
-      <div className={`mt-4 p-3 rounded-xl border ${selected.length === 0 ? 'bg-red-50 border-red-200' : 'bg-slate-100 border-slate-200'}`}>
+      <div className="mt-4 p-3 rounded-xl border bg-slate-100 border-slate-200">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            {selected.length === 0 && (
-              <AlertCircle className="w-4 h-4 text-red-500" />
-            )}
-            <span className={`text-sm font-medium ${selected.length === 0 ? 'text-red-700' : 'text-slate-900'}`}>
-              {selected.length === 0 ? 'Select at least one module' : `${selected.length} modules selected`}
+            <span className="text-sm font-medium text-slate-900">
+              {selected.length} modules selected
             </span>
-            {selected.length > 0 && (
-              <span className="text-sm text-slate-600 ml-1">
-                {selected
-                  .map((id) => ALL_MODULES.find((m) => m.id === id)?.name)
-                  .filter(Boolean)
-                  .slice(0, 3)
-                  .join(', ')}
-                {selected.length > 3 && ` +${selected.length - 3} more`}
-              </span>
-            )}
+            <span className="text-sm text-slate-600 ml-1">
+              {selected
+                .map((id) => [...CORE_MODULES, ...ALL_TOGGLEABLE_MODULES].find((m) => m.id === id)?.name)
+                .filter(Boolean)
+                .slice(0, 3)
+                .join(', ')}
+              {selected.length > 3 && ` +${selected.length - 3} more`}
+            </span>
           </div>
           <button
             onClick={selectAll}
