@@ -7,6 +7,10 @@
  * IMPORTANT: Keep in sync with registry.ts module definitions.
  */
 
+// Core modules are always enabled (can't be uninstalled)
+// Keep in sync with isCore: true in registry.ts
+const CORE_MODULES = ['employees'];
+
 // Route prefixes mapped to module IDs
 const MODULE_ROUTE_MAP: Array<{ prefix: string; moduleId: string }> = [
   // Assets
@@ -52,6 +56,7 @@ export function getModuleForRoute(pathname: string): string | null {
 
 /**
  * Check if a path requires a specific module and if it's enabled
+ * Core modules (like 'employees') are always considered enabled
  */
 export function checkModuleAccess(
   pathname: string,
@@ -59,8 +64,15 @@ export function checkModuleAccess(
 ): { allowed: boolean; moduleId?: string; reason?: 'not_installed' } {
   const moduleId = getModuleForRoute(pathname);
 
-  if (moduleId && !enabledModules.includes(moduleId)) {
-    return { allowed: false, moduleId, reason: 'not_installed' };
+  if (moduleId) {
+    // Core modules are always enabled
+    if (CORE_MODULES.includes(moduleId)) {
+      return { allowed: true };
+    }
+    // Check if non-core module is enabled
+    if (!enabledModules.includes(moduleId)) {
+      return { allowed: false, moduleId, reason: 'not_installed' };
+    }
   }
 
   return { allowed: true };
