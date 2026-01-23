@@ -614,17 +614,19 @@ const T = {
             ["Submit disabled if unavailable", "Enter existing member email", "Create button remains disabled", "src/app/admin/(hr)/employees/new/page.tsx", "Medium", "E2E"]
         ],
         "Service Account Form Fields": [
-            ["Shows simplified form", "Select Service Account, click Add Member", "Only name and role fields shown (no email, no HR fields)", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
+            ["Shows simplified form", "Select Service Account, click Add Member", "Shows name, email, and role fields (no HR fields)", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
+            ["Email field required", "View service account form", "Email field shown and required (for shared logins like info@, support@)", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
+            ["No HR fields shown", "View service account form", "No employee code, designation, department, date of joining fields", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
             ["Service account alert shown", "View service account form", "Shows alert: 'Service accounts only appear in team management, not in HR features'", "src/app/admin/(hr)/employees/new/page.tsx", "Medium", "E2E"],
-            ["No email field required", "View service account form", "Email field not shown (canLogin=false)", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
             ["Role limited to Admin/Member", "Click role dropdown", "Only ADMIN and MEMBER roles available", "src/app/admin/(hr)/employees/new/page.tsx", "Medium", "E2E"]
         ],
         "Member Creation (POST /api/users)": [
             ["Employee created successfully", "Submit valid employee form", "TeamMember created with isEmployee=true", "src/app/api/users/route.ts", "Critical", "E2E"],
-            ["Service account created successfully", "Submit valid service account form", "TeamMember created with canLogin=false, isEmployee=false", "src/app/api/users/route.ts", "Critical", "E2E"],
+            ["Service account created successfully", "Submit valid service account form", "TeamMember created with canLogin=true, isEmployee=false", "src/app/api/users/route.ts", "Critical", "E2E"],
             ["Password setup email sent (credentials org)", "Create employee on credentials org", "Email sent with /set-password/[token] link", "src/app/api/users/route.ts", "Critical", "E2E"],
             ["Invitation email sent (SSO org)", "Create employee on SSO org", "Email sent with /invite/[token] link", "src/app/api/users/route.ts", "Critical", "E2E"],
-            ["No email for service account", "Create service account", "No email sent (canLogin=false)", "src/app/api/users/route.ts", "High", "E2E"],
+            ["Password setup email sent for service account", "Create service account on credentials org", "Email sent with /set-password/[token] link", "src/app/api/users/route.ts", "High", "E2E"],
+            ["No email when System Access OFF", "Create employee with canLogin=false", "No email sent (for drivers, laborers without system access)", "src/app/api/users/route.ts", "High", "E2E"],
             ["Success toast shown", "Submit valid form", "Toast: '{Name} has been added to the team'", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
             ["Redirects to employees list", "Submit valid form", "Redirects to /admin/employees", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
             ["Button shows loading state", "Click Create button", "Button shows 'Creating...' with spinner", "src/app/admin/(hr)/employees/new/page.tsx", "Medium", "E2E"]
