@@ -502,10 +502,6 @@ const T = {
         "Form Submission (POST /api/organizations/signup)": [
             ["Valid submission creates organization", "Fill all fields correctly, submit", "Organization created with FREE tier", "src/app/api/organizations/signup/route.ts", "Critical", "E2E"],
             ["Creates OrganizationInvitation", "Complete registration", "Invitation token created with 7-day expiry", "src/app/api/organizations/signup/route.ts", "Critical", "E2E"],
-            ["Seeds default modules", "Complete registration", "Organization has assets, subscriptions, suppliers enabled", "src/app/api/organizations/signup/route.ts", "High", "E2E"],
-            ["Seeds default permissions", "Complete registration", "Default permissions seeded for organization", "src/app/api/organizations/signup/route.ts", "High", "E2E"],
-            ["Seeds default leave types", "Complete registration", "Default leave types created", "src/app/api/organizations/signup/route.ts", "High", "E2E"],
-            ["Seeds default asset categories", "Complete registration", "Default asset categories created", "src/app/api/organizations/signup/route.ts", "High", "E2E"],
             ["Sends welcome email with invite link", "Complete registration", "Email sent with organization-specific invite URL", "src/app/api/organizations/signup/route.ts", "Critical", "E2E"],
             ["Returns success response", "Complete registration", "Shows success screen (not error)", "src/app/api/organizations/signup/route.ts", "Critical", "E2E"],
             ["Notifies super admin", "Complete registration", "Super admin receives notification email (non-blocking)", "src/app/api/organizations/signup/route.ts", "Low", "E2E"]
