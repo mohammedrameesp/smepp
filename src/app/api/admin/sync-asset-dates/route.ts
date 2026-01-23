@@ -1,7 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
+import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
+import { withErrorHandler } from '@/lib/http/handler';
 import logger from '@/lib/core/log';
 
 /**
@@ -11,18 +10,8 @@ import logger from '@/lib/core/log';
  *
  * SECURITY: All queries are filtered by tenantId to ensure tenant isolation
  */
-export async function POST(_request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session || !session.user.isAdmin) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
-
-    // SECURITY: Get tenant ID from session - required for data isolation
-    const tenantId = session.user.organizationId;
-    if (!tenantId) {
-      return NextResponse.json({ error: 'Tenant context required' }, { status: 400 });
-    }
+export const POST = withErrorHandler(async (_request, { tenant }) => {
+  const tenantId = tenant!.tenantId;
 
     const results = {
       assetsUpdated: 0,
@@ -242,16 +231,5 @@ export async function POST(_request: NextRequest) {
         },
         errors: results.errors,
       },
-    });
-
-  } catch (error) {
-    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Asset date sync error');
-    return NextResponse.json(
-      {
-        error: 'Failed to sync asset dates',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      },
-      { status: 500 }
-    );
-  }
-}
+  });
+}, { requireAuth: true, requireAdmin: true });

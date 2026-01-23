@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
+import { withErrorHandler } from '@/lib/http/handler';
+import { badRequestResponse, notFoundResponse, forbiddenResponse } from '@/lib/http/errors';
 import logger from '@/lib/core/log';
 import { processChat, getConversations, getConversationMessages, deleteConversation } from '@/lib/ai/chat-service';
 import { sanitizeInput, shouldBlockInput, formatSanitizationLog } from '@/lib/ai/input-sanitizer';
@@ -54,53 +54,42 @@ const sendMessageSchema = z.object({
 /**
  * POST /api/chat - Send a message and get AI response
  */
-export async function POST(request: NextRequest) {
-  let userId: string | null = null;
+export const POST = withErrorHandler(async (request: NextRequest, { tenant }) => {
+  const userId = tenant!.userId;
+  const tenantId = tenant!.tenantId;
+  const tenantSlug = tenant!.tenantSlug || '';
+  const isAdmin = tenant!.isAdmin;
+
+  // Check concurrent request limit
+  if (!acquireConcurrentSlot(userId)) {
+    return NextResponse.json(
+      {
+        error: 'Too many simultaneous requests. Please wait for your current requests to complete.',
+        rateLimitInfo: {
+          reason: 'concurrent_limit',
+          current: 3,
+          limit: 3,
+        },
+      },
+      { status: 429 }
+    );
+  }
 
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
-
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
-    }
-
-    userId = session.user.id;
-
-    // Check concurrent request limit
-    if (!acquireConcurrentSlot(userId)) {
-      return NextResponse.json(
-        {
-          error: 'Too many simultaneous requests. Please wait for your current requests to complete.',
-          rateLimitInfo: {
-            reason: 'concurrent_limit',
-            current: 3,
-            limit: 3,
-          },
-        },
-        { status: 429 }
-      );
-    }
-
     // Check if AI chat is enabled for this organization
     const org = await prisma.organization.findUnique({
-      where: { id: session.user.organizationId },
+      where: { id: tenantId },
       select: { aiChatEnabled: true, subscriptionTier: true },
     });
 
     if (!org?.aiChatEnabled) {
-      return NextResponse.json(
-        { error: 'AI chat is not enabled for your organization. Please contact your administrator.' },
-        { status: 403 }
-      );
+      return forbiddenResponse('AI chat is not enabled for your organization. Please contact your administrator.');
     }
 
     // Check rate limits
     const rateLimitResult = await checkRateLimit(
-      session.user.id,
-      session.user.organizationId,
+      userId,
+      tenantId,
       org.subscriptionTier || SubscriptionTier.FREE
     );
 
@@ -149,11 +138,8 @@ export async function POST(request: NextRequest) {
     // Check if input should be blocked entirely
     const blockCheck = shouldBlockInput(message);
     if (blockCheck.blocked) {
-      logger.warn({ userId: session.user.id, reason: blockCheck.reason }, 'AI Chat: Blocked message');
-      return NextResponse.json(
-        { error: 'Your message could not be processed. Please rephrase and try again.' },
-        { status: 400 }
-      );
+      logger.warn({ userId, reason: blockCheck.reason }, 'AI Chat: Blocked message');
+      return badRequestResponse('Your message could not be processed. Please rephrase and try again.');
     }
 
     // Sanitize input for prompt injection prevention
@@ -162,7 +148,7 @@ export async function POST(request: NextRequest) {
     // Log flagged messages for security monitoring
     if (sanitizationResult.flagged) {
       logger.warn(
-        { userId: session.user.id, sanitizationDetails: formatSanitizationLog(sanitizationResult) },
+        { userId, sanitizationDetails: formatSanitizationLog(sanitizationResult) },
         'AI Chat: Flagged message'
       );
     }
@@ -172,15 +158,13 @@ export async function POST(request: NextRequest) {
 
     // Map isAdmin to Role for chat context
     // ADMINs get DIRECTOR level (highest approval role) for AI permissions
-    const userRole: Role = session.user.isAdmin
-      ? Role.DIRECTOR
-      : Role.EMPLOYEE;
+    const userRole: Role = isAdmin ? Role.DIRECTOR : Role.EMPLOYEE;
 
     const response = await processChat(sanitizationResult.sanitized, {
-      userId: session.user.id,
+      userId,
       userRole,
-      tenantId: session.user.organizationId,
-      tenantSlug: session.user.organizationSlug || '',
+      tenantId,
+      tenantSlug,
     }, conversationId || undefined);
 
     const responseTimeMs = Date.now() - startTime;
@@ -192,7 +176,7 @@ export async function POST(request: NextRequest) {
 
     // Log audit entry (fire and forget, but log failures)
     const auditEntry = createAuditEntry(
-      { tenantId: session.user.organizationId, memberId: session.user.id },
+      { tenantId, memberId: userId },
       message, // Original message for hashing
       response.conversationId,
       response.functionCalls,
@@ -211,7 +195,7 @@ export async function POST(request: NextRequest) {
 
     // Track budget and send alerts if needed (fire and forget)
     trackTokenUsage(
-      session.user.organizationId,
+      tenantId,
       org.subscriptionTier || SubscriptionTier.FREE,
       estimatedTokens
     ).catch((err) => {
@@ -219,125 +203,89 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json(response);
-  } catch (error) {
-    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Chat error');
-    return NextResponse.json(
-      { error: 'Failed to process chat message' },
-      { status: 500 }
-    );
   } finally {
     // Always release concurrent slot when request completes
-    if (userId) {
-      releaseConcurrentSlot(userId);
-    }
+    releaseConcurrentSlot(userId);
   }
-}
+}, { requireAuth: true });
 
 /**
  * GET /api/chat - Get conversation list or messages
  */
-export async function GET(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
+export const GET = withErrorHandler(async (request: NextRequest, { tenant }) => {
+  const userId = tenant!.userId;
+  const tenantId = tenant!.tenantId;
 
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
-    }
+  // Check rate limit for read operations
+  const rateLimitResult = await checkReadRateLimit(userId, tenantId);
 
-    // Check rate limit for read operations
-    const rateLimitResult = await checkReadRateLimit(
-      session.user.id,
-      session.user.organizationId
-    );
-
-    if (!rateLimitResult.allowed) {
-      const errorMessage = formatRateLimitError(rateLimitResult);
-      return NextResponse.json(
-        {
-          error: errorMessage,
-          rateLimitInfo: {
-            reason: rateLimitResult.reason,
-            current: rateLimitResult.current,
-            limit: rateLimitResult.limit,
-            resetAt: rateLimitResult.resetAt?.toISOString(),
-            retryAfterSeconds: rateLimitResult.retryAfterSeconds,
-          },
-        },
-        {
-          status: 429,
-          headers: rateLimitResult.retryAfterSeconds
-            ? { 'Retry-After': String(rateLimitResult.retryAfterSeconds) }
-            : undefined,
-        }
-      );
-    }
-
-    const { searchParams } = new URL(request.url);
-    const conversationId = searchParams.get('conversationId');
-    const cursor = searchParams.get('cursor') || undefined;
-    const limitParam = searchParams.get('limit');
-    const limit = limitParam ? parseInt(limitParam, 10) : undefined;
-
-    if (conversationId) {
-      // Get messages for a specific conversation with pagination
-      const conversation = await getConversationMessages(conversationId, session.user.id, {
-        cursor,
-        limit,
-      });
-      if (!conversation) {
-        return NextResponse.json({ error: 'Conversation not found' }, { status: 404 });
-      }
-      return NextResponse.json(conversation);
-    } else {
-      // Get list of conversations
-      const conversations = await getConversations(session.user.id, session.user.organizationId);
-      return NextResponse.json({ conversations });
-    }
-  } catch (error) {
-    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Chat GET error');
+  if (!rateLimitResult.allowed) {
+    const errorMessage = formatRateLimitError(rateLimitResult);
     return NextResponse.json(
-      { error: 'Failed to fetch chat data' },
-      { status: 500 }
+      {
+        error: errorMessage,
+        rateLimitInfo: {
+          reason: rateLimitResult.reason,
+          current: rateLimitResult.current,
+          limit: rateLimitResult.limit,
+          resetAt: rateLimitResult.resetAt?.toISOString(),
+          retryAfterSeconds: rateLimitResult.retryAfterSeconds,
+        },
+      },
+      {
+        status: 429,
+        headers: rateLimitResult.retryAfterSeconds
+          ? { 'Retry-After': String(rateLimitResult.retryAfterSeconds) }
+          : undefined,
+      }
     );
   }
-}
+
+  const { searchParams } = new URL(request.url);
+  const conversationId = searchParams.get('conversationId');
+  const cursor = searchParams.get('cursor') || undefined;
+  const limitParam = searchParams.get('limit');
+  const limit = limitParam ? parseInt(limitParam, 10) : undefined;
+
+  if (conversationId) {
+    // Get messages for a specific conversation with pagination
+    const conversation = await getConversationMessages(conversationId, userId, {
+      cursor,
+      limit,
+    });
+    if (!conversation) {
+      return notFoundResponse('Conversation not found');
+    }
+    return NextResponse.json(conversation);
+  } else {
+    // Get list of conversations
+    const conversations = await getConversations(userId, tenantId);
+    return NextResponse.json({ conversations });
+  }
+}, { requireAuth: true });
 
 /**
  * DELETE /api/chat - Delete a conversation
  */
-export async function DELETE(request: NextRequest) {
-  try {
-    // Verify CSRF for state-changing operations
-    if (!verifyCsrf(request)) {
-      return NextResponse.json({ error: 'Invalid request origin' }, { status: 403 });
-    }
+export const DELETE = withErrorHandler(async (request: NextRequest, { tenant }) => {
+  const userId = tenant!.userId;
 
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
-
-    const { searchParams } = new URL(request.url);
-    const conversationId = searchParams.get('conversationId');
-
-    if (!conversationId) {
-      return NextResponse.json({ error: 'conversationId required' }, { status: 400 });
-    }
-
-    const deleted = await deleteConversation(conversationId, session.user.id);
-    if (!deleted) {
-      return NextResponse.json({ error: 'Conversation not found' }, { status: 404 });
-    }
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Chat DELETE error');
-    return NextResponse.json(
-      { error: 'Failed to delete conversation' },
-      { status: 500 }
-    );
+  // Verify CSRF for state-changing operations
+  if (!verifyCsrf(request)) {
+    return forbiddenResponse('Invalid request origin');
   }
-}
+
+  const { searchParams } = new URL(request.url);
+  const conversationId = searchParams.get('conversationId');
+
+  if (!conversationId) {
+    return badRequestResponse('conversationId required');
+  }
+
+  const deleted = await deleteConversation(conversationId, userId);
+  if (!deleted) {
+    return notFoundResponse('Conversation not found');
+  }
+
+  return NextResponse.json({ success: true });
+}, { requireAuth: true });

@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
-import logger from '@/lib/core/log';
+import { withErrorHandler } from '@/lib/http/handler';
+import { badRequestResponse } from '@/lib/http/errors';
 
 const SETTINGS_KEY = 'salary_component_percentages';
 
@@ -15,104 +14,71 @@ const DEFAULT_PERCENTAGES = {
   other: 2,
 };
 
-export async function GET() {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session || !session.user.organizationId) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
+export const GET = withErrorHandler(async (_request, { tenant }) => {
+  const tenantId = tenant!.tenantId;
 
-    const tenantId = session.user.organizationId;
+  const setting = await prisma.systemSettings.findUnique({
+    where: {
+      tenantId_key: { tenantId, key: SETTINGS_KEY },
+    },
+  });
 
-    const setting = await prisma.systemSettings.findUnique({
-      where: {
-        tenantId_key: { tenantId, key: SETTINGS_KEY },
-      },
-    });
-
-    if (!setting) {
-      return NextResponse.json({ percentages: DEFAULT_PERCENTAGES });
-    }
-
-    try {
-      const percentages = JSON.parse(setting.value);
-      return NextResponse.json({ percentages });
-    } catch {
-      return NextResponse.json({ percentages: DEFAULT_PERCENTAGES });
-    }
-  } catch (error) {
-    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Payroll percentages GET error');
-    return NextResponse.json(
-      { error: 'Failed to fetch payroll percentages' },
-      { status: 500 }
-    );
+  if (!setting) {
+    return NextResponse.json({ percentages: DEFAULT_PERCENTAGES });
   }
-}
 
-export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || !session.user.isAdmin) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
-
-    const body = await request.json();
-    const { percentages } = body;
-
-    if (!percentages) {
-      return NextResponse.json({ error: 'Percentages are required' }, { status: 400 });
-    }
-
-    // Validate percentages
-    const requiredKeys = ['basic', 'housing', 'transport', 'food', 'phone', 'other'];
-    for (const key of requiredKeys) {
-      if (typeof percentages[key] !== 'number' || percentages[key] < 0) {
-        return NextResponse.json(
-          { error: `Invalid ${key} percentage` },
-          { status: 400 }
-        );
-      }
-    }
-
-    // Validate total equals 100
-    const total = Object.values(percentages as Record<string, number>).reduce(
-      (sum: number, val: number) => sum + val,
-      0
-    );
-    if (Math.abs(total - 100) > 0.01) {
-      return NextResponse.json(
-        { error: `Percentages must total 100%. Current total: ${total.toFixed(1)}%` },
-        { status: 400 }
-      );
-    }
-
-    const tenantId = session.user.organizationId!;
-    // Note: session.user.id is TeamMember ID when isTeamMember is true
-    const memberId = session.user.isTeamMember ? session.user.id : null;
-
-    // Upsert the setting (tenant-scoped)
-    await prisma.systemSettings.upsert({
-      where: {
-        tenantId_key: { tenantId, key: SETTINGS_KEY },
-      },
-      update: {
-        value: JSON.stringify(percentages),
-        updatedById: memberId,
-      },
-      create: {
-        key: SETTINGS_KEY,
-        value: JSON.stringify(percentages),
-        updatedById: memberId,
-        tenantId,
-      },
-    });
-
-    return NextResponse.json({ success: true, percentages });
-  } catch (error) {
-    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Payroll percentages POST error');
-    return NextResponse.json(
-      { error: 'Failed to save payroll percentages' },
-      { status: 500 }
-    );
+    const percentages = JSON.parse(setting.value);
+    return NextResponse.json({ percentages });
+  } catch {
+    return NextResponse.json({ percentages: DEFAULT_PERCENTAGES });
   }
-}
+}, { requireAuth: true, requireModule: 'payroll' });
+
+export const POST = withErrorHandler(async (request: NextRequest, { tenant }) => {
+  const tenantId = tenant!.tenantId;
+  const userId = tenant!.userId;
+
+  const body = await request.json();
+  const { percentages } = body;
+
+  if (!percentages) {
+    return badRequestResponse('Percentages are required');
+  }
+
+  // Validate percentages
+  const requiredKeys = ['basic', 'housing', 'transport', 'food', 'phone', 'other'];
+  for (const key of requiredKeys) {
+    if (typeof percentages[key] !== 'number' || percentages[key] < 0) {
+      return badRequestResponse(`Invalid ${key} percentage`);
+    }
+  }
+
+  // Validate total equals 100
+  const total = Object.values(percentages as Record<string, number>).reduce(
+    (sum: number, val: number) => sum + val,
+    0
+  );
+  if (Math.abs(total - 100) > 0.01) {
+    return badRequestResponse(`Percentages must total 100%. Current total: ${total.toFixed(1)}%`);
+  }
+
+  // Upsert the setting (tenant-scoped)
+  await prisma.systemSettings.upsert({
+    where: {
+      tenantId_key: { tenantId, key: SETTINGS_KEY },
+    },
+    update: {
+      value: JSON.stringify(percentages),
+      updatedById: userId,
+    },
+    create: {
+      key: SETTINGS_KEY,
+      value: JSON.stringify(percentages),
+      updatedById: userId,
+      tenantId,
+    },
+  });
+
+  return NextResponse.json({ success: true, percentages });
+}, { requireAuth: true, requireAdmin: true, requireModule: 'payroll' });

@@ -1,41 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
+import { withErrorHandler } from '@/lib/http/handler';
+import { badRequestResponse } from '@/lib/http/errors';
 import { ApprovalModule } from '@prisma/client';
 import { getApprovalChain, getApprovalChainSummary } from '@/features/approvals/lib';
-import logger from '@/lib/core/log';
-
-interface RouteParams {
-  params: Promise<{ entityType: string; entityId: string }>;
-}
 
 // GET /api/approval-steps/by-entity/[entityType]/[entityId] - Get approval chain for an entity
-export async function GET(request: NextRequest, { params }: RouteParams) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
+export const GET = withErrorHandler(async (request: NextRequest, { params }) => {
+  const entityType = params?.entityType;
+  const entityId = params?.entityId;
 
-    const { entityType, entityId } = await params;
-
-    // Validate entityType
-    if (!['LEAVE_REQUEST', 'PURCHASE_REQUEST', 'ASSET_REQUEST'].includes(entityType)) {
-      return NextResponse.json({ error: 'Invalid entity type' }, { status: 400 });
-    }
-
-    const chain = await getApprovalChain(entityType as ApprovalModule, entityId);
-    const summary = await getApprovalChainSummary(entityType as ApprovalModule, entityId);
-
-    return NextResponse.json({
-      steps: chain,
-      summary,
-    });
-  } catch (error) {
-    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Get approval chain error');
-    return NextResponse.json(
-      { error: 'Failed to get approval chain' },
-      { status: 500 }
-    );
+  if (!entityType || !entityId) {
+    return badRequestResponse('Entity type and ID are required');
   }
-}
+
+  // Validate entityType
+  if (!['LEAVE_REQUEST', 'PURCHASE_REQUEST', 'ASSET_REQUEST'].includes(entityType)) {
+    return badRequestResponse('Invalid entity type');
+  }
+
+  const chain = await getApprovalChain(entityType as ApprovalModule, entityId);
+  const summary = await getApprovalChainSummary(entityType as ApprovalModule, entityId);
+
+  return NextResponse.json({
+    steps: chain,
+    summary,
+  });
+}, { requireAuth: true });

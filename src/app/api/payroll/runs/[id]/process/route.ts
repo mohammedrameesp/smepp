@@ -3,12 +3,12 @@
  * @description Process a draft payroll run to generate payslips
  * @module hr/payroll
  */
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
+import { NextResponse } from 'next/server';
 import { PayrollStatus, DeductionType, LoanStatus } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { logAction, ActivityActions } from '@/lib/core/activity';
+import { withErrorHandler } from '@/lib/http/handler';
+import { badRequestResponse, notFoundResponse } from '@/lib/http/errors';
 import logger from '@/lib/core/log';
 import {
   generatePayslipNumberWithPrefix,
@@ -19,24 +19,14 @@ import {
 } from '@/features/payroll/lib/utils';
 import { calculateUnpaidLeaveDeductions } from '@/features/payroll/lib/leave-deduction';
 
-interface RouteParams {
-  params: Promise<{ id: string }>;
-}
+export const POST = withErrorHandler(async (_request, { tenant, params }) => {
+  const tenantId = tenant!.tenantId;
+  const userId = tenant!.userId;
+  const id = params?.id;
 
-export async function POST(_request: NextRequest, { params }: RouteParams) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session || !session.user.isAdmin) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
-
-    const tenantId = session.user.organizationId;
-    const { id } = await params;
+  if (!id) {
+    return badRequestResponse('Payroll run ID is required');
+  }
 
     // Check database connection and table existence
     try {
@@ -56,17 +46,14 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
       where: { id, tenantId },
     });
 
-    if (!payrollRun) {
-      return NextResponse.json({ error: 'Payroll run not found' }, { status: 404 });
-    }
+  if (!payrollRun) {
+    return notFoundResponse('Payroll run not found');
+  }
 
-    // Must be in DRAFT status to process
-    if (payrollRun.status !== PayrollStatus.DRAFT) {
-      return NextResponse.json({
-        error: 'Payroll must be in DRAFT status to process',
-        currentStatus: payrollRun.status,
-      }, { status: 400 });
-    }
+  // Must be in DRAFT status to process
+  if (payrollRun.status !== PayrollStatus.DRAFT) {
+    return badRequestResponse(`Payroll must be in DRAFT status to process. Current status: ${payrollRun.status}`);
+  }
 
     // FIN-005: Moved payslip existence check inside transaction to prevent race conditions
     // The check is now done inside the transaction with a lock
@@ -94,11 +81,9 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
       },
     });
 
-    if (salaryStructures.length === 0) {
-      return NextResponse.json({
-        error: 'No employees with active salary structures found. Please create salary structures first.',
-      }, { status: 400 });
-    }
+  if (salaryStructures.length === 0) {
+    return badRequestResponse('No employees with active salary structures found. Please create salary structures first.');
+  }
 
     // Get active loans for deductions (wrapped in try-catch)
     // SECURITY: Filter by tenantId to prevent cross-tenant loan access
@@ -143,8 +128,10 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
       }
     }
 
-    // Process payroll in transaction (with extended timeout for large payrolls)
-    const result = await prisma.$transaction(async (tx) => {
+  // Process payroll in transaction (with extended timeout for large payrolls)
+  let result;
+  try {
+    result = await prisma.$transaction(async (tx) => {
       // FIN-005: Check for existing payslips INSIDE transaction with lock
       // This prevents race conditions when multiple users click "Process" simultaneously
       const existingPayslips = await tx.payslip.count({
@@ -249,7 +236,7 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
             bankName: salary.member?.bankName,
             iban: salary.member?.iban,
             qidNumber: salary.member?.qidNumber,
-            tenantId: session.user.organizationId!,
+            tenantId: tenantId,
           },
         });
 
@@ -293,7 +280,7 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
                   payslipId: payslip.id,
                   paymentDate: new Date(),
                   paymentMethod: 'SALARY_DEDUCTION',
-                  recordedById: session.user.id,
+                  recordedById: userId,
                 },
               });
             }
@@ -328,7 +315,7 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
           totalDeductions,
           totalNet: totalGross - totalDeductions,
           employeeCount: createdPayslips.length,
-          processedById: session.user.id,
+          processedById: userId,
           processedAt: new Date(),
         },
       });
@@ -341,7 +328,7 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
           previousStatus: PayrollStatus.DRAFT,
           newStatus: PayrollStatus.PROCESSED,
           notes: `Generated ${createdPayslips.length} payslips`,
-          performedById: session.user.id,
+          performedById: userId,
         },
       });
 
@@ -357,10 +344,17 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
       maxWait: 10000, // 10 seconds max wait to start transaction
       timeout: 120000, // 2 minutes timeout for the transaction
     });
+  } catch (error) {
+    // FIN-005: Handle race condition error
+    if (error instanceof Error && error.message === 'PAYSLIPS_ALREADY_EXIST') {
+      return badRequestResponse('Payslips already generated for this payroll run');
+    }
+    throw error; // Re-throw other errors for withErrorHandler to handle
+  }
 
-    await logAction(
+  await logAction(
       tenantId,
-      session.user.id,
+      userId,
       ActivityActions.PAYROLL_RUN_PROCESSED,
       'PayrollRun',
       id,
@@ -371,40 +365,8 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
       }
     );
 
-    return NextResponse.json({
-      success: true,
-      ...result,
-    });
-  } catch (error) {
-    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Payroll process error');
-    let errorMessage = 'Unknown error';
-    let statusCode = 500;
-
-    if (error instanceof Error) {
-      errorMessage = error.message;
-
-      // FIN-005: Handle race condition error
-      if (error.message === 'PAYSLIPS_ALREADY_EXIST') {
-        return NextResponse.json({
-          error: 'Payslips already generated for this payroll run',
-        }, { status: 400 });
-      }
-
-      // Check for common Prisma errors
-      if (error.message.includes('does not exist')) {
-        errorMessage = 'Database table not found. Please run migrations.';
-      } else if (error.message.includes('Foreign key constraint')) {
-        errorMessage = 'Foreign key constraint failed. Check data integrity.';
-      } else if (error.message.includes('Unique constraint')) {
-        errorMessage = 'Duplicate record found.';
-      } else if (error.message.includes('Deduction reconciliation failed')) {
-        errorMessage = 'Payroll calculation error: deductions do not reconcile.';
-        statusCode = 400;
-      }
-    }
-    return NextResponse.json(
-      { error: `Failed to process payroll: ${errorMessage}` },
-      { status: statusCode }
-    );
-  }
-}
+  return NextResponse.json({
+    success: true,
+    ...result,
+  });
+}, { requireAuth: true, requireAdmin: true, requireFinanceAccess: true, requireModule: 'payroll' });

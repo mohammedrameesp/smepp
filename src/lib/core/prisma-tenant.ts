@@ -37,6 +37,7 @@ import { prisma } from './prisma';
 
 export interface TenantContext {
   tenantId: string;
+  tenantSlug?: string; // Organization slug for subdomain
   userId: string;
   userRole?: string; // User's app role (ADMIN/USER)
   subscriptionTier?: string;
@@ -222,6 +223,11 @@ export function createTenantPrismaClient(context: TenantContext) {
           if (isTenantModel(model)) {
             // Add tenant filter to where clause
             args.where = { ...args.where, tenantId };
+
+            // SECURITY: Prevent tenantId from being changed via update
+            if (args.data && typeof args.data === 'object') {
+              delete (args.data as Record<string, unknown>).tenantId;
+            }
           }
           return query(args);
         },
@@ -229,16 +235,36 @@ export function createTenantPrismaClient(context: TenantContext) {
         async updateMany({ model, args, query }) {
           if (isTenantModel(model)) {
             args.where = { ...args.where, tenantId };
+
+            // SECURITY: Prevent tenantId from being changed via updateMany
+            if (args.data && typeof args.data === 'object') {
+              delete (args.data as Record<string, unknown>).tenantId;
+            }
           }
           return query(args);
         },
 
         async upsert({ model, args, query }) {
           if (isTenantModel(model)) {
-            // Prisma $allModels extension provides generic args that TypeScript cannot narrow.
-            // Runtime check via isTenantModel ensures these are tenant models with tenantId field.
-            (args.where as Record<string, unknown>).tenantId = tenantId;
+            // SECURITY: Upsert requires special handling to prevent cross-tenant updates.
+            // The unique constraint in 'where' may not include tenantId, so we must:
+            // 1. Always inject tenantId into create
+            // 2. Add tenantId to where for finding
+            // 3. Inject tenantId into update's where to ensure tenant isolation
             (args.create as Record<string, unknown>).tenantId = tenantId;
+
+            // Add tenantId to the where clause - this ensures:
+            // - If record exists for this tenant: update proceeds
+            // - If record exists for OTHER tenant: treated as "not found", create attempted
+            // - If record doesn't exist: create proceeds (with tenantId from create)
+            // The create will then enforce tenantId, preventing cross-tenant pollution
+            (args.where as Record<string, unknown>).tenantId = tenantId;
+
+            // Also ensure update data doesn't override tenantId
+            if (args.update && typeof args.update === 'object') {
+              // Remove any attempt to change tenantId in update
+              delete (args.update as Record<string, unknown>).tenantId;
+            }
           }
           return query(args);
         },
@@ -306,6 +332,7 @@ export function getTenantContextFromHeaders(headers: Headers): TenantContext | n
 
   return {
     tenantId,
+    tenantSlug: headers.get('x-tenant-slug') || undefined,
     userId,
     userRole: headers.get('x-user-role') || undefined,
     subscriptionTier: headers.get('x-subscription-tier') || undefined,

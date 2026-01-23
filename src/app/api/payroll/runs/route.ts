@@ -4,8 +4,6 @@
  * @module hr/payroll
  */
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
 import { PayrollStatus } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { createPayrollRunSchema, payrollRunQuerySchema } from '@/features/payroll/validations/payroll';
@@ -94,7 +92,7 @@ export const GET = withErrorHandler(
 
 export const POST = withErrorHandler(
   async (request, { prisma: tenantPrisma, tenant }) => {
-    const session = await getServerSession(authOptions);
+    const userId = tenant!.userId;
 
     const body = await request.json();
     const validation = createPayrollRunSchema.safeParse(body);
@@ -187,7 +185,7 @@ export const POST = withErrorHandler(
           totalDeductions,
           totalNet,
           employeeCount: salaryStructures.length,
-          createdById: session!.user.id,
+          createdById: userId,
           tenantId: tenant!.tenantId,
         },
         include: {
@@ -201,7 +199,7 @@ export const POST = withErrorHandler(
           payrollRunId: run.id,
           action: 'CREATED',
           newStatus: PayrollStatus.DRAFT,
-          performedById: session!.user.id,
+          performedById: userId,
         },
       });
 
@@ -210,7 +208,7 @@ export const POST = withErrorHandler(
 
     await logAction(
       tenant!.tenantId,
-      session!.user.id,
+      userId,
       ActivityActions.PAYROLL_RUN_CREATED,
       'PayrollRun',
       payrollRun.id,

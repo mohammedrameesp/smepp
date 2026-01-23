@@ -4,108 +4,84 @@
  * @module hr/payroll
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
+import { withErrorHandler } from '@/lib/http/handler';
+import { badRequestResponse, notFoundResponse, validationErrorResponse } from '@/lib/http/errors';
 import { calculateGratuity, projectGratuity } from '@/features/payroll/lib/gratuity';
 import { parseDecimal } from '@/features/payroll/lib/utils';
 import { gratuityQuerySchema } from '@/features/payroll/validations/payroll';
-import logger from '@/lib/core/log';
 
-export async function GET(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
+export const GET = withErrorHandler(async (request: NextRequest, { tenant }) => {
+  const tenantId = tenant!.tenantId;
+  const userId = tenant!.userId;
+  const isAdmin = tenant!.isAdmin;
 
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
-    }
+  const { searchParams } = new URL(request.url);
+  const queryParams = Object.fromEntries(searchParams.entries());
 
-    const tenantId = session.user.organizationId;
-    const { searchParams } = new URL(request.url);
-    const queryParams = Object.fromEntries(searchParams.entries());
-
-    const validation = gratuityQuerySchema.safeParse(queryParams);
-    if (!validation.success) {
-      return NextResponse.json({
-        error: 'Invalid query parameters',
-        details: validation.error.issues,
-      }, { status: 400 });
-    }
-
-    const { memberId, terminationDate } = validation.data;
-    const isAdmin = session.user.isAdmin;
-
-    // Non-admin users can only view their own gratuity
-    // session.user.id is the TeamMember ID when isTeamMember=true
-    const targetMemberId = isAdmin && memberId ? memberId : session.user.id;
-
-    // Get member's salary structure and HR fields - verify member belongs to same org
-    const member = await prisma.teamMember.findFirst({
-      where: {
-        id: targetMemberId,
-        tenantId: tenantId,
-      },
-      include: {
-        salaryStructure: true,
-      },
-    });
-
-    if (!member) {
-      return NextResponse.json({ error: 'Member not found' }, { status: 404 });
-    }
-
-    if (!member.dateOfJoining) {
-      return NextResponse.json({
-        error: 'Date of joining not set for this employee',
-      }, { status: 400 });
-    }
-
-    if (!member.salaryStructure) {
-      return NextResponse.json({
-        error: 'Salary structure not set for this employee',
-      }, { status: 400 });
-    }
-
-    const basicSalary = parseDecimal(member.salaryStructure.basicSalary);
-    const dateOfJoining = new Date(member.dateOfJoining);
-
-    // Use termination date priority: query param > member field > today
-    // If employee has left (dateOfLeaving set), use that date to freeze calculations
-    const termDate = terminationDate
-      ? new Date(terminationDate)
-      : member.dateOfLeaving
-        ? new Date(member.dateOfLeaving)
-        : new Date();
-
-    const isTerminated = !!member.dateOfLeaving;
-
-    // Calculate current gratuity
-    const gratuityCalculation = calculateGratuity(basicSalary, dateOfJoining, termDate);
-
-    // Calculate projections
-    const projections = projectGratuity(basicSalary, dateOfJoining, [1, 2, 3, 5, 10]);
-
-    return NextResponse.json({
-      memberId: targetMemberId,
-      memberName: member.name,
-      employeeCode: member.employeeCode,
-      designation: member.designation,
-      dateOfJoining: member.dateOfJoining,
-      basicSalary,
-      terminationDate: termDate.toISOString(),
-      isTerminated, // True if employee is soft-deleted/terminated
-      calculation: gratuityCalculation,
-      projections: isTerminated ? [] : projections, // No future projections for terminated employees
-    });
-  } catch (error) {
-    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Gratuity calculation error');
-    return NextResponse.json(
-      { error: 'Failed to calculate gratuity' },
-      { status: 500 }
-    );
+  const validation = gratuityQuerySchema.safeParse(queryParams);
+  if (!validation.success) {
+    return validationErrorResponse(validation);
   }
-}
+
+  const { memberId, terminationDate } = validation.data;
+
+  // Non-admin users can only view their own gratuity
+  // userId is the TeamMember ID when isTeamMember=true
+  const targetMemberId = isAdmin && memberId ? memberId : userId;
+
+  // Get member's salary structure and HR fields - verify member belongs to same org
+  const member = await prisma.teamMember.findFirst({
+    where: {
+      id: targetMemberId,
+      tenantId: tenantId,
+    },
+    include: {
+      salaryStructure: true,
+    },
+  });
+
+  if (!member) {
+    return notFoundResponse('Member not found');
+  }
+
+  if (!member.dateOfJoining) {
+    return badRequestResponse('Date of joining not set for this employee');
+  }
+
+  if (!member.salaryStructure) {
+    return badRequestResponse('Salary structure not set for this employee');
+  }
+
+  const basicSalary = parseDecimal(member.salaryStructure.basicSalary);
+  const dateOfJoining = new Date(member.dateOfJoining);
+
+  // Use termination date priority: query param > member field > today
+  // If employee has left (dateOfLeaving set), use that date to freeze calculations
+  const termDate = terminationDate
+    ? new Date(terminationDate)
+    : member.dateOfLeaving
+      ? new Date(member.dateOfLeaving)
+      : new Date();
+
+  const isTerminated = !!member.dateOfLeaving;
+
+  // Calculate current gratuity
+  const gratuityCalculation = calculateGratuity(basicSalary, dateOfJoining, termDate);
+
+  // Calculate projections
+  const projections = projectGratuity(basicSalary, dateOfJoining, [1, 2, 3, 5, 10]);
+
+  return NextResponse.json({
+    memberId: targetMemberId,
+    memberName: member.name,
+    employeeCode: member.employeeCode,
+    designation: member.designation,
+    dateOfJoining: member.dateOfJoining,
+    basicSalary,
+    terminationDate: termDate.toISOString(),
+    isTerminated, // True if employee is soft-deleted/terminated
+    calculation: gratuityCalculation,
+    projections: isTerminated ? [] : projections, // No future projections for terminated employees
+  });
+}, { requireAuth: true, requireModule: 'payroll' });
