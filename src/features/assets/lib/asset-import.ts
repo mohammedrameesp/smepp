@@ -189,7 +189,7 @@ export interface AssetDbData {
   priceQAR: number | null;
   status: AssetStatus;
   assignedMemberId: string | null;
-  assignmentDate: string | null;
+  assignmentDate: Date | null;
   assetTag?: string;
 }
 
@@ -214,6 +214,7 @@ export function buildAssetDbData(data: ParsedAssetData): AssetDbData {
     priceQAR: data.priceQAR,
     status: data.status,
     assignedMemberId: data.assignedMemberId,
-    assignmentDate: data.assignmentDate,
+    // Convert date string to Date object for Prisma DateTime field
+    assignmentDate: data.assignmentDate ? new Date(data.assignmentDate + 'T12:00:00') : null,
   };
 }
