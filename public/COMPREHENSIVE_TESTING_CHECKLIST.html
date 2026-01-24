@@ -1049,7 +1049,6 @@ const T = {
         "Asset Assignment Flow": [
             ["Admin assigns to employee with login", "Assign asset to canLogin=true user", "Creates PENDING_USER_ACCEPTANCE request", "src/app", "Medium", "Manual"],
             ["Admin assigns to employee without login", "Assign asset to canLogin=false user", "Direct assignment, auto-accepted", "src/app", "Medium", "Manual"],
-            ["Admin force assign (skipAcceptance)", "Assign with skipAcceptance=true", "Direct assignment, no approval needed", "src/app", "Medium", "Manual"],
             ["Employee accepts assignment", "Employee clicks Accept", "Asset status=IN_USE, assigned to employee", "src/app", "Medium", "Manual"],
             ["Employee declines assignment", "Employee clicks Decline with reason", "Asset stays SPARE, admins notified", "src/app", "Medium", "Manual"],
             ["Acceptance timeout (7 days)", "Don't respond to assignment", "Request expires, admins notified", "src/app", "Medium", "Manual"],
