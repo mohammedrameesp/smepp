@@ -535,9 +535,9 @@ export function TeamClient({ initialStats }: TeamClientProps) {
                           Expired
                         </span>
                       ) : (
-                        <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <span className="text-xs text-amber-600 flex items-center gap-1">
                           <Clock className="h-3 w-3" />
-                          Expires {format(new Date(inv.expiresAt), 'MMM d')}
+                          Expires {format(new Date(inv.expiresAt), 'MMM d, yyyy')}
                         </span>
                       )}
                     </div>
