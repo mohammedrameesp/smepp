@@ -21,7 +21,7 @@
  * │  2. If already assigned to same member → Error                  │
  * │  3. If assigned to different member → Unassign first            │
  * │  4. Check for pending requests                                  │
- * │  5. member.canLogin=false OR skipAcceptance → Direct assign     │
+ * │  5. member.canLogin=false → Direct assign                       │
  * │  6. member.canLogin=true → Create PENDING_USER_ACCEPTANCE       │
  * └─────────────────────────────────────────────────────────────────┘
  *
@@ -101,14 +101,12 @@ interface MemberData {
  *
  * @property assignedMemberId - Member ID to assign (null to unassign)
  * @property notes - Optional notes for the operation
- * @property skipAcceptance - Force direct assign even if user has login
  * @property createReturnRequest - Create return request instead of direct unassign
  * @property assignmentDate - When the assignment/return actually occurred (ISO date string, defaults to today)
  */
 const assignAssetSchema = z.object({
   assignedMemberId: z.string().nullable(),
   notes: z.string().max(1000).optional().nullable(),
-  skipAcceptance: z.boolean().optional().default(false),
   createReturnRequest: z.boolean().optional().default(false),
   assignmentDate: z.string().optional().nullable(), // When the event actually occurred
 });
@@ -426,7 +424,7 @@ async function sendReassignmentUnassignNotification(
 
 /**
  * Directly assign asset to member without acceptance workflow.
- * Used for users without login (canLogin=false) or when admin forces (skipAcceptance=true).
+ * Used for users without login (canLogin=false).
  *
  * Database operations:
  * - Updates asset: assignedMemberId, assignmentDate, status=IN_USE
@@ -668,7 +666,6 @@ async function unassignForReassignment(
  * @param tenantId - Tenant ID for isolation
  * @param adminId - Admin performing the assignment
  * @param notes - Optional notes
- * @param skipAcceptance - Force direct assign
  * @param assignmentDate - Custom assignment date (optional)
  */
 async function handleAssign(
@@ -677,7 +674,6 @@ async function handleAssign(
   tenantId: string,
   adminId: string,
   notes: string | null,
-  skipAcceptance: boolean,
   assignmentDate: string | null
 ): Promise<NextResponse> {
   // STEP 1: Verify member exists in same tenant
@@ -723,7 +719,8 @@ async function handleAssign(
   }
 
   // STEP 5: Determine assignment type and execute
-  const requiresAcceptance = member.canLogin && !skipAcceptance;
+  // Users with login capability must accept/decline; others are auto-assigned
+  const requiresAcceptance = member.canLogin;
 
   // Refresh asset state after potential unassignment
   const refreshedAsset: AssetData = {
@@ -984,7 +981,6 @@ async function handleUnassign(
  * @param {string} id - Asset ID (path parameter)
  * @body {string|null} assignedMemberId - Member ID to assign (null to unassign)
  * @body {string} [notes] - Optional notes
- * @body {boolean} [skipAcceptance=false] - Skip user acceptance (admin override)
  * @body {boolean} [createReturnRequest=false] - Create return request for unassign
  *
  * @returns {Object} Updated asset or created request
@@ -994,9 +990,6 @@ async function handleUnassign(
  *
  * @example Assign to user with login (pending acceptance):
  * { "assignedMemberId": "member-789" }
- *
- * @example Force direct assign:
- * { "assignedMemberId": "member-789", "skipAcceptance": true }
  *
  * @example Direct unassign:
  * { "assignedMemberId": null }
@@ -1033,7 +1026,7 @@ async function assignAssetHandler(request: NextRequest, context: APIContext): Pr
     }, { status: 400 });
   }
 
-  const { assignedMemberId, notes, skipAcceptance, createReturnRequest, assignmentDate } = validation.data;
+  const { assignedMemberId, notes, createReturnRequest, assignmentDate } = validation.data;
 
   // Get current asset state (TENANT-SCOPED - critical for security)
   const currentAsset = await db.asset.findFirst({
@@ -1053,7 +1046,7 @@ async function assignAssetHandler(request: NextRequest, context: APIContext): Pr
     return handleUnassign(currentAsset, tenantId, adminId, notes || null, createReturnRequest);
   } else {
     // CHECK-IN: Assign asset
-    return handleAssign(currentAsset, assignedMemberId, tenantId, adminId, notes || null, skipAcceptance, assignmentDate || null);
+    return handleAssign(currentAsset, assignedMemberId, tenantId, adminId, notes || null, assignmentDate || null);
   }
 }
 
