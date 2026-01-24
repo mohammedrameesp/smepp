@@ -446,7 +446,10 @@ async function directAssign(
   customAssignmentDate: string | null
 ): Promise<NextResponse> {
   const previousMember = asset.assignedMember;
-  const assignmentDate = customAssignmentDate || new Date().toISOString().split('T')[0];
+  // Convert date string to Date object for Prisma DateTime field
+  const assignmentDate = customAssignmentDate
+    ? new Date(customAssignmentDate + 'T12:00:00') // Add noon time to avoid timezone issues
+    : new Date();
 
   // Transaction: Update asset + create history (all tenant-scoped)
   const updatedAsset = await prisma.$transaction(async (tx) => {
