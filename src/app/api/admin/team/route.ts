@@ -36,7 +36,6 @@ export const GET = withErrorHandler(async (_request, { tenant }) => {
     },
     select: {
       id: true,
-      userId: true,
       name: true,
       email: true,
       image: true,
@@ -60,24 +59,24 @@ export const GET = withErrorHandler(async (_request, { tenant }) => {
     ],
   });
 
-  // Query auth data from User table separately
-  const userIds = members.map((m) => m.userId);
+  // Query auth data from User table by email
+  const emails = members.map((m) => m.email.toLowerCase());
   const users = await prisma.user.findMany({
-    where: { id: { in: userIds } },
+    where: { email: { in: emails } },
     select: {
-      id: true,
+      email: true,
       setupToken: true,
       passwordHash: true,
     },
   });
 
-  // Create maps for quick lookup
-  const userAuthMap = new Map(users.map((u) => [u.id, u]));
+  // Create maps for quick lookup by email
+  const userAuthMap = new Map(users.map((u) => [u.email.toLowerCase(), u]));
 
   // Create set of members with passwords
   const membersWithPasswordSet = new Set(
     members
-      .filter((m) => userAuthMap.get(m.userId)?.passwordHash)
+      .filter((m) => userAuthMap.get(m.email.toLowerCase())?.passwordHash)
       .map((m) => m.id)
   );
 
@@ -122,7 +121,7 @@ export const GET = withErrorHandler(async (_request, { tenant }) => {
     // Check for pending status:
     // 1. Credentials pending: has setupToken but no password set
     // 2. SSO pending: has matching invitation that's not accepted
-    const userAuth = userAuthMap.get(m.userId);
+    const userAuth = userAuthMap.get(m.email.toLowerCase());
     const hasPassword = membersWithPasswordSet.has(m.id);
     const credentialsPending = !!(userAuth?.setupToken && !hasPassword);
     const ssoInvite = pendingInviteMap.get(m.email.toLowerCase());
