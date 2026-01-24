@@ -4,6 +4,7 @@
  * @module operations/suppliers
  */
 import { NextRequest, NextResponse } from 'next/server';
+import { invalidBodyResponse } from '@/lib/http/responses';
 import { rejectSupplierSchema } from '@/features/suppliers';
 import { logAction } from '@/lib/core/activity';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
@@ -29,13 +30,7 @@ async function rejectSupplierHandler(request: NextRequest, context: APIContext) 
     const validation = rejectSupplierSchema.safeParse(body);
 
     if (!validation.success) {
-      return NextResponse.json(
-        {
-          error: 'Validation failed',
-          details: validation.error.issues,
-        },
-        { status: 400 }
-      );
+      return invalidBodyResponse(validation.error);
     }
 
     const { rejectionReason } = validation.data;

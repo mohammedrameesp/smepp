@@ -4,15 +4,16 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/core/auth';
 import { createClient } from '@supabase/supabase-js';
 import logger from '@/lib/core/log';
+import { verifyCronAuth } from '@/lib/security/cron-auth';
 
 const BACKUP_BUCKET = 'database-backups';
 
 // GET - Download full backup as JSON file (TENANT-SCOPED)
 export async function GET(request: NextRequest) {
   // Check if it's a cron job or admin user
-  const authHeader = request.headers.get('authorization');
-  const cronSecret = process.env.CRON_SECRET;
-  const isCronJob = cronSecret && authHeader === `Bearer ${cronSecret}`;
+  // SECURITY: Use timing-safe comparison for cron authentication
+  const cronAuthResult = verifyCronAuth(request);
+  const isCronJob = cronAuthResult.valid;
 
   let tenantId: string | undefined;
 

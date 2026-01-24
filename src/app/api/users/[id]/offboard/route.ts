@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { invalidBodyResponse } from '@/lib/http/responses';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { offboardEmployeeSchema } from '@/features/employees/validations/offboarding';
 
@@ -80,13 +81,7 @@ async function offboardUserHandler(
   const validation = offboardEmployeeSchema.safeParse(body);
 
   if (!validation.success) {
-    return NextResponse.json(
-      {
-        error: 'Invalid request body',
-        details: validation.error.issues,
-      },
-      { status: 400 }
-    );
+    return invalidBodyResponse(validation.error);
   }
 
   const { lastWorkingDay, reason, notes } = validation.data;

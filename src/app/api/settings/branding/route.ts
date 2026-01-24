@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import logger from '@/lib/core/log';
-import { formatErrorResponse, validationErrorResponse } from '@/lib/http/errors';
+import { validationErrorResponse, notFoundResponse } from '@/lib/http/errors';
+import { withErrorHandler } from '@/lib/http/handler';
 import { z } from 'zod';
 
 const brandingSchema = z.object({
@@ -13,93 +12,72 @@ const brandingSchema = z.object({
   companyName: z.string().max(100).optional(),
 });
 
-export async function GET() {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.organizationId) {
-      return formatErrorResponse('Tenant context required', 403);
-    }
+export const GET = withErrorHandler(async (_request, { tenant }) => {
+  const tenantId = tenant!.tenantId;
 
-    const org = await prisma.organization.findUnique({
-      where: { id: session.user.organizationId },
-      select: {
-        name: true,
-        logoUrl: true,
-        primaryColor: true,
-        secondaryColor: true,
-      },
-    });
+  const org = await prisma.organization.findUnique({
+    where: { id: tenantId },
+    select: {
+      name: true,
+      logoUrl: true,
+      primaryColor: true,
+      secondaryColor: true,
+    },
+  });
 
-    if (!org) {
-      return formatErrorResponse('Organization not found', 404);
-    }
-
-    return NextResponse.json({
-      logoUrl: org.logoUrl || null,
-      primaryColor: org.primaryColor || '#0f172a',
-      secondaryColor: org.secondaryColor || null,
-      companyName: org.name || 'Durj',
-    });
-
-  } catch (error) {
-    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Failed to fetch branding settings');
-    return formatErrorResponse('Failed to fetch branding settings', 500);
+  if (!org) {
+    return notFoundResponse('Organization');
   }
-}
 
-export async function PUT(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.organizationId) {
-      return formatErrorResponse('Tenant context required', 403);
-    }
-    if (!session.user.isAdmin) {
-      return formatErrorResponse('Admin access required', 403);
-    }
+  return NextResponse.json({
+    logoUrl: org.logoUrl || null,
+    primaryColor: org.primaryColor || '#0f172a',
+    secondaryColor: org.secondaryColor || null,
+    companyName: org.name || 'Durj',
+  });
+}, { requireAuth: true });
 
-    const tenantId = session.user.organizationId;
-    const body = await request.json();
-    const validation = brandingSchema.safeParse(body);
+export const PUT = withErrorHandler(async (request: NextRequest, { tenant }) => {
+  const tenantId = tenant!.tenantId;
+  const userId = tenant!.userId;
 
-    if (!validation.success) {
-      return validationErrorResponse(validation, 'Invalid branding data');
-    }
+  const body = await request.json();
+  const validation = brandingSchema.safeParse(body);
 
-    const { logoUrl, primaryColor, secondaryColor, companyName } = validation.data;
+  if (!validation.success) {
+    return validationErrorResponse(validation, 'Invalid branding data');
+  }
 
-    // Build update object only for provided fields
-    const updateData: Record<string, string | null> = {};
-    if (logoUrl !== undefined) updateData.logoUrl = logoUrl;
-    if (primaryColor !== undefined) updateData.primaryColor = primaryColor;
-    if (secondaryColor !== undefined) updateData.secondaryColor = secondaryColor;
-    if (companyName !== undefined) updateData.name = companyName;
+  const { logoUrl, primaryColor, secondaryColor, companyName } = validation.data;
 
-    // Update organization branding
-    await prisma.organization.update({
-      where: { id: tenantId },
-      data: updateData,
-    });
+  // Build update object only for provided fields
+  const updateData: Record<string, string | null> = {};
+  if (logoUrl !== undefined) updateData.logoUrl = logoUrl;
+  if (primaryColor !== undefined) updateData.primaryColor = primaryColor;
+  if (secondaryColor !== undefined) updateData.secondaryColor = secondaryColor;
+  if (companyName !== undefined) updateData.name = companyName;
 
-    // Log the activity (session.user.id is TeamMember ID when isTeamMember is true)
-    await prisma.activityLog.create({
-      data: {
-        actorMemberId: session.user.isTeamMember ? session.user.id : null,
-        action: 'BRANDING_UPDATED',
-        payload: validation.data,
-        tenantId,
-      },
-    });
+  // Update organization branding
+  await prisma.organization.update({
+    where: { id: tenantId },
+    data: updateData,
+  });
 
-    logger.info({
-      userId: session.user.id,
+  // Log the activity
+  await prisma.activityLog.create({
+    data: {
+      actorMemberId: userId,
+      action: 'BRANDING_UPDATED',
+      payload: validation.data,
       tenantId,
-      settings: validation.data
-    }, 'Branding settings updated');
+    },
+  });
 
-    return NextResponse.json({ success: true });
+  logger.info({
+    userId,
+    tenantId,
+    settings: validation.data
+  }, 'Branding settings updated');
 
-  } catch (error) {
-    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Failed to update branding settings');
-    return formatErrorResponse('Failed to update branding settings', 500);
-  }
-}
+  return NextResponse.json({ success: true });
+}, { requireAuth: true, requireAdmin: true });

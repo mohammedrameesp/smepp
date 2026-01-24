@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { invalidBodyResponse } from '@/lib/http/responses';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { z } from 'zod';
 
@@ -25,10 +26,7 @@ async function resolveChangeRequestHandler(
   const validation = resolveSchema.safeParse(body);
 
   if (!validation.success) {
-    return NextResponse.json(
-      { error: 'Invalid request', details: validation.error.issues },
-      { status: 400 }
-    );
+    return invalidBodyResponse(validation.error);
   }
 
   // Find the change request - tenantId is auto-filtered by tenant-scoped prisma client

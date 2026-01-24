@@ -8,15 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { runDepreciationForTenant } from '@/features/assets/lib/depreciation';
 import logger from '@/lib/core/log';
-
-/**
- * Verify cron secret for scheduled jobs
- */
-function verifyCronAuth(request: NextRequest): boolean {
-  const authHeader = request.headers.get('authorization');
-  const cronSecret = process.env.CRON_SECRET;
-  return !!cronSecret && authHeader === `Bearer ${cronSecret}`;
-}
+import { verifyCronAuth } from '@/lib/security/cron-auth';
 
 /**
  * POST /api/cron/depreciation - Run monthly depreciation for all tenants
@@ -35,9 +27,10 @@ function verifyCronAuth(request: NextRequest): boolean {
  * }
  */
 export async function POST(request: NextRequest) {
-  // Verify cron authorization
-  if (!verifyCronAuth(request)) {
-    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+  // Verify cron authorization using timing-safe comparison
+  const authResult = verifyCronAuth(request);
+  if (!authResult.valid) {
+    return NextResponse.json({ error: 'Authentication required', details: authResult.error }, { status: 401 });
   }
 
   logger.info('Starting monthly depreciation run');
@@ -148,9 +141,10 @@ export async function POST(request: NextRequest) {
  * GET /api/cron/depreciation - Health check and info endpoint
  */
 export async function GET(request: NextRequest) {
-  // Verify cron authorization
-  if (!verifyCronAuth(request)) {
-    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+  // Verify cron authorization using timing-safe comparison
+  const authResult = verifyCronAuth(request);
+  if (!authResult.valid) {
+    return NextResponse.json({ error: 'Authentication required', details: authResult.error }, { status: 401 });
   }
 
   // Get counts of assets with depreciation configured

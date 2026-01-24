@@ -17,6 +17,7 @@ import {
 } from '@/features/purchase-requests/lib/purchase-request-utils';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { DEFAULT_RATES_TO_QAR } from '@/lib/core/currency';
+import { formatNumber } from '@/lib/utils/math-utils';
 
 // Type configuration for dynamic UI based on purchase type
 const TYPE_CONFIG: Record<string, {
@@ -544,7 +545,7 @@ export default function NewPurchaseRequestPage() {
                     All prices below will be in this currency
                     {currency !== 'QAR' && (
                       <span className="ml-1">
-                        (1 {currency} ≈ {(exchangeRates[currency] || 1).toFixed(2)} QAR)
+                        (1 {currency} ≈ {formatNumber(exchangeRates[currency] || 1)} QAR)
                         {usingFallbackRates && (
                           <span className="text-amber-600 ml-1" title="Using default exchange rate">⚠</span>
                         )}

@@ -11,6 +11,7 @@ import { updatePurchaseRequestSchema } from '@/lib/validations/projects/purchase
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { calculatePurchaseRequestItems, CalculatedItem } from '@/features/purchase-requests/lib/purchase-request-creation';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { invalidBodyResponse } from '@/lib/http/responses';
 import {
   getApprovalChain,
   getApprovalChainSummary,
@@ -189,10 +190,7 @@ async function updatePurchaseRequestHandler(request: NextRequest, context: APICo
     const validation = updatePurchaseRequestSchema.safeParse(body);
 
     if (!validation.success) {
-      return NextResponse.json({
-        error: 'Invalid request body',
-        details: validation.error.issues
-      }, { status: 400 });
+      return invalidBodyResponse(validation.error);
     }
 
     const data = validation.data;

@@ -1,0 +1,2350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Durj - UI Review</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            opacity: 0.8;
+            font-size: 1.1rem;
+        }
+
+        .summary-bar {
+            background: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            border-bottom: 1px solid #e0e0e0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .summary-item {
+            text-align: center;
+        }
+
+        .summary-item .count {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #1a1a2e;
+        }
+
+        .summary-item .label {
+            font-size: 0.85rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .search-container {
+            background: white;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .search-input {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            display: block;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-input:focus {
+            border-color: #1a1a2e;
+        }
+
+        .tabs {
+            display: flex;
+            background: white;
+            border-bottom: 2px solid #e0e0e0;
+            overflow-x: auto;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .tab {
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 1rem;
+            color: #666;
+            position: relative;
+            white-space: nowrap;
+            transition: color 0.2s;
+        }
+
+        .tab:hover {
+            color: #333;
+        }
+
+        .tab.active {
+            color: #1a1a2e;
+            font-weight: 600;
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: #1a1a2e;
+        }
+
+        .tab .badge {
+            background: #e0e0e0;
+            padding: 0.15rem 0.5rem;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            margin-left: 0.5rem;
+        }
+
+        .tab.active .badge {
+            background: #1a1a2e;
+            color: white;
+        }
+
+        .content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .section {
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+
+        .section-header {
+            padding: 1rem 1.5rem;
+            background: #fafafa;
+            border-bottom: 1px solid #e0e0e0;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+        }
+
+        .section-header:hover {
+            background: #f0f0f0;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1a1a2e;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-badge {
+            background: #1a1a2e;
+            color: white;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .section-toggle {
+            font-size: 1.5rem;
+            color: #999;
+            transition: transform 0.2s;
+        }
+
+        .section.collapsed .section-toggle {
+            transform: rotate(-90deg);
+        }
+
+        .section.collapsed .section-body {
+            display: none;
+        }
+
+        .section-body {
+            padding: 1rem 1.5rem;
+        }
+
+        .subsection {
+            margin-bottom: 1.5rem;
+        }
+
+        .subsection:last-child {
+            margin-bottom: 0;
+        }
+
+        .subsection-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .file-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 0.5rem;
+        }
+
+        .file-item {
+            padding: 0.6rem 0.8rem;
+            background: #f8f9fa;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            transition: background 0.2s;
+        }
+
+        .file-item:hover {
+            background: #e9ecef;
+        }
+
+        .file-name {
+            font-weight: 500;
+            color: #1a1a2e;
+        }
+
+        .file-path {
+            font-size: 0.75rem;
+            color: #888;
+            font-family: 'Monaco', 'Menlo', monospace;
+            word-break: break-all;
+        }
+
+        .file-item.hidden {
+            display: none;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 3rem;
+            color: #999;
+        }
+
+        .no-results.hidden {
+            display: none;
+        }
+
+        @media print {
+            .tabs, .search-container {
+                display: none;
+            }
+
+            .tab-content {
+                display: block !important;
+            }
+
+            .section {
+                break-inside: avoid;
+                box-shadow: none;
+                border: 1px solid #ddd;
+            }
+
+            .section.collapsed .section-body {
+                display: block !important;
+            }
+
+            .section-toggle {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .summary-bar {
+                gap: 1rem;
+            }
+
+            .summary-item .count {
+                font-size: 1.5rem;
+            }
+
+            .file-list {
+                grid-template-columns: 1fr;
+            }
+
+            .content {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Durj UI Review</h1>
+        <p>Comprehensive listing of all pages and components for UI review</p>
+    </div>
+
+    <div class="summary-bar">
+        <div class="summary-item">
+            <div class="count">129</div>
+            <div class="label">Total Pages</div>
+        </div>
+        <div class="summary-item">
+            <div class="count">113</div>
+            <div class="label">Components</div>
+        </div>
+        <div class="summary-item">
+            <div class="count">49</div>
+            <div class="label">UI States</div>
+        </div>
+        <div class="summary-item">
+            <div class="count">291</div>
+            <div class="label">Total Files</div>
+        </div>
+    </div>
+
+    <div class="search-container">
+        <input type="text" class="search-input" placeholder="Search pages and components..." id="searchInput">
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" data-tab="admin">Admin <span class="badge">66</span></button>
+        <button class="tab" data-tab="employee">Employee <span class="badge">21</span></button>
+        <button class="tab" data-tab="superadmin">Super Admin <span class="badge">21</span></button>
+        <button class="tab" data-tab="auth">Auth & Marketing <span class="badge">14</span></button>
+        <button class="tab" data-tab="other">Other <span class="badge">7</span></button>
+        <button class="tab" data-tab="components">Components <span class="badge">113</span></button>
+        <button class="tab" data-tab="uistates">UI States <span class="badge">49</span></button>
+    </div>
+
+    <div class="content">
+        <div class="no-results hidden" id="noResults">
+            No matching files found
+        </div>
+
+        <!-- Admin Section -->
+        <div class="tab-content active" data-tab="admin">
+            <!-- Dashboard -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span class="section-title">
+                        Dashboard
+                        <span class="section-badge">2</span>
+                    </span>
+                    <span class="section-toggle">&#9662;</span>
+                </div>
+                <div class="section-body">
+                    <div class="file-list">
+                        <div class="file-item" data-search="admin dashboard main">
+                            <span class="file-name">Admin Dashboard</span>
+                            <span class="file-path">src/app/admin/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="admin modules">
+                            <span class="file-name">Modules Management</span>
+                            <span class="file-path">src/app/admin/modules/page.tsx</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HR Module - Employees -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span class="section-title">
+                        HR - Employees
+                        <span class="section-badge">8</span>
+                    </span>
+                    <span class="section-toggle">&#9662;</span>
+                </div>
+                <div class="section-body">
+                    <div class="file-list">
+                        <div class="file-item" data-search="employees list hr">
+                            <span class="file-name">Employees List</span>
+                            <span class="file-path">src/app/admin/(hr)/employees/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="employee new create hr">
+                            <span class="file-name">New Employee</span>
+                            <span class="file-path">src/app/admin/(hr)/employees/new/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="employee detail view hr">
+                            <span class="file-name">Employee Detail</span>
+                            <span class="file-path">src/app/admin/(hr)/employees/[id]/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="employee edit hr">
+                            <span class="file-name">Edit Employee</span>
+                            <span class="file-path">src/app/admin/(hr)/employees/[id]/edit/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="employees deleted archive hr">
+                            <span class="file-name">Deleted Employees</span>
+                            <span class="file-path">src/app/admin/(hr)/employees/deleted/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="employee change requests hr">
+                            <span class="file-name">Change Requests</span>
+                            <span class="file-path">src/app/admin/(hr)/employees/change-requests/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="employee document expiry hr">
+                            <span class="file-name">Document Expiry</span>
+                            <span class="file-path">src/app/admin/(hr)/employees/document-expiry/page.tsx</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HR Module - Leave -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span class="section-title">
+                        HR - Leave Management
+                        <span class="section-badge">5</span>
+                    </span>
+                    <span class="section-toggle">&#9662;</span>
+                </div>
+                <div class="section-body">
+                    <div class="file-list">
+                        <div class="file-item" data-search="leave requests list hr">
+                            <span class="file-name">Leave Requests</span>
+                            <span class="file-path">src/app/admin/(hr)/leave/requests/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="leave request new create hr">
+                            <span class="file-name">New Leave Request</span>
+                            <span class="file-path">src/app/admin/(hr)/leave/requests/new/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="leave request detail hr">
+                            <span class="file-name">Leave Request Detail</span>
+                            <span class="file-path">src/app/admin/(hr)/leave/requests/[id]/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="leave balances hr">
+                            <span class="file-name">Leave Balances</span>
+                            <span class="file-path">src/app/admin/(hr)/leave/balances/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="leave calendar hr">
+                            <span class="file-name">Leave Calendar</span>
+                            <span class="file-path">src/app/admin/(hr)/leave/calendar/page.tsx</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HR Module - Payroll -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span class="section-title">
+                        HR - Payroll
+                        <span class="section-badge">15</span>
+                    </span>
+                    <span class="section-toggle">&#9662;</span>
+                </div>
+                <div class="section-body">
+                    <div class="subsection">
+                        <div class="subsection-title">Dashboard</div>
+                        <div class="file-list">
+                            <div class="file-item" data-search="payroll dashboard hr">
+                                <span class="file-name">Payroll Dashboard</span>
+                                <span class="file-path">src/app/admin/(hr)/payroll/page.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="payroll gratuity hr">
+                                <span class="file-name">Gratuity Calculator</span>
+                                <span class="file-path">src/app/admin/(hr)/payroll/gratuity/page.tsx</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="subsection">
+                        <div class="subsection-title">Payroll Runs</div>
+                        <div class="file-list">
+                            <div class="file-item" data-search="payroll runs list hr">
+                                <span class="file-name">Payroll Runs List</span>
+                                <span class="file-path">src/app/admin/(hr)/payroll/runs/page.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="payroll run new create hr">
+                                <span class="file-name">New Payroll Run</span>
+                                <span class="file-path">src/app/admin/(hr)/payroll/runs/new/page.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="payroll run detail hr">
+                                <span class="file-name">Payroll Run Detail</span>
+                                <span class="file-path">src/app/admin/(hr)/payroll/runs/[id]/page.tsx</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="subsection">
+                        <div class="subsection-title">Payslips</div>
+                        <div class="file-list">
+                            <div class="file-item" data-search="payslips list hr">
+                                <span class="file-name">Payslips List</span>
+                                <span class="file-path">src/app/admin/(hr)/payroll/payslips/page.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="payslip detail hr">
+                                <span class="file-name">Payslip Detail</span>
+                                <span class="file-path">src/app/admin/(hr)/payroll/payslips/[id]/page.tsx</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="subsection">
+                        <div class="subsection-title">Salary Structures</div>
+                        <div class="file-list">
+                            <div class="file-item" data-search="salary structures list hr">
+                                <span class="file-name">Salary Structures</span>
+                                <span class="file-path">src/app/admin/(hr)/payroll/salary-structures/page.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="salary structure new create hr">
+                                <span class="file-name">New Salary Structure</span>
+                                <span class="file-path">src/app/admin/(hr)/payroll/salary-structures/new/page.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="salary structure edit hr">
+                                <span class="file-name">Edit Salary Structure</span>
+                                <span class="file-path">src/app/admin/(hr)/payroll/salary-structures/[id]/edit/page.tsx</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="subsection">
+                        <div class="subsection-title">Loans</div>
+                        <div class="file-list">
+                            <div class="file-item" data-search="loans list hr payroll">
+                                <span class="file-name">Loans List</span>
+                                <span class="file-path">src/app/admin/(hr)/payroll/loans/page.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="loan new create hr payroll">
+                                <span class="file-name">New Loan</span>
+                                <span class="file-path">src/app/admin/(hr)/payroll/loans/new/page.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="loan detail hr payroll">
+                                <span class="file-name">Loan Detail</span>
+                                <span class="file-path">src/app/admin/(hr)/payroll/loans/[id]/page.tsx</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Operations - Assets -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span class="section-title">
+                        Operations - Assets
+                        <span class="section-badge">7</span>
+                    </span>
+                    <span class="section-toggle">&#9662;</span>
+                </div>
+                <div class="section-body">
+                    <div class="file-list">
+                        <div class="file-item" data-search="assets list operations">
+                            <span class="file-name">Assets List</span>
+                            <span class="file-path">src/app/admin/(operations)/assets/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="asset new create operations">
+                            <span class="file-name">New Asset</span>
+                            <span class="file-path">src/app/admin/(operations)/assets/new/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="asset detail view operations">
+                            <span class="file-name">Asset Detail</span>
+                            <span class="file-path">src/app/admin/(operations)/assets/[id]/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="asset edit operations">
+                            <span class="file-name">Edit Asset</span>
+                            <span class="file-path">src/app/admin/(operations)/assets/[id]/edit/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="assets deleted archive operations">
+                            <span class="file-name">Deleted Assets</span>
+                            <span class="file-path">src/app/admin/(operations)/assets/deleted/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="asset requests list operations">
+                            <span class="file-name">Asset Requests</span>
+                            <span class="file-path">src/app/admin/(operations)/asset-requests/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="asset request detail operations">
+                            <span class="file-name">Asset Request Detail</span>
+                            <span class="file-path">src/app/admin/(operations)/asset-requests/[id]/page.tsx</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Operations - Subscriptions -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span class="section-title">
+                        Operations - Subscriptions
+                        <span class="section-badge">4</span>
+                    </span>
+                    <span class="section-toggle">&#9662;</span>
+                </div>
+                <div class="section-body">
+                    <div class="file-list">
+                        <div class="file-item" data-search="subscriptions list operations">
+                            <span class="file-name">Subscriptions List</span>
+                            <span class="file-path">src/app/admin/(operations)/subscriptions/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="subscription new create operations">
+                            <span class="file-name">New Subscription</span>
+                            <span class="file-path">src/app/admin/(operations)/subscriptions/new/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="subscription detail view operations">
+                            <span class="file-name">Subscription Detail</span>
+                            <span class="file-path">src/app/admin/(operations)/subscriptions/[id]/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="subscription edit operations">
+                            <span class="file-name">Edit Subscription</span>
+                            <span class="file-path">src/app/admin/(operations)/subscriptions/[id]/edit/page.tsx</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Operations - Suppliers -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span class="section-title">
+                        Operations - Suppliers
+                        <span class="section-badge">3</span>
+                    </span>
+                    <span class="section-toggle">&#9662;</span>
+                </div>
+                <div class="section-body">
+                    <div class="file-list">
+                        <div class="file-item" data-search="suppliers list vendors operations">
+                            <span class="file-name">Suppliers List</span>
+                            <span class="file-path">src/app/admin/(operations)/suppliers/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="supplier detail view vendor operations">
+                            <span class="file-name">Supplier Detail</span>
+                            <span class="file-path">src/app/admin/(operations)/suppliers/[id]/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="supplier edit vendor operations">
+                            <span class="file-name">Edit Supplier</span>
+                            <span class="file-path">src/app/admin/(operations)/suppliers/[id]/edit/page.tsx</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Projects - Purchase Requests -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span class="section-title">
+                        Projects - Purchase Requests
+                        <span class="section-badge">2</span>
+                    </span>
+                    <span class="section-toggle">&#9662;</span>
+                </div>
+                <div class="section-body">
+                    <div class="file-list">
+                        <div class="file-item" data-search="purchase requests list projects">
+                            <span class="file-name">Purchase Requests</span>
+                            <span class="file-path">src/app/admin/(projects)/purchase-requests/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="purchase request detail projects">
+                            <span class="file-name">Purchase Request Detail</span>
+                            <span class="file-path">src/app/admin/(projects)/purchase-requests/[id]/page.tsx</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System - Users -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span class="section-title">
+                        System - Users
+                        <span class="section-badge">5</span>
+                    </span>
+                    <span class="section-toggle">&#9662;</span>
+                </div>
+                <div class="section-body">
+                    <div class="file-list">
+                        <div class="file-item" data-search="users list system">
+                            <span class="file-name">Users List</span>
+                            <span class="file-path">src/app/admin/(system)/users/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="user new create invite system">
+                            <span class="file-name">New User / Invite</span>
+                            <span class="file-path">src/app/admin/(system)/users/new/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="user detail view system">
+                            <span class="file-name">User Detail</span>
+                            <span class="file-path">src/app/admin/(system)/users/[id]/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="user edit system">
+                            <span class="file-name">Edit User</span>
+                            <span class="file-path">src/app/admin/(system)/users/[id]/edit/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="user hr profile system">
+                            <span class="file-name">User HR Profile</span>
+                            <span class="file-path">src/app/admin/(system)/users/[id]/hr/page.tsx</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System - Settings -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span class="section-title">
+                        System - Settings
+                        <span class="section-badge">7</span>
+                    </span>
+                    <span class="section-toggle">&#9662;</span>
+                </div>
+                <div class="section-body">
+                    <div class="file-list">
+                        <div class="file-item" data-search="settings main system">
+                            <span class="file-name">Settings Dashboard</span>
+                            <span class="file-path">src/app/admin/(system)/settings/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="settings access control roles system">
+                            <span class="file-name">Access Control</span>
+                            <span class="file-path">src/app/admin/(system)/settings/access-control/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="settings permissions system">
+                            <span class="file-name">Permissions</span>
+                            <span class="file-path">src/app/admin/(system)/settings/permissions/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="settings approvals workflow system">
+                            <span class="file-name">Approvals Workflow</span>
+                            <span class="file-path">src/app/admin/(system)/settings/approvals/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="settings approvals new create system">
+                            <span class="file-name">New Approval Workflow</span>
+                            <span class="file-path">src/app/admin/(system)/settings/approvals/new/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="settings approvals edit system">
+                            <span class="file-name">Edit Approval Workflow</span>
+                            <span class="file-path">src/app/admin/(system)/settings/approvals/[id]/edit/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="settings whatsapp notifications system">
+                            <span class="file-name">WhatsApp Settings</span>
+                            <span class="file-path">src/app/admin/(system)/settings/whatsapp/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="settings ai usage system">
+                            <span class="file-name">AI Usage</span>
+                            <span class="file-path">src/app/admin/(system)/settings/ai-usage/page.tsx</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System - Company Documents -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span class="section-title">
+                        System - Company Documents
+                        <span class="section-badge">4</span>
+                    </span>
+                    <span class="section-toggle">&#9662;</span>
+                </div>
+                <div class="section-body">
+                    <div class="file-list">
+                        <div class="file-item" data-search="company documents list system">
+                            <span class="file-name">Company Documents</span>
+                            <span class="file-path">src/app/admin/(system)/company-documents/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="company document new create system">
+                            <span class="file-name">New Company Document</span>
+                            <span class="file-path">src/app/admin/(system)/company-documents/new/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="company document detail view system">
+                            <span class="file-name">Document Detail</span>
+                            <span class="file-path">src/app/admin/(system)/company-documents/[id]/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="company document edit system">
+                            <span class="file-name">Edit Document</span>
+                            <span class="file-path">src/app/admin/(system)/company-documents/[id]/edit/page.tsx</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System - Other -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span class="section-title">
+                        System - Other
+                        <span class="section-badge">6</span>
+                    </span>
+                    <span class="section-toggle">&#9662;</span>
+                </div>
+                <div class="section-body">
+                    <div class="file-list">
+                        <div class="file-item" data-search="organization profile system">
+                            <span class="file-name">Organization Profile</span>
+                            <span class="file-path">src/app/admin/(system)/organization/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="notifications system">
+                            <span class="file-name">Notifications</span>
+                            <span class="file-path">src/app/admin/(system)/notifications/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="alerts system">
+                            <span class="file-name">Alerts</span>
+                            <span class="file-path">src/app/admin/(system)/alerts/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="activity log audit system">
+                            <span class="file-name">Activity Log</span>
+                            <span class="file-path">src/app/admin/(system)/activity/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="reports system">
+                            <span class="file-name">Reports</span>
+                            <span class="file-path">src/app/admin/(system)/reports/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="my approvals pending system">
+                            <span class="file-name">My Approvals</span>
+                            <span class="file-path">src/app/admin/(system)/my-approvals/page.tsx</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Employee Section -->
+        <div class="tab-content" data-tab="employee">
+            <!-- Dashboard -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span class="section-title">
+                        Dashboard
+                        <span class="section-badge">1</span>
+                    </span>
+                    <span class="section-toggle">&#9662;</span>
+                </div>
+                <div class="section-body">
+                    <div class="file-list">
+                        <div class="file-item" data-search="employee dashboard main">
+                            <span class="file-name">Employee Dashboard</span>
+                            <span class="file-path">src/app/employee/page.tsx</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HR - Leave -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span class="section-title">
+                        HR - Leave
+                        <span class="section-badge">4</span>
+                    </span>
+                    <span class="section-toggle">&#9662;</span>
+                </div>
+                <div class="section-body">
+                    <div class="file-list">
+                        <div class="file-item" data-search="leave dashboard employee hr">
+                            <span class="file-name">Leave Dashboard</span>
+                            <span class="file-path">src/app/employee/(hr)/leave/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="leave requests employee hr">
+                            <span class="file-name">Leave Requests</span>
+                            <span class="file-path">src/app/employee/(hr)/leave/requests/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="leave request new apply employee hr">
+                            <span class="file-name">Apply for Leave</span>
+                            <span class="file-path">src/app/employee/(hr)/leave/new/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="leave request detail employee hr">
+                            <span class="file-name">Leave Request Detail</span>
+                            <span class="file-path">src/app/employee/(hr)/leave/[id]/page.tsx</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HR - Payroll -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span class="section-title">
+                        HR - Payroll
+                        <span class="section-badge">4</span>
+                    </span>
+                    <span class="section-toggle">&#9662;</span>
+                </div>
+                <div class="section-body">
+                    <div class="file-list">
+                        <div class="file-item" data-search="payroll dashboard employee hr">
+                            <span class="file-name">Payroll Dashboard</span>
+                            <span class="file-path">src/app/employee/(hr)/payroll/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="payslips list employee hr">
+                            <span class="file-name">My Payslips</span>
+                            <span class="file-path">src/app/employee/(hr)/payroll/payslips/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="payslip detail employee hr">
+                            <span class="file-name">Payslip Detail</span>
+                            <span class="file-path">src/app/employee/(hr)/payroll/payslips/[id]/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="gratuity calculator employee hr">
+                            <span class="file-name">Gratuity Calculator</span>
+                            <span class="file-path">src/app/employee/(hr)/payroll/gratuity/page.tsx</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Operations - Assets -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span class="section-title">
+                        Operations - Assets
+                        <span class="section-badge">5</span>
+                    </span>
+                    <span class="section-toggle">&#9662;</span>
+                </div>
+                <div class="section-body">
+                    <div class="file-list">
+                        <div class="file-item" data-search="assets browse employee operations">
+                            <span class="file-name">Browse Assets</span>
+                            <span class="file-path">src/app/employee/(operations)/assets/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="asset detail employee operations">
+                            <span class="file-name">Asset Detail</span>
+                            <span class="file-path">src/app/employee/(operations)/assets/[id]/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="my assets assigned employee operations">
+                            <span class="file-name">My Assets</span>
+                            <span class="file-path">src/app/employee/(operations)/my-assets/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="asset requests employee operations">
+                            <span class="file-name">Asset Requests</span>
+                            <span class="file-path">src/app/employee/(operations)/asset-requests/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="asset request detail employee operations">
+                            <span class="file-name">Asset Request Detail</span>
+                            <span class="file-path">src/app/employee/(operations)/asset-requests/[id]/page.tsx</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Operations - Subscriptions -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span class="section-title">
+                        Operations - Subscriptions
+                        <span class="section-badge">2</span>
+                    </span>
+                    <span class="section-toggle">&#9662;</span>
+                </div>
+                <div class="section-body">
+                    <div class="file-list">
+                        <div class="file-item" data-search="subscriptions browse employee operations">
+                            <span class="file-name">Browse Subscriptions</span>
+                            <span class="file-path">src/app/employee/(operations)/subscriptions/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="subscription detail employee operations">
+                            <span class="file-name">Subscription Detail</span>
+                            <span class="file-path">src/app/employee/(operations)/subscriptions/[id]/page.tsx</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Operations - Suppliers -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span class="section-title">
+                        Operations - Suppliers
+                        <span class="section-badge">2</span>
+                    </span>
+                    <span class="section-toggle">&#9662;</span>
+                </div>
+                <div class="section-body">
+                    <div class="file-list">
+                        <div class="file-item" data-search="suppliers browse vendors employee operations">
+                            <span class="file-name">Browse Suppliers</span>
+                            <span class="file-path">src/app/employee/(operations)/suppliers/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="supplier detail vendor employee operations">
+                            <span class="file-name">Supplier Detail</span>
+                            <span class="file-path">src/app/employee/(operations)/suppliers/[id]/page.tsx</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Projects - Purchase Requests -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span class="section-title">
+                        Projects - Purchase Requests
+                        <span class="section-badge">3</span>
+                    </span>
+                    <span class="section-toggle">&#9662;</span>
+                </div>
+                <div class="section-body">
+                    <div class="file-list">
+                        <div class="file-item" data-search="purchase requests list employee projects">
+                            <span class="file-name">My Purchase Requests</span>
+                            <span class="file-path">src/app/employee/(projects)/purchase-requests/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="purchase request new create employee projects">
+                            <span class="file-name">New Purchase Request</span>
+                            <span class="file-path">src/app/employee/(projects)/purchase-requests/new/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="purchase request detail employee projects">
+                            <span class="file-name">Purchase Request Detail</span>
+                            <span class="file-path">src/app/employee/(projects)/purchase-requests/[id]/page.tsx</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Super Admin Section -->
+        <div class="tab-content" data-tab="superadmin">
+            <!-- Dashboard -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span class="section-title">
+                        Dashboard
+                        <span class="section-badge">2</span>
+                    </span>
+                    <span class="section-toggle">&#9662;</span>
+                </div>
+                <div class="section-body">
+                    <div class="file-list">
+                        <div class="file-item" data-search="super admin dashboard login">
+                            <span class="file-name">Super Admin Dashboard</span>
+                            <span class="file-path">src/app/super-admin/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="super admin analytics metrics">
+                            <span class="file-name">Analytics</span>
+                            <span class="file-path">src/app/super-admin/analytics/page.tsx</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Organizations -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span class="section-title">
+                        Organizations
+                        <span class="section-badge">3</span>
+                    </span>
+                    <span class="section-toggle">&#9662;</span>
+                </div>
+                <div class="section-body">
+                    <div class="file-list">
+                        <div class="file-item" data-search="organizations list tenants super admin">
+                            <span class="file-name">Organizations List</span>
+                            <span class="file-path">src/app/super-admin/organizations/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="organization detail tenant super admin">
+                            <span class="file-name">Organization Detail</span>
+                            <span class="file-path">src/app/super-admin/organizations/[id]/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="organization new create super admin">
+                            <span class="file-name">New Organization</span>
+                            <span class="file-path">src/app/super-admin/organizations/new/page.tsx</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Users & Admins -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span class="section-title">
+                        Users & Admins
+                        <span class="section-badge">2</span>
+                    </span>
+                    <span class="section-toggle">&#9662;</span>
+                </div>
+                <div class="section-body">
+                    <div class="file-list">
+                        <div class="file-item" data-search="users list platform super admin">
+                            <span class="file-name">All Users</span>
+                            <span class="file-path">src/app/super-admin/users/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="admins list platform super admin">
+                            <span class="file-name">Platform Admins</span>
+                            <span class="file-path">src/app/super-admin/admins/page.tsx</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Feedback -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span class="section-title">
+                        Feedback
+                        <span class="section-badge">2</span>
+                    </span>
+                    <span class="section-toggle">&#9662;</span>
+                </div>
+                <div class="section-body">
+                    <div class="file-list">
+                        <div class="file-item" data-search="feedback list super admin">
+                            <span class="file-name">Feedback List</span>
+                            <span class="file-path">src/app/super-admin/feedback/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="feedback detail super admin">
+                            <span class="file-name">Feedback Detail</span>
+                            <span class="file-path">src/app/super-admin/feedback/[id]/page.tsx</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span class="section-title">
+                        System
+                        <span class="section-badge">8</span>
+                    </span>
+                    <span class="section-toggle">&#9662;</span>
+                </div>
+                <div class="section-body">
+                    <div class="file-list">
+                        <div class="file-item" data-search="system status health super admin">
+                            <span class="file-name">System Status</span>
+                            <span class="file-path">src/app/super-admin/system/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="backups database super admin">
+                            <span class="file-name">Backups</span>
+                            <span class="file-path">src/app/super-admin/backups/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="storage files super admin">
+                            <span class="file-name">Storage</span>
+                            <span class="file-path">src/app/super-admin/storage/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="error logs super admin">
+                            <span class="file-name">Error Logs</span>
+                            <span class="file-path">src/app/super-admin/error-logs/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="error log detail super admin">
+                            <span class="file-name">Error Log Detail</span>
+                            <span class="file-path">src/app/super-admin/error-logs/[id]/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="email failures super admin">
+                            <span class="file-name">Email Failures</span>
+                            <span class="file-path">src/app/super-admin/email-failures/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="email failure detail super admin">
+                            <span class="file-name">Email Failure Detail</span>
+                            <span class="file-path">src/app/super-admin/email-failures/[id]/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="seed data demo super admin">
+                            <span class="file-name">Seed Data</span>
+                            <span class="file-path">src/app/super-admin/seed-data/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="reset danger super admin">
+                            <span class="file-name">Reset Tools</span>
+                            <span class="file-path">src/app/super-admin/reset/page.tsx</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span class="section-title">
+                        Settings
+                        <span class="section-badge">3</span>
+                    </span>
+                    <span class="section-toggle">&#9662;</span>
+                </div>
+                <div class="section-body">
+                    <div class="file-list">
+                        <div class="file-item" data-search="settings main super admin">
+                            <span class="file-name">Platform Settings</span>
+                            <span class="file-path">src/app/super-admin/settings/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="settings security super admin">
+                            <span class="file-name">Security Settings</span>
+                            <span class="file-path">src/app/super-admin/settings/security/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="settings whatsapp super admin">
+                            <span class="file-name">WhatsApp Settings</span>
+                            <span class="file-path">src/app/super-admin/settings/whatsapp/page.tsx</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Auth & Marketing Section -->
+        <div class="tab-content" data-tab="auth">
+            <!-- Authentication -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span class="section-title">
+                        Authentication
+                        <span class="section-badge">10</span>
+                    </span>
+                    <span class="section-toggle">&#9662;</span>
+                </div>
+                <div class="section-body">
+                    <div class="file-list">
+                        <div class="file-item" data-search="login signin auth">
+                            <span class="file-name">Login</span>
+                            <span class="file-path">src/app/login/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="signup register auth">
+                            <span class="file-name">Sign Up</span>
+                            <span class="file-path">src/app/signup/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="invite join team auth">
+                            <span class="file-name">Accept Invite</span>
+                            <span class="file-path">src/app/invite/[token]/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="forgot password reset auth">
+                            <span class="file-name">Forgot Password</span>
+                            <span class="file-path">src/app/forgot-password/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="pending approval waiting auth">
+                            <span class="file-name">Pending Approval</span>
+                            <span class="file-path">src/app/pending/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="get started onboarding auth">
+                            <span class="file-name">Get Started</span>
+                            <span class="file-path">src/app/get-started/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="reset password token auth">
+                            <span class="file-name">Reset Password</span>
+                            <span class="file-path">src/app/reset-password/[token]/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="set password token auth">
+                            <span class="file-name">Set Password</span>
+                            <span class="file-path">src/app/set-password/[token]/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="profile user account settings">
+                            <span class="file-name">User Profile</span>
+                            <span class="file-path">src/app/profile/page.tsx</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Marketing -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span class="section-title">
+                        Marketing
+                        <span class="section-badge">4</span>
+                    </span>
+                    <span class="section-toggle">&#9662;</span>
+                </div>
+                <div class="section-body">
+                    <div class="file-list">
+                        <div class="file-item" data-search="landing home marketing">
+                            <span class="file-name">Landing Page</span>
+                            <span class="file-path">src/app/(marketing)/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="privacy policy legal marketing">
+                            <span class="file-name">Privacy Policy</span>
+                            <span class="file-path">src/app/(marketing)/privacy/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="terms service legal marketing">
+                            <span class="file-name">Terms of Service</span>
+                            <span class="file-path">src/app/(marketing)/terms/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="cookies policy legal marketing">
+                            <span class="file-name">Cookie Policy</span>
+                            <span class="file-path">src/app/(marketing)/cookies/page.tsx</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Public -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span class="section-title">
+                        Public
+                        <span class="section-badge">2</span>
+                    </span>
+                    <span class="section-toggle">&#9662;</span>
+                </div>
+                <div class="section-body">
+                    <div class="file-list">
+                        <div class="file-item" data-search="supplier registration public">
+                            <span class="file-name">Supplier Registration</span>
+                            <span class="file-path">src/app/suppliers/register/page.tsx</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Other Pages Section -->
+        <div class="tab-content" data-tab="other">
+            <!-- Help Center -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span class="section-title">
+                        Help Center
+                        <span class="section-badge">3</span>
+                    </span>
+                    <span class="section-toggle">&#9662;</span>
+                </div>
+                <div class="section-body">
+                    <div class="file-list">
+                        <div class="file-item" data-search="help center main documentation">
+                            <span class="file-name">Help Center Home</span>
+                            <span class="file-path">src/app/help/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="help search documentation">
+                            <span class="file-name">Help Search</span>
+                            <span class="file-path">src/app/help/search/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="help category module article documentation">
+                            <span class="file-name">Help Article</span>
+                            <span class="file-path">src/app/help/[category]/[module]/page.tsx</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Onboarding & Setup -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span class="section-title">
+                        Onboarding & Setup
+                        <span class="section-badge">2</span>
+                    </span>
+                    <span class="section-toggle">&#9662;</span>
+                </div>
+                <div class="section-body">
+                    <div class="file-list">
+                        <div class="file-item" data-search="setup wizard organization onboarding">
+                            <span class="file-name">Organization Setup</span>
+                            <span class="file-path">src/app/setup/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="employee onboarding welcome">
+                            <span class="file-name">Employee Onboarding</span>
+                            <span class="file-path">src/app/employee-onboarding/page.tsx</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error States -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span class="section-title">
+                        Error & Status Pages
+                        <span class="section-badge">2</span>
+                    </span>
+                    <span class="section-toggle">&#9662;</span>
+                </div>
+                <div class="section-body">
+                    <div class="file-list">
+                        <div class="file-item" data-search="forbidden access denied 403 error">
+                            <span class="file-name">Forbidden (403)</span>
+                            <span class="file-path">src/app/forbidden/page.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="organization deleted error">
+                            <span class="file-name">Organization Deleted</span>
+                            <span class="file-path">src/app/org-deleted/page.tsx</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Components Section -->
+        <div class="tab-content" data-tab="components">
+            <!-- UI Base Components -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span class="section-title">
+                        UI Base Components
+                        <span class="section-badge">64</span>
+                    </span>
+                    <span class="section-toggle">&#9662;</span>
+                </div>
+                <div class="section-body">
+                    <div class="subsection">
+                        <div class="subsection-title">Form Controls</div>
+                        <div class="file-list">
+                            <div class="file-item" data-search="button ui component">
+                                <span class="file-name">Button</span>
+                                <span class="file-path">src/components/ui/button.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="input ui component form">
+                                <span class="file-name">Input</span>
+                                <span class="file-path">src/components/ui/input.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="input error ui component form">
+                                <span class="file-name">Input with Error</span>
+                                <span class="file-path">src/components/ui/input-with-error.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="textarea ui component form">
+                                <span class="file-name">Textarea</span>
+                                <span class="file-path">src/components/ui/textarea.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="select dropdown ui component form">
+                                <span class="file-name">Select</span>
+                                <span class="file-path">src/components/ui/select.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="checkbox ui component form">
+                                <span class="file-name">Checkbox</span>
+                                <span class="file-path">src/components/ui/checkbox.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="radio group ui component form">
+                                <span class="file-name">Radio Group</span>
+                                <span class="file-path">src/components/ui/radio-group.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="switch toggle ui component form">
+                                <span class="file-name">Switch</span>
+                                <span class="file-path">src/components/ui/switch.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="form switch ui component">
+                                <span class="file-name">Form Switch</span>
+                                <span class="file-path">src/components/ui/form-switch.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="label ui component form">
+                                <span class="file-name">Label</span>
+                                <span class="file-path">src/components/ui/label.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="submit button loading ui component form">
+                                <span class="file-name">Submit Button</span>
+                                <span class="file-path">src/components/ui/submit-button.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="date picker calendar ui component form">
+                                <span class="file-name">Date Picker</span>
+                                <span class="file-path">src/components/ui/date-picker.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="birth date picker ui component form">
+                                <span class="file-name">Birth Date Picker</span>
+                                <span class="file-path">src/components/ui/birth-date-picker.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="calendar ui component">
+                                <span class="file-name">Calendar</span>
+                                <span class="file-path">src/components/ui/calendar.tsx</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="subsection">
+                        <div class="subsection-title">Display & Layout</div>
+                        <div class="file-list">
+                            <div class="file-item" data-search="card container ui component">
+                                <span class="file-name">Card</span>
+                                <span class="file-path">src/components/ui/card.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="dark card ui component">
+                                <span class="file-name">Dark Card</span>
+                                <span class="file-path">src/components/ui/dark-card.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="detail card ui component">
+                                <span class="file-name">Detail Card</span>
+                                <span class="file-path">src/components/ui/detail-card.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="stats card metrics ui component">
+                                <span class="file-name">Stats Card</span>
+                                <span class="file-path">src/components/ui/stats-card.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="badge label ui component">
+                                <span class="file-name">Badge</span>
+                                <span class="file-path">src/components/ui/badge.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="count badge number ui component">
+                                <span class="file-name">Count Badge</span>
+                                <span class="file-path">src/components/ui/count-badge.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="demo badge ui component">
+                                <span class="file-name">Demo Badge</span>
+                                <span class="file-path">src/components/ui/demo-badge.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="separator divider ui component">
+                                <span class="file-name">Separator</span>
+                                <span class="file-path">src/components/ui/separator.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="tabs navigation ui component">
+                                <span class="file-name">Tabs</span>
+                                <span class="file-path">src/components/ui/tabs.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="icon box ui component">
+                                <span class="file-name">Icon Box</span>
+                                <span class="file-path">src/components/ui/icon-box.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="progress bar ui component">
+                                <span class="file-name">Progress</span>
+                                <span class="file-path">src/components/ui/progress.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="skeleton loading ui component">
+                                <span class="file-name">Skeleton</span>
+                                <span class="file-path">src/components/ui/skeleton.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="stat chip ui component">
+                                <span class="file-name">Stat Chip</span>
+                                <span class="file-path">src/components/ui/stat-chip.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="trend indicator up down ui component">
+                                <span class="file-name">Trend Indicator</span>
+                                <span class="file-path">src/components/ui/trend-indicator.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="user avatar profile ui component">
+                                <span class="file-name">User Avatar</span>
+                                <span class="file-path">src/components/ui/user-avatar.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="user profile ui component">
+                                <span class="file-name">User Profile</span>
+                                <span class="file-path">src/components/ui/user-profile.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="timeline history ui component">
+                                <span class="file-name">Timeline</span>
+                                <span class="file-path">src/components/ui/timeline.tsx</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="subsection">
+                        <div class="subsection-title">Overlays & Dialogs</div>
+                        <div class="file-list">
+                            <div class="file-item" data-search="dialog modal ui component">
+                                <span class="file-name">Dialog</span>
+                                <span class="file-path">src/components/ui/dialog.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="alert dialog confirm ui component">
+                                <span class="file-name">Alert Dialog</span>
+                                <span class="file-path">src/components/ui/alert-dialog.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="confirmation dialog ui component">
+                                <span class="file-name">Confirmation Dialog</span>
+                                <span class="file-path">src/components/ui/confirmation-dialog.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="form dialog modal ui component">
+                                <span class="file-name">Form Dialog</span>
+                                <span class="file-path">src/components/ui/form-dialog.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="approval dialog ui component">
+                                <span class="file-name">Approval Dialog</span>
+                                <span class="file-path">src/components/ui/approval-dialog.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="cancellation dialog ui component">
+                                <span class="file-name">Cancellation Dialog</span>
+                                <span class="file-path">src/components/ui/cancellation-dialog.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="sheet drawer ui component">
+                                <span class="file-name">Sheet</span>
+                                <span class="file-path">src/components/ui/sheet.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="popover tooltip ui component">
+                                <span class="file-name">Popover</span>
+                                <span class="file-path">src/components/ui/popover.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="tooltip ui component">
+                                <span class="file-name">Tooltip</span>
+                                <span class="file-path">src/components/ui/tooltip.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="dropdown menu ui component">
+                                <span class="file-name">Dropdown Menu</span>
+                                <span class="file-path">src/components/ui/dropdown-menu.tsx</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="subsection">
+                        <div class="subsection-title">Tables & Data</div>
+                        <div class="file-list">
+                            <div class="file-item" data-search="table data grid ui component">
+                                <span class="file-name">Table</span>
+                                <span class="file-path">src/components/ui/table.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="table skeleton loading ui component">
+                                <span class="file-name">Table Skeleton</span>
+                                <span class="file-path">src/components/ui/table-skeleton.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="table filter bar search ui component">
+                                <span class="file-name">Table Filter Bar</span>
+                                <span class="file-path">src/components/ui/table-filter-bar.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="data table pagination ui component">
+                                <span class="file-name">Data Table Pagination</span>
+                                <span class="file-path">src/components/ui/data-table-pagination.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="server pagination ui component">
+                                <span class="file-name">Server Pagination</span>
+                                <span class="file-path">src/components/ui/server-pagination.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="empty table row no data ui component">
+                                <span class="file-name">Empty Table Row</span>
+                                <span class="file-path">src/components/ui/empty-table-row.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="status filter buttons ui component">
+                                <span class="file-name">Status Filter Buttons</span>
+                                <span class="file-path">src/components/ui/status-filter-buttons.tsx</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="subsection">
+                        <div class="subsection-title">Navigation & Feedback</div>
+                        <div class="file-list">
+                            <div class="file-item" data-search="breadcrumb navigation ui component">
+                                <span class="file-name">Breadcrumb</span>
+                                <span class="file-path">src/components/ui/breadcrumb.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="alert notification ui component">
+                                <span class="file-name">Alert</span>
+                                <span class="file-path">src/components/ui/alert.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="alert banner notification ui component">
+                                <span class="file-name">Alert Banner</span>
+                                <span class="file-path">src/components/ui/alert-banner.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="form error validation ui component">
+                                <span class="file-name">Form Error</span>
+                                <span class="file-path">src/components/ui/form-error.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="form error summary validation ui component">
+                                <span class="file-name">Form Error Summary</span>
+                                <span class="file-path">src/components/ui/form-error-summary.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="segment error ui component">
+                                <span class="file-name">Segment Error</span>
+                                <span class="file-path">src/components/ui/segment-error.tsx</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="subsection">
+                        <div class="subsection-title">Page Layouts</div>
+                        <div class="file-list">
+                            <div class="file-item" data-search="page header title ui component">
+                                <span class="file-name">Page Header</span>
+                                <span class="file-path">src/components/ui/page-header.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="list page layout ui component">
+                                <span class="file-name">List Page</span>
+                                <span class="file-path">src/components/ui/list-page.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="detail page layout ui component">
+                                <span class="file-name">Detail Page Layout</span>
+                                <span class="file-path">src/components/ui/detail-page-layout.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="error page layout ui component">
+                                <span class="file-name">Error Page Layout</span>
+                                <span class="file-path">src/components/ui/error-page-layout.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="empty state no data ui component">
+                                <span class="file-name">Empty State</span>
+                                <span class="file-path">src/components/ui/empty-state.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="info display read only ui component">
+                                <span class="file-name">Info Display</span>
+                                <span class="file-path">src/components/ui/info-display.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="info field read only ui component">
+                                <span class="file-name">Info Field</span>
+                                <span class="file-path">src/components/ui/info-field.tsx</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="subsection">
+                        <div class="subsection-title">Utilities</div>
+                        <div class="file-list">
+                            <div class="file-item" data-search="scroll area container ui component">
+                                <span class="file-name">Scroll Area</span>
+                                <span class="file-path">src/components/ui/scroll-area.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="collapsible accordion ui component">
+                                <span class="file-name">Collapsible</span>
+                                <span class="file-path">src/components/ui/collapsible.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="client only ssr ui component">
+                                <span class="file-name">Client Only</span>
+                                <span class="file-path">src/components/ui/client-only.tsx</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Dashboard Components -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span class="section-title">
+                        Admin Dashboard
+                        <span class="section-badge">6</span>
+                    </span>
+                    <span class="section-toggle">&#9662;</span>
+                </div>
+                <div class="section-body">
+                    <div class="file-list">
+                        <div class="file-item" data-search="dashboard skeleton loading admin component">
+                            <span class="file-name">Dashboard Skeleton</span>
+                            <span class="file-path">src/components/dashboard/dashboard-skeleton.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="domain card module admin dashboard component">
+                            <span class="file-name">Domain Card</span>
+                            <span class="file-path">src/components/dashboard/domain-card.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="setup checklist onboarding admin dashboard component">
+                            <span class="file-name">Setup Checklist</span>
+                            <span class="file-path">src/components/dashboard/SetupChecklist.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="checklist item admin dashboard component">
+                            <span class="file-name">Checklist Item</span>
+                            <span class="file-path">src/components/dashboard/ChecklistItem.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="celebrations widget birthday anniversary admin dashboard component">
+                            <span class="file-name">Celebrations Widget</span>
+                            <span class="file-path">src/components/dashboard/celebrations-widget.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="expiry alerts widget admin dashboard component">
+                            <span class="file-name">Expiry Alerts Widget</span>
+                            <span class="file-path">src/components/dashboard/expiry-alerts-widget.tsx</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Employee Dashboard Components -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span class="section-title">
+                        Employee Dashboard
+                        <span class="section-badge">9</span>
+                    </span>
+                    <span class="section-toggle">&#9662;</span>
+                </div>
+                <div class="section-body">
+                    <div class="file-list">
+                        <div class="file-item" data-search="stat card metrics employee dashboard component">
+                            <span class="file-name">Stat Card</span>
+                            <span class="file-path">src/components/employee/dashboard/stat-card.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="quick actions employee dashboard component">
+                            <span class="file-name">Quick Actions</span>
+                            <span class="file-path">src/components/employee/dashboard/quick-actions.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="leave balance widget employee dashboard component">
+                            <span class="file-name">Leave Balance Widget</span>
+                            <span class="file-path">src/components/employee/dashboard/leave-balance-widget.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="upcoming card events employee dashboard component">
+                            <span class="file-name">Upcoming Card</span>
+                            <span class="file-path">src/components/employee/dashboard/upcoming-card.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="alert banner notification employee dashboard component">
+                            <span class="file-name">Alert Banner</span>
+                            <span class="file-path">src/components/employee/dashboard/alert-banner.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="asset assignment alert employee dashboard component">
+                            <span class="file-name">Asset Assignment Alert</span>
+                            <span class="file-path">src/components/employee/dashboard/asset-assignment-alert.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="requests card pending employee dashboard component">
+                            <span class="file-name">Requests Card</span>
+                            <span class="file-path">src/components/employee/dashboard/requests-card.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="celebrations card birthday employee dashboard component">
+                            <span class="file-name">Celebrations Card</span>
+                            <span class="file-path">src/components/employee/dashboard/celebrations-card.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="holdings card assets employee dashboard component">
+                            <span class="file-name">Holdings Card</span>
+                            <span class="file-path">src/components/employee/dashboard/holdings-card.tsx</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Domain Components - HR -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span class="section-title">
+                        HR Domain Components
+                        <span class="section-badge">6</span>
+                    </span>
+                    <span class="section-toggle">&#9662;</span>
+                </div>
+                <div class="section-body">
+                    <div class="file-list">
+                        <div class="file-item" data-search="hr profile form employee domain component">
+                            <span class="file-name">HR Profile Form</span>
+                            <span class="file-path">src/components/domains/hr/profile/hr-profile-form.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="document link file hr domain component">
+                            <span class="file-name">Document Link</span>
+                            <span class="file-path">src/components/domains/hr/profile/document-link.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="document upload file hr domain component">
+                            <span class="file-name">Document Upload</span>
+                            <span class="file-path">src/components/domains/hr/profile/document-upload.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="expiry badge date hr domain component">
+                            <span class="file-name">Expiry Badge</span>
+                            <span class="file-path">src/components/domains/hr/profile/expiry-badge.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="phone input international hr domain component">
+                            <span class="file-name">Phone Input</span>
+                            <span class="file-path">src/components/domains/hr/profile/phone-input.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="multi select tags skills hr domain component">
+                            <span class="file-name">Multi-Select Tags</span>
+                            <span class="file-path">src/components/domains/hr/profile/multi-select-tags.tsx</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Help Components -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span class="section-title">
+                        Help Components
+                        <span class="section-badge">10</span>
+                    </span>
+                    <span class="section-toggle">&#9662;</span>
+                </div>
+                <div class="section-body">
+                    <div class="file-list">
+                        <div class="file-item" data-search="help breadcrumb navigation component">
+                            <span class="file-name">Help Breadcrumb</span>
+                            <span class="file-path">src/components/help/help-breadcrumb.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="help category card component">
+                            <span class="file-name">Help Category Card</span>
+                            <span class="file-path">src/components/help/help-category-card.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="help module card component">
+                            <span class="file-name">Help Module Card</span>
+                            <span class="file-path">src/components/help/help-module-card.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="help content section component">
+                            <span class="file-name">Help Content Section</span>
+                            <span class="file-path">src/components/help/help-content-section.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="help faq accordion component">
+                            <span class="file-name">Help FAQ Accordion</span>
+                            <span class="file-path">src/components/help/help-faq-accordion.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="help quick links component">
+                            <span class="file-name">Help Quick Links</span>
+                            <span class="file-path">src/components/help/help-quick-links.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="help search input component">
+                            <span class="file-name">Help Search Input</span>
+                            <span class="file-path">src/components/help/help-search-input.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="help step by step guide component">
+                            <span class="file-name">Help Step by Step</span>
+                            <span class="file-path">src/components/help/help-step-by-step.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="help video embed component">
+                            <span class="file-name">Help Video Embed</span>
+                            <span class="file-path">src/components/help/help-video-embed.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="help validation table component">
+                            <span class="file-name">Help Validation Table</span>
+                            <span class="file-path">src/components/help/help-validation-table.tsx</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Layout Components -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span class="section-title">
+                        Layout Components
+                        <span class="section-badge">6</span>
+                    </span>
+                    <span class="section-toggle">&#9662;</span>
+                </div>
+                <div class="section-body">
+                    <div class="file-list">
+                        <div class="file-item" data-search="admin top nav navigation header layout component">
+                            <span class="file-name">Admin Top Nav</span>
+                            <span class="file-path">src/components/layout/admin-top-nav.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="employee top nav navigation header layout component">
+                            <span class="file-name">Employee Top Nav</span>
+                            <span class="file-path">src/components/layout/employee-top-nav.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="mobile bottom nav navigation layout component">
+                            <span class="file-name">Mobile Bottom Nav</span>
+                            <span class="file-path">src/components/layout/mobile-bottom-nav.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="page wrapper container layout component">
+                            <span class="file-name">Page Wrapper</span>
+                            <span class="file-path">src/components/layout/page-wrapper.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="employee view banner layout component">
+                            <span class="file-name">Employee View Banner</span>
+                            <span class="file-path">src/components/layout/employee-view-banner.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="command palette keyboard shortcuts layout component">
+                            <span class="file-name">Command Palette</span>
+                            <span class="file-path">src/components/layout/command-palette.tsx</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Other Components -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span class="section-title">
+                        Other Components
+                        <span class="section-badge">10</span>
+                    </span>
+                    <span class="section-toggle">&#9662;</span>
+                </div>
+                <div class="section-body">
+                    <div class="subsection">
+                        <div class="subsection-title">Authentication</div>
+                        <div class="file-list">
+                            <div class="file-item" data-search="permission refresh auth component">
+                                <span class="file-name">Permission Refresh</span>
+                                <span class="file-path">src/components/auth/permission-refresh.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="tenant branded panel auth oauth component">
+                                <span class="file-name">Tenant Branded Panel</span>
+                                <span class="file-path">src/components/auth/TenantBrandedPanel.tsx</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="subsection">
+                        <div class="subsection-title">Feedback</div>
+                        <div class="file-list">
+                            <div class="file-item" data-search="feedback dialog modal component">
+                                <span class="file-name">Feedback Dialog</span>
+                                <span class="file-path">src/components/feedback/feedback-dialog.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="feedback trigger button component">
+                                <span class="file-name">Feedback Trigger</span>
+                                <span class="file-path">src/components/feedback/feedback-trigger.tsx</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="subsection">
+                        <div class="subsection-title">Impersonation</div>
+                        <div class="file-list">
+                            <div class="file-item" data-search="impersonation banner super admin component">
+                                <span class="file-name">Impersonation Banner</span>
+                                <span class="file-path">src/components/impersonation/impersonation-banner.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="impersonation handler super admin component">
+                                <span class="file-name">Impersonation Handler</span>
+                                <span class="file-path">src/components/impersonation/impersonation-handler.tsx</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="subsection">
+                        <div class="subsection-title">Chat</div>
+                        <div class="file-list">
+                            <div class="file-item" data-search="chat widget ai assistant component">
+                                <span class="file-name">Chat Widget</span>
+                                <span class="file-path">src/components/chat/chat-widget.tsx</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="subsection">
+                        <div class="subsection-title">Shared</div>
+                        <div class="file-list">
+                            <div class="file-item" data-search="delete button confirm shared component">
+                                <span class="file-name">Delete Button</span>
+                                <span class="file-path">src/components/shared/delete-button.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="form section group shared component">
+                                <span class="file-name">Form Section</span>
+                                <span class="file-path">src/components/forms/form-section.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="main content wrapper shared component">
+                                <span class="file-name">Main Content</span>
+                                <span class="file-path">src/components/main-content.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="providers context shared component">
+                                <span class="file-name">Providers</span>
+                                <span class="file-path">src/components/providers.tsx</span>
+                            </div>
+                            <div class="file-item" data-search="currency selector shared component">
+                                <span class="file-name">Currency Selector</span>
+                                <span class="file-path">src/components/currency-selector.tsx</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- UI States Section -->
+        <div class="tab-content" data-tab="uistates">
+            <!-- Layouts -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span class="section-title">
+                        Layouts
+                        <span class="section-badge">8</span>
+                    </span>
+                    <span class="section-toggle">&#9662;</span>
+                </div>
+                <div class="section-body">
+                    <div class="file-list">
+                        <div class="file-item" data-search="root layout global app">
+                            <span class="file-name">Root Layout</span>
+                            <span class="file-path">src/app/layout.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="admin layout shell navigation">
+                            <span class="file-name">Admin Layout</span>
+                            <span class="file-path">src/app/admin/layout.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="employee layout shell navigation">
+                            <span class="file-name">Employee Layout</span>
+                            <span class="file-path">src/app/employee/layout.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="super admin layout shell">
+                            <span class="file-name">Super Admin Layout</span>
+                            <span class="file-path">src/app/super-admin/layout.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="marketing layout public">
+                            <span class="file-name">Marketing Layout</span>
+                            <span class="file-path">src/app/(marketing)/layout.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="help layout documentation">
+                            <span class="file-name">Help Layout</span>
+                            <span class="file-path">src/app/help/layout.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="login layout auth">
+                            <span class="file-name">Login Layout</span>
+                            <span class="file-path">src/app/login/layout.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="profile layout user">
+                            <span class="file-name">Profile Layout</span>
+                            <span class="file-path">src/app/profile/layout.tsx</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading States - Admin -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span class="section-title">
+                        Loading States - Admin
+                        <span class="section-badge">10</span>
+                    </span>
+                    <span class="section-toggle">&#9662;</span>
+                </div>
+                <div class="section-body">
+                    <div class="file-list">
+                        <div class="file-item" data-search="admin dashboard loading skeleton">
+                            <span class="file-name">Admin Dashboard Loading</span>
+                            <span class="file-path">src/app/admin/loading.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="employees loading skeleton hr">
+                            <span class="file-name">Employees Loading</span>
+                            <span class="file-path">src/app/admin/(hr)/employees/loading.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="leave requests loading skeleton hr">
+                            <span class="file-name">Leave Requests Loading</span>
+                            <span class="file-path">src/app/admin/(hr)/leave/requests/loading.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="assets loading skeleton operations">
+                            <span class="file-name">Assets Loading</span>
+                            <span class="file-path">src/app/admin/(operations)/assets/loading.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="asset detail loading skeleton operations">
+                            <span class="file-name">Asset Detail Loading</span>
+                            <span class="file-path">src/app/admin/(operations)/assets/[id]/loading.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="asset edit loading skeleton operations">
+                            <span class="file-name">Asset Edit Loading</span>
+                            <span class="file-path">src/app/admin/(operations)/assets/[id]/edit/loading.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="asset requests loading skeleton operations">
+                            <span class="file-name">Asset Requests Loading</span>
+                            <span class="file-path">src/app/admin/(operations)/asset-requests/loading.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="subscriptions loading skeleton operations">
+                            <span class="file-name">Subscriptions Loading</span>
+                            <span class="file-path">src/app/admin/(operations)/subscriptions/loading.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="suppliers loading skeleton operations">
+                            <span class="file-name">Suppliers Loading</span>
+                            <span class="file-path">src/app/admin/(operations)/suppliers/loading.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="purchase requests loading skeleton projects">
+                            <span class="file-name">Purchase Requests Loading</span>
+                            <span class="file-path">src/app/admin/(projects)/purchase-requests/loading.tsx</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading States - Employee -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span class="section-title">
+                        Loading States - Employee
+                        <span class="section-badge">21</span>
+                    </span>
+                    <span class="section-toggle">&#9662;</span>
+                </div>
+                <div class="section-body">
+                    <div class="file-list">
+                        <div class="file-item" data-search="employee dashboard loading skeleton">
+                            <span class="file-name">Employee Dashboard Loading</span>
+                            <span class="file-path">src/app/employee/loading.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="leave loading skeleton employee hr">
+                            <span class="file-name">Leave Loading</span>
+                            <span class="file-path">src/app/employee/(hr)/leave/loading.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="leave detail loading skeleton employee hr">
+                            <span class="file-name">Leave Detail Loading</span>
+                            <span class="file-path">src/app/employee/(hr)/leave/[id]/loading.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="leave new loading skeleton employee hr">
+                            <span class="file-name">New Leave Loading</span>
+                            <span class="file-path">src/app/employee/(hr)/leave/new/loading.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="leave requests loading skeleton employee hr">
+                            <span class="file-name">Leave Requests Loading</span>
+                            <span class="file-path">src/app/employee/(hr)/leave/requests/loading.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="payroll loading skeleton employee hr">
+                            <span class="file-name">Payroll Loading</span>
+                            <span class="file-path">src/app/employee/(hr)/payroll/loading.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="payslips loading skeleton employee hr">
+                            <span class="file-name">Payslips Loading</span>
+                            <span class="file-path">src/app/employee/(hr)/payroll/payslips/loading.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="payslip detail loading skeleton employee hr">
+                            <span class="file-name">Payslip Detail Loading</span>
+                            <span class="file-path">src/app/employee/(hr)/payroll/payslips/[id]/loading.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="gratuity loading skeleton employee hr">
+                            <span class="file-name">Gratuity Loading</span>
+                            <span class="file-path">src/app/employee/(hr)/payroll/gratuity/loading.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="assets loading skeleton employee operations">
+                            <span class="file-name">Assets Loading</span>
+                            <span class="file-path">src/app/employee/(operations)/assets/loading.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="asset detail loading skeleton employee operations">
+                            <span class="file-name">Asset Detail Loading</span>
+                            <span class="file-path">src/app/employee/(operations)/assets/[id]/loading.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="my assets loading skeleton employee operations">
+                            <span class="file-name">My Assets Loading</span>
+                            <span class="file-path">src/app/employee/(operations)/my-assets/loading.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="asset requests loading skeleton employee operations">
+                            <span class="file-name">Asset Requests Loading</span>
+                            <span class="file-path">src/app/employee/(operations)/asset-requests/loading.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="asset request detail loading skeleton employee operations">
+                            <span class="file-name">Asset Request Detail Loading</span>
+                            <span class="file-path">src/app/employee/(operations)/asset-requests/[id]/loading.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="subscriptions loading skeleton employee operations">
+                            <span class="file-name">Subscriptions Loading</span>
+                            <span class="file-path">src/app/employee/(operations)/subscriptions/loading.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="subscription detail loading skeleton employee operations">
+                            <span class="file-name">Subscription Detail Loading</span>
+                            <span class="file-path">src/app/employee/(operations)/subscriptions/[id]/loading.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="suppliers loading skeleton employee operations">
+                            <span class="file-name">Suppliers Loading</span>
+                            <span class="file-path">src/app/employee/(operations)/suppliers/loading.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="supplier detail loading skeleton employee operations">
+                            <span class="file-name">Supplier Detail Loading</span>
+                            <span class="file-path">src/app/employee/(operations)/suppliers/[id]/loading.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="purchase requests loading skeleton employee projects">
+                            <span class="file-name">Purchase Requests Loading</span>
+                            <span class="file-path">src/app/employee/(projects)/purchase-requests/loading.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="purchase request detail loading skeleton employee projects">
+                            <span class="file-name">Purchase Request Detail Loading</span>
+                            <span class="file-path">src/app/employee/(projects)/purchase-requests/[id]/loading.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="purchase request new loading skeleton employee projects">
+                            <span class="file-name">New Purchase Request Loading</span>
+                            <span class="file-path">src/app/employee/(projects)/purchase-requests/new/loading.tsx</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error Boundaries -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span class="section-title">
+                        Error Boundaries
+                        <span class="section-badge">9</span>
+                    </span>
+                    <span class="section-toggle">&#9662;</span>
+                </div>
+                <div class="section-body">
+                    <div class="file-list">
+                        <div class="file-item" data-search="global error boundary root">
+                            <span class="file-name">Global Error Boundary</span>
+                            <span class="file-path">src/app/error.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="admin hr error boundary">
+                            <span class="file-name">Admin HR Error</span>
+                            <span class="file-path">src/app/admin/(hr)/error.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="admin operations error boundary">
+                            <span class="file-name">Admin Operations Error</span>
+                            <span class="file-path">src/app/admin/(operations)/error.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="admin projects error boundary">
+                            <span class="file-name">Admin Projects Error</span>
+                            <span class="file-path">src/app/admin/(projects)/error.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="admin system error boundary">
+                            <span class="file-name">Admin System Error</span>
+                            <span class="file-path">src/app/admin/(system)/error.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="admin modules error boundary">
+                            <span class="file-name">Admin Modules Error</span>
+                            <span class="file-path">src/app/admin/modules/error.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="employee hr error boundary">
+                            <span class="file-name">Employee HR Error</span>
+                            <span class="file-path">src/app/employee/(hr)/error.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="employee operations error boundary">
+                            <span class="file-name">Employee Operations Error</span>
+                            <span class="file-path">src/app/employee/(operations)/error.tsx</span>
+                        </div>
+                        <div class="file-item" data-search="employee projects error boundary">
+                            <span class="file-name">Employee Projects Error</span>
+                            <span class="file-path">src/app/employee/(projects)/error.tsx</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Not Found -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span class="section-title">
+                        Not Found Pages
+                        <span class="section-badge">1</span>
+                    </span>
+                    <span class="section-toggle">&#9662;</span>
+                </div>
+                <div class="section-body">
+                    <div class="file-list">
+                        <div class="file-item" data-search="404 not found global">
+                            <span class="file-name">404 Not Found</span>
+                            <span class="file-path">src/app/not-found.tsx</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+                tab.classList.add('active');
+                document.querySelector(`.tab-content[data-tab="${tab.dataset.tab}"]`).classList.add('active');
+            });
+        });
+
+        // Section toggle
+        function toggleSection(header) {
+            header.parentElement.classList.toggle('collapsed');
+        }
+
+        // Search functionality
+        const searchInput = document.getElementById('searchInput');
+        const noResults = document.getElementById('noResults');
+
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            let hasResults = false;
+
+            document.querySelectorAll('.file-item').forEach(item => {
+                const searchText = item.dataset.search.toLowerCase() + ' ' +
+                                   item.querySelector('.file-name').textContent.toLowerCase() + ' ' +
+                                   item.querySelector('.file-path').textContent.toLowerCase();
+
+                if (query === '' || searchText.includes(query)) {
+                    item.classList.remove('hidden');
+                    hasResults = true;
+                } else {
+                    item.classList.add('hidden');
+                }
+            });
+
+            // Show/hide sections based on visible items
+            document.querySelectorAll('.section').forEach(section => {
+                const visibleItems = section.querySelectorAll('.file-item:not(.hidden)');
+                section.style.display = visibleItems.length > 0 ? 'block' : 'none';
+                if (query && visibleItems.length > 0) {
+                    section.classList.remove('collapsed');
+                }
+            });
+
+            // Show all tabs' content when searching
+            if (query) {
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.add('active'));
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            } else {
+                // Reset to first tab when search cleared
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                document.querySelector('.tab-content[data-tab="admin"]').classList.add('active');
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelector('.tab[data-tab="admin"]').classList.add('active');
+                document.querySelectorAll('.section').forEach(s => s.style.display = 'block');
+            }
+
+            noResults.classList.toggle('hidden', hasResults || query === '');
+        });
+
+        // Expand all sections by default
+        // document.querySelectorAll('.section').forEach(s => s.classList.remove('collapsed'));
+    </script>
+</body>
+</html>

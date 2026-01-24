@@ -5,12 +5,12 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
 import { validateUploadedFile } from '@/lib/files/sanity';
 import { storageUpload, storagePublicUrl } from '@/lib/storage';
 import { logAction } from '@/lib/core/activity';
 import logger from '@/lib/core/log';
+import { withErrorHandler } from '@/lib/http/handler';
+import { badRequestResponse } from '@/lib/http/errors';
 
 // Force Node.js runtime for file upload handling
 export const runtime = 'nodejs';
@@ -37,159 +37,104 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
  * Response:
  * - url: The file path in Supabase storage
  */
-export async function POST(request: NextRequest) {
+export const POST = withErrorHandler(async (request: NextRequest, { tenant }) => {
+  const tenantId = tenant!.tenantId;
+  const userId = tenant!.userId;
+
   logger.debug('Starting file upload');
 
+  // Parse the multipart form data using Next.js built-in API
+  let formData: FormData;
   try {
-    // Check authentication
-    const session = await getServerSession(authOptions);
-    logger.debug({ authenticated: !!session?.user }, 'Session check');
-
-    if (!session?.user) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      );
-    }
-
-    // SECURITY: Require tenant context for file isolation
-    const tenantId = session.user.organizationId;
-    if (!tenantId) {
-      return NextResponse.json(
-        { error: 'Tenant context required' },
-        { status: 403 }
-      );
-    }
-
-    // Parse the multipart form data using Next.js built-in API
-    let formData: FormData;
-    try {
-      logger.debug('Parsing multipart form');
-      formData = await request.formData();
-      logger.debug('Form parsed successfully');
-    } catch (error) {
-      logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Error parsing form data');
-      return NextResponse.json(
-        { error: 'Failed to parse upload data. Please ensure the file is under 10MB.' },
-        { status: 400 }
-      );
-    }
-
-    // Get the file from form data
-    const file = formData.get('file') as File | null;
-    if (!file) {
-      return NextResponse.json(
-        { error: 'No file provided' },
-        { status: 400 }
-      );
-    }
-
-    // Validate file size
-    if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json(
-        { error: 'File size exceeds 10MB limit' },
-        { status: 400 }
-      );
-    }
-
-    // Validate file extension
-    const extension = '.' + (file.name.split('.').pop()?.toLowerCase() || '');
-    if (!ALLOWED_EXTENSIONS.includes(extension)) {
-      return NextResponse.json(
-        { error: `File type ${extension} not allowed. Allowed: ${ALLOWED_EXTENSIONS.join(', ')}` },
-        { status: 400 }
-      );
-    }
-
-    // Validate MIME type
-    if (!ALLOWED_MIME_TYPES.includes(file.type)) {
-      return NextResponse.json(
-        { error: `Invalid file type: ${file.type}` },
-        { status: 400 }
-      );
-    }
-
-    // Convert file to buffer
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
-    // Run sanity checks on file content
-    const sanityCheck = await validateUploadedFile(
-      buffer,
-      file.name,
-      file.type
-    );
-
-    if (!sanityCheck.valid) {
-      return NextResponse.json(
-        { error: sanityCheck.error || 'File content validation failed' },
-        { status: 400 }
-      );
-    }
-
-    // Generate unique file path with tenant isolation
-    // Files are stored under: {tenantId}/{timestamp}.{ext}
-    const timestamp = Date.now();
-    const fileName = `${timestamp}${extension}`;
-    const filePath = `${tenantId}/${fileName}`; // Tenant-scoped path for isolation
-
-    // Upload to Supabase storage
-    try {
-      logger.debug({ fileSize: buffer.length }, 'Uploading to Supabase storage');
-
-      await storageUpload({
-        path: filePath,
-        bytes: buffer,
-        contentType: file.type || 'application/octet-stream',
-      });
-
-      logger.debug('Upload to Supabase successful');
-    } catch (error) {
-      logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Error uploading to Supabase');
-      return NextResponse.json(
-        { error: 'Failed to upload file to storage' },
-        { status: 500 }
-      );
-    }
-
-    // Get the public URL for the uploaded file
-    const publicUrl = await storagePublicUrl(filePath);
-
-    // Log the upload action
-    try {
-      await logAction(
-        tenantId,
-        session.user.id,
-        'UPLOAD_FILE',
-        'file',
-        filePath,
-        {
-          fileName: file.name,
-          fileSize: file.size,
-          mimeType: file.type,
-          publicUrl,
-        }
-      );
-    } catch {
-      // Don't fail the request if logging fails
-    }
-
-    // Return the public URL
-    return NextResponse.json({
-      url: publicUrl,
-      fileName: file.name,
-      size: file.size,
-      mimeType: file.type,
-    });
-
+    logger.debug('Parsing multipart form');
+    formData = await request.formData();
+    logger.debug('Form parsed successfully');
   } catch (error) {
-    logger.error({
-      error: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
-    }, 'Unexpected error in upload endpoint');
-    return NextResponse.json(
-      { error: 'An unexpected error occurred during upload' },
-      { status: 500 }
-    );
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Error parsing form data');
+    return badRequestResponse('Failed to parse upload data. Please ensure the file is under 10MB.');
   }
-}
+
+  // Get the file from form data
+  const file = formData.get('file') as File | null;
+  if (!file) {
+    return badRequestResponse('No file provided');
+  }
+
+  // Validate file size
+  if (file.size > MAX_FILE_SIZE) {
+    return badRequestResponse('File size exceeds 10MB limit');
+  }
+
+  // Validate file extension
+  const extension = '.' + (file.name.split('.').pop()?.toLowerCase() || '');
+  if (!ALLOWED_EXTENSIONS.includes(extension)) {
+    return badRequestResponse(`File type ${extension} not allowed. Allowed: ${ALLOWED_EXTENSIONS.join(', ')}`);
+  }
+
+  // Validate MIME type
+  if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+    return badRequestResponse(`Invalid file type: ${file.type}`);
+  }
+
+  // Convert file to buffer
+  const arrayBuffer = await file.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+
+  // Run sanity checks on file content
+  const sanityCheck = await validateUploadedFile(
+    buffer,
+    file.name,
+    file.type
+  );
+
+  if (!sanityCheck.valid) {
+    return badRequestResponse(sanityCheck.error || 'File content validation failed');
+  }
+
+  // Generate unique file path with tenant isolation
+  // Files are stored under: {tenantId}/{timestamp}.{ext}
+  const timestamp = Date.now();
+  const fileName = `${timestamp}${extension}`;
+  const filePath = `${tenantId}/${fileName}`; // Tenant-scoped path for isolation
+
+  // Upload to Supabase storage
+  logger.debug({ fileSize: buffer.length }, 'Uploading to Supabase storage');
+
+  await storageUpload({
+    path: filePath,
+    bytes: buffer,
+    contentType: file.type || 'application/octet-stream',
+  });
+
+  logger.debug('Upload to Supabase successful');
+
+  // Get the public URL for the uploaded file
+  const publicUrl = await storagePublicUrl(filePath);
+
+  // Log the upload action
+  try {
+    await logAction(
+      tenantId,
+      userId,
+      'UPLOAD_FILE',
+      'file',
+      filePath,
+      {
+        fileName: file.name,
+        fileSize: file.size,
+        mimeType: file.type,
+        publicUrl,
+      }
+    );
+  } catch {
+    // Don't fail the request if logging fails
+  }
+
+  // Return the public URL
+  return NextResponse.json({
+    url: publicUrl,
+    fileName: file.name,
+    size: file.size,
+    mimeType: file.type,
+  });
+}, { requireAuth: true });

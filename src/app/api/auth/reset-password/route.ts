@@ -47,8 +47,8 @@ export async function GET(request: NextRequest) {
     // SECURITY: Hash the token before comparing with stored hash
     const hashedToken = hashToken(token);
 
-    // Check TeamMember first (org users)
-    const teamMember = await prisma.teamMember.findFirst({
+    // Check User table (single source of truth for auth)
+    const user = await prisma.user.findFirst({
       where: {
         resetToken: hashedToken,
         resetTokenExpiry: {
@@ -58,17 +58,7 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // Fall back to User model (for super admins)
-    const user = !teamMember ? await prisma.user.findFirst({
-      where: {
-        resetToken: hashedToken,
-        resetTokenExpiry: {
-          gt: new Date(),
-        },
-      },
-    }) : null;
-
-    return NextResponse.json({ valid: !!(teamMember || user) });
+    return NextResponse.json({ valid: !!user });
   } catch (error) {
     logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Validate reset token error');
     return NextResponse.json({ valid: false }, { status: 500 });
@@ -96,8 +86,8 @@ export async function POST(request: NextRequest) {
     // SECURITY: Hash the token before comparing with stored hash
     const hashedToken = hashToken(token);
 
-    // Check TeamMember first (org users)
-    const teamMember = await prisma.teamMember.findFirst({
+    // Check User table (single source of truth for auth)
+    const user = await prisma.user.findFirst({
       where: {
         resetToken: hashedToken,
         resetTokenExpiry: {
@@ -107,17 +97,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Fall back to User model (for super admins)
-    const user = !teamMember ? await prisma.user.findFirst({
-      where: {
-        resetToken: hashedToken,
-        resetTokenExpiry: {
-          gt: new Date(),
-        },
-      },
-    }) : null;
-
-    if (!teamMember && !user) {
+    if (!user) {
       return NextResponse.json(
         { error: 'Invalid or expired reset token' },
         { status: 400 }
@@ -127,30 +107,18 @@ export async function POST(request: NextRequest) {
     // Hash new password
     const passwordHash = await hash(password, 12);
 
-    if (teamMember) {
-      // Update TeamMember: set new password, clear reset token
-      await prisma.teamMember.update({
-        where: { id: teamMember.id },
-        data: {
-          passwordHash,
-          resetToken: null,
-          resetTokenExpiry: null,
-        },
-      });
-      logger.debug({ memberId: teamMember.id }, 'Password reset successful for team member');
-    } else if (user) {
-      // Update User: set new password, clear reset token, and invalidate existing sessions
-      await prisma.user.update({
-        where: { id: user.id },
-        data: {
-          passwordHash,
-          resetToken: null,
-          resetTokenExpiry: null,
-          passwordChangedAt: new Date(), // SECURITY: Invalidates all existing sessions
-        },
-      });
-      logger.debug({ userId: user.id }, 'Password reset successful for user');
-    }
+    // Update User: set new password, clear reset token, and invalidate existing sessions
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordHash,
+        resetToken: null,
+        resetTokenExpiry: null,
+        passwordChangedAt: new Date(), // SECURITY: Invalidates all existing sessions
+      },
+    });
+
+    logger.debug({ userId: user.id }, 'Password reset successful');
 
     return NextResponse.json({
       success: true,

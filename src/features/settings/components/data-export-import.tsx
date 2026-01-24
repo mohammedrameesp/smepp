@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Download, Upload, Database, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatNumber } from '@/lib/utils/math-utils';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
@@ -314,7 +315,7 @@ export function DataExportImport() {
                   />
                   {selectedFiles.fullBackup && (
                     <p className="mt-2 text-sm text-gray-600">
-                      {selectedFiles.fullBackup.name} ({(selectedFiles.fullBackup.size / 1024 / 1024).toFixed(2)} MB)
+                      {selectedFiles.fullBackup.name} ({formatNumber(selectedFiles.fullBackup.size / 1024 / 1024)} MB)
                     </p>
                   )}
                 </div>

@@ -19,14 +19,13 @@
 // IMPORTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
+import { NextResponse } from 'next/server';
 import { AssetRequestStatus } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { canCancelRequest } from '@/features/asset-requests';
-import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { withErrorHandler } from '@/lib/http/handler';
+import { badRequestResponse, notFoundResponse, forbiddenResponse } from '@/lib/http/errors';
 import {
   getApprovalChain,
   getApprovalChainSummary,
@@ -66,17 +65,15 @@ import {
  *   ]
  * }
  */
-async function getAssetRequestHandler(request: NextRequest, context: APIContext) {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
-    }
-
-    const tenantId = session.user.organizationId;
-    const id = context.params?.id;
-    if (!id) {
-      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
-    }
+export const GET = withErrorHandler(async (_request, { tenant, params }) => {
+  const tenantId = tenant!.tenantId;
+  const userId = tenant!.userId;
+  const isAdmin = tenant!.isAdmin;
+  const hasOperationsAccess = tenant!.hasOperationsAccess;
+  const id = params?.id;
+  if (!id) {
+    return badRequestResponse('ID is required');
+  }
 
     // ─────────────────────────────────────────────────────────────────────────────
     // STEP 1: Fetch request with all related data
@@ -138,77 +135,69 @@ async function getAssetRequestHandler(request: NextRequest, context: APIContext)
       },
     });
 
-    if (!assetRequest) {
-      return NextResponse.json({ error: 'Asset request not found' }, { status: 404 });
-    }
+  if (!assetRequest) {
+    return notFoundResponse('Asset request not found');
+  }
 
-    // ─────────────────────────────────────────────────────────────────────────────
-    // STEP 2: Check access permissions
-    // Non-admin users can only view their own requests
-    // ─────────────────────────────────────────────────────────────────────────────
-    const isAdmin = session.user.isAdmin;
-    if (!isAdmin && assetRequest.memberId !== session.user.id) {
-      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
-    }
+  // ─────────────────────────────────────────────────────────────────────────────
+  // STEP 2: Check access permissions
+  // Non-admin users can only view their own requests
+  // ─────────────────────────────────────────────────────────────────────────────
+  if (!isAdmin && assetRequest.memberId !== userId) {
+    return forbiddenResponse('Access denied');
+  }
 
-    // ─────────────────────────────────────────────────────────────────────────────
-    // STEP 3: Include approval chain if it exists
-    // ─────────────────────────────────────────────────────────────────────────────
-    const chainExists = await hasApprovalChain('ASSET_REQUEST', id);
-    let approvalChain = null;
-    let approvalSummary = null;
+  // ─────────────────────────────────────────────────────────────────────────────
+  // STEP 3: Include approval chain if it exists
+  // ─────────────────────────────────────────────────────────────────────────────
+  const chainExists = await hasApprovalChain('ASSET_REQUEST', id);
+  let approvalChain = null;
+  let approvalSummary = null;
 
-    if (chainExists) {
-      approvalChain = await getApprovalChain('ASSET_REQUEST', id);
-      approvalSummary = await getApprovalChainSummary('ASSET_REQUEST', id);
+  if (chainExists) {
+    approvalChain = await getApprovalChain('ASSET_REQUEST', id);
+    approvalSummary = await getApprovalChainSummary('ASSET_REQUEST', id);
 
-      // Add canCurrentUserApprove flag
-      if (approvalSummary?.status === 'PENDING' && approvalChain && approvalChain.length > 0) {
-        const currentStep = approvalChain.find(step => step.status === 'PENDING');
-        if (currentStep) {
-          // Get current user's approval capabilities
-          const currentUserId = session.user.id;
-          const currentUserIsAdmin = !!session.user.isAdmin;
-          const currentUserHasOperationsAccess = !!session.user.hasOperationsAccess;
+    // Add canCurrentUserApprove flag
+    if (approvalSummary?.status === 'PENDING' && approvalChain && approvalChain.length > 0) {
+      const currentStep = approvalChain.find(step => step.status === 'PENDING');
+      if (currentStep) {
+        // Determine if current user can approve based on their role matching the step's required role
+        let canCurrentUserApprove = false;
 
-          // Determine if current user can approve based on their role matching the step's required role
-          let canCurrentUserApprove = false;
-
-          switch (currentStep.requiredRole) {
-            case 'MANAGER': {
-              // Check if current user is the requester's manager
-              const directReports = await prisma.teamMember.findMany({
-                where: { reportingToId: currentUserId, tenantId },
-                select: { id: true },
-              });
-              canCurrentUserApprove = directReports.some(r => r.id === assetRequest.memberId);
-              break;
-            }
-            case 'HR_MANAGER':
-              canCurrentUserApprove = currentUserHasOperationsAccess;
-              break;
-            case 'DIRECTOR':
-              // Only admins can approve director-level steps
-              canCurrentUserApprove = currentUserIsAdmin;
-              break;
+        switch (currentStep.requiredRole) {
+          case 'MANAGER': {
+            // Check if current user is the requester's manager
+            const directReports = await prisma.teamMember.findMany({
+              where: { reportingToId: userId, tenantId },
+              select: { id: true },
+            });
+            canCurrentUserApprove = directReports.some(r => r.id === assetRequest.memberId);
+            break;
           }
-
-          approvalSummary = {
-            ...approvalSummary,
-            canCurrentUserApprove,
-          };
+          case 'HR_MANAGER':
+            canCurrentUserApprove = !!hasOperationsAccess;
+            break;
+          case 'DIRECTOR':
+            // Only admins can approve director-level steps
+            canCurrentUserApprove = !!isAdmin;
+            break;
         }
+
+        approvalSummary = {
+          ...approvalSummary,
+          canCurrentUserApprove,
+        };
       }
     }
+  }
 
-    return NextResponse.json({
-      ...assetRequest,
-      approvalChain,
-      approvalSummary,
-    });
-}
-
-export const GET = withErrorHandler(getAssetRequestHandler, { requireAuth: true, requireModule: 'assets' });
+  return NextResponse.json({
+    ...assetRequest,
+    approvalChain,
+    approvalSummary,
+  });
+}, { requireAuth: true, requireModule: 'assets' });
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // DELETE /api/asset-requests/[id] - Cancel Request
@@ -236,85 +225,79 @@ export const GET = withErrorHandler(getAssetRequestHandler, { requireAuth: true,
  * @example Response:
  * { "success": true, "message": "Request cancelled" }
  */
-async function deleteAssetRequestHandler(request: NextRequest, context: APIContext) {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
-    }
+export const DELETE = withErrorHandler(async (_request, { tenant, params }) => {
+  const tenantId = tenant!.tenantId;
+  const userId = tenant!.userId;
+  const isAdmin = tenant!.isAdmin;
+  const id = params?.id;
+  if (!id) {
+    return badRequestResponse('ID is required');
+  }
 
-    const tenantId = session.user.organizationId;
-    const id = context.params?.id;
-    if (!id) {
-      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
-    }
+  // ─────────────────────────────────────────────────────────────────────────────
+  // STEP 1: Fetch request (tenant-scoped for IDOR prevention)
+  // ─────────────────────────────────────────────────────────────────────────────
+  const assetRequest = await prisma.assetRequest.findFirst({
+    where: { id, tenantId },
+    include: {
+      asset: {
+        select: { assetTag: true, model: true },
+      },
+    },
+  });
 
-    // ─────────────────────────────────────────────────────────────────────────────
-    // STEP 1: Fetch request (tenant-scoped for IDOR prevention)
-    // ─────────────────────────────────────────────────────────────────────────────
-    const assetRequest = await prisma.assetRequest.findFirst({
-      where: { id, tenantId },
-      include: {
-        asset: {
-          select: { assetTag: true, model: true },
-        },
+  if (!assetRequest) {
+    return notFoundResponse('Asset request not found');
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // STEP 2: Check if user can cancel this request
+  // ─────────────────────────────────────────────────────────────────────────────
+  const isRequester = assetRequest.memberId === userId;
+
+  if (!isAdmin && !canCancelRequest(assetRequest.status, assetRequest.type, isRequester)) {
+    return badRequestResponse('Cannot cancel this request');
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // STEP 3: Cancel request in transaction
+  // ─────────────────────────────────────────────────────────────────────────────
+  await prisma.$transaction(async (tx) => {
+    await tx.assetRequest.update({
+      where: { id },
+      data: {
+        status: AssetRequestStatus.CANCELLED,
+        processedById: userId,
+        processedAt: new Date(),
       },
     });
 
-    if (!assetRequest) {
-      return NextResponse.json({ error: 'Asset request not found' }, { status: 404 });
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────────
-    // STEP 2: Check if user can cancel this request
-    // ─────────────────────────────────────────────────────────────────────────────
-    const isRequester = assetRequest.memberId === session.user.id;
-    const isAdmin = session.user.isAdmin;
-
-    if (!isAdmin && !canCancelRequest(assetRequest.status, assetRequest.type, isRequester)) {
-      return NextResponse.json({ error: 'Cannot cancel this request' }, { status: 400 });
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────────
-    // STEP 3: Cancel request in transaction
-    // ─────────────────────────────────────────────────────────────────────────────
-    await prisma.$transaction(async (tx) => {
-      await tx.assetRequest.update({
-        where: { id },
-        data: {
-          status: AssetRequestStatus.CANCELLED,
-          processedById: session.user.id,
-          processedAt: new Date(),
-        },
-      });
-
-      await tx.assetRequestHistory.create({
-        data: {
-          assetRequestId: id,
-          action: 'CANCELLED',
-          oldStatus: assetRequest.status,
-          newStatus: AssetRequestStatus.CANCELLED,
-          performedById: session.user.id,
-        },
-      });
+    await tx.assetRequestHistory.create({
+      data: {
+        assetRequestId: id,
+        action: 'CANCELLED',
+        oldStatus: assetRequest.status,
+        newStatus: AssetRequestStatus.CANCELLED,
+        performedById: userId,
+      },
     });
+  });
 
-    // ─────────────────────────────────────────────────────────────────────────────
-    // STEP 4: Log activity
-    // ─────────────────────────────────────────────────────────────────────────────
-    await logAction(
-      tenantId,
-      session.user.id,
-      ActivityActions.ASSET_REQUEST_CANCELLED,
-      'AssetRequest',
-      id,
-      {
-        requestNumber: assetRequest.requestNumber,
-        assetTag: assetRequest.asset.assetTag,
-        previousStatus: assetRequest.status,
-      }
-    );
+  // ─────────────────────────────────────────────────────────────────────────────
+  // STEP 4: Log activity
+  // ─────────────────────────────────────────────────────────────────────────────
+  await logAction(
+    tenantId,
+    userId,
+    ActivityActions.ASSET_REQUEST_CANCELLED,
+    'AssetRequest',
+    id,
+    {
+      requestNumber: assetRequest.requestNumber,
+      assetTag: assetRequest.asset.assetTag,
+      previousStatus: assetRequest.status,
+    }
+  );
 
-    return NextResponse.json({ success: true, message: 'Request cancelled' });
-}
-
-export const DELETE = withErrorHandler(deleteAssetRequestHandler, { requireAuth: true, requireModule: 'assets' });
+  return NextResponse.json({ success: true, message: 'Request cancelled' });
+}, { requireAuth: true, requireModule: 'assets' });

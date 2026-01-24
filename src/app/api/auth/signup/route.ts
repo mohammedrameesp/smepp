@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     const { name, email, password, inviteToken } = result.data;
     const normalizedEmail = email.toLowerCase().trim();
 
-    // Check if email already exists
+    // Check if email already exists in User table
     const existingUser = await prisma.user.findUnique({
       where: { email: normalizedEmail },
     });
@@ -124,16 +124,15 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Create user and optionally accept invitation in a transaction
+    // Create User and optionally accept invitation in a transaction
     const userWithOrg = await prisma.$transaction(async (tx) => {
-      // Create user
-      // Note: User.role defaults to EMPLOYEE (used for approval hierarchy)
-      // Admin/member status is stored on TeamMember.isAdmin
+      // Create User (single source of truth for auth)
       const user = await tx.user.create({
         data: {
           name,
           email: normalizedEmail,
           passwordHash,
+          emailVerified: new Date(), // Verified via signup
           isSuperAdmin,
         },
       });
@@ -150,25 +149,20 @@ export async function POST(request: NextRequest) {
         const isAdmin = invitation.role === 'OWNER' || invitation.role === 'ADMIN';
 
         // Check if TeamMember already exists (created by admin via /api/users)
-        const existingMember = await tx.teamMember.findUnique({
+        const existingMember = await tx.teamMember.findFirst({
           where: {
-            tenantId_email: {
-              tenantId: invitation.organizationId,
-              email: normalizedEmail,
-            },
+            tenantId: invitation.organizationId,
+            email: normalizedEmail,
           },
         });
 
         if (existingMember) {
-          // Update existing TeamMember with password and email verification
+          // Update existing TeamMember with userId FK
           await tx.teamMember.update({
             where: { id: existingMember.id },
             data: {
+              userId: user.id,
               name: name,
-              passwordHash: passwordHash,
-              emailVerified: new Date(),
-              setupToken: null,
-              setupTokenExpiry: null,
             },
           });
         } else {
@@ -178,13 +172,13 @@ export async function POST(request: NextRequest) {
             employeeCode = `${employeeCodePrefix}-${String(employeeCount + 1).padStart(3, '0')}`;
           }
 
-          // Create new TeamMember (the unified model for org users)
+          // Create new TeamMember with userId FK
           await tx.teamMember.create({
             data: {
               tenantId: invitation.organizationId,
-              email: normalizedEmail,
+              userId: user.id,
+              email: normalizedEmail, // Denormalized for queries
               name: name,
-              passwordHash: passwordHash,
               isAdmin,
               isOwner,
               isEmployee: finalIsEmployee,

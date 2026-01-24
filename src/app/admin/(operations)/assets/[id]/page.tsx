@@ -36,6 +36,7 @@ import {
 } from '@/features/assets';
 import { formatDate, formatDateTime } from '@/lib/core/datetime';
 import { formatCurrency } from '@/lib/core/currency';
+import { formatNumber } from '@/lib/utils/math-utils';
 import { AssetAssignDialog } from '@/features/asset-requests';
 import {
   Package,
@@ -459,13 +460,13 @@ export default async function AssetDetailPage({ params }: Props) {
                 {asset.disposalProceeds !== null && asset.disposalProceeds !== undefined && (
                   <div>
                     <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Proceeds</p>
-                    <p className="text-sm font-medium text-slate-900">QAR {Number(asset.disposalProceeds).toFixed(2)}</p>
+                    <p className="text-sm font-medium text-slate-900">QAR {formatNumber(Number(asset.disposalProceeds))}</p>
                   </div>
                 )}
                 {asset.disposalNetBookValue !== null && asset.disposalNetBookValue !== undefined && (
                   <div>
                     <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">NBV at Disposal</p>
-                    <p className="text-sm font-medium text-slate-900">QAR {Number(asset.disposalNetBookValue).toFixed(2)}</p>
+                    <p className="text-sm font-medium text-slate-900">QAR {formatNumber(Number(asset.disposalNetBookValue))}</p>
                   </div>
                 )}
                 {asset.disposalGainLoss !== null && asset.disposalGainLoss !== undefined && (
@@ -479,7 +480,7 @@ export default async function AssetDetailPage({ params }: Props) {
                       ) : (
                         <TrendingDown className="h-4 w-4" />
                       )}
-                      QAR {Math.abs(Number(asset.disposalGainLoss)).toFixed(2)}
+                      QAR {formatNumber(Math.abs(Number(asset.disposalGainLoss)))}
                     </p>
                   </div>
                 )}

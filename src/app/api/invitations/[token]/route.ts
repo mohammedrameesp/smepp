@@ -159,11 +159,11 @@ export async function POST(
         return { error: 'Your session is invalid. Please sign out and sign in again.', status: 401 };
       }
 
-      // Check if user is already a member (check TeamMember by email)
+      // Check if user is already a member (check TeamMember by userId FK)
       const existingMembership = await tx.teamMember.findFirst({
         where: {
           tenantId: invitation.organizationId,
-          email: session.user.email?.toLowerCase(),
+          userId: session.user.id,
           isDeleted: false,
         },
       });
@@ -197,16 +197,27 @@ export async function POST(
       // Determine if this user should be an admin based on role string
       const isAdmin = invitation.role === 'OWNER' || invitation.role === 'ADMIN';
 
-      // Check if TeamMember already exists for this email in this org
+      // Check if TeamMember already exists for this user in this org
       // (This happens when admin creates member via Add Member form for SSO orgs)
-      const existingTeamMember = await tx.teamMember.findUnique({
+      // First try by userId FK, then fall back to email for legacy records
+      let existingTeamMember = await tx.teamMember.findFirst({
         where: {
-          tenantId_email: {
-            tenantId: invitation.organizationId,
-            email: session.user.email!.toLowerCase(),
-          },
+          tenantId: invitation.organizationId,
+          userId: session.user.id,
         },
       });
+
+      // Fall back to email lookup for legacy records without userId
+      if (!existingTeamMember) {
+        existingTeamMember = await tx.teamMember.findUnique({
+          where: {
+            tenantId_email: {
+              tenantId: invitation.organizationId,
+              email: session.user.email!.toLowerCase(),
+            },
+          },
+        });
+      }
 
       if (existingTeamMember) {
         // Get user data to update TeamMember with (e.g., profile image from SSO)
@@ -214,8 +225,6 @@ export async function POST(
           where: { id: session.user.id },
           select: {
             image: true,
-            passwordHash: true,
-            emailVerified: true,
           },
         });
 
@@ -263,14 +272,8 @@ export async function POST(
             ...(!shouldBeEmployee && !existingTeamMember.image && invitation.organization.logoUrl
               ? { image: invitation.organization.logoUrl }
               : {}),
-            // Copy password hash if available (for credentials fallback)
-            ...(userData?.passwordHash && !existingTeamMember.passwordHash
-              ? { passwordHash: userData.passwordHash }
-              : {}),
-            // Set email verified if verified by OAuth
-            ...(userData?.emailVerified && !existingTeamMember.emailVerified
-              ? { emailVerified: userData.emailVerified }
-              : {}),
+            // Set userId FK if not already set (for legacy records)
+            ...(!existingTeamMember.userId ? { userId: session.user.id } : {}),
             // Set joinedAt if not already set
             ...(!existingTeamMember.joinedAt ? { joinedAt: new Date() } : {}),
           },
@@ -295,15 +298,13 @@ export async function POST(
         };
       }
 
-      // Get user data to copy password hash (for credentials login)
+      // Get user data for TeamMember creation
       const user = await tx.user.findUnique({
         where: { id: session.user.id },
         select: {
           name: true,
           email: true,
           image: true,
-          passwordHash: true,
-          emailVerified: true,
         },
       });
 
@@ -322,17 +323,16 @@ export async function POST(
         employeeCode = `${prefix}-${String(count + 1).padStart(3, '0')}`;
       }
 
-      // Create TeamMember (the unified model)
+      // Create TeamMember with userId FK
       await tx.teamMember.create({
         data: {
           tenantId: invitation.organizationId,
-          email: session.user.email!.toLowerCase(),
+          userId: session.user.id,
+          email: session.user.email!.toLowerCase(), // Denormalized for queries
           name: invitation.name || user?.name || null,
           image: !finalIsEmployee && invitation.organization.logoUrl
             ? invitation.organization.logoUrl
             : user?.image || null,
-          passwordHash: user?.passwordHash || null,
-          emailVerified: user?.emailVerified || null,
           isAdmin,
           isOwner,
           isEmployee: finalIsEmployee,

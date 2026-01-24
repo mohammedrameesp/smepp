@@ -48,3 +48,15 @@ export {
   resetToDefaultPermissions,
   copyPermissions,
 } from './seed-permissions';
+
+// Manager access filter
+export {
+  buildManagerAccessFilter,
+  applyManagerFilter,
+  canAccessMember,
+  type ManagerAccessFilter,
+  type ManagerFilterOptions,
+} from './manager-filter';
+
+// Re-export TenantContext from prisma-tenant for convenience
+export type { TenantContext } from '@/lib/core/prisma-tenant';

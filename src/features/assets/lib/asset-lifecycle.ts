@@ -25,6 +25,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { prisma } from '@/lib/core/prisma';
+import { formatNumber } from '@/lib/utils/math-utils';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -376,7 +377,7 @@ export async function getAssetUtilization(assetId: string, tenantId: string): Pr
 
   if (rawUtilization > 100) {
     console.warn(
-      `[Asset ${assetId}] Utilization exceeds 100%: ${rawUtilization.toFixed(2)}%`,
+      `[Asset ${assetId}] Utilization exceeds 100%: ${formatNumber(rawUtilization)}%`,
       `(${totalAssignedDays} assigned / ${totalOwnedDays} owned days)`,
       `Asset may have overlapping assignments or data integrity issues.`
     );

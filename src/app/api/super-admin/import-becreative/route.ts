@@ -93,13 +93,14 @@ export async function POST(request: NextRequest) {
 
       // Create TeamMember entry for organization membership
       const existingMember = await prisma.teamMember.findFirst({
-        where: { tenantId, email: existingUser.email },
+        where: { tenantId, userId: existingUser.id },
       });
 
       if (!existingMember) {
         await prisma.teamMember.create({
           data: {
             tenantId,
+            userId: existingUser.id,
             email: existingUser.email,
             name: existingUser.name,
             canLogin: true,

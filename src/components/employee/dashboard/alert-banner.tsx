@@ -1,3 +1,8 @@
+/**
+ * @file alert-banner.tsx
+ * @description Document expiry alert banner for employee dashboard
+ * @module components/employee/dashboard
+ */
 'use client';
 
 import Link from 'next/link';
@@ -11,7 +16,7 @@ interface DocumentAlert {
   daysLeft: number;
 }
 
-interface AlertBannerProps {
+interface DocumentExpiryAlertProps {
   alerts: DocumentAlert[];
   className?: string;
 }
@@ -22,7 +27,14 @@ const iconMap: Record<string, typeof IdCard> = {
   'Health Card': HeartPulse,
 };
 
-export function AlertBanner({ alerts, className }: AlertBannerProps) {
+/**
+ * Document expiry alert banner for employee dashboard.
+ * Shows alerts for expiring or expired documents (QID, Passport, Health Card).
+ *
+ * @deprecated Use AlertBanner from @/components/ui/alert-banner for general alerts.
+ * This component provides specific document expiry functionality.
+ */
+export function DocumentExpiryAlert({ alerts, className }: DocumentExpiryAlertProps) {
   const [dismissed, setDismissed] = useState(false);
 
   if (dismissed || alerts.length === 0) return null;
@@ -66,3 +78,6 @@ export function AlertBanner({ alerts, className }: AlertBannerProps) {
     </div>
   );
 }
+
+/** @deprecated Use DocumentExpiryAlert instead */
+export const AlertBanner = DocumentExpiryAlert;

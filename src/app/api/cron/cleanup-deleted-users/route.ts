@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import logger from '@/lib/core/log';
+import { verifyCronAuth } from '@/lib/security/cron-auth';
 
 /**
  * Cron job to permanently delete users whose scheduled deletion date has passed.
@@ -16,13 +17,11 @@ import logger from '@/lib/core/log';
  */
 export async function GET(request: NextRequest) {
   try {
-    // Verify cron secret for security
-    // SECURITY: Require CRON_SECRET to be set AND match - never allow unauthenticated access
-    const authHeader = request.headers.get('authorization');
-    const cronSecret = process.env.CRON_SECRET;
-
-    if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    // SECURITY: Verify cron secret using timing-safe comparison
+    // Require CRON_SECRET to be set AND match - never allow unauthenticated access
+    const authResult = verifyCronAuth(request);
+    if (!authResult.valid) {
+      return NextResponse.json({ error: 'Authentication required', details: authResult.error }, { status: 401 });
     }
 
     const now = new Date();

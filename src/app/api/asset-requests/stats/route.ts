@@ -37,12 +37,10 @@
 // IMPORTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
+import { NextResponse } from 'next/server';
 import { AssetRequestStatus } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
-import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { withErrorHandler } from '@/lib/http/handler';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GET /api/asset-requests/stats - Get Request Statistics
@@ -77,16 +75,12 @@ import { withErrorHandler, APIContext } from '@/lib/http/handler';
  *   "totalPending": 3
  * }
  */
-async function getAssetRequestStatsHandler(_request: NextRequest, _context: APIContext) {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
-    }
+export const GET = withErrorHandler(async (_request, { tenant }) => {
+  const tenantId = tenant!.tenantId;
+  const userId = tenant!.userId;
+  const isAdmin = tenant!.isAdmin;
 
-    const tenantId = session.user.organizationId;
-    const isAdmin = session.user.isAdmin;
-
-    if (isAdmin) {
+  if (isAdmin) {
       // ─────────────────────────────────────────────────────────────────────────────
       // ADMIN VIEW: Organization-wide pending counts
       // Shows items that need admin action or attention
@@ -123,7 +117,7 @@ async function getAssetRequestStatsHandler(_request: NextRequest, _context: APIC
         prisma.assetRequest.count({
           where: {
             tenantId,
-            memberId: session.user.id,
+            memberId: userId,
             status: AssetRequestStatus.PENDING_USER_ACCEPTANCE,
           },
         }),
@@ -131,7 +125,7 @@ async function getAssetRequestStatsHandler(_request: NextRequest, _context: APIC
         prisma.assetRequest.count({
           where: {
             tenantId,
-            memberId: session.user.id,
+            memberId: userId,
             status: AssetRequestStatus.PENDING_ADMIN_APPROVAL,
           },
         }),
@@ -139,19 +133,17 @@ async function getAssetRequestStatsHandler(_request: NextRequest, _context: APIC
         prisma.assetRequest.count({
           where: {
             tenantId,
-            memberId: session.user.id,
+            memberId: userId,
             status: AssetRequestStatus.PENDING_RETURN_APPROVAL,
           },
         }),
       ]);
 
-      return NextResponse.json({
-        pendingAssignments: myPendingAssignments,
-        pendingRequests: myPendingRequests,
-        pendingReturns: myPendingReturns,
-        totalPending: myPendingAssignments + myPendingRequests + myPendingReturns,
-      });
-    }
-}
-
-export const GET = withErrorHandler(getAssetRequestStatsHandler, { requireAuth: true, requireModule: 'assets' });
+    return NextResponse.json({
+      pendingAssignments: myPendingAssignments,
+      pendingRequests: myPendingRequests,
+      pendingReturns: myPendingReturns,
+      totalPending: myPendingAssignments + myPendingRequests + myPendingReturns,
+    });
+  }
+}, { requireAuth: true, requireModule: 'assets' });

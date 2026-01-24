@@ -29,12 +29,10 @@
 // IMPORTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
+import { NextResponse } from 'next/server';
 import { AssetRequestStatus } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
-import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { withErrorHandler } from '@/lib/http/handler';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GET /api/asset-requests/my-pending - Get User's Pending Requests
@@ -79,24 +77,20 @@ import { withErrorHandler, APIContext } from '@/lib/http/handler';
  *   }
  * }
  */
-async function getMyPendingRequestsHandler(_request: NextRequest, _context: APIContext) {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
-    }
+export const GET = withErrorHandler(async (_request, { tenant }) => {
+  const tenantId = tenant!.tenantId;
+  const userId = tenant!.userId;
 
-    const tenantId = session.user.organizationId;
-
-    // ─────────────────────────────────────────────────────────────────────────────
-    // STEP 1: Get user's pending assignments (awaiting their response)
-    // These are assignments TO the user that need accept/decline
-    // ─────────────────────────────────────────────────────────────────────────────
-    const pendingAssignments = await prisma.assetRequest.findMany({
-      where: {
-        tenantId,
-        memberId: session.user.id,
-        status: AssetRequestStatus.PENDING_USER_ACCEPTANCE,
-      },
+  // ─────────────────────────────────────────────────────────────────────────────
+  // STEP 1: Get user's pending assignments (awaiting their response)
+  // These are assignments TO the user that need accept/decline
+  // ─────────────────────────────────────────────────────────────────────────────
+  const pendingAssignments = await prisma.assetRequest.findMany({
+    where: {
+      tenantId,
+      memberId: userId,
+      status: AssetRequestStatus.PENDING_USER_ACCEPTANCE,
+    },
       include: {
         asset: {
           select: {
@@ -119,47 +113,45 @@ async function getMyPendingRequestsHandler(_request: NextRequest, _context: APIC
       orderBy: { createdAt: 'desc' },
     });
 
-    // ─────────────────────────────────────────────────────────────────────────────
-    // STEP 2: Get user's pending requests (awaiting admin response)
-    // These are requests BY the user waiting for admin approval
-    // ─────────────────────────────────────────────────────────────────────────────
-    const pendingRequests = await prisma.assetRequest.findMany({
-      where: {
-        tenantId,
-        memberId: session.user.id,
-        status: {
-          in: [
-            AssetRequestStatus.PENDING_ADMIN_APPROVAL,
-            AssetRequestStatus.PENDING_RETURN_APPROVAL,
-          ],
+  // ─────────────────────────────────────────────────────────────────────────────
+  // STEP 2: Get user's pending requests (awaiting admin response)
+  // These are requests BY the user waiting for admin approval
+  // ─────────────────────────────────────────────────────────────────────────────
+  const pendingRequests = await prisma.assetRequest.findMany({
+    where: {
+      tenantId,
+      memberId: userId,
+      status: {
+        in: [
+          AssetRequestStatus.PENDING_ADMIN_APPROVAL,
+          AssetRequestStatus.PENDING_RETURN_APPROVAL,
+        ],
+      },
+    },
+    include: {
+      asset: {
+        select: {
+          id: true,
+          assetTag: true,
+          model: true,
+          brand: true,
+          type: true,
         },
       },
-      include: {
-        asset: {
-          select: {
-            id: true,
-            assetTag: true,
-            model: true,
-            brand: true,
-            type: true,
-          },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    },
+    orderBy: { createdAt: 'desc' },
+  });
 
-    // ─────────────────────────────────────────────────────────────────────────────
-    // STEP 3: Return organized response with counts for UI badges
-    // ─────────────────────────────────────────────────────────────────────────────
-    return NextResponse.json({
-      pendingAssignments,
-      pendingRequests,
-      counts: {
-        assignments: pendingAssignments.length,
-        requests: pendingRequests.length,
-        total: pendingAssignments.length + pendingRequests.length,
-      },
-    });
-}
-
-export const GET = withErrorHandler(getMyPendingRequestsHandler, { requireAuth: true, requireModule: 'assets' });
+  // ─────────────────────────────────────────────────────────────────────────────
+  // STEP 3: Return organized response with counts for UI badges
+  // ─────────────────────────────────────────────────────────────────────────────
+  return NextResponse.json({
+    pendingAssignments,
+    pendingRequests,
+    counts: {
+      assignments: pendingAssignments.length,
+      requests: pendingRequests.length,
+      total: pendingAssignments.length + pendingRequests.length,
+    },
+  });
+}, { requireAuth: true, requireModule: 'assets' });

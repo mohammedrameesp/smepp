@@ -13,6 +13,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import logger from '@/lib/core/log';
+import { verifyCronAuth } from '@/lib/security/cron-auth';
 
 const RETENTION_DAYS = 7;
 
@@ -24,12 +25,10 @@ const RETENTION_DAYS = 7;
  */
 export async function GET(request: NextRequest) {
   try {
-    // Verify cron secret for security
-    const authHeader = request.headers.get('authorization');
-    const cronSecret = process.env.CRON_SECRET;
-
-    if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    // SECURITY: Verify cron secret using timing-safe comparison
+    const authResult = verifyCronAuth(request);
+    if (!authResult.valid) {
+      return NextResponse.json({ error: 'Authentication required', details: authResult.error }, { status: 401 });
     }
 
     // Calculate cutoff date (7 days ago)

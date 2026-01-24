@@ -289,8 +289,9 @@ model User {
   accounts Account[]
   sessions Session[]
 
-  // NOTE: hrProfile and organizationMemberships removed
-  // Use TeamMember model for all organization and HR data
+  // Organization memberships via TeamMember
+  // One User can have multiple TeamMember records (multi-org support)
+  teamMemberships TeamMember[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -554,29 +555,18 @@ model TeamMember {
   tenant   Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   // ═══════════════════════════════════════════════════════════════════════════════
-  // AUTHENTICATION
+  // USER LINK (Authentication handled by User model)
   // ═══════════════════════════════════════════════════════════════════════════════
-  email         String
-  name          String?
-  passwordHash  String?
-  emailVerified DateTime?
-  image         String?
-  canLogin      Boolean   @default(true)
+  userId String // FK to User - handles all authentication
+  user   User   @relation(fields: [userId], references: [id])
 
-  // Password reset
-  resetToken       String?   @unique
-  resetTokenExpiry DateTime?
-
-  // Session security
-  passwordChangedAt DateTime?
-
-  // Account lockout (brute-force protection)
-  failedLoginAttempts Int       @default(0)
-  lockedUntil         DateTime?
-
-  // Initial password setup
-  setupToken       String?   @unique
-  setupTokenExpiry DateTime?
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // BASIC INFO (can differ per org)
+  // ═══════════════════════════════════════════════════════════════════════════════
+  email    String // Denormalized from User for queries (kept in sync)
+  name     String?
+  image    String?
+  canLogin Boolean @default(true) // Org-level login control
 
   // ═══════════════════════════════════════════════════════════════════════════════
   // OWNERSHIP
@@ -606,9 +596,9 @@ model TeamMember {
   // ═══════════════════════════════════════════════════════════════════════════════
   // EMPLOYEE CODE & BASIC INFO
   // ═══════════════════════════════════════════════════════════════════════════════
-  employeeCode   String?
-  dateOfJoining  DateTime?
-  dateOfLeaving  DateTime?
+  employeeCode  String?
+  dateOfJoining DateTime?
+  dateOfLeaving DateTime?
 
   // Offboarding (voluntary exit)
   offboardingReason    OffboardingReason?
@@ -622,7 +612,7 @@ model TeamMember {
   workLocation     WorkLocation?
   probationEndDate DateTime?
   noticePeriodDays Int?            @default(30)
-  reportingToId    String?         // TeamMember ID of manager
+  reportingToId    String? // TeamMember ID of manager
 
   // ═══════════════════════════════════════════════════════════════════════════════
   // PERSONAL INFORMATION
@@ -633,7 +623,7 @@ model TeamMember {
   maritalStatus MaritalStatus?
 
   // Contact
-  personalEmail    String?
+  personalEmail String?
 
   // Qatar-specific contact fields
   qatarMobile        String?
@@ -816,8 +806,8 @@ model TeamMember {
   aiChatAuditLogs   AIChatAuditLog[]
 
   // WhatsApp
-  whatsAppPhone                WhatsAppUserPhone?
-  whatsAppPromptSnoozedUntil   DateTime?           // User clicked "Remind me later"
+  whatsAppPhone              WhatsAppUserPhone?
+  whatsAppPromptSnoozedUntil DateTime? // User clicked "Remind me later"
 
   // Profile change requests
   changeRequests ProfileChangeRequest[]
@@ -826,6 +816,7 @@ model TeamMember {
   // INDEXES
   // ═══════════════════════════════════════════════════════════════════════════════
   @@unique([tenantId, email])
+  @@unique([tenantId, userId]) // One membership per org per user
   @@unique([tenantId, employeeCode])
   @@index([tenantId])
   @@index([tenantId, isEmployee])
@@ -835,8 +826,7 @@ model TeamMember {
   @@index([tenantId, canApprove])
   @@index([tenantId, reportingToId])
   @@index([email])
-  @@index([resetToken])
-  @@index([setupToken])
+  @@index([userId])
   @@index([scheduledDeletionAt])
   @@index([qidNumber])
   @@index([passportNumber])

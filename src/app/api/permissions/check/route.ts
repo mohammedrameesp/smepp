@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/core/auth';
-import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { prisma } from '@/lib/core/prisma';
+import { withErrorHandler } from '@/lib/http/handler';
 import { hasPermission, hasPermissions, isValidPermission } from '@/lib/access-control';
+import { badRequestResponse } from '@/lib/http/errors';
 
 /**
  * GET /api/permissions/check
@@ -18,32 +18,21 @@ import { hasPermission, hasPermissions, isValidPermission } from '@/lib/access-c
  * - Multiple permissions: { permissions: { [key]: boolean } }
  */
 export const GET = withErrorHandler(
-  async (request: NextRequest, { tenant }: APIContext) => {
+  async (request: NextRequest, { tenant }) => {
     const { searchParams } = new URL(request.url);
     const singlePermission = searchParams.get('permission');
     const multiplePermissions = searchParams.get('permissions');
 
     if (!singlePermission && !multiplePermissions) {
-      return NextResponse.json(
-        { error: 'Missing required query parameter: permission or permissions' },
-        { status: 400 }
-      );
+      return badRequestResponse('Missing required query parameter: permission or permissions');
     }
 
     const orgId = tenant!.tenantId;
-
-    // Get session to access isOwner and isAdmin flags
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Session not found' }, { status: 401 });
-    }
-
-    const isOwner = session.user.isOwner ?? false;
-    const isAdmin = session.user.isAdmin ?? false;
+    const isOwner = tenant!.isOwner ?? false;
+    const isAdmin = tenant!.isAdmin ?? false;
 
     // Get enabled modules from organization
-    const { prisma: rawPrisma } = await import('@/lib/core/prisma');
-    const organization = await rawPrisma.organization.findUnique({
+    const organization = await prisma.organization.findUnique({
       where: { id: orgId },
       select: { enabledModules: true },
     });
@@ -53,7 +42,7 @@ export const GET = withErrorHandler(
     // Single permission check
     if (singlePermission) {
       if (!isValidPermission(singlePermission)) {
-        return NextResponse.json({ error: `Invalid permission: ${singlePermission}` }, { status: 400 });
+        return badRequestResponse(`Invalid permission: ${singlePermission}`);
       }
 
       const allowed = await hasPermission(orgId, isOwner, isAdmin, singlePermission, enabledModules);
@@ -68,10 +57,7 @@ export const GET = withErrorHandler(
       // Validate all permissions
       const invalidPermissions = permissionList.filter((p) => !isValidPermission(p));
       if (invalidPermissions.length > 0) {
-        return NextResponse.json(
-          { error: `Invalid permissions: ${invalidPermissions.join(', ')}` },
-          { status: 400 }
-        );
+        return badRequestResponse(`Invalid permissions: ${invalidPermissions.join(', ')}`);
       }
 
       const permissions = await hasPermissions(orgId, isOwner, isAdmin, permissionList, enabledModules);
@@ -79,7 +65,7 @@ export const GET = withErrorHandler(
       return NextResponse.json({ permissions });
     }
 
-    return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+    return badRequestResponse('Invalid request');
   },
   { requireAuth: true }
 );

@@ -29,8 +29,6 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
 import { AssetRequestStatus, AssetStatus, AssetHistoryAction } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { acceptAssetAssignmentSchema } from '@/features/asset-requests';
@@ -40,7 +38,8 @@ import { sendBatchEmails } from '@/lib/core/email';
 import { handleEmailFailure } from '@/lib/core/email-failure-handler';
 import { assetAssignmentAcceptedEmail } from '@/lib/core/asset-request-emails';
 import { createBulkNotifications, NotificationTemplates } from '@/features/notifications/lib';
-import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { withErrorHandler } from '@/lib/http/handler';
+import { badRequestResponse, notFoundResponse, forbiddenResponse, validationErrorResponse } from '@/lib/http/errors';
 import logger from '@/lib/core/log';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -85,62 +84,55 @@ import logger from '@/lib/core/log';
  *   "asset": { "assetTag": "ORG-CP-25001", "status": "IN_USE" }
  * }
  */
-async function acceptAssetAssignmentHandler(request: NextRequest, context: APIContext) {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
+export const POST = withErrorHandler(async (request: NextRequest, { tenant, params }) => {
+  const tenantId = tenant!.tenantId;
+  const userId = tenant!.userId;
+  const id = params?.id;
+  if (!id) {
+    return badRequestResponse('ID is required');
+  }
 
-    const tenantId = session.user.organizationId;
-    const id = context.params?.id;
-    if (!id) {
-      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
-    }
+  // ─────────────────────────────────────────────────────────────────────────────
+  // STEP 1: Validate request body
+  // ─────────────────────────────────────────────────────────────────────────────
+  const body = await request.json();
 
-    // ─────────────────────────────────────────────────────────────────────────────
-    // STEP 1: Validate request body
-    // ─────────────────────────────────────────────────────────────────────────────
-    const body = await request.json();
+  const validation = acceptAssetAssignmentSchema.safeParse(body);
+  if (!validation.success) {
+    return validationErrorResponse(validation);
+  }
 
-    const validation = acceptAssetAssignmentSchema.safeParse(body);
-    if (!validation.success) {
-      return NextResponse.json({
-        error: 'Invalid request body',
-        details: validation.error.issues,
-      }, { status: 400 });
-    }
+  const { notes } = validation.data;
 
-    const { notes } = validation.data;
+  // ─────────────────────────────────────────────────────────────────────────────
+  // STEP 2: Fetch request (tenant-scoped for IDOR prevention)
+  // ─────────────────────────────────────────────────────────────────────────────
+  const assetRequest = await prisma.assetRequest.findFirst({
+    where: { id, tenantId },
+    include: {
+      asset: true,
+      member: { select: { id: true, name: true, email: true } },
+      assignedByMember: { select: { id: true, name: true, email: true } },
+    },
+  });
 
-    // ─────────────────────────────────────────────────────────────────────────────
-    // STEP 2: Fetch request (tenant-scoped for IDOR prevention)
-    // ─────────────────────────────────────────────────────────────────────────────
-    const assetRequest = await prisma.assetRequest.findFirst({
-      where: { id, tenantId },
-      include: {
-        asset: true,
-        member: { select: { id: true, name: true, email: true } },
-        assignedByMember: { select: { id: true, name: true, email: true } },
-      },
-    });
+  if (!assetRequest) {
+    return notFoundResponse('Asset request not found');
+  }
 
-    if (!assetRequest) {
-      return NextResponse.json({ error: 'Asset request not found' }, { status: 404 });
-    }
+  // ─────────────────────────────────────────────────────────────────────────────
+  // STEP 3: Verify only target member can accept
+  // ─────────────────────────────────────────────────────────────────────────────
+  if (assetRequest.memberId !== userId) {
+    return forbiddenResponse('Access denied');
+  }
 
-    // ─────────────────────────────────────────────────────────────────────────────
-    // STEP 3: Verify only target member can accept
-    // ─────────────────────────────────────────────────────────────────────────────
-    if (assetRequest.memberId !== session.user.id) {
-      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────────
-    // STEP 4: Check if user can respond to this request
-    // ─────────────────────────────────────────────────────────────────────────────
-    if (!canUserRespond(assetRequest.status, assetRequest.type)) {
-      return NextResponse.json({ error: 'Cannot accept this assignment' }, { status: 400 });
-    }
+  // ─────────────────────────────────────────────────────────────────────────────
+  // STEP 4: Check if user can respond to this request
+  // ─────────────────────────────────────────────────────────────────────────────
+  if (!canUserRespond(assetRequest.status, assetRequest.type)) {
+    return badRequestResponse('Cannot accept this assignment');
+  }
 
     // ─────────────────────────────────────────────────────────────────────────────
     // STEP 5: Accept assignment in transaction
@@ -151,7 +143,7 @@ async function acceptAssetAssignmentHandler(request: NextRequest, context: APICo
         where: { id },
         data: {
           status: AssetRequestStatus.ACCEPTED,
-          processedById: session.user.id,
+          processedById: userId,
           processedAt: new Date(),
           processorNotes: notes,
         },
@@ -167,7 +159,7 @@ async function acceptAssetAssignmentHandler(request: NextRequest, context: APICo
       await tx.asset.update({
         where: { id: assetRequest.assetId },
         data: {
-          assignedMemberId: session.user.id,
+          assignedMemberId: userId,
           assignmentDate: new Date(),
           status: AssetStatus.IN_USE,
         },
@@ -181,13 +173,13 @@ async function acceptAssetAssignmentHandler(request: NextRequest, context: APICo
           assetId: assetRequest.assetId,
           action: AssetHistoryAction.ASSIGNED,
           fromMemberId: assetRequest.asset.assignedMemberId, // Previous owner (null if fresh assignment)
-          toMemberId: session.user.id,
+          toMemberId: userId,
           fromStatus: assetRequest.asset.status,
           toStatus: AssetStatus.IN_USE,
           notes: isReassignment
             ? `Reassigned via request ${assetRequest.requestNumber}`
             : `Assigned via request ${assetRequest.requestNumber}`,
-          performedById: session.user.id,
+          performedById: userId,
           assignmentDate: new Date(),
         },
       });
@@ -200,7 +192,7 @@ async function acceptAssetAssignmentHandler(request: NextRequest, context: APICo
           oldStatus: assetRequest.status,
           newStatus: AssetRequestStatus.ACCEPTED,
           notes,
-          performedById: session.user.id,
+          performedById: userId,
         },
       });
 
@@ -212,7 +204,7 @@ async function acceptAssetAssignmentHandler(request: NextRequest, context: APICo
     // ─────────────────────────────────────────────────────────────────────────────
     await logAction(
       tenantId,
-      session.user.id,
+      userId,
       ActivityActions.ASSET_ASSIGNMENT_ACCEPTED,
       'AssetRequest',
       id,
@@ -329,7 +321,5 @@ async function acceptAssetAssignmentHandler(request: NextRequest, context: APICo
       }, 'Failed to send in-app notifications for assignment acceptance');
     }
 
-    return NextResponse.json(updatedRequest);
-}
-
-export const POST = withErrorHandler(acceptAssetAssignmentHandler, { requireAuth: true, requireModule: 'assets' });
+  return NextResponse.json(updatedRequest);
+}, { requireAuth: true, requireModule: 'assets' });

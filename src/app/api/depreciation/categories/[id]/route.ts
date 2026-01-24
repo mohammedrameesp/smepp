@@ -21,6 +21,7 @@ import {
 } from '@/features/assets/lib/depreciation';
 import { updateDepreciationCategorySchema } from '@/features/assets';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { invalidBodyResponse } from '@/lib/http/responses';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GET /api/depreciation/categories/[id] - Get single category
@@ -87,10 +88,7 @@ async function putHandler(request: NextRequest, context: APIContext) {
   const validation = updateDepreciationCategorySchema.safeParse(body);
 
   if (!validation.success) {
-    return NextResponse.json(
-      { error: 'Invalid request body', details: validation.error.issues },
-      { status: 400 }
-    );
+    return invalidBodyResponse(validation.error);
   }
 
   // Check code uniqueness if changing code

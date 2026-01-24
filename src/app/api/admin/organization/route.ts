@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { z } from 'zod';
 import { updateSetupProgressBulk } from '@/features/onboarding/lib';
-import logger from '@/lib/core/log';
+import { withErrorHandler } from '@/lib/http/handler';
+import { validationErrorResponse, notFoundResponse } from '@/lib/http/errors';
 
 // Force dynamic rendering to prevent caching
 export const dynamic = 'force-dynamic';
@@ -13,92 +12,78 @@ export const dynamic = 'force-dynamic';
 // GET /api/admin/organization - Get current organization details
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export async function GET() {
-  try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
-
-    const organization = await prisma.organization.findUnique({
-      where: { id: session.user.organizationId },
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        logoUrl: true,
-        subscriptionTier: true,
-        maxUsers: true,
-        maxAssets: true,
-        createdAt: true,
-        codePrefix: true,
-        codeFormats: true,
-        // Branding
-        primaryColor: true,
-        secondaryColor: true,
-        website: true,
-        // Currency settings
-        additionalCurrencies: true,
-        // Weekend settings
-        weekendDays: true,
-        // Module settings
-        enabledModules: true,
-        // Location settings
-        hasMultipleLocations: true,
-        // Depreciation settings
-        depreciationEnabled: true,
-        // Auth settings
-        allowedAuthMethods: true,
-        customGoogleClientId: true,
-        customGoogleClientSecret: true,
-        customAzureClientId: true,
-        customAzureClientSecret: true,
-        _count: {
-          select: {
-            teamMembers: true,
-            assets: true,
-          },
+export const GET = withErrorHandler(async (_request, { tenant }) => {
+  const organization = await prisma.organization.findUnique({
+    where: { id: tenant!.tenantId },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      logoUrl: true,
+      subscriptionTier: true,
+      maxUsers: true,
+      maxAssets: true,
+      createdAt: true,
+      codePrefix: true,
+      codeFormats: true,
+      // Branding
+      primaryColor: true,
+      secondaryColor: true,
+      website: true,
+      // Currency settings
+      additionalCurrencies: true,
+      // Weekend settings
+      weekendDays: true,
+      // Module settings
+      enabledModules: true,
+      // Location settings
+      hasMultipleLocations: true,
+      // Depreciation settings
+      depreciationEnabled: true,
+      // Auth settings
+      allowedAuthMethods: true,
+      customGoogleClientId: true,
+      customGoogleClientSecret: true,
+      customAzureClientId: true,
+      customAzureClientSecret: true,
+      _count: {
+        select: {
+          teamMembers: true,
+          assets: true,
         },
       },
-    });
+    },
+  });
 
-    if (!organization) {
-      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
-    }
-
-    // Compute auth config (don't expose actual secrets)
-    const allowedMethods = organization.allowedAuthMethods || [];
-    const hasCustomGoogleOAuth = !!(organization.customGoogleClientId && organization.customGoogleClientSecret);
-    const hasCustomAzureOAuth = !!(organization.customAzureClientId && organization.customAzureClientSecret);
-    const hasSSO = hasCustomGoogleOAuth || hasCustomAzureOAuth;
-    const hasCredentials = allowedMethods.length === 0 || allowedMethods.includes('credentials');
-
-    // Remove sensitive fields before returning
-    const { customGoogleClientId: _customGoogleClientId, customGoogleClientSecret: _customGoogleClientSecret, customAzureClientId: _customAzureClientId, customAzureClientSecret: _customAzureClientSecret, ...orgData } = organization;
-
-    return NextResponse.json({
-      organization: orgData,
-      authConfig: {
-        allowedMethods,
-        hasCredentials,
-        hasSSO,
-        hasCustomGoogleOAuth,
-        hasCustomAzureOAuth,
-      },
-    }, {
-      headers: {
-        'Cache-Control': 'no-store, max-age=0',
-      },
-    });
-  } catch (error) {
-    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Get organization error');
-    return NextResponse.json(
-      { error: 'Failed to get organization' },
-      { status: 500 }
-    );
+  if (!organization) {
+    return notFoundResponse('Organization');
   }
-}
+
+  // Compute auth config (don't expose actual secrets)
+  const allowedMethods = organization.allowedAuthMethods || [];
+  const hasCustomGoogleOAuth = !!(organization.customGoogleClientId && organization.customGoogleClientSecret);
+  const hasCustomAzureOAuth = !!(organization.customAzureClientId && organization.customAzureClientSecret);
+  const hasSSO = hasCustomGoogleOAuth || hasCustomAzureOAuth;
+  const hasCredentials = allowedMethods.length === 0 || allowedMethods.includes('credentials');
+
+  // Remove sensitive fields before returning
+  const { customGoogleClientId: _customGoogleClientId, customGoogleClientSecret: _customGoogleClientSecret, customAzureClientId: _customAzureClientId, customAzureClientSecret: _customAzureClientSecret, ...orgData } = organization;
+
+  return NextResponse.json({
+    organization: orgData,
+    authConfig: {
+      allowedMethods,
+      hasCredentials,
+      hasSSO,
+      hasCustomGoogleOAuth,
+      hasCustomAzureOAuth,
+    },
+  }, {
+    headers: {
+      'Cache-Control': 'no-store, max-age=0',
+    },
+  });
+}, { requireAuth: true });
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // PATCH /api/admin/organization - Update organization details
@@ -123,82 +108,60 @@ const updateOrgSchema = z.object({
   depreciationEnabled: z.boolean().optional(),
 });
 
-export async function PATCH(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
+export const PATCH = withErrorHandler(async (request: NextRequest, { tenant }) => {
+  const body = await request.json();
+  const result = updateOrgSchema.safeParse(body);
 
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
-
-    // Only owners/admins can update org
-    if (!session.user.isOwner && !session.user.isAdmin) {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
-    }
-
-    const body = await request.json();
-    const result = updateOrgSchema.safeParse(body);
-
-    if (!result.success) {
-      return NextResponse.json(
-        { error: 'Invalid input', details: result.error.flatten().fieldErrors },
-        { status: 400 }
-      );
-    }
-
-    const { name, codePrefix, primaryColor, secondaryColor, website, additionalCurrencies, weekendDays, hasMultipleLocations, depreciationEnabled } = result.data;
-
-    // Normalize colors: empty/null resets to default for primaryColor, null for secondaryColor
-    const DEFAULT_PRIMARY_COLOR = '#0f172a';
-    const normalizedPrimaryColor = (!primaryColor || primaryColor === '') ? DEFAULT_PRIMARY_COLOR : primaryColor;
-    const normalizedSecondaryColor = (!secondaryColor || secondaryColor === '') ? null : secondaryColor;
-
-    // Normalize website: empty string becomes null
-    const normalizedWebsite = (!website || website === '') ? null : website;
-
-    const updated = await prisma.organization.update({
-      where: { id: session.user.organizationId },
-      data: {
-        ...(name && { name }),
-        ...(codePrefix && { codePrefix }),
-        ...(primaryColor !== undefined && { primaryColor: normalizedPrimaryColor }),
-        ...(secondaryColor !== undefined && { secondaryColor: normalizedSecondaryColor }),
-        ...(website !== undefined && { website: normalizedWebsite }),
-        ...(additionalCurrencies !== undefined && { additionalCurrencies }),
-        ...(weekendDays !== undefined && { weekendDays }),
-        ...(hasMultipleLocations !== undefined && { hasMultipleLocations }),
-        ...(depreciationEnabled !== undefined && { depreciationEnabled }),
-      },
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        logoUrl: true,
-        codePrefix: true,
-        primaryColor: true,
-        secondaryColor: true,
-        website: true,
-        additionalCurrencies: true,
-        weekendDays: true,
-        hasMultipleLocations: true,
-        depreciationEnabled: true,
-      },
-    });
-
-    // Update setup progress (non-blocking)
-    const progressUpdates: Record<string, boolean> = {};
-    if (name) progressUpdates.profileComplete = true;
-    if (primaryColor) progressUpdates.brandingConfigured = true;
-    if (Object.keys(progressUpdates).length > 0) {
-      updateSetupProgressBulk(session.user.organizationId, progressUpdates).catch(() => {});
-    }
-
-    return NextResponse.json({ organization: updated });
-  } catch (error) {
-    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Update organization error');
-    return NextResponse.json(
-      { error: 'Failed to update organization' },
-      { status: 500 }
-    );
+  if (!result.success) {
+    return validationErrorResponse(result);
   }
-}
+
+  const { name, codePrefix, primaryColor, secondaryColor, website, additionalCurrencies, weekendDays, hasMultipleLocations, depreciationEnabled } = result.data;
+
+  // Normalize colors: empty/null resets to default for primaryColor, null for secondaryColor
+  const DEFAULT_PRIMARY_COLOR = '#0f172a';
+  const normalizedPrimaryColor = (!primaryColor || primaryColor === '') ? DEFAULT_PRIMARY_COLOR : primaryColor;
+  const normalizedSecondaryColor = (!secondaryColor || secondaryColor === '') ? null : secondaryColor;
+
+  // Normalize website: empty string becomes null
+  const normalizedWebsite = (!website || website === '') ? null : website;
+
+  const updated = await prisma.organization.update({
+    where: { id: tenant!.tenantId },
+    data: {
+      ...(name && { name }),
+      ...(codePrefix && { codePrefix }),
+      ...(primaryColor !== undefined && { primaryColor: normalizedPrimaryColor }),
+      ...(secondaryColor !== undefined && { secondaryColor: normalizedSecondaryColor }),
+      ...(website !== undefined && { website: normalizedWebsite }),
+      ...(additionalCurrencies !== undefined && { additionalCurrencies }),
+      ...(weekendDays !== undefined && { weekendDays }),
+      ...(hasMultipleLocations !== undefined && { hasMultipleLocations }),
+      ...(depreciationEnabled !== undefined && { depreciationEnabled }),
+    },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      logoUrl: true,
+      codePrefix: true,
+      primaryColor: true,
+      secondaryColor: true,
+      website: true,
+      additionalCurrencies: true,
+      weekendDays: true,
+      hasMultipleLocations: true,
+      depreciationEnabled: true,
+    },
+  });
+
+  // Update setup progress (non-blocking)
+  const progressUpdates: Record<string, boolean> = {};
+  if (name) progressUpdates.profileComplete = true;
+  if (primaryColor) progressUpdates.brandingConfigured = true;
+  if (Object.keys(progressUpdates).length > 0) {
+    updateSetupProgressBulk(tenant!.tenantId, progressUpdates).catch(() => {});
+  }
+
+  return NextResponse.json({ organization: updated });
+}, { requireAuth: true, requireAdmin: true });

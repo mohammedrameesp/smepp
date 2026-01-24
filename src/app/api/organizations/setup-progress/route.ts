@@ -5,8 +5,6 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import logger from '@/lib/core/log';
 import { z } from 'zod';
@@ -17,6 +15,8 @@ import {
   CHECKLIST_ITEMS,
   type SetupProgressField,
 } from '@/features/onboarding/lib';
+import { withErrorHandler } from '@/lib/http/handler';
+import { badRequestResponse } from '@/lib/http/errors';
 
 const updateProgressSchema = z.object({
   field: z.enum([
@@ -43,89 +43,73 @@ const bulkUpdateSchema = z.object({
 // GET /api/organizations/setup-progress - Get setup progress status
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export async function GET() {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
+export const GET = withErrorHandler(async (_request, { tenant }) => {
+  const tenantId = tenant!.tenantId;
 
-    const status = await getSetupProgress(session.user.organizationId);
+  const status = await getSetupProgress(tenantId);
 
-    // Also get organization info for additional context
-    const org = await prisma.organization.findUnique({
-      where: { id: session.user.organizationId },
-      select: {
-        logoUrl: true,
-        primaryColor: true,
-        onboardingCompleted: true,
-      },
-    });
+  // Also get organization info for additional context
+  const org = await prisma.organization.findUnique({
+    where: { id: tenantId },
+    select: {
+      logoUrl: true,
+      primaryColor: true,
+      onboardingCompleted: true,
+    },
+  });
 
-    return NextResponse.json({
-      ...status,
-      checklistItems: CHECKLIST_ITEMS,
-      organization: org,
-    });
-  } catch (error) {
-    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Get setup progress error');
-    return NextResponse.json({ error: 'Failed to get setup progress' }, { status: 500 });
-  }
-}
+  return NextResponse.json({
+    ...status,
+    checklistItems: CHECKLIST_ITEMS,
+    organization: org,
+  });
+}, { requireAuth: true });
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // PUT /api/organizations/setup-progress - Update setup progress
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export async function PUT(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
+export const PUT = withErrorHandler(async (request: NextRequest, { tenant }) => {
+  const tenantId = tenant!.tenantId;
 
-    const body = await request.json();
+  const body = await request.json();
 
-    // Check if it's a single field update or bulk update
-    if ('field' in body) {
-      // Single field update
-      const result = updateProgressSchema.safeParse(body);
-      if (!result.success) {
-        logger.error({ validationErrors: result.error.flatten() }, 'Setup progress single field validation failed');
-        return NextResponse.json(
-          { error: 'Validation failed', details: result.error.flatten().fieldErrors },
-          { status: 400 }
-        );
-      }
-
-      const { field, value } = result.data;
-      const progress = await updateSetupProgress(session.user.organizationId, field, value);
-      const status = await getSetupProgress(session.user.organizationId);
-
-      return NextResponse.json({ progress, status });
-    } else if ('updates' in body) {
-      // Bulk update
-      const result = bulkUpdateSchema.safeParse(body);
-      if (!result.success) {
-        logger.error({ validationErrors: result.error.flatten() }, 'Setup progress bulk validation failed');
-        return NextResponse.json(
-          { error: 'Validation failed', details: result.error.flatten(), received: body },
-          { status: 400 }
-        );
-      }
-
-      const progress = await updateSetupProgressBulk(
-        session.user.organizationId,
-        result.data.updates as Partial<Record<SetupProgressField, boolean>>
+  // Check if it's a single field update or bulk update
+  if ('field' in body) {
+    // Single field update
+    const result = updateProgressSchema.safeParse(body);
+    if (!result.success) {
+      logger.error({ validationErrors: result.error.flatten() }, 'Setup progress single field validation failed');
+      return NextResponse.json(
+        { error: 'Validation failed', details: result.error.flatten().fieldErrors },
+        { status: 400 }
       );
-      const status = await getSetupProgress(session.user.organizationId);
-
-      return NextResponse.json({ progress, status });
     }
 
-    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
-  } catch (error) {
-    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Update setup progress error');
-    return NextResponse.json({ error: 'Failed to update setup progress' }, { status: 500 });
+    const { field, value } = result.data;
+    const progress = await updateSetupProgress(tenantId, field, value);
+    const status = await getSetupProgress(tenantId);
+
+    return NextResponse.json({ progress, status });
+  } else if ('updates' in body) {
+    // Bulk update
+    const result = bulkUpdateSchema.safeParse(body);
+    if (!result.success) {
+      logger.error({ validationErrors: result.error.flatten() }, 'Setup progress bulk validation failed');
+      return NextResponse.json(
+        { error: 'Validation failed', details: result.error.flatten(), received: body },
+        { status: 400 }
+      );
+    }
+
+    const progress = await updateSetupProgressBulk(
+      tenantId,
+      result.data.updates as Partial<Record<SetupProgressField, boolean>>
+    );
+    const status = await getSetupProgress(tenantId);
+
+    return NextResponse.json({ progress, status });
   }
-}
+
+  return badRequestResponse('Invalid request body');
+}, { requireAuth: true });

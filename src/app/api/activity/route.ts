@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
-import { prisma } from '@/lib/core/prisma';
 import { z } from 'zod';
-import logger from '@/lib/core/log';
+import { withErrorHandler } from '@/lib/http/handler';
+import { validationErrorResponse } from '@/lib/http/errors';
 
 const querySchema = z.object({
   actor: z.string().optional(),
@@ -14,92 +12,66 @@ const querySchema = z.object({
   offset: z.coerce.number().min(0).default(0),
 });
 
-export async function GET(request: NextRequest) {
-  try {
-    // Check authentication and authorization
-    const session = await getServerSession(authOptions);
-    if (!session || !session.user.isAdmin) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
+export const GET = withErrorHandler(async (request: NextRequest, { prisma, tenant }) => {
+  // Parse query parameters
+  const { searchParams } = new URL(request.url);
+  const queryParams = Object.fromEntries(searchParams.entries());
 
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
-    }
+  const validation = querySchema.safeParse(queryParams);
+  if (!validation.success) {
+    return validationErrorResponse(validation);
+  }
 
-    const tenantId = session.user.organizationId;
+  const { actor, entityType, from, to, limit, offset } = validation.data;
 
-    // Parse query parameters
-    const { searchParams } = new URL(request.url);
-    const queryParams = Object.fromEntries(searchParams.entries());
+  // Build where clause - tenant filtering handled by prisma extension
+  const where: {
+    actorMemberId?: string;
+    entityType?: string;
+    at?: { gte?: Date; lte?: Date };
+  } = {};
 
-    const validation = querySchema.safeParse(queryParams);
-    if (!validation.success) {
-      return NextResponse.json({
-        error: 'Invalid query parameters',
-        details: validation.error.issues
-      }, { status: 400 });
-    }
+  if (actor) {
+    where.actorMemberId = actor;
+  }
 
-    const { actor, entityType, from, to, limit, offset } = validation.data;
+  if (entityType) {
+    where.entityType = entityType;
+  }
 
-    // Build where clause with tenant filtering
-    const where: {
-      tenantId: string;
-      actorMemberId?: string;
-      entityType?: string;
-      at?: { gte?: Date; lte?: Date };
-    } = { tenantId };
+  if (from || to) {
+    where.at = {};
+    if (from) where.at.gte = new Date(from);
+    if (to) where.at.lte = new Date(to);
+  }
 
-    if (actor) {
-      where.actorMemberId = actor;
-    }
-
-    if (entityType) {
-      where.entityType = entityType;
-    }
-
-    if (from || to) {
-      where.at = {};
-      if (from) where.at.gte = new Date(from);
-      if (to) where.at.lte = new Date(to);
-    }
-
-    // Fetch activity logs
-    const [activities, total] = await Promise.all([
-      prisma.activityLog.findMany({
-        where,
-        orderBy: { at: 'desc' },
-        take: limit,
-        skip: offset,
-        include: {
-          actorMember: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
+  // Fetch activity logs - tenant isolation automatic via prisma extension
+  const [activities, total] = await Promise.all([
+    prisma.activityLog.findMany({
+      where,
+      orderBy: { at: 'desc' },
+      take: limit,
+      skip: offset,
+      include: {
+        actorMember: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
           },
         },
-      }),
-      prisma.activityLog.count({ where }),
-    ]);
-
-    return NextResponse.json({
-      activities,
-      pagination: {
-        total,
-        limit,
-        offset,
-        hasMore: offset + limit < total,
       },
-    });
+    }),
+    prisma.activityLog.count({ where }),
+  ]);
 
-  } catch (error) {
-    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Activity log error');
-    return NextResponse.json(
-      { error: 'Failed to fetch activity log' },
-      { status: 500 }
-    );
-  }
-}
+  return NextResponse.json({
+    activities,
+    pagination: {
+      total,
+      limit,
+      offset,
+      hasMore: offset + limit < total,
+    },
+  });
+}, { requireAuth: true, requireAdmin: true });

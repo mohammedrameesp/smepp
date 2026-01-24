@@ -19,6 +19,7 @@ import {
   Shield,
 } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
+import { formatNumber } from '@/lib/utils/math-utils';
 
 interface UsageData {
   overview: {
@@ -63,7 +64,7 @@ interface UsageData {
   };
 }
 
-function formatNumber(num: number): string {
+function formatLargeNumber(num: number): string {
   if (num >= 1000000) {
     return (num / 1000000).toFixed(1) + 'M';
   }
@@ -177,9 +178,9 @@ export default function AIUsagePage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Monthly Tokens</p>
-                    <p className="text-2xl font-bold">{formatNumber(overview.monthlyTokensUsed)}</p>
+                    <p className="text-2xl font-bold">{formatLargeNumber(overview.monthlyTokensUsed)}</p>
                     <p className="text-xs text-muted-foreground">
-                      of {formatNumber(overview.monthlyTokenLimit)} limit
+                      of {formatLargeNumber(overview.monthlyTokenLimit)} limit
                     </p>
                   </div>
                   <Sparkles className="h-8 w-8 text-blue-500" />
@@ -208,7 +209,7 @@ export default function AIUsagePage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Total Requests</p>
-                    <p className="text-2xl font-bold">{formatNumber(overview.monthlyRequestCount)}</p>
+                    <p className="text-2xl font-bold">{formatLargeNumber(overview.monthlyRequestCount)}</p>
                     <p className="text-xs text-muted-foreground">This month</p>
                   </div>
                   <TrendingUp className="h-8 w-8 text-green-500" />
@@ -234,7 +235,7 @@ export default function AIUsagePage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Est. Cost</p>
-                    <p className="text-2xl font-bold">${overview.estimatedCost.toFixed(2)}</p>
+                    <p className="text-2xl font-bold">${formatNumber(overview.estimatedCost)}</p>
                     <p className="text-xs text-muted-foreground">This month</p>
                   </div>
                   <DollarSign className="h-8 w-8 text-emerald-500" />
@@ -269,7 +270,7 @@ export default function AIUsagePage() {
                         <div
                           key={day.date}
                           className="flex-1 flex flex-col items-center group"
-                          title={`${day.date}: ${formatNumber(day.tokens)} tokens, ${day.requests} requests`}
+                          title={`${day.date}: ${formatLargeNumber(day.tokens)} tokens, ${day.requests} requests`}
                         >
                           <div
                             className="w-full bg-blue-500 rounded-t hover:bg-blue-600 transition-colors min-h-[2px]"
@@ -321,7 +322,7 @@ export default function AIUsagePage() {
                               </div>
                             </TableCell>
                             <TableCell className="text-right font-mono">
-                              {formatNumber(user.totalTokens)}
+                              {formatLargeNumber(user.totalTokens)}
                             </TableCell>
                             <TableCell className="text-right font-mono">
                               {user.requestCount}
@@ -410,7 +411,7 @@ export default function AIUsagePage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">Total Queries</p>
-                        <p className="text-2xl font-bold">{formatNumber(auditSummary.totalQueries)}</p>
+                        <p className="text-2xl font-bold">{formatLargeNumber(auditSummary.totalQueries)}</p>
                       </div>
                       <Sparkles className="h-8 w-8 text-blue-500" />
                     </div>
@@ -479,12 +480,12 @@ export default function AIUsagePage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Daily Token Limit</p>
-                  <p className="text-xl font-bold">{formatNumber(limits.daily)}</p>
+                  <p className="text-xl font-bold">{formatLargeNumber(limits.daily)}</p>
                   <p className="text-xs text-muted-foreground">per user</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Monthly Token Budget</p>
-                  <p className="text-xl font-bold">{formatNumber(limits.monthly)}</p>
+                  <p className="text-xl font-bold">{formatLargeNumber(limits.monthly)}</p>
                   <p className="text-xs text-muted-foreground">organization-wide</p>
                 </div>
                 <div>

@@ -13,6 +13,8 @@ import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import logger from '@/lib/core/log';
 import { z } from 'zod';
+import { withErrorHandler } from '@/lib/http/handler';
+import { validationErrorResponse, forbiddenResponse } from '@/lib/http/errors';
 
 // Validation schema for feedback submission
 const feedbackSchema = z.object({
@@ -27,64 +29,57 @@ const feedbackSchema = z.object({
  * POST /api/feedback - Submit feedback
  * Available to any authenticated user
  */
-export async function POST(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
+export const POST = withErrorHandler(async (request: NextRequest, { tenant }) => {
+  const body = await request.json();
+  const validation = feedbackSchema.safeParse(body);
 
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
-
-    const body = await request.json();
-    const validation = feedbackSchema.safeParse(body);
-
-    if (!validation.success) {
-      return NextResponse.json(
-        { error: 'Invalid request', details: validation.error.issues },
-        { status: 400 }
-      );
-    }
-
-    const { type, message, screenshotUrl, pageUrl, userAgent } = validation.data;
-
-    // Get organization name if user has one
-    let organizationName: string | null = null;
-    if (session.user.organizationId) {
-      const org = await prisma.organization.findUnique({
-        where: { id: session.user.organizationId },
-        select: { name: true },
-      });
-      organizationName = org?.name || null;
-    }
-
-    const feedback = await prisma.feedback.create({
-      data: {
-        type,
-        message,
-        screenshotUrl: screenshotUrl || null,
-        pageUrl: pageUrl || null,
-        userAgent: userAgent || null,
-        organizationId: session.user.organizationId || null,
-        organizationName,
-        submittedByEmail: session.user.email,
-        submittedByName: session.user.name || null,
-      },
-    });
-
-    return NextResponse.json({
-      success: true,
-      message: 'Feedback submitted successfully',
-      id: feedback.id,
-    });
-  } catch (error) {
-    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Error submitting feedback');
-    return NextResponse.json({ error: 'Failed to submit feedback' }, { status: 500 });
+  if (!validation.success) {
+    return validationErrorResponse(validation);
   }
-}
+
+  const { type, message, screenshotUrl, pageUrl, userAgent } = validation.data;
+
+  // Get organization name if user has one
+  let organizationName: string | null = null;
+  const organizationId = tenant?.tenantId || null;
+
+  if (organizationId) {
+    const org = await prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { name: true },
+    });
+    organizationName = org?.name || null;
+  }
+
+  // Get user email from session for feedback attribution
+  const session = await getServerSession(authOptions);
+  const userEmail = session?.user?.email || 'unknown';
+  const userName = session?.user?.name || null;
+
+  const feedback = await prisma.feedback.create({
+    data: {
+      type,
+      message,
+      screenshotUrl: screenshotUrl || null,
+      pageUrl: pageUrl || null,
+      userAgent: userAgent || null,
+      organizationId,
+      organizationName,
+      submittedByEmail: userEmail,
+      submittedByName: userName,
+    },
+  });
+
+  return NextResponse.json({
+    success: true,
+    message: 'Feedback submitted successfully',
+    id: feedback.id,
+  });
+}, { requireAuth: true, requireTenant: false });
 
 /**
  * GET /api/feedback - List all feedback
- * Super-admin only
+ * Super-admin only (handled manually since withErrorHandler doesn't support requireSuperAdmin)
  */
 export async function GET(request: NextRequest) {
   try {
@@ -96,7 +91,7 @@ export async function GET(request: NextRequest) {
 
     // Check if user is super admin
     if (!session.user.isSuperAdmin) {
-      return NextResponse.json({ error: 'Super admin access required' }, { status: 403 });
+      return forbiddenResponse('Super admin access required');
     }
 
     const { searchParams } = new URL(request.url);

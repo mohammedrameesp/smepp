@@ -8,6 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { invalidBodyResponse } from '@/lib/http/responses';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
@@ -78,10 +79,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     const validation = updateFeedbackSchema.safeParse(body);
 
     if (!validation.success) {
-      return NextResponse.json(
-        { error: 'Invalid request', details: validation.error.issues },
-        { status: 400 }
-      );
+      return invalidBodyResponse(validation.error);
     }
 
     const feedback = await prisma.feedback.findUnique({

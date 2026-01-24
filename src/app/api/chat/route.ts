@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { withErrorHandler } from '@/lib/http/handler';
 import { badRequestResponse, notFoundResponse, forbiddenResponse } from '@/lib/http/errors';
+import { invalidBodyResponse } from '@/lib/http/responses';
 import logger from '@/lib/core/log';
 import { processChat, getConversations, getConversationMessages, deleteConversation } from '@/lib/ai/chat-service';
 import { sanitizeInput, shouldBlockInput, formatSanitizationLog } from '@/lib/ai/input-sanitizer';
@@ -127,10 +128,7 @@ export const POST = withErrorHandler(async (request: NextRequest, { tenant }) =>
     const validation = sendMessageSchema.safeParse(body);
 
     if (!validation.success) {
-      return NextResponse.json(
-        { error: 'Invalid request', details: validation.error.issues },
-        { status: 400 }
-      );
+      return invalidBodyResponse(validation.error);
     }
 
     const { message, conversationId } = validation.data;

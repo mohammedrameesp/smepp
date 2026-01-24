@@ -5,26 +5,44 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Loader2, Cake, Award, User } from 'lucide-react';
+import { Loader2, Cake, Award, User, Trophy } from 'lucide-react';
+
+type MilestoneTier = 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond';
 
 interface CelebrationEvent {
   employeeId: string;
   employeeName: string;
   employeeEmail: string;
   photoUrl: string | null;
-  type: 'birthday' | 'work_anniversary';
+  type: 'birthday' | 'work_anniversary' | 'work_milestone';
   date: string;
   daysUntil: number;
   yearsCompleting?: number;
+  milestone?: {
+    days: number;
+    name: string;
+    description: string;
+    tier: MilestoneTier;
+  };
 }
 
 interface Summary {
   total: number;
   todayBirthdays: number;
   todayAnniversaries: number;
+  todayMilestones: number;
   upcomingBirthdays: number;
   upcomingAnniversaries: number;
+  upcomingMilestones: number;
 }
+
+const MILESTONE_TIER_COLORS: Record<MilestoneTier, { bg: string; text: string; border: string }> = {
+  bronze: { bg: 'bg-amber-100', text: 'text-amber-800', border: 'border-amber-300' },
+  silver: { bg: 'bg-slate-100', text: 'text-slate-700', border: 'border-slate-300' },
+  gold: { bg: 'bg-yellow-100', text: 'text-yellow-800', border: 'border-yellow-400' },
+  platinum: { bg: 'bg-cyan-100', text: 'text-cyan-800', border: 'border-cyan-300' },
+  diamond: { bg: 'bg-violet-100', text: 'text-violet-800', border: 'border-violet-300' },
+};
 
 const DISPLAY_COUNT = 2;
 
@@ -106,8 +124,8 @@ export function CelebrationsWidget() {
     );
   }
 
-  const todayCount = summary ? summary.todayBirthdays + summary.todayAnniversaries : 0;
-  const upcomingCount = summary ? summary.upcomingBirthdays + summary.upcomingAnniversaries : 0;
+  const todayCount = summary ? summary.todayBirthdays + summary.todayAnniversaries + (summary.todayMilestones || 0) : 0;
+  const upcomingCount = summary ? summary.upcomingBirthdays + summary.upcomingAnniversaries + (summary.upcomingMilestones || 0) : 0;
   const displayedCelebrations = showAll ? celebrations : celebrations.slice(0, DISPLAY_COUNT);
   const remainingCount = celebrations.length - DISPLAY_COUNT;
 
@@ -183,12 +201,21 @@ export function CelebrationsWidget() {
                         <Cake className="h-3 w-3 mr-1" />
                         Birthday
                       </Badge>
-                    ) : (
+                    ) : event.type === 'work_anniversary' ? (
                       <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-300 text-xs">
                         <Award className="h-3 w-3 mr-1" />
                         {event.yearsCompleting}yr
                       </Badge>
-                    )}
+                    ) : event.type === 'work_milestone' && event.milestone ? (
+                      <Badge
+                        variant="outline"
+                        className={`text-xs ${MILESTONE_TIER_COLORS[event.milestone.tier].bg} ${MILESTONE_TIER_COLORS[event.milestone.tier].text} ${MILESTONE_TIER_COLORS[event.milestone.tier].border}`}
+                        title={event.milestone.description}
+                      >
+                        <Trophy className="h-3 w-3 mr-1" />
+                        {event.milestone.days}d
+                      </Badge>
+                    ) : null}
                     <Badge variant="outline" className={`text-xs ${getDaysBadgeClass(event.daysUntil)}`}>
                       {getDaysLabel(event.daysUntil)}
                     </Badge>

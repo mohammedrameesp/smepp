@@ -579,29 +579,40 @@ const T = {
         ]
     },
     "2. Team Onboarding": {
-        "Member Type Selection (/admin/employees/new)": [
-            ["Navigate to add member page", "Click 'Add Member' button in employees page", "Shows member type selection: Employee or Service Account", "src/app/admin/(hr)/employees/new/page.tsx", "Critical", "E2E"],
-            ["Employee option shows description", "View Employee card", "Shows 'Full team member with HR profile' description", "src/app/admin/(hr)/employees/new/page.tsx", "Medium", "E2E"],
-            ["Service Account option shows description", "View Service Account card", "Shows 'Shared account without HR features' description", "src/app/admin/(hr)/employees/new/page.tsx", "Medium", "E2E"],
-            ["Select Employee type", "Click 'Employee' card", "Card selected, shows 'Add Member' button", "src/app/admin/(hr)/employees/new/page.tsx", "Critical", "E2E"],
-            ["Select Service Account type", "Click 'Service Account' card", "Card selected, shows 'Add Member' button", "src/app/admin/(hr)/employees/new/page.tsx", "Critical", "E2E"],
-            ["Click Add Member to proceed", "Click 'Add Member' button after selecting type", "Shows form fields for selected type", "src/app/admin/(hr)/employees/new/page.tsx", "Critical", "E2E"]
+        "Page Access (/admin/employees/new)": [
+            ["Navigate to add member page", "Click 'Add Member' button in employees page", "Shows add member form with Basic Information section", "src/app/admin/(hr)/employees/new/page.tsx", "Critical", "E2E"],
+            ["Page shows correct heading", "View page header", "Shows 'Add Team Member' title", "src/app/admin/(hr)/employees/new/page.tsx", "Medium", "E2E"],
+            ["Back button returns to team list", "Click back arrow", "Returns to /admin/employees", "src/app/admin/(hr)/employees/new/page.tsx", "Medium", "E2E"]
         ],
-        "Employee Form Fields": [
+        "Basic Information Section": [
             ["Full name field required", "Leave name empty, try to submit", "Validation error: name required", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
             ["Full name max 100 chars", "Enter name > 100 chars", "Input truncated or validation error", "src/app/admin/(hr)/employees/new/page.tsx", "Low", "E2E"],
-            ["Email field shown for credentials org", "View form on credentials-only org", "Email field visible with availability check", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
-            ["System Access toggle for credentials org", "View form on credentials-only org", "Toggle shown to enable/disable login", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
-            ["System Access hidden for SSO org", "View form on SSO-enabled org", "Toggle hidden (always enabled for SSO)", "src/app/admin/(hr)/employees/new/page.tsx", "Medium", "E2E"],
-            ["Employee code auto-generated", "Check isEmployee checkbox", "Code generated as PREFIX-YYYY-NNN format", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
+            ["System Access toggle (credentials-only org)", "View form on credentials-only org", "Toggle shown: 'Allow this user to log in to the system'", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
+            ["System Access default ON", "View toggle initial state", "Toggle is ON by default (canLogin=true)", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
+            ["Email field shown when System Access ON", "System Access toggle is ON", "Email field visible with availability check", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
+            ["Email field hidden when System Access OFF", "Turn System Access toggle OFF", "Email field hidden (auto-generated nologin-{uuid}@{slug}.internal)", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
+            ["Email required when System Access ON", "Leave email empty with System Access ON", "Validation error: email required", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
+            ["Role dropdown with descriptions", "Click role dropdown", "Shows ADMIN, MANAGER, HR, FINANCE, OPERATIONS, EMPLOYEE with descriptions", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"]
+        ],
+        "Employee Settings Section": [
+            ["Add as Employee checkbox present", "View form", "Shows 'Add as Employee' checkbox with description", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
+            ["Add as Employee default checked", "View checkbox initial state", "Checkbox is checked by default (isEmployee=true)", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
+            ["HR fields shown when checked", "Check 'Add as Employee'", "Shows employee code, designation, department, date of joining fields", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
+            ["HR fields hidden when unchecked", "Uncheck 'Add as Employee'", "HR fields hidden (creates Service Account)", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
+            ["Employee code auto-generated", "Check 'Add as Employee'", "Code generated as PREFIX-YYYY-NNN format", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
             ["Employee code regenerate button", "Click regenerate icon next to code", "New unique code generated", "src/app/admin/(hr)/employees/new/page.tsx", "Medium", "E2E"],
             ["Designation field (optional)", "Enter designation", "Saved to employee profile", "src/app/admin/(hr)/employees/new/page.tsx", "Medium", "E2E"],
             ["Department dropdown with search", "Click department field", "Shows searchable dropdown of departments", "src/app/admin/(hr)/employees/new/page.tsx", "Medium", "E2E"],
             ["Date of Joining picker", "Click date field", "Shows date picker, max date is today", "src/app/admin/(hr)/employees/new/page.tsx", "Medium", "E2E"],
             ["Reports To dropdown (only if managers exist)", "View form when org has managers", "Shows dropdown with managers list + 'No manager' option", "src/app/admin/(hr)/employees/new/page.tsx", "Medium", "E2E"],
             ["Reports To hidden if no managers", "View form on new org with no managers", "Reports To field not shown", "src/app/admin/(hr)/employees/new/page.tsx", "Medium", "E2E"],
-            ["On WPS checkbox (if payroll enabled)", "View form when payroll module enabled", "Shows 'On WPS' checkbox", "src/app/admin/(hr)/employees/new/page.tsx", "Medium", "E2E"],
-            ["Role dropdown with descriptions", "Click role dropdown", "Shows ADMIN, MANAGER, HR, FINANCE, OPERATIONS, EMPLOYEE with descriptions", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"]
+            ["On WPS checkbox (if payroll enabled)", "View form when payroll module enabled", "Shows 'On WPS' checkbox", "src/app/admin/(hr)/employees/new/page.tsx", "Medium", "E2E"]
+        ],
+        "Member Type Combinations": [
+            ["Employee type: System Access ON + Add as Employee checked", "canLogin=true, isEmployee=true", "Email required, HR fields shown, full employee with system access", "src/app/admin/(hr)/employees/new/page.tsx", "Critical", "E2E"],
+            ["Service Account type: System Access ON + Add as Employee unchecked", "canLogin=true, isEmployee=false", "Email required, NO HR fields, shared login account (info@, support@)", "src/app/admin/(hr)/employees/new/page.tsx", "Critical", "E2E"],
+            ["No System Access type: System Access OFF + Add as Employee checked", "canLogin=false, isEmployee=true", "NO email field, HR fields shown, for drivers/laborers without login", "src/app/admin/(hr)/employees/new/page.tsx", "Critical", "E2E"],
+            ["Invalid combination: System Access OFF + Add as Employee unchecked", "canLogin=false, isEmployee=false", "Validation error or Add as Employee auto-checked (must be employee)", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"]
         ],
         "Email Availability Check": [
             ["Email check triggers on input", "Enter email address", "Shows loading spinner after 500ms debounce", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
@@ -613,20 +624,27 @@ const T = {
             ["Submit disabled while checking", "Enter email, try to submit immediately", "Create button disabled during check", "src/app/admin/(hr)/employees/new/page.tsx", "Medium", "E2E"],
             ["Submit disabled if unavailable", "Enter existing member email", "Create button remains disabled", "src/app/admin/(hr)/employees/new/page.tsx", "Medium", "E2E"]
         ],
-        "Service Account Form Fields": [
-            ["Shows simplified form", "Select Service Account, click Add Member", "Shows name, email, and role fields (no HR fields)", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
-            ["Email field required", "View service account form", "Email field shown and required (for shared logins like info@, support@)", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
-            ["No HR fields shown", "View service account form", "No employee code, designation, department, date of joining fields", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
-            ["Service account alert shown", "View service account form", "Shows alert: 'Service accounts only appear in team management, not in HR features'", "src/app/admin/(hr)/employees/new/page.tsx", "Medium", "E2E"],
-            ["Role limited to Admin/Member", "Click role dropdown", "Only ADMIN and MEMBER roles available", "src/app/admin/(hr)/employees/new/page.tsx", "Medium", "E2E"]
+        "Service Account Behavior (System Access ON, Add as Employee unchecked)": [
+            ["Unchecking Add as Employee hides HR fields", "Uncheck 'Add as Employee' checkbox", "Employee code, designation, department, date of joining fields hidden", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
+            ["Email field still shown and required", "View form with Add as Employee unchecked", "Email field visible and required (for shared logins like info@, support@)", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
+            ["Service account info shown", "View form with Add as Employee unchecked", "Shows info: 'Service accounts only appear in team management, not in HR features'", "src/app/admin/(hr)/employees/new/page.tsx", "Medium", "E2E"],
+            ["Role dropdown still available", "Click role dropdown", "All roles available for service accounts", "src/app/admin/(hr)/employees/new/page.tsx", "Medium", "E2E"]
+        ],
+        "No System Access Behavior (System Access OFF, Add as Employee checked)": [
+            ["Turning System Access OFF hides email field", "Turn off System Access toggle", "Email field hidden (will be auto-generated)", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
+            ["Add as Employee checkbox auto-checked", "Turn off System Access", "Add as Employee is checked (required when no login)", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
+            ["HR fields still shown", "View form with System Access OFF", "Employee code, designation, department fields still visible", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
+            ["No System Access info shown", "View form with System Access OFF", "Shows info: 'User will be added as employee without system login (e.g., drivers, laborers)'", "src/app/admin/(hr)/employees/new/page.tsx", "Medium", "E2E"],
+            ["Auto-generated email format", "Submit form with System Access OFF", "Email generated as nologin-{uuid}@{org-slug}.internal", "src/app/api/users/route.ts", "High", "E2E"]
         ],
         "Member Creation (POST /api/users)": [
-            ["Employee created successfully", "Submit valid employee form", "TeamMember created with isEmployee=true", "src/app/api/users/route.ts", "Critical", "E2E"],
-            ["Service account created successfully", "Submit valid service account form", "TeamMember created with canLogin=true, isEmployee=false", "src/app/api/users/route.ts", "Critical", "E2E"],
-            ["Password setup email sent (credentials org)", "Create employee on credentials org", "Email sent with /set-password/[token] link", "src/app/api/users/route.ts", "Critical", "E2E"],
-            ["Invitation email sent (SSO org)", "Create employee on SSO org", "Email sent with /invite/[token] link", "src/app/api/users/route.ts", "Critical", "E2E"],
+            ["Employee created successfully", "Submit form: System Access ON + Add as Employee checked", "TeamMember created with canLogin=true, isEmployee=true", "src/app/api/users/route.ts", "Critical", "E2E"],
+            ["Service account created successfully", "Submit form: System Access ON + Add as Employee unchecked", "TeamMember created with canLogin=true, isEmployee=false", "src/app/api/users/route.ts", "Critical", "E2E"],
+            ["No System Access employee created", "Submit form: System Access OFF + Add as Employee checked", "TeamMember created with canLogin=false, isEmployee=true, auto-generated email", "src/app/api/users/route.ts", "Critical", "E2E"],
+            ["Password setup email sent (credentials org)", "Create employee with System Access ON on credentials org", "Email sent with /set-password/[token] link", "src/app/api/users/route.ts", "Critical", "E2E"],
             ["Password setup email sent for service account", "Create service account on credentials org", "Email sent with /set-password/[token] link", "src/app/api/users/route.ts", "High", "E2E"],
-            ["No email when System Access OFF", "Create employee with canLogin=false", "No email sent (for drivers, laborers without system access)", "src/app/api/users/route.ts", "High", "E2E"],
+            ["No email when System Access OFF", "Create employee with System Access OFF", "No email sent (for drivers, laborers without system access)", "src/app/api/users/route.ts", "High", "E2E"],
+            ["No System Access uses auto-generated email", "Create employee with System Access OFF", "Email set to nologin-{uuid}@{org-slug}.internal", "src/app/api/users/route.ts", "High", "E2E"],
             ["Success toast shown", "Submit valid form", "Toast: '{Name} has been added to the team'", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
             ["Redirects to employees list", "Submit valid form", "Redirects to /admin/employees", "src/app/admin/(hr)/employees/new/page.tsx", "High", "E2E"],
             ["Button shows loading state", "Click Create button", "Button shows 'Creating...' with spinner", "src/app/admin/(hr)/employees/new/page.tsx", "Medium", "E2E"]
@@ -678,10 +696,8 @@ const T = {
             ["Card shown when pending members exist", "View team page with pending members", "Shows 'Pending Members - N awaiting authentication'", "src/app/admin/(hr)/employees/team-client.tsx", "High", "E2E"],
             ["Shows member name and email", "View pending member", "Name, email, and employee code (if any) displayed", "src/app/admin/(hr)/employees/team-client.tsx", "Medium", "E2E"],
             ["Shows 'Awaiting password setup' (credentials)", "View credentials-pending member", "Clock icon + 'Awaiting password setup' in orange", "src/app/admin/(hr)/employees/team-client.tsx", "Medium", "E2E"],
-            ["Shows 'Awaiting invitation acceptance' (SSO)", "View SSO-pending member", "Clock icon + 'Awaiting invitation acceptance' in orange", "src/app/admin/(hr)/employees/team-client.tsx", "Medium", "E2E"],
             ["Shows 'Expired' status (red)", "View member with expired token", "Alert icon + 'Expired' in red", "src/app/admin/(hr)/employees/team-client.tsx", "Medium", "E2E"],
             ["Resend setup email (credentials)", "Click 'Resend' for credentials member", "Regenerates setupToken, sends new email, shows 'Sent!'", "src/app/api/admin/team/[memberId]/resend/route.ts", "High", "E2E"],
-            ["Resend invitation (SSO)", "Click 'Resend' for SSO member", "Regenerates invitation, sends new email", "src/app/api/admin/team/[memberId]/resend/route.ts", "High", "E2E"],
             ["Remove pending member (Admin only)", "Click trash icon on pending member", "Confirmation dialog, soft-deletes member", "src/app/api/admin/team/[memberId]/route.ts", "High", "E2E"]
         ],
         "Member Role Management": [
@@ -720,6 +736,10 @@ const T = {
             ["Already accepted shows message", "Navigate with used token", "Shows 'Already accepted' message with login link", "src/app/invite/[token]/page.tsx", "Critical", "E2E"],
             ["Invalid token shows error", "Navigate with fake token", "Shows 'Invalid invitation' message", "src/app/invite/[token]/page.tsx", "Critical", "E2E"],
             ["Decline invitation option", "Click 'Decline' button", "Shows confirmation, then marks declined", "src/app/invite/[token]/page.tsx", "Medium", "E2E"]
+        ],
+        "SSO Flow: Pending Members (requires super admin SSO setup)": [
+            ["Shows 'Awaiting invitation acceptance' (SSO)", "View SSO-pending member", "Clock icon + 'Awaiting invitation acceptance' in orange", "src/app/admin/(hr)/employees/team-client.tsx", "Medium", "E2E"],
+            ["Resend invitation (SSO)", "Click 'Resend' for SSO member", "Regenerates invitation, sends new email", "src/app/api/admin/team/[memberId]/resend/route.ts", "High", "E2E"]
         ]
     },
     "3. Authentication & Session": {

@@ -47,34 +47,51 @@ async function getUsersHandler(request: NextRequest, context: APIContext) {
     where.isDeleted = false;
   }
 
-  // Fetch team members (tenant-scoped via extension)
+  // Fetch team members (without user relation - query separately for production compatibility)
   const members = await db.teamMember.findMany({
     where,
     orderBy: { createdAt: 'desc' },
   });
 
+  // Query User auth data separately by email (production schema compatibility)
+  const emails = members.map((m) => m.email.toLowerCase());
+  const usersAuth = await prisma.user.findMany({
+    where: { email: { in: emails } },
+    select: {
+      email: true,
+      setupToken: true,
+      passwordHash: true,
+    },
+  });
+  const userAuthMap = new Map(usersAuth.map((u) => [u.email.toLowerCase(), u]));
+
   // Transform to maintain backwards compatibility with frontend
-  const users = members.map((member) => ({
-    id: member.id,
-    name: member.name,
-    email: member.email,
-    image: member.image,
-    role: member.isAdmin ? 'ADMIN' : 'MEMBER',
-    isEmployee: member.isEmployee,
-    isOnWps: member.isOnWps,
-    isDeleted: member.isDeleted,
-    deletedAt: member.deletedAt,
-    createdAt: member.createdAt,
-    updatedAt: member.updatedAt,
-    // Include HR-like data if requested
-    hrProfile: (includeHrProfile || includeAll) ? {
+  const users = members.map((member) => {
+    const userAuth = userAuthMap.get(member.email.toLowerCase());
+    return {
       id: member.id,
-      tenantId: member.tenantId,
-      dateOfJoining: member.dateOfJoining,
-      employeeId: member.employeeCode,
-      designation: member.designation,
-    } : undefined,
-  }));
+      name: member.name,
+      email: member.email,
+      image: member.image,
+      role: member.isAdmin ? 'ADMIN' : 'MEMBER',
+      isEmployee: member.isEmployee,
+      isOnWps: member.isOnWps,
+      isDeleted: member.isDeleted,
+      deletedAt: member.deletedAt,
+      createdAt: member.createdAt,
+      updatedAt: member.updatedAt,
+      // Auth status from User table
+      hasPendingSetup: !!(userAuth?.setupToken && !userAuth?.passwordHash),
+      // Include HR-like data if requested
+      hrProfile: (includeHrProfile || includeAll) ? {
+        id: member.id,
+        tenantId: member.tenantId,
+        dateOfJoining: member.dateOfJoining,
+        employeeId: member.employeeCode,
+        designation: member.designation,
+      } : undefined,
+    };
+  });
 
   return NextResponse.json(includeHrProfile || includeAll ? { users } : users);
 }
@@ -162,50 +179,68 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
     userImage = org?.logoUrl || null;
   }
 
-  // Create TeamMember directly (replaces User + OrganizationUser + HRProfile)
-  // Permission flags from role determine access to different modules
-  // Note: tenantId is included explicitly for type safety; the tenant prisma
-  // extension also auto-injects it but TypeScript requires it at compile time
   // Parse date fields if provided
   const parsedDateOfJoining = dateOfJoining ? new Date(dateOfJoining) : null;
   const parsedProbationEndDate = probationEndDate ? new Date(probationEndDate) : null;
 
-  const member = await db.teamMember.create({
-    data: {
-      tenantId,
-      name,
-      email: finalEmail,
-      // Permission flags from role
-      isAdmin,
-      canApprove,
-      hasHRAccess,
-      hasFinanceAccess,
-      hasOperationsAccess,
-      // Employee settings
-      isEmployee,
-      canLogin,
-      isOnWps: isEmployee ? isOnWps : false, // Only set WPS for employees
-      image: userImage, // Set to org logo for non-employees, null for employees
-      emailVerified: null,
-      isOwner: false,
-      // HR profile fields (embedded in TeamMember)
-      employeeCode: isEmployee ? finalEmployeeId : null,
-      designation: isEmployee ? (designation || null) : null,
-      department: isEmployee ? (department || null) : null,
-      // Admin-set employment fields
-      dateOfJoining: isEmployee ? parsedDateOfJoining : null,
-      workLocation: isEmployee && workLocation ? (workLocation as 'OFFICE' | 'REMOTE' | 'HYBRID') : null,
-      probationEndDate: isEmployee ? parsedProbationEndDate : null,
-      noticePeriodDays: isEmployee ? (noticePeriodDays ?? 30) : null,
-      sponsorshipType: isEmployee ? (sponsorshipType || null) : null,
-      reportingToId: isEmployee ? (reportingToId || null) : null,
-      onboardingComplete: false,
-      onboardingStep: 0,
-    },
+  // Create User and TeamMember in a transaction
+  const result = await prisma.$transaction(async (tx) => {
+    // Create or find User (single source of truth for auth)
+    let user = await tx.user.findUnique({
+      where: { email: finalEmail },
+    });
+
+    if (!user) {
+      user = await tx.user.create({
+        data: {
+          email: finalEmail,
+          name: name,
+        },
+      });
+    }
+
+    // Create TeamMember with userId FK
+    const member = await tx.teamMember.create({
+      data: {
+        tenantId,
+        userId: user.id,
+        name,
+        email: finalEmail, // Denormalized for queries
+        // Permission flags from role
+        isAdmin,
+        canApprove,
+        hasHRAccess,
+        hasFinanceAccess,
+        hasOperationsAccess,
+        // Employee settings
+        isEmployee,
+        canLogin,
+        isOnWps: isEmployee ? isOnWps : false, // Only set WPS for employees
+        image: userImage, // Set to org logo for non-employees, null for employees
+        isOwner: false,
+        // HR profile fields (embedded in TeamMember)
+        employeeCode: isEmployee ? finalEmployeeId : null,
+        designation: isEmployee ? (designation || null) : null,
+        department: isEmployee ? (department || null) : null,
+        // Admin-set employment fields
+        dateOfJoining: isEmployee ? parsedDateOfJoining : null,
+        workLocation: isEmployee && workLocation ? (workLocation as 'OFFICE' | 'REMOTE' | 'HYBRID') : null,
+        probationEndDate: isEmployee ? parsedProbationEndDate : null,
+        noticePeriodDays: isEmployee ? (noticePeriodDays ?? 30) : null,
+        sponsorshipType: isEmployee ? (sponsorshipType || null) : null,
+        reportingToId: isEmployee ? (reportingToId || null) : null,
+        onboardingComplete: false,
+        onboardingStep: 0,
+      },
+    });
+
+    return { user, member };
   });
 
+  const { user, member } = result;
+
   // For backwards compatibility, alias to 'user'
-  const user = {
+  const responseUser = {
     id: member.id,
     name: member.name,
     email: member.email,
@@ -222,8 +257,8 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
     currentUserId,
     ActivityActions.USER_CREATED,
     'User',
-    user.id,
-    { userName: user.name, userEmail: user.email, userRole: user.role }
+    responseUser.id,
+    { userName: responseUser.name, userEmail: responseUser.email, userRole: responseUser.role }
   );
 
   // Update setup progress for first team member (non-blocking)
@@ -286,9 +321,9 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
 
         // Send invitation email
         const emailContent = organizationInvitationEmail({
-          userName: user.name || user.email,
-          userEmail: user.email,
-          userRole: user.role,
+          userName: responseUser.name || responseUser.email,
+          userEmail: responseUser.email,
+          userRole: responseUser.role,
           orgSlug: org?.slug || 'app',
           orgName: org?.name || 'Organization',
           inviteToken,
@@ -298,7 +333,7 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
           primaryColor: org?.primaryColor || undefined,
         });
         await sendEmail({
-          to: user.email,
+          to: responseUser.email,
           subject: emailContent.subject,
           html: emailContent.html,
           text: emailContent.text,
@@ -308,24 +343,24 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
         const setupToken = randomBytes(32).toString('hex');
         const setupTokenExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
-        // Update TeamMember with setup token (tenant-scoped via extension)
-        await db.teamMember.update({
-          where: { id: member.id },
+        // Update User with setup token (auth data on User, not TeamMember)
+        await prisma.user.update({
+          where: { id: user.id },
           data: { setupToken, setupTokenExpiry },
         });
 
         // Send welcome email with password setup link
         const emailContent = welcomeUserWithPasswordSetupEmail({
-          userName: user.name || user.email,
-          userEmail: user.email,
-          userRole: user.role,
+          userName: responseUser.name || responseUser.email,
+          userEmail: responseUser.email,
+          userRole: responseUser.role,
           orgSlug: org?.slug || 'app',
           orgName: org?.name || 'Organization',
           setupToken,
           primaryColor: org?.primaryColor || undefined,
         });
         await sendEmail({
-          to: user.email,
+          to: responseUser.email,
           subject: emailContent.subject,
           html: emailContent.html,
           text: emailContent.text,
@@ -333,9 +368,9 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
       } else {
         // Fallback: Send regular welcome email
         const emailContent = welcomeUserEmail({
-          userName: user.name || user.email,
-          userEmail: user.email,
-          userRole: user.role,
+          userName: responseUser.name || responseUser.email,
+          userEmail: responseUser.email,
+          userRole: responseUser.role,
           orgSlug: org?.slug || 'app',
           orgName: org?.name || 'Organization',
           authMethods: {
@@ -346,14 +381,14 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
           primaryColor: org?.primaryColor || undefined,
         });
         await sendEmail({
-          to: user.email,
+          to: responseUser.email,
           subject: emailContent.subject,
           html: emailContent.html,
           text: emailContent.text,
         });
       }
     } catch (emailError) {
-      logger.error({ error: String(emailError), userId: user.id }, 'Failed to send welcome/invitation email');
+      logger.error({ error: String(emailError), userId: responseUser.id }, 'Failed to send welcome/invitation email');
 
       // Notify admins and super admin about email failure
       const org = await prisma.organization.findUnique({
@@ -367,20 +402,20 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
         tenantId,
         organizationName: org?.name || 'Organization',
         organizationSlug: org?.slug || 'app',
-        recipientEmail: user.email,
-        recipientName: user.name || user.email,
+        recipientEmail: responseUser.email,
+        recipientName: responseUser.name || responseUser.email,
         emailSubject: 'Welcome/Invitation Email',
         error: emailError instanceof Error ? emailError.message : String(emailError),
         metadata: {
-          userId: user.id,
-          userRole: user.role,
+          userId: responseUser.id,
+          userRole: responseUser.role,
           isEmployee,
         },
       }).catch(() => {}); // Non-blocking
     }
   }
 
-  return NextResponse.json(user, { status: 201 });
+  return NextResponse.json(responseUser, { status: 201 });
 }
 
 export const POST = withErrorHandler(createUserHandler, { requireAdmin: true });

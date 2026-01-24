@@ -14,6 +14,7 @@
 
 import { NextResponse } from 'next/server';
 import { csvToArray } from '@/lib/core/csv-utils';
+import { formatNumber } from '@/lib/utils/math-utils';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
@@ -126,8 +127,8 @@ export async function parseImportFile(
 
   // Validate file size
   if (file.size > maxFileSizeBytes) {
-    const sizeMB = (file.size / 1024 / 1024).toFixed(2);
-    const maxMB = (maxFileSizeBytes / 1024 / 1024).toFixed(0);
+    const sizeMB = formatNumber(file.size / 1024 / 1024);
+    const maxMB = formatNumber(maxFileSizeBytes / 1024 / 1024, 0);
     return {
       error: NextResponse.json(
         { error: `File size exceeds maximum limit of ${maxMB}MB. Your file is ${sizeMB}MB` },

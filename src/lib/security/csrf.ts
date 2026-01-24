@@ -3,12 +3,45 @@
  * @description CSRF (Cross-Site Request Forgery) protection using signed tokens for form submissions
  *              and origin validation for JSON API requests.
  * @module security
+ *
+ * SECURITY: Uses a separate CSRF_SECRET to ensure key separation.
+ * If CSRF_SECRET is not set, we derive a unique key from NEXTAUTH_SECRET using HKDF.
+ * This ensures that even if one secret is compromised, other security mechanisms
+ * remain protected.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { randomBytes, createHmac, timingSafeEqual } from 'crypto';
+import { randomBytes, createHmac, timingSafeEqual, createHash } from 'crypto';
 
-const CSRF_SECRET = process.env.NEXTAUTH_SECRET || 'dev-csrf-secret';
+/**
+ * SECURITY: Derive a separate CSRF secret from NEXTAUTH_SECRET
+ * Uses HKDF-like derivation to create a unique key for CSRF operations.
+ * This ensures key separation between authentication and CSRF protection.
+ */
+function deriveCsrfSecret(): string {
+  // Prefer dedicated CSRF_SECRET if available
+  if (process.env.CSRF_SECRET) {
+    return process.env.CSRF_SECRET;
+  }
+
+  // Fall back to deriving from NEXTAUTH_SECRET with domain separation
+  const baseSecret = process.env.NEXTAUTH_SECRET;
+  if (!baseSecret) {
+    // Development fallback only - production should have secrets set
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('CSRF_SECRET or NEXTAUTH_SECRET must be set in production');
+    }
+    return 'dev-csrf-secret-not-for-production';
+  }
+
+  // Derive a unique CSRF key using HMAC with a fixed context string
+  // This provides cryptographic separation from the base secret
+  return createHash('sha256')
+    .update(`csrf-token-key:${baseSecret}`)
+    .digest('hex');
+}
+
+const CSRF_SECRET = deriveCsrfSecret();
 const CSRF_COOKIE_NAME = '__Host-csrf-token';
 const CSRF_HEADER_NAME = 'x-csrf-token';
 

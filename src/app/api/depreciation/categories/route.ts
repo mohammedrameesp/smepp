@@ -22,6 +22,7 @@ import {
 } from '@/features/assets/lib/depreciation';
 import { createDepreciationCategorySchema } from '@/features/assets';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { invalidBodyResponse } from '@/lib/http/responses';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GET /api/depreciation/categories - List depreciation categories
@@ -103,10 +104,7 @@ async function postHandler(request: NextRequest, context: APIContext) {
   const validation = createDepreciationCategorySchema.safeParse(body);
 
   if (!validation.success) {
-    return NextResponse.json(
-      { error: 'Invalid request body', details: validation.error.issues },
-      { status: 400 }
-    );
+    return invalidBodyResponse(validation.error);
   }
 
   const { name, code, annualRate, usefulLifeYears, description } = validation.data;

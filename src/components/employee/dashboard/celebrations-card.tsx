@@ -1,12 +1,27 @@
 import { cn } from '@/lib/core/utils';
 
+type MilestoneTier = 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond';
+
 interface Celebration {
   id: string;
   name: string;
-  type: 'birthday' | 'anniversary';
+  type: 'birthday' | 'anniversary' | 'milestone';
   date: Date;
   years?: number; // For anniversaries
+  milestone?: {
+    days: number;
+    name: string;
+    tier: MilestoneTier;
+  };
 }
+
+const MILESTONE_TIER_COLORS: Record<MilestoneTier, string> = {
+  bronze: 'text-amber-600',
+  silver: 'text-slate-600',
+  gold: 'text-yellow-600',
+  platinum: 'text-cyan-600',
+  diamond: 'text-violet-600',
+};
 
 interface CelebrationsCardProps {
   celebrations: Celebration[];
@@ -57,10 +72,12 @@ export function CelebrationsCard({ celebrations, className }: CelebrationsCardPr
             <div className="flex items-center gap-2">
               <div
                 className={cn(
-                  'w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold',
+                  'w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold bg-slate-100',
                   celebration.type === 'birthday'
-                    ? 'bg-slate-100 text-pink-600'
-                    : 'bg-slate-100 text-purple-600'
+                    ? 'text-pink-600'
+                    : celebration.type === 'milestone' && celebration.milestone
+                      ? MILESTONE_TIER_COLORS[celebration.milestone.tier]
+                      : 'text-purple-600'
                 )}
               >
                 {getInitials(celebration.name)}
@@ -70,6 +87,8 @@ export function CelebrationsCard({ celebrations, className }: CelebrationsCardPr
                 <p className="text-xs text-gray-500">
                   {celebration.type === 'birthday' ? (
                     <>Birthday {getRelativeDay(celebration.date)}!</>
+                  ) : celebration.type === 'milestone' && celebration.milestone ? (
+                    <>{celebration.milestone.name} {getRelativeDay(celebration.date)}</>
                   ) : (
                     <>{celebration.years} year anniversary {getRelativeDay(celebration.date)}</>
                   )}
@@ -77,7 +96,7 @@ export function CelebrationsCard({ celebrations, className }: CelebrationsCardPr
               </div>
             </div>
             <span className="text-sm">
-              {celebration.type === 'birthday' ? '🎉' : '🏆'}
+              {celebration.type === 'birthday' ? '🎂' : celebration.type === 'milestone' ? '🏆' : '🎉'}
             </span>
           </div>
         ))}

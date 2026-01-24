@@ -35,8 +35,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ valid: false, reason: 'missing_token' }, { status: 400 });
     }
 
-    // Check TeamMember first (org users)
-    const teamMember = await prisma.teamMember.findFirst({
+    // Check User table (single source of truth for auth)
+    const user = await prisma.user.findFirst({
       where: {
         setupToken: token,
         setupTokenExpiry: {
@@ -52,36 +52,14 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // Fall back to User model (for super admins)
-    const user = !teamMember ? await prisma.user.findFirst({
-      where: {
-        setupToken: token,
-        setupTokenExpiry: {
-          gt: new Date(),
-        },
-      },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        passwordHash: true,
-      },
-    }) : null;
-
-    const targetUser = teamMember || user;
-
-    if (!targetUser) {
-      // Check if token exists but expired (check both models)
-      const expiredTeamMember = await prisma.teamMember.findFirst({
+    if (!user) {
+      // Check if token exists but expired
+      const expiredUser = await prisma.user.findFirst({
         where: { setupToken: token },
         select: { setupTokenExpiry: true },
       });
-      const expiredUser = !expiredTeamMember ? await prisma.user.findFirst({
-        where: { setupToken: token },
-        select: { setupTokenExpiry: true },
-      }) : null;
 
-      if (expiredTeamMember || expiredUser) {
+      if (expiredUser) {
         return NextResponse.json({ valid: false, reason: 'expired' });
       }
 
@@ -89,7 +67,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Check if user already has a password set
-    if (targetUser.passwordHash) {
+    if (user.passwordHash) {
       return NextResponse.json({
         valid: false,
         reason: 'already_set',
@@ -100,8 +78,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       valid: true,
       user: {
-        email: targetUser.email,
-        name: targetUser.name,
+        email: user.email,
+        name: user.name,
       },
     });
   } catch (error) {
@@ -128,8 +106,8 @@ export async function POST(request: NextRequest) {
 
     const { token, password } = result.data;
 
-    // Check TeamMember first (org users)
-    const teamMember = await prisma.teamMember.findFirst({
+    // Check User table (single source of truth for auth)
+    const user = await prisma.user.findFirst({
       where: {
         setupToken: token,
         setupTokenExpiry: {
@@ -139,27 +117,15 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Fall back to User model (for super admins)
-    const user = !teamMember ? await prisma.user.findFirst({
-      where: {
-        setupToken: token,
-        setupTokenExpiry: {
-          gt: new Date(),
-        },
-      },
-    }) : null;
-
-    if (!teamMember && !user) {
+    if (!user) {
       return NextResponse.json(
         { error: 'Invalid or expired setup token' },
         { status: 400 }
       );
     }
 
-    const targetUser = teamMember || user;
-
     // Check if user already has a password
-    if (targetUser!.passwordHash) {
+    if (user.passwordHash) {
       return NextResponse.json(
         { error: 'Password has already been set. Please use the login page.' },
         { status: 400 }
@@ -169,31 +135,18 @@ export async function POST(request: NextRequest) {
     // Hash new password
     const passwordHash = await hash(password, 12);
 
-    if (teamMember) {
-      // Update TeamMember: set password, verify email, and clear setup token
-      await prisma.teamMember.update({
-        where: { id: teamMember.id },
-        data: {
-          passwordHash,
-          emailVerified: new Date(), // Mark email as verified since they clicked the link
-          setupToken: null,
-          setupTokenExpiry: null,
-        },
-      });
-      logger.debug({ memberId: teamMember.id }, 'Initial password set for team member');
-    } else if (user) {
-      // Update User: set password, verify email, and clear setup token
-      await prisma.user.update({
-        where: { id: user.id },
-        data: {
-          passwordHash,
-          emailVerified: new Date(), // Mark email as verified since they clicked the link
-          setupToken: null,
-          setupTokenExpiry: null,
-        },
-      });
-      logger.debug({ userId: user.id }, 'Initial password set for user');
-    }
+    // Update User: set password, verify email, and clear setup token
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordHash,
+        emailVerified: new Date(), // Mark email as verified since they clicked the link
+        setupToken: null,
+        setupTokenExpiry: null,
+      },
+    });
+
+    logger.debug({ userId: user.id }, 'Initial password set for user');
 
     return NextResponse.json({
       success: true,

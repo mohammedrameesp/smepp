@@ -31,8 +31,6 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
 import { AssetRequestStatus } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { declineAssetAssignmentSchema } from '@/features/asset-requests';
@@ -42,7 +40,8 @@ import { sendBatchEmails } from '@/lib/core/email';
 import { handleEmailFailure } from '@/lib/core/email-failure-handler';
 import { assetAssignmentDeclinedEmail } from '@/lib/core/asset-request-emails';
 import { createBulkNotifications, NotificationTemplates } from '@/features/notifications/lib';
-import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { withErrorHandler } from '@/lib/http/handler';
+import { badRequestResponse, notFoundResponse, forbiddenResponse, validationErrorResponse } from '@/lib/http/errors';
 import logger from '@/lib/core/log';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -87,62 +86,55 @@ import logger from '@/lib/core/log';
  *   "processorNotes": "I already have a laptop..."
  * }
  */
-async function declineAssetAssignmentHandler(request: NextRequest, context: APIContext) {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
+export const POST = withErrorHandler(async (request: NextRequest, { tenant, params }) => {
+  const tenantId = tenant!.tenantId;
+  const userId = tenant!.userId;
+  const id = params?.id;
+  if (!id) {
+    return badRequestResponse('ID is required');
+  }
 
-    const tenantId = session.user.organizationId;
-    const id = context.params?.id;
-    if (!id) {
-      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
-    }
+  // ─────────────────────────────────────────────────────────────────────────────
+  // STEP 1: Validate request body (reason is required)
+  // ─────────────────────────────────────────────────────────────────────────────
+  const body = await request.json();
 
-    // ─────────────────────────────────────────────────────────────────────────────
-    // STEP 1: Validate request body (reason is required)
-    // ─────────────────────────────────────────────────────────────────────────────
-    const body = await request.json();
+  const validation = declineAssetAssignmentSchema.safeParse(body);
+  if (!validation.success) {
+    return validationErrorResponse(validation);
+  }
 
-    const validation = declineAssetAssignmentSchema.safeParse(body);
-    if (!validation.success) {
-      return NextResponse.json({
-        error: 'Invalid request body',
-        details: validation.error.issues,
-      }, { status: 400 });
-    }
+  const { reason } = validation.data;
 
-    const { reason } = validation.data;
+  // ─────────────────────────────────────────────────────────────────────────────
+  // STEP 2: Fetch request (tenant-scoped for IDOR prevention)
+  // ─────────────────────────────────────────────────────────────────────────────
+  const assetRequest = await prisma.assetRequest.findFirst({
+    where: { id, tenantId },
+    include: {
+      asset: { select: { assetTag: true, model: true, brand: true, type: true } },
+      member: { select: { id: true, name: true, email: true } },
+      assignedByMember: { select: { id: true, name: true, email: true } },
+    },
+  });
 
-    // ─────────────────────────────────────────────────────────────────────────────
-    // STEP 2: Fetch request (tenant-scoped for IDOR prevention)
-    // ─────────────────────────────────────────────────────────────────────────────
-    const assetRequest = await prisma.assetRequest.findFirst({
-      where: { id, tenantId },
-      include: {
-        asset: { select: { assetTag: true, model: true, brand: true, type: true } },
-        member: { select: { id: true, name: true, email: true } },
-        assignedByMember: { select: { id: true, name: true, email: true } },
-      },
-    });
+  if (!assetRequest) {
+    return notFoundResponse('Asset request not found');
+  }
 
-    if (!assetRequest) {
-      return NextResponse.json({ error: 'Asset request not found' }, { status: 404 });
-    }
+  // ─────────────────────────────────────────────────────────────────────────────
+  // STEP 3: Verify only target member can decline
+  // ─────────────────────────────────────────────────────────────────────────────
+  if (assetRequest.memberId !== userId) {
+    return forbiddenResponse('Access denied');
+  }
 
-    // ─────────────────────────────────────────────────────────────────────────────
-    // STEP 3: Verify only target member can decline
-    // ─────────────────────────────────────────────────────────────────────────────
-    if (assetRequest.memberId !== session.user.id) {
-      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────────
-    // STEP 4: Check if user can respond to this request
-    // ─────────────────────────────────────────────────────────────────────────────
-    if (!canUserRespond(assetRequest.status, assetRequest.type)) {
-      return NextResponse.json({ error: 'Cannot decline this assignment' }, { status: 400 });
-    }
+  // ─────────────────────────────────────────────────────────────────────────────
+  // STEP 4: Check if user can respond to this request
+  // ─────────────────────────────────────────────────────────────────────────────
+  if (!canUserRespond(assetRequest.status, assetRequest.type)) {
+    return badRequestResponse('Cannot decline this assignment');
+  }
 
     // ─────────────────────────────────────────────────────────────────────────────
     // STEP 5: Decline assignment in transaction
@@ -154,7 +146,7 @@ async function declineAssetAssignmentHandler(request: NextRequest, context: APIC
         where: { id },
         data: {
           status: AssetRequestStatus.REJECTED_BY_USER,
-          processedById: session.user.id,
+          processedById: userId,
           processedAt: new Date(),
           processorNotes: reason,
         },
@@ -174,7 +166,7 @@ async function declineAssetAssignmentHandler(request: NextRequest, context: APIC
           oldStatus: assetRequest.status,
           newStatus: AssetRequestStatus.REJECTED_BY_USER,
           notes: reason,
-          performedById: session.user.id,
+          performedById: userId,
         },
       });
 
@@ -186,7 +178,7 @@ async function declineAssetAssignmentHandler(request: NextRequest, context: APIC
     // ─────────────────────────────────────────────────────────────────────────────
     await logAction(
       tenantId,
-      session.user.id,
+      userId,
       ActivityActions.ASSET_ASSIGNMENT_DECLINED,
       'AssetRequest',
       id,
@@ -305,7 +297,5 @@ async function declineAssetAssignmentHandler(request: NextRequest, context: APIC
       }, 'Failed to send in-app notifications for assignment decline');
     }
 
-    return NextResponse.json(updatedRequest);
-}
-
-export const POST = withErrorHandler(declineAssetAssignmentHandler, { requireAuth: true, requireModule: 'assets' });
+  return NextResponse.json(updatedRequest);
+}, { requireAuth: true, requireModule: 'assets' });

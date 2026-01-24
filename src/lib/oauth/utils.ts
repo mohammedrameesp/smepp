@@ -8,7 +8,7 @@
 import crypto from 'crypto';
 import { prisma } from '@/lib/core/prisma';
 import { encode } from 'next-auth/jwt';
-import { isAccountLocked, clearFailedLogins, isTeamMemberLocked, clearTeamMemberFailedLogins } from '@/lib/security/account-lockout';
+import { isAccountLocked, clearFailedLogins } from '@/lib/security/account-lockout';
 import logger from '@/lib/core/log';
 import { createBulkNotifications } from '@/features/notifications/lib/notification-service';
 import { sendEmail } from '@/lib/core/email';
@@ -373,10 +373,16 @@ export async function validateOAuthSecurity(
         return { allowed: false, error: 'LoginDisabled' };
       }
 
-      // Check account lockout for TeamMember
-      const lockoutCheck = await isTeamMemberLocked(teamMember.id);
-      if (lockoutCheck.locked) {
-        return { allowed: false, error: 'AccountLocked', lockedUntil: lockoutCheck.lockedUntil };
+      // Check account lockout on User table (single source of truth for auth)
+      const user = await prisma.user.findUnique({
+        where: { email: normalizedEmail },
+        select: { id: true },
+      });
+      if (user) {
+        const lockoutCheck = await isAccountLocked(user.id);
+        if (lockoutCheck.locked) {
+          return { allowed: false, error: 'AccountLocked', lockedUntil: lockoutCheck.lockedUntil };
+        }
       }
 
       // Check org-level auth method restrictions
@@ -457,9 +463,34 @@ export async function upsertOAuthUser(userInfo: OAuthUserInfo, orgId: string | n
   // ORG USERS: Create/update TeamMember (PRIMARY PATH)
   // ═══════════════════════════════════════════════════════════════════════════════
   if (orgId) {
+    // First, create or find User (single source of truth for auth)
+    let user = await prisma.user.findUnique({
+      where: { email: normalizedEmail },
+    });
+
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          email: normalizedEmail,
+          name: userInfo.name,
+          image: userInfo.image,
+          emailVerified: userInfo.emailVerified ? new Date() : null,
+        },
+      });
+    } else {
+      // Update User email verification if needed
+      if (userInfo.emailVerified && !user.emailVerified) {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { emailVerified: new Date() },
+        });
+      }
+    }
+
+    // Now find or create TeamMember with userId FK
     let teamMember = await prisma.teamMember.findFirst({
       where: {
-        email: normalizedEmail,
+        userId: user.id,
         tenantId: orgId,
       },
     });
@@ -469,10 +500,10 @@ export async function upsertOAuthUser(userInfo: OAuthUserInfo, orgId: string | n
       // SSO logins without invitation default to employee (admin can change later)
       teamMember = await prisma.teamMember.create({
         data: {
-          email: normalizedEmail,
+          userId: user.id,
+          email: normalizedEmail, // Denormalized for queries
           name: userInfo.name,
           image: userInfo.image,
-          emailVerified: userInfo.emailVerified ? new Date() : null,
           tenantId: orgId,
           isAdmin: false,
           isOwner: false,
@@ -488,6 +519,7 @@ export async function upsertOAuthUser(userInfo: OAuthUserInfo, orgId: string | n
       logger.info({
         event: 'OAUTH_ACCOUNT_CREATED',
         teamMemberId: teamMember.id,
+        userId: user.id,
         email: normalizedEmail,
         orgId,
         provider,
@@ -519,13 +551,12 @@ export async function upsertOAuthUser(userInfo: OAuthUserInfo, orgId: string | n
         data: {
           name: userInfo.name || teamMember.name,
           image: userInfo.image || teamMember.image,
-          emailVerified: userInfo.emailVerified ? new Date() : teamMember.emailVerified,
         },
       });
     }
 
-    // Clear any failed login attempts on successful OAuth login
-    await clearTeamMemberFailedLogins(teamMember.id);
+    // Clear any failed login attempts on successful OAuth login (on User table)
+    await clearFailedLogins(user.id);
 
     return { type: 'teamMember' as const, ...teamMember };
   }
@@ -626,6 +657,7 @@ export async function createTeamMemberSessionToken(memberId: string): Promise<st
   const tokenPayload: Record<string, unknown> = {
     sub: teamMember.id,
     id: teamMember.id,
+    userId: teamMember.userId, // User ID for auth/security checks
     email: teamMember.email,
     name: teamMember.name,
     picture: teamMember.image,

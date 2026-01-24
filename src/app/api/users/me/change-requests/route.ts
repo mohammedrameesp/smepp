@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { invalidBodyResponse } from '@/lib/http/responses';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { z } from 'zod';
 import { sendBatchEmails } from '@/lib/core/email';
@@ -55,10 +56,7 @@ async function createChangeRequestHandler(request: NextRequest, context: APICont
   const validation = createRequestSchema.safeParse(body);
 
   if (!validation.success) {
-    return NextResponse.json(
-      { error: 'Invalid request', details: validation.error.issues },
-      { status: 400 }
-    );
+    return invalidBodyResponse(validation.error);
   }
 
   // Verify TeamMember exists in this tenant (tenant-scoped via extension)

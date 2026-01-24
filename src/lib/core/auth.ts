@@ -18,9 +18,6 @@ import {
   isAccountLocked,
   recordFailedLogin,
   clearFailedLogins,
-  isTeamMemberLocked,
-  recordTeamMemberFailedLogin,
-  clearTeamMemberFailedLogins,
 } from '@/lib/security/account-lockout';
 import logger from '@/lib/core/log';
 
@@ -96,7 +93,7 @@ if (process.env.AZURE_AD_CLIENT_ID && process.env.AZURE_AD_CLIENT_SECRET) {
 }
 
 // Email/Password credentials (for users who signed up with email)
-// This provider checks TeamMember first (org users), then User (super admins)
+// NEW: Always check User first (single source of truth for auth), then load TeamMember for org context
 providers.push(
   CredentialsProvider({
     id: 'credentials',
@@ -114,112 +111,7 @@ providers.push(
       const email = credentials.email.toLowerCase().trim();
       const orgSlug = credentials.orgSlug?.toLowerCase().trim() || null;
 
-      // STEP 1: Try to find TeamMember first (org-level users)
-      // If orgSlug is provided (login from subdomain), filter by it to ensure
-      // we get the correct organization when user belongs to multiple orgs
-      const teamMember = await prisma.teamMember.findFirst({
-        where: {
-          email,
-          ...(orgSlug && { tenant: { slug: { equals: orgSlug, mode: 'insensitive' as const } } }),
-        },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          passwordHash: true,
-          canLogin: true,
-          isDeleted: true,
-          lockedUntil: true,
-          isOwner: true,
-          isEmployee: true,
-          onboardingComplete: true,
-          // New boolean permission flags
-          isAdmin: true,
-          hasOperationsAccess: true,
-          hasHRAccess: true,
-          hasFinanceAccess: true,
-          canApprove: true,
-          permissionsUpdatedAt: true,
-          tenantId: true,
-          tenant: {
-            select: {
-              id: true,
-              name: true,
-              slug: true,
-              logoUrl: true,
-              logoUrlInverse: true,
-              subscriptionTier: true,
-              enabledModules: true,
-            },
-          },
-        },
-      });
-
-      if (teamMember && teamMember.passwordHash) {
-        // SECURITY: Check if account is locked (brute-force protection)
-        const lockStatus = await isTeamMemberLocked(teamMember.id);
-        if (lockStatus.locked) {
-          const minutesRemaining = lockStatus.lockedUntil
-            ? Math.ceil((lockStatus.lockedUntil.getTime() - Date.now()) / 60000)
-            : 5;
-          throw new Error(`Account temporarily locked. Try again in ${minutesRemaining} minutes.`);
-        }
-
-        // Block soft-deleted members
-        if (teamMember.isDeleted) {
-          throw new Error('This account has been deactivated');
-        }
-
-        // Block members who cannot login
-        if (!teamMember.canLogin) {
-          throw new Error('This account is not enabled for login');
-        }
-
-        // Verify password
-        const isValid = await bcrypt.compare(credentials.password, teamMember.passwordHash);
-        if (!isValid) {
-          // SECURITY: Record failed login attempt
-          const lockResult = await recordTeamMemberFailedLogin(teamMember.id);
-          if (lockResult.locked) {
-            const minutesRemaining = lockResult.lockedUntil
-              ? Math.ceil((lockResult.lockedUntil.getTime() - Date.now()) / 60000)
-              : 5;
-            throw new Error(`Too many failed attempts. Account locked for ${minutesRemaining} minutes.`);
-          }
-          return null;
-        }
-
-        // SECURITY: Clear failed login attempts on successful login
-        await clearTeamMemberFailedLogins(teamMember.id);
-
-        // Return TeamMember data with org info embedded
-        return {
-          id: teamMember.id,
-          email: teamMember.email,
-          name: teamMember.name,
-          // Custom fields for TeamMember auth
-          isTeamMember: true,
-          isOwner: teamMember.isOwner,
-          isEmployee: teamMember.isEmployee,
-          // Permission flags (new boolean-based system)
-          isAdmin: teamMember.isAdmin,
-          hasOperationsAccess: teamMember.hasOperationsAccess,
-          hasHRAccess: teamMember.hasHRAccess,
-          hasFinanceAccess: teamMember.hasFinanceAccess,
-          canApprove: teamMember.canApprove,
-          permissionsUpdatedAt: teamMember.permissionsUpdatedAt?.toISOString() || null,
-          // Organization context
-          organizationId: teamMember.tenant.id,
-          organizationSlug: teamMember.tenant.slug,
-          organizationName: teamMember.tenant.name,
-          organizationLogoUrl: teamMember.tenant.logoUrl,
-          organizationLogoUrlInverse: teamMember.tenant.logoUrlInverse,
-          subscriptionTier: teamMember.tenant.subscriptionTier,
-          enabledModules: teamMember.tenant.enabledModules,
-        };
-      }
-
-      // STEP 2: Fall back to User table (for super admins only)
+      // STEP 1: Find User by email (single source of truth for authentication)
       const user = await prisma.user.findUnique({
         where: { email },
         select: {
@@ -228,17 +120,11 @@ providers.push(
           name: true,
           passwordHash: true,
           isDeleted: true,
-          lockedUntil: true,
           isSuperAdmin: true,
         },
       });
 
       if (!user || !user.passwordHash) {
-        return null;
-      }
-
-      // Only allow super admins to login via User table
-      if (!user.isSuperAdmin) {
         return null;
       }
 
@@ -251,14 +137,12 @@ providers.push(
         throw new Error(`Account temporarily locked. Try again in ${minutesRemaining} minutes.`);
       }
 
-      // Block soft-deleted users (deactivated accounts)
+      // Block soft-deleted users
       if (user.isDeleted) {
         throw new Error('This account has been deactivated');
       }
 
-      // Super admins can always login (canLogin is only on TeamMember)
-
-      // Verify password
+      // Verify password against User table
       const isValid = await bcrypt.compare(credentials.password, user.passwordHash);
       if (!isValid) {
         // SECURITY: Record failed login attempt
@@ -275,13 +159,156 @@ providers.push(
       // SECURITY: Clear failed login attempts on successful login
       await clearFailedLogins(user.id);
 
-      return {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        isSuperAdmin: true,
-        isTeamMember: false,
-      };
+      // STEP 2: For org login, find TeamMember by userId + org
+      if (orgSlug) {
+        const teamMember = await prisma.teamMember.findFirst({
+          where: {
+            userId: user.id,
+            tenant: { slug: { equals: orgSlug, mode: 'insensitive' as const } },
+          },
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            canLogin: true,
+            isDeleted: true,
+            isOwner: true,
+            isEmployee: true,
+            onboardingComplete: true,
+            isAdmin: true,
+            hasOperationsAccess: true,
+            hasHRAccess: true,
+            hasFinanceAccess: true,
+            canApprove: true,
+            permissionsUpdatedAt: true,
+            tenant: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+                logoUrl: true,
+                logoUrlInverse: true,
+                subscriptionTier: true,
+                enabledModules: true,
+              },
+            },
+          },
+        });
+
+        if (!teamMember) {
+          throw new Error('You are not a member of this organization');
+        }
+
+        // Block soft-deleted members
+        if (teamMember.isDeleted) {
+          throw new Error('This account has been deactivated');
+        }
+
+        // Block members who cannot login (org-level control)
+        if (!teamMember.canLogin) {
+          throw new Error('This account is not enabled for login');
+        }
+
+        // Return with org context - store both userId and memberId
+        return {
+          id: teamMember.id, // TeamMember ID for session (existing pattern)
+          email: teamMember.email,
+          name: teamMember.name,
+          userId: user.id, // Store User ID for auth operations
+          isTeamMember: true,
+          isOwner: teamMember.isOwner,
+          isEmployee: teamMember.isEmployee,
+          isAdmin: teamMember.isAdmin,
+          hasOperationsAccess: teamMember.hasOperationsAccess,
+          hasHRAccess: teamMember.hasHRAccess,
+          hasFinanceAccess: teamMember.hasFinanceAccess,
+          canApprove: teamMember.canApprove,
+          permissionsUpdatedAt: teamMember.permissionsUpdatedAt?.toISOString() || null,
+          organizationId: teamMember.tenant.id,
+          organizationSlug: teamMember.tenant.slug,
+          organizationName: teamMember.tenant.name,
+          organizationLogoUrl: teamMember.tenant.logoUrl,
+          organizationLogoUrlInverse: teamMember.tenant.logoUrlInverse,
+          subscriptionTier: teamMember.tenant.subscriptionTier,
+          enabledModules: teamMember.tenant.enabledModules,
+        };
+      }
+
+      // STEP 3: Super admin login (no org context)
+      if (user.isSuperAdmin) {
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          isSuperAdmin: true,
+          isTeamMember: false,
+        };
+      }
+
+      // User exists but no org context provided and not super admin
+      // Try to find their first org membership
+      const teamMember = await prisma.teamMember.findFirst({
+        where: { userId: user.id, isDeleted: false },
+        orderBy: { joinedAt: 'asc' },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          canLogin: true,
+          isOwner: true,
+          isEmployee: true,
+          onboardingComplete: true,
+          isAdmin: true,
+          hasOperationsAccess: true,
+          hasHRAccess: true,
+          hasFinanceAccess: true,
+          canApprove: true,
+          permissionsUpdatedAt: true,
+          tenant: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              logoUrl: true,
+              logoUrlInverse: true,
+              subscriptionTier: true,
+              enabledModules: true,
+            },
+          },
+        },
+      });
+
+      if (teamMember) {
+        if (!teamMember.canLogin) {
+          throw new Error('This account is not enabled for login');
+        }
+
+        return {
+          id: teamMember.id,
+          email: teamMember.email,
+          name: teamMember.name,
+          userId: user.id,
+          isTeamMember: true,
+          isOwner: teamMember.isOwner,
+          isEmployee: teamMember.isEmployee,
+          isAdmin: teamMember.isAdmin,
+          hasOperationsAccess: teamMember.hasOperationsAccess,
+          hasHRAccess: teamMember.hasHRAccess,
+          hasFinanceAccess: teamMember.hasFinanceAccess,
+          canApprove: teamMember.canApprove,
+          permissionsUpdatedAt: teamMember.permissionsUpdatedAt?.toISOString() || null,
+          organizationId: teamMember.tenant.id,
+          organizationSlug: teamMember.tenant.slug,
+          organizationName: teamMember.tenant.name,
+          organizationLogoUrl: teamMember.tenant.logoUrl,
+          organizationLogoUrlInverse: teamMember.tenant.logoUrlInverse,
+          subscriptionTier: teamMember.tenant.subscriptionTier,
+          enabledModules: teamMember.tenant.enabledModules,
+        };
+      }
+
+      // No org membership found - user needs to be invited to an org
+      return null;
     },
   })
 );
@@ -429,19 +456,12 @@ async function getTeamMemberOrganization(memberId: string): Promise<{
 
 /**
  * Get the user's primary organization membership (legacy - for super admin OAuth)
- * Now uses TeamMember table instead of deprecated OrganizationUser
+ * Uses userId FK to find TeamMember
  */
 async function _getUserOrganization(userId: string): Promise<OrganizationInfo | null> {
-  // Find TeamMember by matching User email
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { email: true },
-  });
-
-  if (!user?.email) return null;
-
+  // Find TeamMember by userId FK
   const membership = await prisma.teamMember.findFirst({
-    where: { email: user.email, isDeleted: false },
+    where: { userId, isDeleted: false },
     orderBy: { joinedAt: 'asc' }, // Get the oldest (first) organization
     include: {
       tenant: {
@@ -493,59 +513,14 @@ export const authOptions: NextAuthOptions = {
 
         const authMethod = account?.provider ? providerToAuthMethod[account.provider] : null;
 
-        // For OAuth providers, check TeamMember and org restrictions
+        // For OAuth providers, check User and TeamMember restrictions
         if (account?.provider && account.provider !== 'credentials' && account.provider !== 'super-admin-credentials' && user.email) {
           const normalizedEmail = user.email.toLowerCase().trim();
           const emailDomain = normalizedEmail.split('@')[1];
           const superAdminEmail = process.env.SUPER_ADMIN_EMAIL?.toLowerCase().trim();
           const isSuperAdmin = superAdminEmail === normalizedEmail;
 
-          // Check TeamMember first (org users)
-          const teamMember = await prisma.teamMember.findFirst({
-            where: { email: normalizedEmail },
-            include: {
-              tenant: {
-                select: {
-                  id: true,
-                  name: true,
-                  allowedAuthMethods: true,
-                  allowedEmailDomains: true,
-                  enforceDomainRestriction: true,
-                },
-              },
-            },
-          });
-
-          if (teamMember) {
-            // Block soft-deleted members
-            if (teamMember.isDeleted) {
-              return '/login?error=AccountDeactivated';
-            }
-
-            // Block members who cannot login
-            if (!teamMember.canLogin) {
-              return false;
-            }
-
-            // Check auth restrictions for org
-            const org = teamMember.tenant;
-
-            // Check auth method restriction
-            if (org.allowedAuthMethods.length > 0 && authMethod) {
-              if (!org.allowedAuthMethods.includes(authMethod)) {
-                return '/login?error=AuthMethodNotAllowed';
-              }
-            }
-
-            // Check email domain restriction
-            if (org.enforceDomainRestriction && org.allowedEmailDomains.length > 0) {
-              if (!org.allowedEmailDomains.includes(emailDomain)) {
-                return '/login?error=DomainNotAllowed';
-              }
-            }
-          }
-
-          // Also check User table for super admins (for OAuth account linking)
+          // Check User table first (for account status and OAuth account linking)
           const existingUser = await prisma.user.findUnique({
             where: { email: normalizedEmail },
             include: { accounts: true },
@@ -556,9 +531,6 @@ export const authOptions: NextAuthOptions = {
             if (existingUser.isDeleted) {
               return '/login?error=AccountDeactivated';
             }
-
-            // Note: canLogin is now on TeamMember, not User
-            // User table is only for super admins who can always login if not deleted
 
             // Check if this OAuth account is already linked
             const accountExists = existingUser.accounts.some(
@@ -584,6 +556,46 @@ export const authOptions: NextAuthOptions = {
                   token_type: account.token_type,
                 },
               });
+            }
+
+            // Check TeamMember by userId FK (org-level restrictions)
+            const teamMember = await prisma.teamMember.findFirst({
+              where: { userId: existingUser.id, isDeleted: false },
+              include: {
+                tenant: {
+                  select: {
+                    id: true,
+                    name: true,
+                    allowedAuthMethods: true,
+                    allowedEmailDomains: true,
+                    enforceDomainRestriction: true,
+                  },
+                },
+              },
+            });
+
+            if (teamMember) {
+              // Block members who cannot login (org-level control)
+              if (!teamMember.canLogin) {
+                return false;
+              }
+
+              // Check auth restrictions for org
+              const org = teamMember.tenant;
+
+              // Check auth method restriction
+              if (org.allowedAuthMethods.length > 0 && authMethod) {
+                if (!org.allowedAuthMethods.includes(authMethod)) {
+                  return '/login?error=AuthMethodNotAllowed';
+                }
+              }
+
+              // Check email domain restriction
+              if (org.enforceDomainRestriction && org.allowedEmailDomains.length > 0) {
+                if (!org.allowedEmailDomains.includes(emailDomain)) {
+                  return '/login?error=DomainNotAllowed';
+                }
+              }
             }
 
             // SEC-CRIT-3: Removed auto-promotion to super admin
@@ -625,12 +637,37 @@ export const authOptions: NextAuthOptions = {
         const shouldCheckSecurity = !user && token.id && token.iat && (now - lastSecurityCheck > SECURITY_CHECK_INTERVAL_MS);
 
         if (shouldCheckSecurity) {
-          // Check against TeamMember table for org users, User table for super admins
+          // Always check User table for password security (single source of truth)
+          // Use userId for TeamMember logins, id for super admin logins
+          const authUserId = token.isTeamMember ? (token.userId as string) : (token.id as string);
+
+          if (authUserId) {
+            const userSecurityCheck = await prisma.user.findUnique({
+              where: { id: authUserId },
+              select: { passwordChangedAt: true, isDeleted: true },
+            });
+
+            if (userSecurityCheck) {
+              // If user is deleted, invalidate the session
+              if (userSecurityCheck.isDeleted) {
+                return { ...token, id: undefined };
+              }
+
+              // If password was changed after token was issued, invalidate the session
+              if (userSecurityCheck.passwordChangedAt) {
+                const tokenIssuedAt = (token.iat as number) * 1000;
+                if (userSecurityCheck.passwordChangedAt.getTime() > tokenIssuedAt) {
+                  return { ...token, id: undefined };
+                }
+              }
+            }
+          }
+
+          // For TeamMember logins, also check org-level permissions
           if (token.isTeamMember) {
-            const securityCheck = await prisma.teamMember.findUnique({
+            const memberCheck = await prisma.teamMember.findUnique({
               where: { id: token.id as string },
               select: {
-                passwordChangedAt: true,
                 canLogin: true,
                 isDeleted: true,
                 // SEC-CRIT-2: Also verify permission flags haven't changed
@@ -646,50 +683,22 @@ export const authOptions: NextAuthOptions = {
               },
             });
 
-            if (securityCheck) {
+            if (memberCheck) {
               // If member can't login or is deleted, invalidate the session
-              if (!securityCheck.canLogin || securityCheck.isDeleted) {
+              if (!memberCheck.canLogin || memberCheck.isDeleted) {
                 return { ...token, id: undefined };
-              }
-
-              // If password was changed after token was issued, invalidate the session
-              if (securityCheck.passwordChangedAt) {
-                const tokenIssuedAt = (token.iat as number) * 1000;
-                if (securityCheck.passwordChangedAt.getTime() > tokenIssuedAt) {
-                  return { ...token, id: undefined };
-                }
               }
 
               // SEC-CRIT-2: Update permission flags from database (ensures revoked permissions take effect)
-              token.isAdmin = securityCheck.isAdmin;
-              token.isOwner = securityCheck.isOwner;
-              token.hasFinanceAccess = securityCheck.hasFinanceAccess;
-              token.hasHRAccess = securityCheck.hasHRAccess;
-              token.hasOperationsAccess = securityCheck.hasOperationsAccess;
-              token.canApprove = securityCheck.canApprove;
-              token.isEmployee = securityCheck.isEmployee;
-              token.onboardingComplete = securityCheck.onboardingComplete ?? false;
-              token.permissionsUpdatedAt = securityCheck.permissionsUpdatedAt?.toISOString() || null;
-            }
-          } else {
-            // Super admin - check User table
-            const securityCheck = await prisma.user.findUnique({
-              where: { id: token.id as string },
-              select: { passwordChangedAt: true, isDeleted: true },
-            });
-
-            if (securityCheck) {
-              // Super admins can always login if not deleted (canLogin is only on TeamMember)
-              if (securityCheck.isDeleted) {
-                return { ...token, id: undefined };
-              }
-
-              if (securityCheck.passwordChangedAt) {
-                const tokenIssuedAt = (token.iat as number) * 1000;
-                if (securityCheck.passwordChangedAt.getTime() > tokenIssuedAt) {
-                  return { ...token, id: undefined };
-                }
-              }
+              token.isAdmin = memberCheck.isAdmin;
+              token.isOwner = memberCheck.isOwner;
+              token.hasFinanceAccess = memberCheck.hasFinanceAccess;
+              token.hasHRAccess = memberCheck.hasHRAccess;
+              token.hasOperationsAccess = memberCheck.hasOperationsAccess;
+              token.canApprove = memberCheck.canApprove;
+              token.isEmployee = memberCheck.isEmployee;
+              token.onboardingComplete = memberCheck.onboardingComplete ?? false;
+              token.permissionsUpdatedAt = memberCheck.permissionsUpdatedAt?.toISOString() || null;
             }
           }
           // Update last security check timestamp
@@ -710,6 +719,8 @@ export const authOptions: NextAuthOptions = {
             token.isTeamMember = true;
             token.isSuperAdmin = false;
             const userData = user as unknown as Record<string, unknown>;
+            // Store User ID for auth operations (password security checks)
+            token.userId = userData.userId as string;
             token.isOwner = userData.isOwner as boolean;
             token.isEmployee = userData.isEmployee as boolean;
             token.onboardingComplete = (userData.onboardingComplete as boolean) ?? false;
@@ -750,10 +761,11 @@ export const authOptions: NextAuthOptions = {
             }
 
             // For non-super-admins, check if they have an org via TeamMember
-            if (!token.isSuperAdmin) {
-              // Check TeamMember table for OAuth users
+            if (!token.isSuperAdmin && token.id) {
+              // Check TeamMember table for OAuth users using userId FK
               const teamMember = await prisma.teamMember.findFirst({
-                where: { email: user.email!.toLowerCase().trim() },
+                where: { userId: token.id as string, isDeleted: false },
+                orderBy: { joinedAt: 'asc' },
                 select: {
                   id: true,
                   isOwner: true,
@@ -780,6 +792,8 @@ export const authOptions: NextAuthOptions = {
               });
 
               if (teamMember) {
+                // Store User ID for auth operations
+                token.userId = token.id as string;
                 // Switch to TeamMember context
                 token.id = teamMember.id;
                 token.isTeamMember = true;
@@ -997,6 +1011,7 @@ declare module 'next-auth' {
 
   interface User {
     // Extended fields from credentials provider
+    userId?: string; // User.id for auth operations (when isTeamMember=true, id is TeamMember.id)
     isTeamMember?: boolean;
     isSuperAdmin?: boolean;
     isOwner?: boolean;
@@ -1022,6 +1037,7 @@ declare module 'next-auth' {
 declare module 'next-auth/jwt' {
   interface JWT {
     id?: string;
+    userId?: string; // User.id for auth operations (password security, lockout)
     isSuperAdmin?: boolean;
     isEmployee?: boolean;
     onboardingComplete?: boolean;

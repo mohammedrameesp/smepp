@@ -4,6 +4,7 @@
  * @module operations/suppliers
  */
 import { NextRequest, NextResponse } from 'next/server';
+import { invalidBodyResponse } from '@/lib/http/responses';
 import { updateSupplierSchema } from '@/features/suppliers';
 import { logAction } from '@/lib/core/activity';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
@@ -90,18 +91,7 @@ async function updateSupplierHandler(request: NextRequest, context: APIContext) 
     const validation = updateSupplierSchema.safeParse(body);
 
     if (!validation.success) {
-      const errorMessages = validation.error.issues.map(issue => {
-        const field = issue.path.join('.');
-        return `${field}: ${issue.message}`;
-      }).join('; ');
-
-      return NextResponse.json(
-        {
-          error: `Validation failed: ${errorMessages}`,
-          details: validation.error.issues,
-        },
-        { status: 400 }
-      );
+      return invalidBodyResponse(validation.error);
     }
 
     const data = validation.data;

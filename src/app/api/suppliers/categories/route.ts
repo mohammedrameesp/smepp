@@ -6,21 +6,17 @@
  * @module operations/suppliers
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { getMatchingDefaultCategories } from '@/features/suppliers/constants/categories';
+import { forbiddenResponse } from '@/lib/http/errors';
 
-async function getCategoriesHandler(request: NextRequest, _context: APIContext) {
-    let tenantId: string | null = null;
+async function getCategoriesHandler(request: NextRequest, context: APIContext) {
+    // Try to get tenant from context (authenticated users)
+    let tenantId: string | null = context.tenant?.tenantId || null;
 
-    // Try to get tenant from session (authenticated users)
-    const session = await getServerSession(authOptions);
-    if (session?.user?.organizationId) {
-      tenantId = session.user.organizationId;
-    } else {
-      // For public access, get tenant from subdomain
+    // For public access, get tenant from subdomain header
+    if (!tenantId) {
       const subdomain = request.headers.get('x-subdomain');
       if (subdomain) {
         const organization = await prisma.organization.findUnique({
@@ -34,7 +30,7 @@ async function getCategoriesHandler(request: NextRequest, _context: APIContext) 
     }
 
     if (!tenantId) {
-      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+      return forbiddenResponse('Tenant context required');
     }
 
     const { searchParams } = new URL(request.url);

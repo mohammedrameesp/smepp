@@ -7,6 +7,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { invalidBodyResponse } from '@/lib/http/responses';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 
 const enableManagerSchema = z.object({
@@ -28,10 +29,7 @@ async function enableManagerHandler(
   const validation = enableManagerSchema.safeParse(body);
 
   if (!validation.success) {
-    return NextResponse.json(
-      { error: 'Invalid request', details: validation.error.flatten() },
-      { status: 400 }
-    );
+    return invalidBodyResponse(validation.error);
   }
 
   const { email } = validation.data;

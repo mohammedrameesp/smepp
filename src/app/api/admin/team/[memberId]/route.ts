@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { z } from 'zod';
 import { TeamMemberStatus } from '@prisma/client';
-import logger from '@/lib/core/log';
 import { clearWhatsAppPromptSnooze } from '@/lib/utils/whatsapp-verification-check';
+import { withErrorHandler } from '@/lib/http/handler';
+import { validationErrorResponse, notFoundResponse, forbiddenResponse, badRequestResponse } from '@/lib/http/errors';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // PATCH /api/admin/team/[memberId] - Update member permissions
@@ -22,223 +21,188 @@ const updateMemberSchema = z.object({
   role: z.enum(['ADMIN', 'MEMBER']).optional(),
 });
 
-export async function PATCH(
+export const PATCH = withErrorHandler(async (
   request: NextRequest,
-  { params }: { params: Promise<{ memberId: string }> }
-) {
-  try {
-    const session = await getServerSession(authOptions);
+  { tenant, params }
+) => {
+  const tenantId = tenant!.tenantId;
+  const userId = tenant!.userId;
+  const memberId = params?.memberId;
 
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
+  if (!memberId) {
+    return badRequestResponse('Member ID is required');
+  }
 
-    // Only owners can change roles
-    if (!session.user.isOwner) {
-      return NextResponse.json({ error: 'Owner access required' }, { status: 403 });
-    }
+  // Only owners can change roles
+  if (!tenant!.isOwner) {
+    return forbiddenResponse('Owner access required');
+  }
+  const body = await request.json();
+  const result = updateMemberSchema.safeParse(body);
 
-    const { memberId } = await params;
-    const body = await request.json();
-    const result = updateMemberSchema.safeParse(body);
+  if (!result.success) {
+    return validationErrorResponse(result);
+  }
 
-    if (!result.success) {
-      return NextResponse.json(
-        { error: 'Invalid input', details: result.error.flatten().fieldErrors },
-        { status: 400 }
-      );
-    }
+  // Check member exists and belongs to org
+  const member = await prisma.teamMember.findUnique({
+    where: { id: memberId },
+    select: {
+      id: true,
+      tenantId: true,
+      isAdmin: true,
+      canApprove: true,
+    },
+  });
 
-    // Check member exists and belongs to org
-    const member = await prisma.teamMember.findUnique({
-      where: { id: memberId },
-      select: {
-        id: true,
-        tenantId: true,
-        isAdmin: true,
-        canApprove: true,
-      },
+  if (!member || member.tenantId !== tenantId) {
+    return notFoundResponse('Member');
+  }
+
+  // Can't change own permissions
+  if (member.id === userId) {
+    return badRequestResponse('Cannot change your own permissions');
+  }
+
+  // Build update data from new boolean fields or legacy role
+  const updateData: {
+    isAdmin?: boolean;
+    hasOperationsAccess?: boolean;
+    hasHRAccess?: boolean;
+    hasFinanceAccess?: boolean;
+    canApprove?: boolean;
+    permissionsUpdatedAt?: Date;
+  } = {};
+
+  // If legacy role is provided, map to isAdmin
+  if (result.data.role !== undefined) {
+    updateData.isAdmin = result.data.role === 'ADMIN';
+  }
+  // Otherwise, use the new boolean fields if provided
+  if (result.data.isAdmin !== undefined) updateData.isAdmin = result.data.isAdmin;
+  if (result.data.hasOperationsAccess !== undefined) updateData.hasOperationsAccess = result.data.hasOperationsAccess;
+  if (result.data.hasHRAccess !== undefined) updateData.hasHRAccess = result.data.hasHRAccess;
+  if (result.data.hasFinanceAccess !== undefined) updateData.hasFinanceAccess = result.data.hasFinanceAccess;
+  if (result.data.canApprove !== undefined) updateData.canApprove = result.data.canApprove;
+
+  // Set permissionsUpdatedAt if any permission field is being updated
+  if (Object.keys(updateData).length > 0) {
+    updateData.permissionsUpdatedAt = new Date();
+  }
+
+  // Check if member is being promoted to an eligible role for WhatsApp verification
+  const wasEligible = member.isAdmin || member.canApprove;
+  const willBeAdmin = updateData.isAdmin ?? member.isAdmin;
+  const willCanApprove = updateData.canApprove ?? member.canApprove;
+  const willBeEligible = willBeAdmin || willCanApprove;
+  const isBeingPromoted = !wasEligible && willBeEligible;
+
+  // Update permissions
+  const updated = await prisma.teamMember.update({
+    where: { id: memberId },
+    data: updateData,
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      isAdmin: true,
+      hasOperationsAccess: true,
+      hasHRAccess: true,
+      hasFinanceAccess: true,
+      canApprove: true,
+      isOwner: true,
+    },
+  });
+
+  // If user is being promoted to an eligible role, check if org has WhatsApp enabled
+  // and clear their snooze so they'll be prompted to verify their number
+  if (isBeingPromoted) {
+    const org = await prisma.organization.findUnique({
+      where: { id: tenantId },
+      select: { whatsAppSource: true },
     });
 
-    if (!member || member.tenantId !== session.user.organizationId) {
-      return NextResponse.json({ error: 'Member not found' }, { status: 404 });
-    }
-
-    // Can't change own permissions
-    if (member.id === session.user.id) {
-      return NextResponse.json(
-        { error: 'Cannot change your own permissions' },
-        { status: 400 }
-      );
-    }
-
-    // Build update data from new boolean fields or legacy role
-    const updateData: {
-      isAdmin?: boolean;
-      hasOperationsAccess?: boolean;
-      hasHRAccess?: boolean;
-      hasFinanceAccess?: boolean;
-      canApprove?: boolean;
-      permissionsUpdatedAt?: Date;
-    } = {};
-
-    // If legacy role is provided, map to isAdmin
-    if (result.data.role !== undefined) {
-      updateData.isAdmin = result.data.role === 'ADMIN';
-    }
-    // Otherwise, use the new boolean fields if provided
-    if (result.data.isAdmin !== undefined) updateData.isAdmin = result.data.isAdmin;
-    if (result.data.hasOperationsAccess !== undefined) updateData.hasOperationsAccess = result.data.hasOperationsAccess;
-    if (result.data.hasHRAccess !== undefined) updateData.hasHRAccess = result.data.hasHRAccess;
-    if (result.data.hasFinanceAccess !== undefined) updateData.hasFinanceAccess = result.data.hasFinanceAccess;
-    if (result.data.canApprove !== undefined) updateData.canApprove = result.data.canApprove;
-
-    // Set permissionsUpdatedAt if any permission field is being updated
-    if (Object.keys(updateData).length > 0) {
-      updateData.permissionsUpdatedAt = new Date();
-    }
-
-    // Check if member is being promoted to an eligible role for WhatsApp verification
-    const wasEligible = member.isAdmin || member.canApprove;
-    const willBeAdmin = updateData.isAdmin ?? member.isAdmin;
-    const willCanApprove = updateData.canApprove ?? member.canApprove;
-    const willBeEligible = willBeAdmin || willCanApprove;
-    const isBeingPromoted = !wasEligible && willBeEligible;
-
-    // Update permissions
-    const updated = await prisma.teamMember.update({
-      where: { id: memberId },
-      data: updateData,
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        isAdmin: true,
-        hasOperationsAccess: true,
-        hasHRAccess: true,
-        hasFinanceAccess: true,
-        canApprove: true,
-        isOwner: true,
-      },
-    });
-
-    // If user is being promoted to an eligible role, check if org has WhatsApp enabled
-    // and clear their snooze so they'll be prompted to verify their number
-    if (isBeingPromoted) {
-      const org = await prisma.organization.findUnique({
-        where: { id: session.user.organizationId },
-        select: { whatsAppSource: true },
+    if (org && org.whatsAppSource !== 'NONE') {
+      // Check if user is already verified
+      const whatsAppPhone = await prisma.whatsAppUserPhone.findUnique({
+        where: { memberId },
+        select: { isVerified: true },
       });
 
-      if (org && org.whatsAppSource !== 'NONE') {
-        // Check if user is already verified
-        const whatsAppPhone = await prisma.whatsAppUserPhone.findUnique({
-          where: { memberId },
-          select: { isVerified: true },
-        });
-
-        if (!whatsAppPhone?.isVerified) {
-          // Clear snooze so they'll see the prompt on next login
-          await clearWhatsAppPromptSnooze(memberId);
-        }
+      if (!whatsAppPhone?.isVerified) {
+        // Clear snooze so they'll see the prompt on next login
+        await clearWhatsAppPromptSnooze(memberId);
       }
     }
-
-    return NextResponse.json({
-      member: {
-        ...updated,
-        // Legacy role field for backwards compatibility
-        role: updated.isAdmin ? 'ADMIN' : 'MEMBER',
-      },
-    });
-  } catch (error) {
-    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Failed to update member');
-    return NextResponse.json(
-      { error: 'Failed to update member' },
-      { status: 500 }
-    );
   }
-}
+
+  return NextResponse.json({
+    member: {
+      ...updated,
+      // Legacy role field for backwards compatibility
+      role: updated.isAdmin ? 'ADMIN' : 'MEMBER',
+    },
+  });
+}, { requireAuth: true });
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // DELETE /api/admin/team/[memberId] - Remove member from organization
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ memberId: string }> }
-) {
-  try {
-    const session = await getServerSession(authOptions);
+export const DELETE = withErrorHandler(async (
+  _request: NextRequest,
+  { tenant, params }
+) => {
+  const tenantId = tenant!.tenantId;
+  const userId = tenant!.userId;
+  const isOwner = tenant!.isOwner;
+  const memberId = params?.memberId;
 
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
-
-    // Only admins/owners can remove members
-    if (!session.user.isOwner && !session.user.isAdmin) {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
-    }
-
-    const { memberId } = await params;
-
-    // Check member exists and belongs to org
-    const member = await prisma.teamMember.findUnique({
-      where: { id: memberId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        tenantId: true,
-        isAdmin: true,
-        isOwner: true,
-      },
-    });
-
-    if (!member || member.tenantId !== session.user.organizationId) {
-      return NextResponse.json({ error: 'Member not found' }, { status: 404 });
-    }
-
-    // Can't remove yourself
-    if (member.id === session.user.id) {
-      return NextResponse.json(
-        { error: 'Cannot remove yourself from the organization' },
-        { status: 400 }
-      );
-    }
-
-    // Can't remove the owner
-    if (member.isOwner) {
-      return NextResponse.json(
-        { error: 'Cannot remove the organization owner' },
-        { status: 400 }
-      );
-    }
-
-    // Admins can't remove other admins (only owners can)
-    if (!session.user.isOwner && member.isAdmin) {
-      return NextResponse.json(
-        { error: 'Only owners can remove admins' },
-        { status: 403 }
-      );
-    }
-
-    // Soft delete member (mark as terminated)
-    await prisma.teamMember.update({
-      where: { id: memberId },
-      data: {
-        status: TeamMemberStatus.TERMINATED,
-        isDeleted: true,
-        deletedAt: new Date(),
-      },
-    });
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Failed to remove member');
-    return NextResponse.json(
-      { error: 'Failed to remove member' },
-      { status: 500 }
-    );
+  if (!memberId) {
+    return badRequestResponse('Member ID is required');
   }
-}
+
+  // Check member exists and belongs to org
+  const member = await prisma.teamMember.findUnique({
+    where: { id: memberId },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      tenantId: true,
+      isAdmin: true,
+      isOwner: true,
+    },
+  });
+
+  if (!member || member.tenantId !== tenantId) {
+    return notFoundResponse('Member');
+  }
+
+  // Can't remove yourself
+  if (member.id === userId) {
+    return badRequestResponse('Cannot remove yourself from the organization');
+  }
+
+  // Can't remove the owner
+  if (member.isOwner) {
+    return badRequestResponse('Cannot remove the organization owner');
+  }
+
+  // Admins can't remove other admins (only owners can)
+  if (!isOwner && member.isAdmin) {
+    return forbiddenResponse('Only owners can remove admins');
+  }
+
+  // Soft delete member (mark as terminated)
+  await prisma.teamMember.update({
+    where: { id: memberId },
+    data: {
+      status: TeamMemberStatus.TERMINATED,
+      isDeleted: true,
+      deletedAt: new Date(),
+    },
+  });
+
+  return NextResponse.json({ success: true });
+}, { requireAuth: true, requireAdmin: true });

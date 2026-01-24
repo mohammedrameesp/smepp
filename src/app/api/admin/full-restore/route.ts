@@ -1,31 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
 import { AssetStatus, BillingCycle, SubscriptionStatus, Role, Prisma } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import ExcelJS from 'exceljs';
-import logger from '@/lib/core/log';
+import { withErrorHandler } from '@/lib/http/handler';
+import { badRequestResponse } from '@/lib/http/errors';
 
-export async function POST(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session || !session.user.isAdmin) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
+export const POST = withErrorHandler(async (request: NextRequest, { tenant }) => {
+  const tenantId = tenant!.tenantId;
 
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
-    }
+  const formData = await request.formData();
+  const file = formData.get('file') as File;
 
-    const tenantId = session.user.organizationId;
-
-    const formData = await request.formData();
-    const file = formData.get('file') as File;
-
-    if (!file) {
-      return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
-    }
+  if (!file) {
+    return badRequestResponse('No file uploaded');
+  }
 
     // Convert file to buffer
     const bytes = await file.arrayBuffer();
@@ -65,49 +53,50 @@ export async function POST(request: NextRequest) {
 
     // 1. Import Users (match by email)
     const usersSheet = workbook.getWorksheet('Users');
+    const userIdMap = new Map<string, string>(); // old ID -> new ID
+
     if (usersSheet) {
-      const userIdMap = new Map<string, string>(); // old ID -> new ID
+      // Collect all user import promises for proper async handling
+      const userImportPromises: Promise<void>[] = [];
 
       usersSheet.eachRow((row, rowNumber) => {
         if (rowNumber === 1) return; // Skip header
-        try {
-          const oldId = row.getCell(1).value?.toString() || '';
-          const email = row.getCell(3).value?.toString() || '';
 
-          if (!email) return;
+        const oldId = row.getCell(1).value?.toString() || '';
+        const email = row.getCell(3).value?.toString() || '';
 
-          // Skip auth-related accounts to prevent conflicts
-          if (email.includes('next-auth')) return;
+        if (!email) return;
 
-          const userData = {
-            name: row.getCell(2).value?.toString() || null,
-            email: email,
-            role: (row.getCell(6).value?.toString() || 'EMPLOYEE') as Role,
-            isTemporaryStaff: row.getCell(7).value?.toString() === 'Yes',
-            isSystemAccount: row.getCell(8).value?.toString() === 'Yes',
-          };
+        // Skip auth-related accounts to prevent conflicts
+        if (email.includes('next-auth')) return;
 
-          // Try to find existing user by email
-          prisma.user.upsert({
-            where: { email: userData.email },
-            update: userData,
-            create: userData,
-          }).then(user => {
-            userIdMap.set(oldId, user.id);
-            results.users.updated++;
-          }).catch(() => {
-            results.users.errors++;
-          });
+        const userData = {
+          name: row.getCell(2).value?.toString() || null,
+          email: email,
+          role: (row.getCell(6).value?.toString() || 'EMPLOYEE') as Role,
+          isTemporaryStaff: row.getCell(7).value?.toString() === 'Yes',
+          isSystemAccount: row.getCell(8).value?.toString() === 'Yes',
+        };
 
-        } catch (error) {
+        // Create promise for each user upsert
+        const promise = prisma.user.upsert({
+          where: { email: userData.email },
+          update: userData,
+          create: userData,
+        }).then(user => {
+          userIdMap.set(oldId, user.id);
+          results.users.updated++;
+        }).catch((error) => {
           results.users.errors++;
           results.errors.push(`User row ${rowNumber}: ${error instanceof Error ? error.message : 'Unknown error'}`);
-        }
-      });
-    }
+        });
 
-    // Wait for users to complete
-    await new Promise(resolve => setTimeout(resolve, 2000));
+        userImportPromises.push(promise);
+      });
+
+      // Wait for ALL user imports to complete (not arbitrary timeout)
+      await Promise.allSettled(userImportPromises);
+    }
 
     // 2. Import Assets (match by assetTag if exists, otherwise create)
     const assetsSheet = workbook.getWorksheet('Assets');
@@ -268,17 +257,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({
-      success: true,
-      message: 'Database restore completed',
-      results,
-    });
-
-  } catch (error) {
-    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Full restore error');
-    return NextResponse.json(
-      { error: 'Failed to restore database', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    );
-  }
-}
+  return NextResponse.json({
+    success: true,
+    message: 'Database restore completed',
+    results,
+  });
+}, { requireAuth: true, requireAdmin: true });

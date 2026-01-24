@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Coins, Loader2, Save, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { CURRENCY_MAP } from '@/lib/core/currency';
+import { formatNumber } from '@/lib/utils/math-utils';
 
 interface CurrencyRate {
   code: string;
@@ -238,9 +239,9 @@ export function ExchangeRateSettings() {
                 <div className="mt-3 pt-3 border-t">
                   <p className="text-xs text-slate-500">Quick reference:</p>
                   <div className="grid grid-cols-3 gap-2 mt-1 text-xs">
-                    <span>100 {rate.code} = {(100 * parseFloat(rate.rate)).toFixed(2)} {primaryCurrency}</span>
-                    <span>1000 {rate.code} = {(1000 * parseFloat(rate.rate)).toFixed(2)} {primaryCurrency}</span>
-                    <span>10000 {rate.code} = {(10000 * parseFloat(rate.rate)).toFixed(2)} {primaryCurrency}</span>
+                    <span>100 {rate.code} = {formatNumber(100 * parseFloat(rate.rate))} {primaryCurrency}</span>
+                    <span>1000 {rate.code} = {formatNumber(1000 * parseFloat(rate.rate))} {primaryCurrency}</span>
+                    <span>10000 {rate.code} = {formatNumber(10000 * parseFloat(rate.rate))} {primaryCurrency}</span>
                   </div>
                 </div>
               )}

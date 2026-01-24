@@ -165,11 +165,12 @@ export async function POST(request: NextRequest) {
         data: { organizationId: org.id },
       });
 
-      // Create owner as TeamMember
+      // Create owner as TeamMember with userId FK
       await tx.teamMember.create({
         data: {
           tenantId: org.id,
-          email: session.user.email!.toLowerCase(),
+          userId: session.user.id,
+          email: session.user.email!.toLowerCase(), // Denormalized for queries
           name: session.user.name,
           isAdmin: true,
           isOwner: true,

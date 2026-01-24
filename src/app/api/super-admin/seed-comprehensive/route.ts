@@ -189,13 +189,14 @@ export async function POST(request: NextRequest) {
 
       // Create TeamMember if not exists (combines membership + HR profile data)
       let member = await prisma.teamMember.findFirst({
-        where: { tenantId, email: emp.email }
+        where: { tenantId, userId: user.id }
       });
 
       if (!member) {
         member = await prisma.teamMember.create({
           data: {
             tenantId,
+            userId: user.id,
             email: emp.email,
             name: emp.name,
             canLogin: true,

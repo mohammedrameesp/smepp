@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { withErrorHandler } from '@/lib/http/handler';
 import { forbiddenResponse } from '@/lib/http/errors';
+import { invalidBodyResponse } from '@/lib/http/responses';
 import logger from '@/lib/core/log';
 import { processChatStream } from '@/lib/ai/chat-service';
 import { sanitizeInput, shouldBlockInput, formatSanitizationLog } from '@/lib/ai/input-sanitizer';
@@ -96,10 +97,7 @@ export const POST = withErrorHandler(async (request: NextRequest, { tenant }) =>
 
   if (!validation.success) {
     releaseConcurrentSlot(userId);
-    return NextResponse.json(
-      { error: 'Invalid request', details: validation.error.issues },
-      { status: 400 }
-    );
+    return invalidBodyResponse(validation.error);
   }
 
   const { message, conversationId } = validation.data;

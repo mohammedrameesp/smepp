@@ -1,23 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
+import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import ExcelJS from 'exceljs';
-import logger from '@/lib/core/log';
+import { withErrorHandler } from '@/lib/http/handler';
 
-export async function GET(_request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session || !session.user.isAdmin) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
-    }
-
-    const tenantId = session.user.organizationId;
+export const GET = withErrorHandler(async (_request, { tenant }) => {
+  const tenantId = tenant!.tenantId;
 
     // Helper to safely query tables that might not exist
     const safeQuery = async <T>(query: Promise<T>, fallback: T): Promise<T> => {
@@ -636,18 +623,11 @@ export async function GET(_request: NextRequest) {
     // Return file
     const filename = `full_backup_${new Date().toISOString().split('T')[0]}.xlsx`;
 
-    return new NextResponse(buffer, {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'Content-Disposition': `attachment; filename="${filename}"`,
-      },
-    });
-  } catch (error) {
-    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Full backup error');
-    return NextResponse.json(
-      { error: 'Failed to create backup', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    );
-  }
-}
+  return new NextResponse(buffer, {
+    status: 200,
+    headers: {
+      'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+    },
+  });
+}, { requireAuth: true, requireAdmin: true });

@@ -16,6 +16,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { invalidBodyResponse } from '@/lib/http/responses';
 import { updateLocationSchema } from '@/features/locations';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -74,10 +75,7 @@ async function putHandler(request: NextRequest, context: APIContext) {
   const validation = updateLocationSchema.safeParse(body);
 
   if (!validation.success) {
-    return NextResponse.json(
-      { error: 'Invalid request body', details: validation.error.issues },
-      { status: 400 }
-    );
+    return invalidBodyResponse(validation.error);
   }
 
   const { name, description } = validation.data;

@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { invalidBodyResponse } from '@/lib/http/responses';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { prisma } from '@/lib/core/prisma';
 import { logAction, ActivityActions } from '@/lib/core/activity';
@@ -58,10 +59,7 @@ async function submitPhoneHandler(request: NextRequest, context: APIContext) {
   const validation = phoneSchema.safeParse(body);
 
   if (!validation.success) {
-    return NextResponse.json(
-      { error: 'Invalid request', details: validation.error.issues },
-      { status: 400 }
-    );
+    return invalidBodyResponse(validation.error);
   }
 
   const { phoneNumber, countryCode } = validation.data;

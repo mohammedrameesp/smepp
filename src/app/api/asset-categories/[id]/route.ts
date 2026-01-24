@@ -5,6 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { invalidBodyResponse } from '@/lib/http/responses';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { updateAssetCategorySchema } from '@/features/assets';
 import { logAction, ActivityActions } from '@/lib/core/activity';
@@ -82,13 +83,7 @@ async function updateAssetCategoryHandler(request: NextRequest, context: APICont
   const validation = updateAssetCategorySchema.safeParse(body);
 
   if (!validation.success) {
-    return NextResponse.json(
-      {
-        error: 'Invalid request body',
-        details: validation.error.issues,
-      },
-      { status: 400 }
-    );
+    return invalidBodyResponse(validation.error);
   }
 
   const data = validation.data;

@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { CurrencyInput } from '@/components/ui/currency-input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Calculator } from 'lucide-react';
 import { toast } from 'sonner';
@@ -210,80 +211,68 @@ export default function EditSalaryStructurePage() {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="basicSalary">Basic Salary *</Label>
-                  <Input
+                  <CurrencyInput
                     id="basicSalary"
-                    type="number"
                     min="0"
                     placeholder="0.00"
                     value={basicSalary}
                     onChange={(e) => setBasicSalary(e.target.value)}
-                    onKeyDown={(e) => ['ArrowUp', 'ArrowDown'].includes(e.key) && e.preventDefault()}
                     required
                   />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="housingAllowance">Housing Allowance</Label>
-                  <Input
+                  <CurrencyInput
                     id="housingAllowance"
-                    type="number"
                     min="0"
                     placeholder="0.00"
                     value={housingAllowance}
                     onChange={(e) => setHousingAllowance(e.target.value)}
-                    onKeyDown={(e) => ['ArrowUp', 'ArrowDown'].includes(e.key) && e.preventDefault()}
                   />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="transportAllowance">Transport Allowance</Label>
-                  <Input
+                  <CurrencyInput
                     id="transportAllowance"
-                    type="number"
                     min="0"
                     placeholder="0.00"
                     value={transportAllowance}
                     onChange={(e) => setTransportAllowance(e.target.value)}
-                    onKeyDown={(e) => ['ArrowUp', 'ArrowDown'].includes(e.key) && e.preventDefault()}
                   />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="foodAllowance">Food Allowance</Label>
-                  <Input
+                  <CurrencyInput
                     id="foodAllowance"
-                    type="number"
                     min="0"
                     placeholder="0.00"
                     value={foodAllowance}
                     onChange={(e) => setFoodAllowance(e.target.value)}
-                    onKeyDown={(e) => ['ArrowUp', 'ArrowDown'].includes(e.key) && e.preventDefault()}
                   />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="phoneAllowance">Phone Allowance</Label>
-                  <Input
+                  <CurrencyInput
                     id="phoneAllowance"
-                    type="number"
                     min="0"
                     placeholder="0.00"
                     value={phoneAllowance}
                     onChange={(e) => setPhoneAllowance(e.target.value)}
-                    onKeyDown={(e) => ['ArrowUp', 'ArrowDown'].includes(e.key) && e.preventDefault()}
                   />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="otherAllowances">Other Allowances</Label>
-                  <Input
+                  <CurrencyInput
                     id="otherAllowances"
-                    type="number"
                     min="0"
                     placeholder="0.00"
                     value={otherAllowances}
                     onChange={(e) => setOtherAllowances(e.target.value)}
-                    onKeyDown={(e) => ['ArrowUp', 'ArrowDown'].includes(e.key) && e.preventDefault()}
                   />
                 </div>
               </CardContent>

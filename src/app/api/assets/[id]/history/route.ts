@@ -28,11 +28,10 @@
 // IMPORTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
+import { NextResponse } from 'next/server';
 import { getAssetHistory } from '@/features/assets';
-import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { withErrorHandler } from '@/lib/http/handler';
+import { badRequestResponse } from '@/lib/http/errors';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GET /api/assets/[id]/history - Get Asset History Timeline
@@ -74,29 +73,17 @@ import { withErrorHandler, APIContext } from '@/lib/http/handler';
  *   }
  * ]
  */
-async function getAssetHistoryHandler(request: NextRequest, context: APIContext) {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
+export const GET = withErrorHandler(async (_request, { tenant, params }) => {
+  const tenantId = tenant!.tenantId;
+  const id = params?.id;
+  if (!id) {
+    return badRequestResponse('ID is required');
+  }
 
-    const tenantId = session.user.organizationId;
-    const id = context.params?.id;
-    if (!id) {
-      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
-    }
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Fetch asset history (tenant filtering handled by the service function)
+  // ─────────────────────────────────────────────────────────────────────────────
+  const history = await getAssetHistory(id, tenantId);
 
-
-    // ─────────────────────────────────────────────────────────────────────────────
-    // Fetch asset history (tenant filtering handled by the service function)
-    // ─────────────────────────────────────────────────────────────────────────────
-    const history = await getAssetHistory(id, tenantId);
-
-    return NextResponse.json(history);
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// EXPORTS
-// ═══════════════════════════════════════════════════════════════════════════════
-
-export const GET = withErrorHandler(getAssetHistoryHandler, { requireAuth: true, requireModule: 'assets' });
+  return NextResponse.json(history);
+}, { requireAuth: true, requireModule: 'assets' });

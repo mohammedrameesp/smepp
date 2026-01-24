@@ -27,8 +27,6 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
 import { AssetRequestStatus, AssetRequestType, AssetStatus, AssetHistoryAction } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { approveAssetRequestSchema } from '@/features/asset-requests';
@@ -38,7 +36,8 @@ import { sendEmail } from '@/lib/core/email';
 import { handleEmailFailure } from '@/lib/core/email-failure-handler';
 import { assetRequestApprovedEmail, assetReturnApprovedEmail } from '@/lib/core/asset-request-emails';
 import { createNotification, createBulkNotifications, NotificationTemplates } from '@/features/notifications/lib';
-import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { withErrorHandler } from '@/lib/http/handler';
+import { badRequestResponse, notFoundResponse, forbiddenResponse, validationErrorResponse } from '@/lib/http/errors';
 import { invalidateTokensForEntity, notifyApproversViaWhatsApp } from '@/lib/whatsapp';
 import logger from '@/lib/core/log';
 import {
@@ -181,66 +180,66 @@ async function processApprovalChainStep(
  *   "processedAt": "2025-01-05T..."
  * }
  */
-async function approveAssetRequestHandler(request: NextRequest, context: APIContext) {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
+export const POST = withErrorHandler(async (request: NextRequest, { tenant, params }) => {
+  const tenantId = tenant!.tenantId;
+  const userId = tenant!.userId;
+  const id = params?.id;
+  if (!id) {
+    return badRequestResponse('ID is required');
+  }
 
-    const tenantId = session.user.organizationId;
-    const id = context.params?.id;
-    if (!id) {
-      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
-    }
+  // ─────────────────────────────────────────────────────────────────────────────
+  // STEP 1: Validate request body
+  // ─────────────────────────────────────────────────────────────────────────────
+  const body = await request.json();
 
-    // ─────────────────────────────────────────────────────────────────────────────
-    // STEP 1: Validate request body
-    // ─────────────────────────────────────────────────────────────────────────────
-    const body = await request.json();
+  const validation = approveAssetRequestSchema.safeParse(body);
+  if (!validation.success) {
+    return validationErrorResponse(validation);
+  }
 
-    const validation = approveAssetRequestSchema.safeParse(body);
-    if (!validation.success) {
-      return NextResponse.json({
-        error: 'Invalid request body',
-        details: validation.error.issues,
-      }, { status: 400 });
-    }
+  const { notes } = validation.data;
 
-    const { notes } = validation.data;
+  // ─────────────────────────────────────────────────────────────────────────────
+  // STEP 2: Fetch request (tenant-scoped for IDOR prevention)
+  // ─────────────────────────────────────────────────────────────────────────────
+  const assetRequest = await prisma.assetRequest.findFirst({
+    where: { id, tenantId },
+    include: {
+      asset: true,
+      member: { select: { id: true, name: true, email: true } },
+    },
+  });
 
-    // ─────────────────────────────────────────────────────────────────────────────
-    // STEP 2: Fetch request (tenant-scoped for IDOR prevention)
-    // ─────────────────────────────────────────────────────────────────────────────
-    const assetRequest = await prisma.assetRequest.findFirst({
-      where: { id, tenantId },
-      include: {
-        asset: true,
-        member: { select: { id: true, name: true, email: true } },
-      },
-    });
+  if (!assetRequest) {
+    return notFoundResponse('Asset request not found');
+  }
 
-    if (!assetRequest) {
-      return NextResponse.json({ error: 'Asset request not found' }, { status: 404 });
-    }
+  // ─────────────────────────────────────────────────────────────────────────────
+  // STEP 3: Check if admin can process this request
+  // ─────────────────────────────────────────────────────────────────────────────
+  if (!canAdminProcess(assetRequest.status, assetRequest.type)) {
+    return badRequestResponse('Cannot approve this request');
+  }
 
-    // ─────────────────────────────────────────────────────────────────────────────
-    // STEP 3: Check if admin can process this request
-    // ─────────────────────────────────────────────────────────────────────────────
-    if (!canAdminProcess(assetRequest.status, assetRequest.type)) {
-      return NextResponse.json({ error: 'Cannot approve this request' }, { status: 400 });
-    }
+  // Validate memberId exists (required for approval chain processing)
+  if (!assetRequest.memberId) {
+    return badRequestResponse('Asset request has no associated member');
+  }
 
-    // Validate memberId exists (required for approval chain processing)
-    if (!assetRequest.memberId) {
-      return NextResponse.json({ error: 'Asset request has no associated member' }, { status: 400 });
-    }
+  // Get approver info for notifications
+  const approverMember = await prisma.teamMember.findUnique({
+    where: { id: userId },
+    select: { name: true, email: true },
+  });
+  const approverName = approverMember?.name || approverMember?.email || 'Admin';
 
     // ─────────────────────────────────────────────────────────────────────────────
     // STEP 4: Process approval chain (if exists)
     // ─────────────────────────────────────────────────────────────────────────────
     const chainResult = await processApprovalChainStep(
       id,
-      session.user.id,
+      userId,
       tenantId,
       assetRequest.memberId,
       notes ?? undefined
@@ -352,12 +351,12 @@ async function approveAssetRequestHandler(request: NextRequest, context: APICont
         where: { id },
         data: {
           status: newStatus,
-          processedById: session.user.id,
+          processedById: userId,
           processedAt: new Date(),
           processorNotes: notes,
           // For employee requests, set the admin as assigner
           assignedById: assetRequest.type === AssetRequestType.EMPLOYEE_REQUEST
-            ? session.user.id
+            ? userId
             : assetRequest.assignedById,
         },
         include: {
@@ -376,7 +375,7 @@ async function approveAssetRequestHandler(request: NextRequest, context: APICont
           oldStatus: assetRequest.status,
           newStatus,
           notes,
-          performedById: session.user.id,
+          performedById: userId,
         },
       });
 
@@ -402,7 +401,7 @@ async function approveAssetRequestHandler(request: NextRequest, context: APICont
             fromStatus: AssetStatus.IN_USE,
             toStatus: AssetStatus.SPARE,
             notes: `Returned via request ${assetRequest.requestNumber}`,
-            performedById: session.user.id,
+            performedById: userId,
             returnDate: new Date(),
           },
         });
@@ -416,7 +415,7 @@ async function approveAssetRequestHandler(request: NextRequest, context: APICont
     // ─────────────────────────────────────────────────────────────────────────────
     await logAction(
       tenantId,
-      session.user.id,
+      userId,
       activityAction,
       'AssetRequest',
       id,
@@ -455,7 +454,7 @@ async function approveAssetRequestHandler(request: NextRequest, context: APICont
             assetBrand: assetRequest.asset?.brand || null,
             assetType: assetRequest.asset?.type || '',
             userName: assetRequest.member?.name || assetRequest.member?.email || 'Employee',
-            approverName: session.user.name || session.user.email || 'Admin',
+            approverName: approverName,
             orgSlug,
             orgName,
             primaryColor,
@@ -470,7 +469,7 @@ async function approveAssetRequestHandler(request: NextRequest, context: APICont
             assetBrand: assetRequest.asset?.brand || '',
             assetType: assetRequest.asset?.type || '',
             userName: assetRequest.member?.name || assetRequest.member?.email || 'Employee',
-            approverName: session.user.name || session.user.email || 'Admin',
+            approverName: approverName,
             orgSlug,
             orgName,
             primaryColor,
@@ -537,7 +536,5 @@ async function approveAssetRequestHandler(request: NextRequest, context: APICont
       });
     }
 
-    return NextResponse.json(updatedRequest);
-}
-
-export const POST = withErrorHandler(approveAssetRequestHandler, { requireCanApprove: true, requireModule: 'assets' });
+  return NextResponse.json(updatedRequest);
+}, { requireCanApprove: true, requireModule: 'assets' });

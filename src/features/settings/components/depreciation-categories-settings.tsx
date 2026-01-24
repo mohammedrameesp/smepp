@@ -64,6 +64,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { formatNumber, calculateAnnualRate } from '@/lib/utils/math-utils';
 
 interface DepreciationCategory {
   id: string;
@@ -323,7 +324,7 @@ export function DepreciationCategoriesSettings({
     setter(years);
     const yearsNum = parseInt(years, 10);
     if (!isNaN(yearsNum) && yearsNum > 0) {
-      rateSetter((100 / yearsNum).toFixed(2));
+      rateSetter(String(calculateAnnualRate(yearsNum)));
     }
   }
 
@@ -398,7 +399,7 @@ export function DepreciationCategoriesSettings({
                         <span className="font-medium">{category.name}</span>
                       </TableCell>
                       <TableCell className="text-right font-mono">
-                        {category.annualRate.toFixed(2)}%
+                        {formatNumber(category.annualRate)}%
                       </TableCell>
                       <TableCell className="text-right">
                         {category.usefulLifeYears} {category.usefulLifeYears === 1 ? 'year' : 'years'}

@@ -1,22 +1,29 @@
 /**
  * @file route.ts
- * @description Employee celebrations (birthdays and work anniversaries)
+ * @description Employee celebrations (birthdays, work anniversaries, and milestones)
  * @module hr/employees
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
+import { getUpcomingMilestones, WorkMilestone } from '@/lib/hr/work-milestones';
 
 interface CelebrationEvent {
   employeeId: string;
   employeeName: string;
   employeeEmail: string;
   photoUrl: string | null;
-  type: 'birthday' | 'work_anniversary';
+  type: 'birthday' | 'work_anniversary' | 'work_milestone';
   date: string;
   daysUntil: number;
   yearsCompleting?: number; // For work anniversaries
+  milestone?: {
+    days: number;
+    name: string;
+    description: string;
+    tier: WorkMilestone['tier'];
+  }; // For work milestones
 }
 
 // GET /api/employees/celebrations - Get upcoming birthdays and work anniversaries
@@ -80,7 +87,7 @@ async function getCelebrationsHandler(request: NextRequest, context: APIContext)
       }
     }
 
-    // Check work anniversary
+    // Check work anniversary (yearly)
     if (emp.dateOfJoining) {
       const doj = new Date(emp.dateOfJoining);
       // Create this year's anniversary
@@ -110,6 +117,26 @@ async function getCelebrationsHandler(request: NextRequest, context: APIContext)
           yearsCompleting,
         });
       }
+
+      // Check work milestones (day-based)
+      const upcomingMilestones = getUpcomingMilestones(doj, lookAheadDays, today);
+      for (const { milestone, daysUntil, targetDate } of upcomingMilestones) {
+        celebrations.push({
+          employeeId: emp.id,
+          employeeName: emp.name || emp.email,
+          employeeEmail: emp.email,
+          photoUrl: emp.photoUrl,
+          type: 'work_milestone',
+          date: targetDate.toISOString(),
+          daysUntil,
+          milestone: {
+            days: milestone.days,
+            name: milestone.name,
+            description: milestone.description,
+            tier: milestone.tier,
+          },
+        });
+      }
     }
   }
 
@@ -119,8 +146,10 @@ async function getCelebrationsHandler(request: NextRequest, context: APIContext)
   // Calculate summary
   const todayBirthdays = celebrations.filter(c => c.type === 'birthday' && c.daysUntil === 0).length;
   const todayAnniversaries = celebrations.filter(c => c.type === 'work_anniversary' && c.daysUntil === 0).length;
+  const todayMilestones = celebrations.filter(c => c.type === 'work_milestone' && c.daysUntil === 0).length;
   const upcomingBirthdays = celebrations.filter(c => c.type === 'birthday' && c.daysUntil > 0).length;
   const upcomingAnniversaries = celebrations.filter(c => c.type === 'work_anniversary' && c.daysUntil > 0).length;
+  const upcomingMilestones = celebrations.filter(c => c.type === 'work_milestone' && c.daysUntil > 0).length;
 
   return NextResponse.json({
     celebrations,
@@ -128,8 +157,10 @@ async function getCelebrationsHandler(request: NextRequest, context: APIContext)
       total: celebrations.length,
       todayBirthdays,
       todayAnniversaries,
+      todayMilestones,
       upcomingBirthdays,
       upcomingAnniversaries,
+      upcomingMilestones,
     },
   });
 }

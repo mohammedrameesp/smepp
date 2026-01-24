@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
+import { roundTo } from '@/lib/utils/math-utils';
 
 interface OrganizationStorage {
   id: string;
@@ -41,7 +42,7 @@ function formatBytes(bytes: number): string {
   const k = 1024;
   const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+  return `${roundTo(bytes / Math.pow(k, i), 2)} ${sizes[i]}`;
 }
 
 export default function SuperAdminStoragePage() {

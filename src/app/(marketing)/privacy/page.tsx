@@ -20,7 +20,6 @@ export default function PrivacyPolicyPage() {
               <li><Link href="/#features">Features</Link></li>
               <li><Link href="/#domains">Modules</Link></li>
               <li><Link href="/#security">Security</Link></li>
-              <li><Link href="/#pricing">Pricing</Link></li>
             </ul>
             <div className="nav-cta">
               <Link href="/login" className="btn btn-secondary">Log In</Link>
@@ -493,7 +492,6 @@ export default function PrivacyPolicyPage() {
               <div className="footer-title">Product</div>
               <ul className="footer-links">
                 <li><Link href="/#features">Features</Link></li>
-                <li><Link href="/#pricing">Pricing</Link></li>
                 <li><Link href="/#security">Security</Link></li>
               </ul>
             </div>

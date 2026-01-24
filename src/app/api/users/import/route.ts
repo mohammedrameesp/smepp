@@ -146,10 +146,11 @@ async function importUsersHandler(request: NextRequest, context: APIContext) {
 
         // Ensure TeamMember exists for organization membership
         if (!existingUserById) {
-          // Newly created user - create TeamMember (tenant-scoped via extension)
+          // Newly created user - create TeamMember with userId FK
           await db.teamMember.create({
             data: {
               tenantId,
+              userId: user.id,
               email: user.email,
               name: user.name,
               canLogin: true,
@@ -158,12 +159,13 @@ async function importUsersHandler(request: NextRequest, context: APIContext) {
           });
         } else if (existingUserById) {
           const existingMember = await db.teamMember.findFirst({
-            where: { email: user.email },
+            where: { userId: user.id },
           });
           if (!existingMember) {
             await db.teamMember.create({
               data: {
                 tenantId,
+                userId: user.id,
                 email: user.email,
                 name: user.name,
                 canLogin: true,
@@ -216,12 +218,13 @@ async function importUsersHandler(request: NextRequest, context: APIContext) {
 
           // Ensure TeamMember exists for organization membership (tenant-scoped via extension)
           const existingMember = await db.teamMember.findFirst({
-            where: { email },
+            where: { userId: existingUser.id },
           });
           if (!existingMember) {
             await db.teamMember.create({
               data: {
                 tenantId,
+                userId: existingUser.id,
                 email,
                 name: name || existingUser.name,
                 canLogin: true,
@@ -255,10 +258,11 @@ async function importUsersHandler(request: NextRequest, context: APIContext) {
         },
       });
 
-      // Create TeamMember for organization membership (tenant-scoped via extension)
+      // Create TeamMember for organization membership with userId FK
       await db.teamMember.create({
         data: {
           tenantId,
+          userId: user.id,
           email: user.email,
           name: user.name,
           canLogin: true,

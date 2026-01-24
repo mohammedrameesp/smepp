@@ -4,6 +4,7 @@
  * @module operations/suppliers
  */
 import { NextRequest, NextResponse } from 'next/server';
+import { invalidBodyResponse } from '@/lib/http/responses';
 import { prisma } from '@/lib/core/prisma';
 import { logAction } from '@/lib/core/activity';
 import { generateUniqueSupplierCode, approveSupplierSchema } from '@/features/suppliers';
@@ -35,10 +36,7 @@ async function approveSupplierHandler(request: NextRequest, context: APIContext)
     const validation = approveSupplierSchema.safeParse(body);
 
     if (!validation.success) {
-      return NextResponse.json({
-        error: 'Invalid request body',
-        details: validation.error.issues,
-      }, { status: 400 });
+      return invalidBodyResponse(validation.error);
     }
 
     const { notes } = validation.data;

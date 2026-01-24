@@ -33,6 +33,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { NextRequest, NextResponse } from 'next/server';
+import { invalidBodyResponse } from '@/lib/http/responses';
 import { disposeAssetSchema, previewDisposalSchema } from '@/features/assets';
 import { processAssetDisposal, previewAssetDisposal } from '@/features/assets/lib/depreciation';
 import { logAction, ActivityActions } from '@/lib/core/activity';
@@ -106,13 +107,7 @@ async function disposeAssetHandler(request: NextRequest, context: APIContext) {
   const validation = disposeAssetSchema.safeParse(body);
 
   if (!validation.success) {
-    return NextResponse.json(
-      {
-        error: 'Invalid request body',
-        details: validation.error.issues,
-      },
-      { status: 400 }
-    );
+    return invalidBodyResponse(validation.error);
   }
 
   const { disposalDate, disposalMethod, disposalProceeds, disposalNotes } = validation.data;
@@ -250,13 +245,7 @@ async function previewDisposeHandler(request: NextRequest, context: APIContext) 
   });
 
   if (!validation.success) {
-    return NextResponse.json(
-      {
-        error: 'Invalid query parameters',
-        details: validation.error.issues,
-      },
-      { status: 400 }
-    );
+    return invalidBodyResponse(validation.error);
   }
 
   const { disposalDate, disposalProceeds } = validation.data;

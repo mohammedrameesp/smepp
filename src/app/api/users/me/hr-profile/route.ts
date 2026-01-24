@@ -12,6 +12,7 @@ import { prisma } from '@/lib/core/prisma';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { hrProfileSchema, hrProfileEmployeeSchema } from '@/features/employees/validations/hr-profile';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { invalidBodyResponse } from '@/lib/http/responses';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { sendEmail } from '@/lib/core/email';
 import { handleEmailFailure } from '@/lib/core/email-failure-handler';
@@ -166,13 +167,7 @@ async function updateHRProfileHandler(request: NextRequest, context: APIContext)
   const validation = schema.safeParse(body);
 
   if (!validation.success) {
-    return NextResponse.json(
-      {
-        error: 'Invalid request body',
-        details: validation.error.issues,
-      },
-      { status: 400 }
-    );
+    return invalidBodyResponse(validation.error);
   }
 
   const data = validation.data;

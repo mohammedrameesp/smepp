@@ -21,6 +21,7 @@ import { purchaseRequestSubmittedEmail } from '@/lib/core/email-templates';
 import { createBulkNotifications, createNotification, NotificationTemplates } from '@/features/notifications/lib';
 import { findApplicablePolicy, initializeApprovalChain } from '@/features/approvals/lib';
 import { notifyApproversViaWhatsApp } from '@/lib/whatsapp';
+import { formatNumber } from '@/lib/utils/math-utils';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -310,7 +311,7 @@ export async function sendPurchaseRequestNotifications(
           recipientId: approver.id,
           type: 'APPROVAL_PENDING' as const,
           title: 'Purchase Request Approval Required',
-          message: `${userName} submitted a purchase request (${referenceNumber}) for ${purchaseRequest.currency} ${totalAmount.toFixed(2)}. Your approval is required.`,
+          message: `${userName} submitted a purchase request (${referenceNumber}) for ${purchaseRequest.currency} ${formatNumber(totalAmount)}. Your approval is required.`,
           link: `/admin/purchase-requests/${purchaseRequest.id}`,
           entityType: 'PurchaseRequest',
           entityId: purchaseRequest.id,

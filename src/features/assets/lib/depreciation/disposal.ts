@@ -16,6 +16,7 @@ import {
   calculateDisposalGainLoss,
   DepreciationInput,
 } from './calculator';
+import { formatNumber } from '@/lib/utils/math-utils';
 
 export interface DisposalInput {
   assetId: string;
@@ -193,9 +194,9 @@ export async function processAssetDisposal(input: DisposalInput): Promise<Dispos
           toMemberId: null,
           performedById,
           notes: `Disposed via ${disposalMethod.toLowerCase().replace('_', ' ')}. ` +
-            `NBV: ${netBookValueAtDisposal.toFixed(2)} QAR, ` +
-            `Proceeds: ${disposalProceeds.toFixed(2)} QAR, ` +
-            `${gainLoss >= 0 ? 'Gain' : 'Loss'}: ${Math.abs(gainLoss).toFixed(2)} QAR` +
+            `NBV: ${formatNumber(netBookValueAtDisposal)} QAR, ` +
+            `Proceeds: ${formatNumber(disposalProceeds)} QAR, ` +
+            `${gainLoss >= 0 ? 'Gain' : 'Loss'}: ${formatNumber(Math.abs(gainLoss))} QAR` +
             (disposalNotes ? `. Notes: ${disposalNotes}` : ''),
         },
       });

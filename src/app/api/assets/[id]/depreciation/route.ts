@@ -32,6 +32,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { NextRequest, NextResponse } from 'next/server';
+import { invalidBodyResponse } from '@/lib/http/responses';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { assignDepreciationCategorySchema } from '@/features/assets';
 import { assignDepreciationCategory } from '@/features/assets/lib/depreciation';
@@ -229,10 +230,7 @@ async function assignDepreciationHandler(request: NextRequest, context: APIConte
 
   const validation = assignDepreciationCategorySchema.safeParse(body);
   if (!validation.success) {
-    return NextResponse.json(
-      { error: 'Invalid request body', details: validation.error.issues },
-      { status: 400 }
-    );
+    return invalidBodyResponse(validation.error);
   }
 
   // ─────────────────────────────────────────────────────────────────────────────

@@ -5,8 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
+import { withErrorHandler } from '@/lib/http/handler';
 
 const VIEW_MODE_COOKIE = 'durj-view-mode';
 // SEC-HIGH-1: Reduced TTL from 8 hours to 1 hour for security
@@ -16,43 +15,23 @@ const VIEW_MODE_MAX_AGE = 60 * 60; // 1 hour
  * GET /api/view-mode
  * Check current view mode
  */
-export async function GET(request: NextRequest) {
-  const session = await getServerSession(authOptions);
-
-  if (!session?.user) {
-    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-  }
-
+export const GET = withErrorHandler(async (request: NextRequest, { tenant }) => {
   const viewModeCookie = request.cookies.get(VIEW_MODE_COOKIE);
   const isEmployeeView = viewModeCookie?.value === 'employee';
-  const isAdmin = session.user.isAdmin;
+  const isAdmin = tenant?.isAdmin ?? false;
 
   return NextResponse.json({
     isEmployeeView,
     isAdmin,
     canToggle: isAdmin,
   });
-}
+}, { requireAuth: true, requireTenant: false });
 
 /**
  * POST /api/view-mode
  * Set employee view mode (admin switches to employee view)
  */
-export async function POST() {
-  const session = await getServerSession(authOptions);
-
-  if (!session?.user) {
-    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-  }
-
-  // Only admins can toggle view mode
-  if (!session.user.isAdmin) {
-    return NextResponse.json(
-      { error: 'Only administrators can switch view modes' },
-      { status: 403 }
-    );
-  }
-
+export const POST = withErrorHandler(async () => {
   const response = NextResponse.json({
     success: true,
     viewMode: 'employee',
@@ -69,19 +48,13 @@ export async function POST() {
   });
 
   return response;
-}
+}, { requireAuth: true, requireAdmin: true });
 
 /**
  * DELETE /api/view-mode
  * Clear view mode (return to admin view)
  */
-export async function DELETE() {
-  const session = await getServerSession(authOptions);
-
-  if (!session?.user) {
-    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-  }
-
+export const DELETE = withErrorHandler(async () => {
   const response = NextResponse.json({
     success: true,
     viewMode: 'admin',
@@ -91,4 +64,4 @@ export async function DELETE() {
   response.cookies.delete(VIEW_MODE_COOKIE);
 
   return response;
-}
+}, { requireAuth: true });

@@ -36,37 +36,25 @@ export async function POST(request: NextRequest) {
     }
 
     const { email, orgSlug } = result.data;
+    const normalizedEmail = email.toLowerCase();
 
-    // First check TeamMember (org users with credentials)
-    // If orgSlug is provided (from subdomain), filter by it to ensure correct org
-    const teamMember = await prisma.teamMember.findFirst({
+    // Check User table (single source of truth for auth)
+    const user = await prisma.user.findUnique({
       where: {
-        email: email.toLowerCase(),
-        passwordHash: { not: null }, // Only credential users can reset password
-        isDeleted: false,
-        ...(orgSlug && { tenant: { slug: { equals: orgSlug, mode: 'insensitive' as const } } }),
+        email: normalizedEmail,
       },
-      include: {
-        tenant: {
-          select: { slug: true, name: true, primaryColor: true },
-        },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        passwordHash: true,
+        isDeleted: true,
       },
     });
 
-    // Fall back to User model (for super admins)
-    const user = !teamMember ? await prisma.user.findFirst({
-      where: {
-        email: email.toLowerCase(),
-        passwordHash: { not: null }, // Only credential users can reset password
-        isSuperAdmin: true,
-      },
-    }) : null;
-
-    const targetUser = teamMember || user;
-
     // Always return success to prevent email enumeration
-    // But only send reset link if user exists
-    if (targetUser) {
+    // But only send reset link if user exists with a password
+    if (user && user.passwordHash && !user.isDeleted) {
       // Generate secure token
       const resetToken = randomBytes(32).toString('hex');
       const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
@@ -75,30 +63,35 @@ export async function POST(request: NextRequest) {
       // This prevents token theft if database is compromised
       const hashedToken = hashToken(resetToken);
 
-      if (teamMember) {
-        await prisma.teamMember.update({
-          where: { id: teamMember.id },
-          data: {
-            resetToken: hashedToken,
-            resetTokenExpiry,
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          resetToken: hashedToken,
+          resetTokenExpiry,
+        },
+      });
+
+      // Find TeamMember by userId FK to get org branding
+      // If orgSlug is provided (from subdomain), filter by it
+      const teamMember = await prisma.teamMember.findFirst({
+        where: {
+          userId: user.id,
+          isDeleted: false,
+          ...(orgSlug && { tenant: { slug: { equals: orgSlug, mode: 'insensitive' as const } } }),
+        },
+        select: {
+          tenant: {
+            select: { slug: true, name: true, primaryColor: true },
           },
-        });
-      } else if (user) {
-        await prisma.user.update({
-          where: { id: user.id },
-          data: {
-            resetToken: hashedToken,
-            resetTokenExpiry,
-          },
-        });
-      }
+        },
+      });
 
       // Build reset URL - use org subdomain if user has one, otherwise main domain
       const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
       const protocol = appDomain.includes('localhost') ? 'http' : 'https';
-      const orgSlug = teamMember?.tenant?.slug;
-      const resetUrl = orgSlug
-        ? `${protocol}://${orgSlug}.${appDomain}/reset-password/${resetToken}`
+      const memberOrgSlug = teamMember?.tenant?.slug;
+      const resetUrl = memberOrgSlug
+        ? `${protocol}://${memberOrgSlug}.${appDomain}/reset-password/${resetToken}`
         : `${protocol}://${appDomain}/reset-password/${resetToken}`;
 
       // Determine branding based on whether this is an org user or platform user
@@ -108,7 +101,7 @@ export async function POST(request: NextRequest) {
 
       // Send password reset email
       await sendEmail({
-        to: targetUser.email,
+        to: user.email,
         subject: `Reset your ${brandName} password`,
         html: `
 <!DOCTYPE html>
@@ -136,7 +129,7 @@ export async function POST(request: NextRequest) {
               <h2 style="color: #1e293b; margin: 0 0 20px; font-size: 22px; font-weight: bold; font-family: Arial, Helvetica, sans-serif;">Reset Your Password</h2>
 
               <p style="color: #475569; font-size: 16px; line-height: 24px; margin: 0 0 20px; font-family: Arial, Helvetica, sans-serif;">
-                Hello${targetUser.name ? ` ${targetUser.name}` : ''},
+                Hello${user.name ? ` ${user.name}` : ''},
               </p>
 
               <p style="color: #475569; font-size: 16px; line-height: 24px; margin: 0 0 20px; font-family: Arial, Helvetica, sans-serif;">
@@ -204,7 +197,7 @@ export async function POST(request: NextRequest) {
 </body>
 </html>
         `,
-        text: `Hello${targetUser.name ? ` ${targetUser.name}` : ''},
+        text: `Hello${user.name ? ` ${user.name}` : ''},
 
 We received a request to reset your password for ${brandName}.
 

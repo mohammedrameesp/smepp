@@ -9,67 +9,9 @@ import { prisma } from '@/lib/core/prisma';
 import { createClient } from '@supabase/supabase-js';
 import logger from '@/lib/core/log';
 import { encryptBackup, redactBackupData } from '@/lib/security/backup-encryption';
-import crypto from 'crypto';
+import { verifyCronAuth } from '@/lib/security/cron-auth';
 
 const BACKUP_BUCKET = 'database-backups';
-const MAX_TIMESTAMP_DRIFT_MS = 5 * 60 * 1000;
-
-interface CronAuthResult {
-  valid: boolean;
-  error?: string;
-}
-
-function verifyCronAuth(request: NextRequest): CronAuthResult {
-  const cronSecret = process.env.CRON_SECRET;
-
-  if (!cronSecret) {
-    return { valid: false, error: 'CRON_SECRET not configured' };
-  }
-
-  // Method 1: Simple Bearer token (for Vercel Cron)
-  const authHeader = request.headers.get('authorization');
-  if (authHeader === `Bearer ${cronSecret}`) {
-    return { valid: true };
-  }
-
-  // Method 2: HMAC signature with timestamp (for external cron services)
-  // Headers: X-Cron-Timestamp, X-Cron-Signature
-  const timestamp = request.headers.get('x-cron-timestamp');
-  const signature = request.headers.get('x-cron-signature');
-
-  if (timestamp && signature) {
-    // Validate timestamp to prevent replay attacks
-    const requestTime = parseInt(timestamp, 10);
-    const now = Date.now();
-
-    if (isNaN(requestTime)) {
-      return { valid: false, error: 'Invalid timestamp format' };
-    }
-
-    if (Math.abs(now - requestTime) > MAX_TIMESTAMP_DRIFT_MS) {
-      return { valid: false, error: 'Timestamp too old or too far in future (replay protection)' };
-    }
-
-    // Verify HMAC signature: HMAC-SHA256(timestamp + ":" + path)
-    const path = new URL(request.url).pathname;
-    const payload = `${timestamp}:${path}`;
-    const expectedSignature = crypto
-      .createHmac('sha256', cronSecret)
-      .update(payload)
-      .digest('hex');
-
-    if (crypto.timingSafeEqual(
-      Buffer.from(signature, 'hex'),
-      Buffer.from(expectedSignature, 'hex')
-    )) {
-      return { valid: true };
-    }
-
-    return { valid: false, error: 'Invalid signature' };
-  }
-
-  return { valid: false, error: 'Missing authentication' };
-}
 
 function getSupabaseClient() {
   const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
