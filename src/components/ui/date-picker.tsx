@@ -166,14 +166,21 @@ export function DatePicker({
 
     const parsed = parseInputDate(inputValue);
     if (parsed) {
-      // Validate against min/max
-      if (maxDate && parsed > maxDate) {
-        setInputValue(date ? formatDisplayDate(date) : '');
-        return;
+      // Validate against min/max (normalize to start of day to ignore time)
+      const parsedStart = new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
+      if (maxDate) {
+        const maxStart = new Date(maxDate.getFullYear(), maxDate.getMonth(), maxDate.getDate());
+        if (parsedStart > maxStart) {
+          setInputValue(date ? formatDisplayDate(date) : '');
+          return;
+        }
       }
-      if (minDate && parsed < minDate) {
-        setInputValue(date ? formatDisplayDate(date) : '');
-        return;
+      if (minDate) {
+        const minStart = new Date(minDate.getFullYear(), minDate.getMonth(), minDate.getDate());
+        if (parsedStart < minStart) {
+          setInputValue(date ? formatDisplayDate(date) : '');
+          return;
+        }
       }
 
       setDate(parsed);
@@ -237,8 +244,16 @@ export function DatePicker({
             defaultMonth={date}
             initialFocus
             disabled={(day) => {
-              if (maxDate && day > maxDate) return true;
-              if (minDate && day < minDate) return true;
+              // Normalize dates to start of day for comparison (ignore time)
+              const dayStart = new Date(day.getFullYear(), day.getMonth(), day.getDate());
+              if (maxDate) {
+                const maxStart = new Date(maxDate.getFullYear(), maxDate.getMonth(), maxDate.getDate());
+                if (dayStart > maxStart) return true;
+              }
+              if (minDate) {
+                const minStart = new Date(minDate.getFullYear(), minDate.getMonth(), minDate.getDate());
+                if (dayStart < minStart) return true;
+              }
               return false;
             }}
             toDate={maxDate}
