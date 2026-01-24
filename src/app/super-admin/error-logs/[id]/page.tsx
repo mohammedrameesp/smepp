@@ -156,9 +156,19 @@ export default function ErrorLogDetailPage() {
 
   const copyErrorDetails = async () => {
     if (!error) return;
-    const text = `Error Message:\n${error.message}\n\nStack Trace:\n${error.stack || 'No stack trace available'}`;
+    const lines = [
+      `Error: ${error.message}`,
+      `Path: ${error.method || 'N/A'} ${error.path || 'N/A'}`,
+      `Source: ${error.source}${error.action ? ` → ${error.action}` : ''}`,
+      '',
+      'Stack:',
+      error.stack || 'No stack trace available',
+    ];
+    if (error.metadata && Object.keys(error.metadata).length > 0) {
+      lines.push('', 'Metadata:', JSON.stringify(error.metadata, null, 2));
+    }
     try {
-      await navigator.clipboard.writeText(text);
+      await navigator.clipboard.writeText(lines.join('\n'));
       toast.success('Copied to clipboard');
     } catch {
       toast.error('Failed to copy');
@@ -205,6 +215,10 @@ export default function ErrorLogDetailPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={copyErrorDetails}>
+            <Copy className="h-4 w-4 mr-2" />
+            Copy Debug Info
+          </Button>
           {error.resolved ? (
             <Button
               variant="outline"
@@ -399,20 +413,11 @@ export default function ErrorLogDetailPage() {
 
       {/* Error Message */}
       <Card className="border-red-200">
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader>
           <CardTitle className="text-base flex items-center gap-2 text-red-700">
             <AlertTriangle className="h-4 w-4" />
             Error Message
           </CardTitle>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={copyErrorDetails}
-            className="h-8"
-          >
-            <Copy className="h-3.5 w-3.5 mr-1.5" />
-            Copy Error & Stack
-          </Button>
         </CardHeader>
         <CardContent>
           <p className="text-red-600 bg-red-50 p-3 rounded-md text-sm">
