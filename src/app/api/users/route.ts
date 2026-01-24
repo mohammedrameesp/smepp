@@ -125,12 +125,12 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
     finalEmail = `nologin-${uniqueId}@${org?.slug || 'system'}.internal`;
   }
 
-  // Check if user with this email already exists
-  const existingUser = await prisma.user.findUnique({
+  // Check if team member with this email already exists in this tenant
+  const existingMember = await db.teamMember.findFirst({
     where: { email: finalEmail },
   });
 
-  if (existingUser) {
+  if (existingMember) {
     return NextResponse.json(
       { error: 'User with this email already exists' },
       { status: 409 }
