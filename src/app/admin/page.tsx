@@ -121,7 +121,7 @@ export default async function AdminDashboard() {
       prisma.teamMember.count({
         where: { tenantId, isDeleted: false },
       }),
-      prisma.asset.count({ where: { tenantId, deletedAt: null } }),
+      prisma.asset.count({ where: { tenantId, deletedAt: null, status: { not: 'DISPOSED' } } }),
       prisma.subscription.count({ where: { tenantId, status: 'ACTIVE' } }),
       prisma.supplier.count({ where: { tenantId, status: 'APPROVED' } }),
       prisma.purchaseRequest.count({ where: { tenantId, status: 'PENDING' } }),
