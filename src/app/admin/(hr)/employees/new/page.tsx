@@ -300,6 +300,7 @@ export default function NewEmployeePage() {
                       setValue('canLogin', checked);
                       if (!checked) {
                         setValue('email', '');
+                        setEmailCheckResult(null);
                       }
                     }}
                   />

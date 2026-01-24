@@ -81,7 +81,9 @@ export const createUserSchema = z.object({
   /** Full name (required, max 100 chars) */
   name: z.string().min(1, 'Name is required').max(100, 'Name must be less than 100 characters'),
   /** Email address (required when canLogin is true) */
-  email: z.string().email('Invalid email address').optional(),
+  email: z.string()
+    .transform(val => val === '' ? undefined : val)
+    .pipe(z.string().email('Invalid email address').optional()),
   /** Role determines access level and permission flags */
   role: z.enum(USER_ROLES).default('EMPLOYEE'),
   /** @deprecated Use role instead. Is this user an admin (full dashboard access)? */
