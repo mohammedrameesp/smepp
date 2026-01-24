@@ -100,9 +100,24 @@ type FilterType = 'employees' | 'service-accounts';
 
 const roleIcons: Record<string, React.ReactNode> = {
   OWNER: <Crown className="h-4 w-4 text-amber-500" />,
-  ADMIN: <Shield className="h-4 w-4 text-blue-500" />,
-  MANAGER: <Shield className="h-4 w-4 text-green-500" />,
+  ADMIN: <Shield className="h-4 w-4 text-red-500" />,
+  MANAGER: <Shield className="h-4 w-4 text-purple-500" />,
+  HR: <Shield className="h-4 w-4 text-green-500" />,
+  FINANCE: <Shield className="h-4 w-4 text-yellow-500" />,
+  OPERATIONS: <Shield className="h-4 w-4 text-blue-500" />,
+  EMPLOYEE: <User className="h-4 w-4 text-gray-500" />,
   MEMBER: <User className="h-4 w-4 text-gray-500" />,
+};
+
+const roleLabels: Record<string, string> = {
+  OWNER: 'Owner',
+  ADMIN: 'Admin',
+  MANAGER: 'Manager',
+  HR: 'HR',
+  FINANCE: 'Finance',
+  OPERATIONS: 'Operations',
+  EMPLOYEE: 'Employee',
+  MEMBER: 'Employee', // Legacy fallback
 };
 
 export function TeamClient({ initialStats }: TeamClientProps) {
@@ -461,7 +476,7 @@ export function TeamClient({ initialStats }: TeamClientProps) {
                           </Select>
                         ) : (
                           <Badge variant={member.isOwner ? 'default' : 'secondary'}>
-                            {member.role}
+                            {roleLabels[member.role] || member.role}
                           </Badge>
                         )}
                         <p className="text-xs text-muted-foreground mt-1">
@@ -513,7 +528,7 @@ export function TeamClient({ initialStats }: TeamClientProps) {
                   <div>
                     <p className="font-medium">{inv.email}</p>
                     <div className="flex items-center gap-2 mt-1">
-                      <Badge variant="secondary">{inv.role}</Badge>
+                      <Badge variant="secondary">{roleLabels[inv.role] || inv.role}</Badge>
                       {inv.isExpired ? (
                         <span className="text-xs text-red-600 flex items-center gap-1">
                           <AlertCircle className="h-3 w-3" />
@@ -593,7 +608,7 @@ export function TeamClient({ initialStats }: TeamClientProps) {
                       </div>
                       <p className="text-sm text-muted-foreground">{member.user.email}</p>
                       <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="secondary">{member.role}</Badge>
+                        <Badge variant="secondary">{roleLabels[member.role] || member.role}</Badge>
                         {(member.designation || member.department) && (
                           <span className="text-xs text-muted-foreground">
                             {member.designation}
