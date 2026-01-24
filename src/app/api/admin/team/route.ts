@@ -124,6 +124,7 @@ export const GET = withErrorHandler(async (_request, { tenant }) => {
       type: 'credentials' | 'sso' | null;
       message: string | null;
       isExpired?: boolean;
+      expiresAt?: Date;
     } | null = null;
 
     if (credentialsPending) {
@@ -139,6 +140,7 @@ export const GET = withErrorHandler(async (_request, { tenant }) => {
         type: 'sso',
         message: isExpired ? 'Invitation expired' : 'Awaiting invitation acceptance',
         isExpired,
+        expiresAt: ssoInvite.expiresAt,
       };
     }
 

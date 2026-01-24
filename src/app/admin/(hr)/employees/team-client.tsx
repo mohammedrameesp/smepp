@@ -48,6 +48,7 @@ interface PendingStatus {
   type: 'credentials' | 'sso' | null;
   message: string | null;
   isExpired?: boolean;
+  expiresAt?: string;
 }
 
 interface Member {
@@ -537,7 +538,7 @@ export function TeamClient({ initialStats }: TeamClientProps) {
                       ) : (
                         <span className="text-xs text-amber-600 flex items-center gap-1">
                           <Clock className="h-3 w-3" />
-                          Expires {format(new Date(inv.expiresAt), 'MMM d, yyyy')}
+                          Expires {format(new Date(inv.expiresAt), 'MMM d')}
                         </span>
                       )}
                     </div>
@@ -620,6 +621,11 @@ export function TeamClient({ initialStats }: TeamClientProps) {
                           <span className="text-xs text-red-600 flex items-center gap-1">
                             <AlertCircle className="h-3 w-3" />
                             Expired
+                          </span>
+                        ) : member.pendingStatus?.expiresAt ? (
+                          <span className="text-xs text-amber-600 flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            Expires {format(new Date(member.pendingStatus.expiresAt), 'MMM d')}
                           </span>
                         ) : (
                           <span className="text-xs text-amber-600 flex items-center gap-1">
