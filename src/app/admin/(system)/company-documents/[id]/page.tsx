@@ -307,7 +307,7 @@ export default async function CompanyDocumentDetailPage({ params }: Props) {
             <div className="p-6 space-y-4">
               <div className="bg-slate-50 rounded-xl p-4">
                 <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Created By</p>
-                <p className="text-sm font-semibold text-slate-900">{document.createdBy.name}</p>
+                <p className="text-sm font-semibold text-slate-900">{document.createdBy?.name || 'Unknown'}</p>
                 <p className="text-xs text-slate-500 mt-1">
                   {format(new Date(document.createdAt), 'dd MMM yyyy HH:mm')}
                 </p>

@@ -355,7 +355,7 @@ export default async function SupplierDetailPage({ params }: Props) {
                     </div>
                     <p className="text-sm text-slate-700 mb-2">{engagement.notes}</p>
                     <p className="text-xs text-slate-500">
-                      By {engagement.createdBy.name || engagement.createdBy.email}
+                      By {engagement.createdBy?.name || engagement.createdBy?.email || 'Unknown'}
                     </p>
                   </div>
                 ))}

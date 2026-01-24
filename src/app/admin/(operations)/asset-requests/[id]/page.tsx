@@ -340,7 +340,7 @@ export default async function AdminAssetRequestDetailPage({ params }: Props) {
                         )}
                       </div>
                       <p className="text-xs text-slate-500">
-                        by {entry.performedBy.name || entry.performedBy.email}
+                        by {entry.performedBy?.name || entry.performedBy?.email || 'System'}
                       </p>
                       <p className="text-xs text-slate-400 mt-1">
                         {formatDateTime(entry.createdAt)}

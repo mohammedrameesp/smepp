@@ -731,7 +731,7 @@ model TeamMember {
   // ═══════════════════════════════════════════════════════════════════════════════
 
   // Manager/Direct Reports (self-relation)
-  reportingTo   TeamMember?  @relation("ManagerRelation", fields: [reportingToId], references: [id])
+  reportingTo   TeamMember?  @relation("ManagerRelation", fields: [reportingToId], references: [id], onDelete: SetNull)
   directReports TeamMember[] @relation("ManagerRelation")
 
   // Assets
@@ -885,7 +885,7 @@ model Asset {
   supplier         String? // #10 Supplier/Vendor (where purchased from)
   invoiceNumber    String? // #12 Invoice/PO Number
   assignedMemberId String? // #13 Assigned To (TeamMember)
-  assignedMember   TeamMember?    @relation("MemberAssets", fields: [assignedMemberId], references: [id])
+  assignedMember   TeamMember?    @relation("MemberAssets", fields: [assignedMemberId], references: [id], onDelete: SetNull)
   assignmentDate   DateTime? // When the asset was assigned to current member
   status           AssetStatus    @default(IN_USE) // #14 Status/Condition
   price            Decimal? // #15 Cost/Value
@@ -917,12 +917,12 @@ model Asset {
   disposalNetBookValue Decimal?        @db.Decimal(12, 2) // NBV at disposal date (immutable)
   disposalGainLoss     Decimal?        @db.Decimal(12, 2) // Gain (+) or Loss (-)
   disposedById         String?
-  disposedBy           TeamMember?     @relation("AssetDisposer", fields: [disposedById], references: [id])
+  disposedBy           TeamMember?     @relation("AssetDisposer", fields: [disposedById], references: [id], onDelete: SetNull)
 
   // Soft delete (7-day recovery window)
   deletedAt   DateTime?
   deletedById String?
-  deletedBy   TeamMember? @relation("AssetDeleter", fields: [deletedById], references: [id])
+  deletedBy   TeamMember? @relation("AssetDeleter", fields: [deletedById], references: [id], onDelete: SetNull)
 
   // Relations & Metadata
   history             AssetHistory[]
@@ -1041,16 +1041,16 @@ model AssetHistory {
   asset            Asset              @relation(fields: [assetId], references: [id], onDelete: Cascade)
   action           AssetHistoryAction
   fromMemberId     String?
-  fromMember       TeamMember?        @relation("AssetHistoryFromMember", fields: [fromMemberId], references: [id])
+  fromMember       TeamMember?        @relation("AssetHistoryFromMember", fields: [fromMemberId], references: [id], onDelete: SetNull)
   toMemberId       String?
-  toMember         TeamMember?        @relation("AssetHistoryToMember", fields: [toMemberId], references: [id])
+  toMember         TeamMember?        @relation("AssetHistoryToMember", fields: [toMemberId], references: [id], onDelete: SetNull)
   fromStatus       AssetStatus?
   toStatus         AssetStatus?
   fromLocation     String?
   toLocation       String?
   notes            String?
   performedById    String?
-  performedBy      TeamMember?        @relation("AssetHistoryPerformer", fields: [performedById], references: [id])
+  performedBy      TeamMember?        @relation("AssetHistoryPerformer", fields: [performedById], references: [id], onDelete: SetNull)
   assignmentDate   DateTime? // When asset was assigned (for ASSIGNED action)
   returnDate       DateTime? // When asset was returned (for UNASSIGNED action)
   statusChangeDate DateTime? // When status changed (for STATUS_CHANGED action)
@@ -1079,7 +1079,7 @@ model Subscription {
   vendor                String?
   status                SubscriptionStatus    @default(ACTIVE)
   assignedMemberId      String?
-  assignedMember        TeamMember?           @relation(fields: [assignedMemberId], references: [id])
+  assignedMember        TeamMember?           @relation(fields: [assignedMemberId], references: [id], onDelete: SetNull)
   autoRenew             Boolean               @default(true)
   paymentMethod         String?
   notes                 String?
@@ -1123,11 +1123,11 @@ model SubscriptionHistory {
   assignmentDate   DateTime? // Date when member was assigned/reassigned
   oldMemberId      String? // Previous assigned member
   newMemberId      String? // New assigned member
-  oldMember        TeamMember?               @relation("SubscriptionHistoryOldMember", fields: [oldMemberId], references: [id])
-  newMember        TeamMember?               @relation("SubscriptionHistoryNewMember", fields: [newMemberId], references: [id])
+  oldMember        TeamMember?               @relation("SubscriptionHistoryOldMember", fields: [oldMemberId], references: [id], onDelete: SetNull)
+  newMember        TeamMember?               @relation("SubscriptionHistoryNewMember", fields: [newMemberId], references: [id], onDelete: SetNull)
   notes            String?
   performedById    String?
-  performedBy      TeamMember?               @relation("SubscriptionHistoryPerformer", fields: [performedById], references: [id])
+  performedBy      TeamMember?               @relation("SubscriptionHistoryPerformer", fields: [performedById], references: [id], onDelete: SetNull)
   createdAt        DateTime                  @default(now())
 
   @@index([subscriptionId])
@@ -1139,7 +1139,7 @@ model ActivityLog {
   tenantId      String
   tenant        Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   actorMemberId String?
-  actorMember   TeamMember?  @relation(fields: [actorMemberId], references: [id])
+  actorMember   TeamMember?  @relation(fields: [actorMemberId], references: [id], onDelete: SetNull)
   action        String
   entityType    String?
   entityId      String?
@@ -1332,7 +1332,7 @@ model ApprovalStep {
   policyVersion Int? // Version of the policy when chain was created
 
   approverId String? // Member who took action (null if pending)
-  approver   TeamMember? @relation("ApprovalStepApprover", fields: [approverId], references: [id])
+  approver   TeamMember? @relation("ApprovalStepApprover", fields: [approverId], references: [id], onDelete: SetNull)
 
   status   ApprovalStepStatus @default(PENDING)
   actionAt DateTime? // When action was taken
@@ -1394,7 +1394,7 @@ model Supplier {
   rejectionReason        String?
   approvedAt             DateTime?
   approvedById           String?
-  approvedBy             TeamMember?          @relation("SupplierApprover", fields: [approvedById], references: [id])
+  approvedBy             TeamMember?          @relation("SupplierApprover", fields: [approvedById], references: [id], onDelete: SetNull)
   engagements            SupplierEngagement[]
   createdAt              DateTime             @default(now())
   updatedAt              DateTime             @updatedAt
@@ -1417,8 +1417,8 @@ model SupplierEngagement {
   date        DateTime
   notes       String
   rating      Int? // 1-5 star rating (optional)
-  createdById String
-  createdBy   TeamMember   @relation(fields: [createdById], references: [id])
+  createdById String?
+  createdBy   TeamMember?  @relation(fields: [createdById], references: [id], onDelete: SetNull)
   createdAt   DateTime     @default(now())
 
   @@index([supplierId])
@@ -1442,7 +1442,7 @@ model SystemSettings {
   key         String // Removed @unique - now part of composite unique constraint
   value       String
   updatedById String?
-  updatedBy   TeamMember?  @relation("SystemSettingsUpdater", fields: [updatedById], references: [id])
+  updatedBy   TeamMember?  @relation("SystemSettingsUpdater", fields: [updatedById], references: [id], onDelete: SetNull)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
@@ -1547,7 +1547,7 @@ model PurchaseRequest {
 
   // Requester info (auto-populated from logged-in member)
   requesterId String
-  requester   TeamMember @relation("PurchaseRequester", fields: [requesterId], references: [id])
+  requester   TeamMember @relation("PurchaseRequester", fields: [requesterId], references: [id], onDelete: Cascade)
 
   // Request details
   title         String
@@ -1579,7 +1579,7 @@ model PurchaseRequest {
 
   // Approval workflow
   reviewedById String?
-  reviewedBy   TeamMember? @relation("PurchaseReviewer", fields: [reviewedById], references: [id])
+  reviewedBy   TeamMember? @relation("PurchaseReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
   reviewedAt   DateTime?
   reviewNotes  String?
 
@@ -1646,8 +1646,8 @@ model PurchaseRequestHistory {
   previousStatus PurchaseRequestStatus?
   newStatus      PurchaseRequestStatus?
 
-  performedById String
-  performedBy   TeamMember @relation("PurchaseRequestHistoryPerformer", fields: [performedById], references: [id])
+  performedById String?
+  performedBy   TeamMember? @relation("PurchaseRequestHistoryPerformer", fields: [performedById], references: [id], onDelete: SetNull)
 
   details String? // JSON or text description of changes
 
@@ -1766,7 +1766,7 @@ model LeaveRequest {
 
   // Approval
   approverId    String?
-  approver      TeamMember? @relation("LeaveApprovals", fields: [approverId], references: [id])
+  approver      TeamMember? @relation("LeaveApprovals", fields: [approverId], references: [id], onDelete: SetNull)
   approvedAt    DateTime?
   approverNotes String?
 
@@ -1780,7 +1780,7 @@ model LeaveRequest {
 
   // On behalf of: track who submitted if different from member
   createdById String?
-  createdBy   TeamMember? @relation("LeaveRequestCreator", fields: [createdById], references: [id])
+  createdBy   TeamMember? @relation("LeaveRequestCreator", fields: [createdById], references: [id], onDelete: SetNull)
 
   // Emergency contact during leave
   emergencyContact String?
@@ -1814,8 +1814,8 @@ model LeaveRequestHistory {
   changes   Json?
   notes     String?
 
-  performedById String
-  performedBy   TeamMember @relation("LeaveHistoryPerformer", fields: [performedById], references: [id])
+  performedById String?
+  performedBy   TeamMember? @relation("LeaveHistoryPerformer", fields: [performedById], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
 
@@ -1899,8 +1899,8 @@ model SalaryStructureHistory {
   previousValues Json? // Previous salary values
   notes          String?
 
-  performedById String
-  performedBy   TeamMember @relation("SalaryHistoryPerformer", fields: [performedById], references: [id])
+  performedById String?
+  performedBy   TeamMember? @relation("SalaryHistoryPerformer", fields: [performedById], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
 
@@ -1936,25 +1936,25 @@ model PayrollRun {
 
   // Workflow
   submittedById String?
-  submittedBy   TeamMember? @relation("PayrollSubmitter", fields: [submittedById], references: [id])
+  submittedBy   TeamMember? @relation("PayrollSubmitter", fields: [submittedById], references: [id], onDelete: SetNull)
   submittedAt   DateTime?
 
   approvedById  String?
-  approvedBy    TeamMember? @relation("PayrollApprover", fields: [approvedById], references: [id])
+  approvedBy    TeamMember? @relation("PayrollApprover", fields: [approvedById], references: [id], onDelete: SetNull)
   approvedAt    DateTime?
   approverNotes String?
 
   processedById String?
-  processedBy   TeamMember? @relation("PayrollProcessor", fields: [processedById], references: [id])
+  processedBy   TeamMember? @relation("PayrollProcessor", fields: [processedById], references: [id], onDelete: SetNull)
   processedAt   DateTime?
 
   paidById         String?
-  paidBy           TeamMember? @relation("PayrollPayer", fields: [paidById], references: [id])
+  paidBy           TeamMember? @relation("PayrollPayer", fields: [paidById], references: [id], onDelete: SetNull)
   paidAt           DateTime?
   paymentReference String?
 
-  createdById String
-  createdBy   TeamMember @relation("PayrollCreator", fields: [createdById], references: [id])
+  createdById String?
+  createdBy   TeamMember? @relation("PayrollCreator", fields: [createdById], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1982,8 +1982,8 @@ model PayrollHistory {
   changes        Json?
   notes          String?
 
-  performedById String
-  performedBy   TeamMember @relation("PayrollHistoryPerformer", fields: [performedById], references: [id])
+  performedById String?
+  performedBy   TeamMember? @relation("PayrollHistoryPerformer", fields: [performedById], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
 
@@ -2097,13 +2097,13 @@ model EmployeeLoan {
 
   // Approval
   approvedById String?
-  approvedBy   TeamMember? @relation("LoanApprover", fields: [approvedById], references: [id])
+  approvedBy   TeamMember? @relation("LoanApprover", fields: [approvedById], references: [id], onDelete: SetNull)
   approvedAt   DateTime?
 
   notes String?
 
-  createdById String
-  createdBy   TeamMember @relation("LoanCreator", fields: [createdById], references: [id])
+  createdById String?
+  createdBy   TeamMember? @relation("LoanCreator", fields: [createdById], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -2132,8 +2132,8 @@ model LoanRepayment {
 
   notes String?
 
-  recordedById String
-  recordedBy   TeamMember @relation("RepaymentRecorder", fields: [recordedById], references: [id])
+  recordedById String?
+  recordedBy   TeamMember? @relation("RepaymentRecorder", fields: [recordedById], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
 
@@ -2159,7 +2159,7 @@ model AssetRequest {
 
   // Target member (requester for EMPLOYEE_REQUEST, assignee for ADMIN_ASSIGNMENT)
   memberId String
-  member   TeamMember @relation("AssetRequestMember", fields: [memberId], references: [id])
+  member   TeamMember @relation("AssetRequestMember", fields: [memberId], references: [id], onDelete: Cascade)
 
   // Request details
   reason String? // Reason for request/return
@@ -2167,11 +2167,11 @@ model AssetRequest {
 
   // For ADMIN_ASSIGNMENT: who initiated the assignment
   assignedById     String?
-  assignedByMember TeamMember? @relation("AssetRequestAssigner", fields: [assignedById], references: [id])
+  assignedByMember TeamMember? @relation("AssetRequestAssigner", fields: [assignedById], references: [id], onDelete: SetNull)
 
   // Processing info (approve/reject/accept/decline)
   processedById     String?
-  processedByMember TeamMember? @relation("AssetRequestProcessor", fields: [processedById], references: [id])
+  processedByMember TeamMember? @relation("AssetRequestProcessor", fields: [processedById], references: [id], onDelete: SetNull)
   processedAt       DateTime?
   processorNotes    String?
 
@@ -2203,8 +2203,8 @@ model AssetRequestHistory {
   newStatus AssetRequestStatus?
   notes     String?
 
-  performedById String
-  performedBy   TeamMember @relation("AssetRequestHistoryPerformer", fields: [performedById], references: [id])
+  performedById String?
+  performedBy   TeamMember? @relation("AssetRequestHistoryPerformer", fields: [performedById], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
 
@@ -2254,7 +2254,7 @@ model DepreciationRecord {
   calculationType String // "SCHEDULED" | "MANUAL"
   calculatedAt    DateTime    @default(now())
   calculatedById  String?
-  calculatedBy    TeamMember? @relation("DepreciationRecordCalculator", fields: [calculatedById], references: [id])
+  calculatedBy    TeamMember? @relation("DepreciationRecordCalculator", fields: [calculatedById], references: [id], onDelete: SetNull)
   notes           String?
 
   @@index([tenantId])
@@ -2310,8 +2310,8 @@ model CompanyDocument {
   notes       String?
 
   // Audit
-  createdById String
-  createdBy   TeamMember @relation("CompanyDocumentCreator", fields: [createdById], references: [id])
+  createdById String?
+  createdBy   TeamMember? @relation("CompanyDocumentCreator", fields: [createdById], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
