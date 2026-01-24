@@ -93,22 +93,25 @@ export default async function AdminEmployeeDetailPage({ params }: Props) {
   const employeeRole = employee.isAdmin ? 'ADMIN' : 'MEMBER';
   const roleBadgeVariant = employeeRole === 'ADMIN' ? 'error' : 'info';
 
+  // Hide auto-generated internal emails from UI display
+  const displayEmail = employee.email.endsWith('.internal') ? undefined : employee.email;
+
   return (
     <>
       <PageHeader
-        title={employee.name || 'No name'}
-        subtitle={employee.email}
+        title={employee.name || 'Unnamed'}
+        subtitle={displayEmail}
         breadcrumbs={[
           { label: 'Team', href: '/admin/employees' },
-          { label: employee.name || employee.email },
+          { label: employee.name || 'Unnamed' },
         ]}
         badge={{ text: employeeRole, variant: roleBadgeVariant }}
         actions={
           <div className="flex gap-2 flex-wrap">
             <ExportUserPDFButton
               userId={employee.id}
-              userName={employee.name || ''}
-              userEmail={employee.email}
+              userName={employee.name || 'Unnamed'}
+              userEmail={displayEmail || ''}
             />
             <PageHeaderButton href={`/admin/employees/${id}/edit`} variant="primary">
               <Edit className="h-4 w-4" />
@@ -116,7 +119,7 @@ export default async function AdminEmployeeDetailPage({ params }: Props) {
             </PageHeaderButton>
             <EmployeeActionsDropdown
               employeeId={employee.id}
-              employeeName={employee.name || employee.email}
+              employeeName={employee.name || 'Unnamed'}
               isSelf={isSelf}
               isDeleted={isDeleted}
               isOffboarded={isOffboarded}
@@ -149,7 +152,7 @@ export default async function AdminEmployeeDetailPage({ params }: Props) {
             </div>
             <RestoreUserButton
               userId={employee.id}
-              userName={employee.name || employee.email}
+              userName={employee.name || 'Unnamed'}
             />
           </div>
         )}
@@ -158,7 +161,7 @@ export default async function AdminEmployeeDetailPage({ params }: Props) {
         {isOffboarded && !isDeleted && (
           <OffboardingStatusBanner
             employeeId={employee.id}
-            employeeName={employee.name || employee.email}
+            employeeName={employee.name || 'Unnamed'}
             dateOfLeaving={employee.dateOfLeaving}
             offboardingReason={employee.offboardingReason}
             offboardingNotes={employee.offboardingNotes}

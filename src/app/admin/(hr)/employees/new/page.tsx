@@ -534,7 +534,7 @@ export default function NewEmployeePage() {
                           <SelectItem value="none">No manager</SelectItem>
                           {managers.map((manager) => (
                             <SelectItem key={manager.id} value={manager.id}>
-                              {manager.name || manager.email}
+                              {manager.name || 'Unnamed'}
                             </SelectItem>
                           ))}
                         </SelectContent>

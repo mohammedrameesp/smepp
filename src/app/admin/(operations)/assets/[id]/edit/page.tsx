@@ -44,6 +44,7 @@ import { CategorySelector } from '@/features/assets';
 import { AssetTypeCombobox } from '@/features/assets';
 import { DEFAULT_RATES_TO_QAR } from '@/lib/core/currency';
 import { getQatarEndOfDay } from '@/lib/core/datetime';
+import { formatNumber } from '@/lib/utils/math-utils';
 
 interface Asset {
   id: string;
@@ -749,9 +750,9 @@ export default function EditAssetPage() {
                   {typeof watchedPrice === 'number' && !isNaN(watchedPrice) && watchedPrice > 0 && watchedCurrency && (
                     <p className="text-xs text-muted-foreground">
                       {watchedCurrency === 'QAR' ? (
-                        <>≈ USD {(watchedPrice / (exchangeRates['USD'] || 3.64)).toFixed(2)}</>
+                        <>≈ USD {formatNumber(watchedPrice / (exchangeRates['USD'] || 3.64))}</>
                       ) : (
-                        <>≈ QAR {(watchedPrice * (exchangeRates[watchedCurrency as string] || 1)).toFixed(2)}</>
+                        <>≈ QAR {formatNumber(watchedPrice * (exchangeRates[watchedCurrency as string] || 1))}</>
                       )}
                       {usingFallbackRates && watchedCurrency !== 'QAR' && (
                         <span className="ml-2 text-amber-600" title="Using default exchange rate">⚠</span>
@@ -889,7 +890,7 @@ export default function EditAssetPage() {
                         <SelectItem value="__none__">None (Unassigned)</SelectItem>
                         {users.map((user) => (
                           <SelectItem key={user.id} value={user.id}>
-                            {user.name || user.email}
+                            {user.name || 'Unnamed'}
                           </SelectItem>
                         ))}
                       </SelectContent>

@@ -639,7 +639,7 @@ export function LeaveBalancesClient() {
 
                                   <AdjustBalanceDialog
                                     balanceId={balance.id}
-                                    userName={balance.member.name || balance.member.email}
+                                    userName={balance.member.name || 'Unnamed'}
                                     leaveTypeName={balance.leaveType.name}
                                     currentBalance={remaining}
                                     onAdjusted={fetchBalances}
@@ -844,7 +844,7 @@ export function LeaveBalancesClient() {
                   <SelectContent>
                     {users.map(user => (
                       <SelectItem key={user.id} value={user.id}>
-                        {user.name || user.email}
+                        {user.name || 'Unnamed'}
                       </SelectItem>
                     ))}
                   </SelectContent>

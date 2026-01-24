@@ -26,6 +26,7 @@ import { Badge } from '@/components/ui/badge';
 import { EmployeeActions } from './employee-actions';
 import { SPONSORSHIP_TYPES } from '@/lib/data/constants';
 import { calculateTenure } from '@/features/employees/lib/hr-utils';
+import { getDisplayEmail } from '@/lib/utils/user-display';
 
 const PAGE_SIZE = 50;
 
@@ -317,7 +318,7 @@ export function EmployeeListTableFiltered({ employees }: EmployeeListTableFilter
                         {employee.hrProfile?.photoUrl || employee.image ? (
                           <img
                             src={employee.hrProfile?.photoUrl || employee.image || ''}
-                            alt={employee.name || employee.email}
+                            alt={employee.name || 'Unnamed'}
                             className="h-full w-full object-cover"
                           />
                         ) : (
@@ -328,7 +329,9 @@ export function EmployeeListTableFiltered({ employees }: EmployeeListTableFilter
                         <div className="font-medium text-gray-900">
                           {employee.name || 'No name'}
                         </div>
-                        <div className="text-sm text-gray-500">{employee.email}</div>
+                        {getDisplayEmail(employee.email) && (
+                          <div className="text-sm text-gray-500">{getDisplayEmail(employee.email)}</div>
+                        )}
                       </div>
                     </Link>
                   </TableCell>

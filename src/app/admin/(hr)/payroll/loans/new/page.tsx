@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { CurrencyInput } from '@/components/ui/currency-input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -126,7 +127,7 @@ export default function NewLoanPage() {
                   <SelectContent>
                     {employees.map((emp) => (
                       <SelectItem key={emp.id} value={emp.id}>
-                        {emp.name || emp.email}
+                        {emp.name || 'Unnamed'}
                         {emp.employeeCode && ` (${emp.employeeCode})`}
                       </SelectItem>
                     ))}
@@ -152,13 +153,11 @@ export default function NewLoanPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="principalAmount">Loan Amount (QAR) *</Label>
-                <Input
+                <CurrencyInput
                   id="principalAmount"
-                  type="number"
                   min="0"
                   value={principalAmount}
                   onChange={(e) => setPrincipalAmount(e.target.value)}
-                  onKeyDown={(e) => ['ArrowUp', 'ArrowDown'].includes(e.key) && e.preventDefault()}
                   placeholder="0.00"
                   required
                 />
@@ -166,13 +165,11 @@ export default function NewLoanPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="monthlyDeduction">Monthly Deduction (QAR) *</Label>
-                <Input
+                <CurrencyInput
                   id="monthlyDeduction"
-                  type="number"
                   min="0"
                   value={monthlyDeduction}
                   onChange={(e) => setMonthlyDeduction(e.target.value)}
-                  onKeyDown={(e) => ['ArrowUp', 'ArrowDown'].includes(e.key) && e.preventDefault()}
                   placeholder="0.00"
                   required
                 />

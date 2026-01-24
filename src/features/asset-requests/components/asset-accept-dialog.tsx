@@ -169,7 +169,7 @@ export function AssetAcceptDialog({
           {assignedBy && (
             <div className="text-sm">
               <span className="text-gray-500">Assigned by:</span>{' '}
-              <span className="font-medium">{assignedBy.name || assignedBy.email}</span>
+              <span className="font-medium">{assignedBy.name || 'Unknown'}</span>
             </div>
           )}
 

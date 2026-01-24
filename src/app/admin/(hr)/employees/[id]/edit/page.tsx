@@ -342,7 +342,7 @@ export default function AdminEmployeeEditPage() {
     <>
       <PageHeader
         title="Edit Profile"
-        subtitle={hrProfile?.user?.name || hrProfile?.user?.email || 'Employee'}
+        subtitle={hrProfile?.user?.name || 'Employee'}
         breadcrumbs={[
           { label: 'Team', href: '/admin/employees' },
           { label: hrProfile?.user?.name || 'Employee', href: `/admin/employees/${employeeId}` },
@@ -478,7 +478,7 @@ export default function AdminEmployeeEditPage() {
                               <SelectItem value="none">No manager</SelectItem>
                               {managers.map((manager) => (
                                 <SelectItem key={manager.id} value={manager.id}>
-                                  {manager.name || manager.email}
+                                  {manager.name || 'Unnamed'}
                                 </SelectItem>
                               ))}
                             </SelectContent>

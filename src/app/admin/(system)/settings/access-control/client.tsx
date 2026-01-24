@@ -178,7 +178,7 @@ export function AccessControlClient() {
           m.id === memberId
             ? {
                 ...m,
-                reportingTo: manager ? { id: manager.id, name: manager.name || manager.email } : null,
+                reportingTo: manager ? { id: manager.id, name: manager.name || 'Unnamed' } : null,
               }
             : m
         )
@@ -308,7 +308,7 @@ export function AccessControlClient() {
                               {member.image ? (
                                 <img
                                   src={member.image}
-                                  alt={member.name || member.email}
+                                  alt={member.name || 'Unnamed'}
                                   className="h-full w-full object-cover"
                                 />
                               ) : (
@@ -319,7 +319,7 @@ export function AccessControlClient() {
                             </div>
                             <div className="min-w-0">
                               <div className="flex items-center gap-2">
-                                <p className="font-medium truncate">{member.name || member.email}</p>
+                                <p className="font-medium truncate">{member.name || 'Unnamed'}</p>
                                 {isOwner && (
                                   <Crown className="h-4 w-4 text-amber-500 flex-shrink-0" />
                                 )}
@@ -400,7 +400,7 @@ export function AccessControlClient() {
                                 .filter((m) => m.id !== member.id)
                                 .map((manager) => (
                                   <SelectItem key={manager.id} value={manager.id}>
-                                    {manager.name || manager.email}
+                                    {manager.name || 'Unnamed'}
                                   </SelectItem>
                                 ))}
                             </SelectContent>

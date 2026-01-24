@@ -44,6 +44,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DatePicker } from '@/components/ui/date-picker';
 import { toInputDateString } from '@/lib/core/datetime';
+import { formatNumber } from '@/lib/utils/math-utils';
 
 // Default exchange rates to QAR (fallback if not set in settings)
 const DEFAULT_RATES: Record<string, number> = {
@@ -549,10 +550,10 @@ export default function NewSubscriptionPage() {
                       <p className="text-xs text-muted-foreground">
                         {watchedCostCurrency === 'QAR' ? (
                           // QAR selected: show USD equivalent
-                          <>≈ USD {(watchedCostPerCycle / (exchangeRates['USD'] || 3.64)).toFixed(2)}</>
+                          <>≈ USD {formatNumber(watchedCostPerCycle / (exchangeRates['USD'] || 3.64))}</>
                         ) : (
                           // Any other currency: show QAR equivalent
-                          <>≈ QAR {(watchedCostPerCycle * (exchangeRates[watchedCostCurrency as string] || 1)).toFixed(2)}</>
+                          <>≈ QAR {formatNumber(watchedCostPerCycle * (exchangeRates[watchedCostCurrency as string] || 1))}</>
                         )}
                       </p>
                     )}
@@ -580,7 +581,7 @@ export default function NewSubscriptionPage() {
                         <SelectItem value="__none__">None (Unassigned)</SelectItem>
                         {users.map((user) => (
                           <SelectItem key={user.id} value={user.id}>
-                            {user.name || user.email}
+                            {user.name || 'Unnamed'}
                           </SelectItem>
                         ))}
                       </SelectContent>

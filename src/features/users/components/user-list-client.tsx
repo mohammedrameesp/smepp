@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { UserActions } from './user-actions';
 import { formatDate } from '@/lib/core/datetime';
 import { Users } from 'lucide-react';
+import { getDisplayEmail } from '@/lib/utils/user-display';
 
 interface User {
   id: string;
@@ -65,7 +66,7 @@ export function UserListClient({ users, currentUserId }: UserListClientProps) {
                 {user.image && (
                   <img
                     src={user.image}
-                    alt={user.name || user.email}
+                    alt={user.name || 'Unnamed'}
                     className="w-8 h-8 rounded-full"
                   />
                 )}
@@ -74,14 +75,14 @@ export function UserListClient({ users, currentUserId }: UserListClientProps) {
                     {user.isSystemAccount && <span className="text-lg">🏢</span>}
                     {user.name || 'No name'}
                   </div>
-                  {user.name && !user.isSystemAccount && (
-                    <div className="text-sm text-gray-500 font-mono">{user.email}</div>
+                  {user.name && !user.isSystemAccount && getDisplayEmail(user.email) && (
+                    <div className="text-sm text-gray-500 font-mono">{getDisplayEmail(user.email)}</div>
                   )}
                 </div>
               </div>
             </TableCell>
             <TableCell className="text-base font-mono">
-              {!user.name && !user.isSystemAccount && user.email}
+              {!user.name && !user.isSystemAccount && getDisplayEmail(user.email)}
             </TableCell>
             <TableCell>
               <Badge variant={getRoleBadgeVariant(user.role)}>

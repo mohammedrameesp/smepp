@@ -51,6 +51,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { DatePicker } from '@/components/ui/date-picker';
 import { toInputDateString } from '@/lib/core/datetime';
+import { formatNumber } from '@/lib/utils/math-utils';
 import { updateSubscriptionSchema, type UpdateSubscriptionRequest } from '@/features/subscriptions';
 
 // Default exchange rates to QAR (fallback if not set in settings)
@@ -678,10 +679,10 @@ export default function EditSubscriptionPage() {
                       <p className="text-xs text-muted-foreground">
                         {watchedCostCurrency === 'QAR' ? (
                           // QAR selected: show USD equivalent
-                          <>≈ USD {(watchedCostPerCycle / (exchangeRates['USD'] || 3.64)).toFixed(2)}</>
+                          <>≈ USD {formatNumber(watchedCostPerCycle / (exchangeRates['USD'] || 3.64))}</>
                         ) : (
                           // Any other currency: show QAR equivalent
-                          <>≈ QAR {(watchedCostPerCycle * (exchangeRates[watchedCostCurrency as string] || 1)).toFixed(2)}</>
+                          <>≈ QAR {formatNumber(watchedCostPerCycle * (exchangeRates[watchedCostCurrency as string] || 1))}</>
                         )}
                       </p>
                     )}
@@ -706,7 +707,7 @@ export default function EditSubscriptionPage() {
                         <SelectItem value="__none__">None (Unassigned)</SelectItem>
                         {users.map((user) => (
                           <SelectItem key={user.id} value={user.id}>
-                            {user.name || user.email}
+                            {user.name || 'Unnamed'}
                           </SelectItem>
                         ))}
                       </SelectContent>

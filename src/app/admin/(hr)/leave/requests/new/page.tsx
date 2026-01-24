@@ -230,7 +230,7 @@ export default function AdminNewLeavePage() {
                 <option value="">-- Select an employee --</option>
                 {employees.map((employee) => (
                   <option key={employee.id} value={employee.id}>
-                    {employee.name || employee.email}
+                    {employee.name}
                     {employee.hrProfile?.employeeId && ` (${employee.hrProfile.employeeId})`}
                     {employee.hrProfile?.designation && ` - ${employee.hrProfile.designation}`}
                   </option>
@@ -248,7 +248,7 @@ export default function AdminNewLeavePage() {
               <CardDescription>
                 Creating leave request for{' '}
                 <span className="font-medium text-gray-900">
-                  {selectedEmployee?.name || selectedEmployee?.email}
+                  {selectedEmployee?.name}
                 </span>
               </CardDescription>
             </CardHeader>

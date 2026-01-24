@@ -6,6 +6,7 @@ export const dynamic = 'force-dynamic';
 import { Badge } from '@/components/ui/badge';
 import { Users, Mail, Building2, Calendar } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { getDisplayInitials, getDisplayEmail } from '@/lib/utils/user-display';
 
 async function getUsers() {
   // Query TeamMembers with their organizations
@@ -53,15 +54,17 @@ export default async function SuperAdminUsersPage() {
                   <div className="flex items-center gap-3 sm:gap-4">
                     <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
                       <span className="text-lg font-semibold text-slate-600">
-                        {(member.name || member.email)?.[0]?.toUpperCase() || '?'}
+                        {getDisplayInitials(member.name, member.email)}
                       </span>
                     </div>
                     <div className="min-w-0">
                       <p className="font-medium truncate">{member.name || 'No name'}</p>
-                      <p className="text-sm text-muted-foreground flex items-center gap-1 truncate">
-                        <Mail className="h-3 w-3 flex-shrink-0" />
-                        <span className="truncate">{member.email}</span>
-                      </p>
+                      {getDisplayEmail(member.email) && (
+                        <p className="text-sm text-muted-foreground flex items-center gap-1 truncate">
+                          <Mail className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate">{getDisplayEmail(member.email)}</span>
+                        </p>
+                      )}
                     </div>
                   </div>
 

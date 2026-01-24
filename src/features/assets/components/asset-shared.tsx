@@ -201,5 +201,5 @@ export function getStatusLabel(status: string): string {
  */
 export function formatMemberName(member: AssetMember | null | undefined): string {
   if (!member) return '';
-  return member.name || member.email;
+  return member.name || '';
 }

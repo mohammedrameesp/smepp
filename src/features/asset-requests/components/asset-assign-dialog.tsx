@@ -23,6 +23,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertCircle, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
+import { getDisplayEmail } from '@/lib/utils/user-display';
 
 interface Asset {
   id: string;
@@ -114,7 +115,7 @@ export function AssetAssignDialog({ asset, trigger }: AssetAssignDialogProps) {
 
       // Show appropriate message based on response
       if (data.type === 'pending_acceptance') {
-        toast.success(`Assignment pending acceptance by ${data.request?.member?.name || data.request?.member?.email || 'user'}`);
+        toast.success(`Assignment pending acceptance by ${data.request?.member?.name || 'user'}`);
       } else if (data.type === 'direct_assignment') {
         toast.success('Asset assigned successfully');
       } else {
@@ -173,7 +174,7 @@ export function AssetAssignDialog({ asset, trigger }: AssetAssignDialogProps) {
               <SelectContent className="z-[200]">
                 {users.map((user) => (
                   <SelectItem key={user.id} value={user.id}>
-                    {user.name || user.email} {user.name && `(${user.email})`}
+                    {user.name} {getDisplayEmail(user.email) && `(${getDisplayEmail(user.email)})`}
                   </SelectItem>
                 ))}
               </SelectContent>

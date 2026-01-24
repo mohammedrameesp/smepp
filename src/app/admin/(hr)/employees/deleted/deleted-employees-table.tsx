@@ -103,7 +103,7 @@ export function DeletedEmployeesTable({ employees }: DeletedEmployeesTableProps)
                           <User className="h-5 w-5 text-slate-500" />
                         </div>
                         <div>
-                          <p className="font-medium text-slate-900">{employee.name || employee.email}</p>
+                          <p className="font-medium text-slate-900">{employee.name || 'Unnamed'}</p>
                           <p className="text-sm text-slate-500">
                             {employee.employeeCode && <span className="font-mono">{employee.employeeCode} • </span>}
                             {employee.designation || 'No designation'}

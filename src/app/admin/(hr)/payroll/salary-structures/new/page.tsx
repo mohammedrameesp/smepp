@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { CurrencyInput } from '@/components/ui/currency-input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -18,6 +19,7 @@ import {
 import { Loader2, Calculator, Settings2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/core/currency';
+import { formatNumber, calculatePercentage } from '@/lib/utils/math-utils';
 
 interface Employee {
   id: string;
@@ -102,12 +104,12 @@ export default function NewSalaryStructurePage() {
     const total = parseFloat(totalSalary) || 0;
     if (total <= 0) return;
 
-    setBasicSalary(((total * percentages.basic) / 100).toFixed(2));
-    setHousingAllowance(((total * percentages.housing) / 100).toFixed(2));
-    setTransportAllowance(((total * percentages.transport) / 100).toFixed(2));
-    setFoodAllowance(((total * percentages.food) / 100).toFixed(2));
-    setPhoneAllowance(((total * percentages.phone) / 100).toFixed(2));
-    setOtherAllowances(((total * percentages.other) / 100).toFixed(2));
+    setBasicSalary(formatNumber(calculatePercentage(total, percentages.basic)));
+    setHousingAllowance(formatNumber(calculatePercentage(total, percentages.housing)));
+    setTransportAllowance(formatNumber(calculatePercentage(total, percentages.transport)));
+    setFoodAllowance(formatNumber(calculatePercentage(total, percentages.food)));
+    setPhoneAllowance(formatNumber(calculatePercentage(total, percentages.phone)));
+    setOtherAllowances(formatNumber(calculatePercentage(total, percentages.other)));
   }, [totalSalary, percentages, useAutoCalculate]);
 
   useEffect(() => {
@@ -219,7 +221,7 @@ export default function NewSalaryStructurePage() {
                         ) : (
                           employees.map((emp) => (
                             <SelectItem key={emp.id} value={emp.id}>
-                              {emp.name || emp.email}
+                              {emp.name || 'Unnamed'}
                               {emp.employeeCode && ` (${emp.employeeCode})`}
                             </SelectItem>
                           ))
@@ -292,14 +294,12 @@ export default function NewSalaryStructurePage() {
                       <Label htmlFor="totalSalary" className="text-lg font-medium">
                         Total Monthly Salary (Gross)
                       </Label>
-                      <Input
+                      <CurrencyInput
                         id="totalSalary"
-                        type="number"
                         min="0"
                         placeholder="Enter total salary"
                         value={totalSalary}
                         onChange={(e) => setTotalSalary(e.target.value)}
-                        onKeyDown={(e) => ['ArrowUp', 'ArrowDown'].includes(e.key) && e.preventDefault()}
                         className="text-lg h-12"
                       />
                       <p className="text-sm text-muted-foreground">
@@ -397,80 +397,68 @@ export default function NewSalaryStructurePage() {
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     <div className="space-y-2">
                       <Label htmlFor="basicSalary">Basic Salary *</Label>
-                      <Input
+                      <CurrencyInput
                         id="basicSalary"
-                        type="number"
                         min="0"
                         placeholder="0.00"
                         value={basicSalary}
                         onChange={(e) => setBasicSalary(e.target.value)}
-                        onKeyDown={(e) => ['ArrowUp', 'ArrowDown'].includes(e.key) && e.preventDefault()}
                         required
                       />
                     </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="housingAllowance">Housing Allowance</Label>
-                      <Input
+                      <CurrencyInput
                         id="housingAllowance"
-                        type="number"
                         min="0"
                         placeholder="0.00"
                         value={housingAllowance}
                         onChange={(e) => setHousingAllowance(e.target.value)}
-                        onKeyDown={(e) => ['ArrowUp', 'ArrowDown'].includes(e.key) && e.preventDefault()}
                       />
                     </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="transportAllowance">Transport Allowance</Label>
-                      <Input
+                      <CurrencyInput
                         id="transportAllowance"
-                        type="number"
                         min="0"
                         placeholder="0.00"
                         value={transportAllowance}
                         onChange={(e) => setTransportAllowance(e.target.value)}
-                        onKeyDown={(e) => ['ArrowUp', 'ArrowDown'].includes(e.key) && e.preventDefault()}
                       />
                     </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="foodAllowance">Food Allowance</Label>
-                      <Input
+                      <CurrencyInput
                         id="foodAllowance"
-                        type="number"
                         min="0"
                         placeholder="0.00"
                         value={foodAllowance}
                         onChange={(e) => setFoodAllowance(e.target.value)}
-                        onKeyDown={(e) => ['ArrowUp', 'ArrowDown'].includes(e.key) && e.preventDefault()}
                       />
                     </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="phoneAllowance">Phone Allowance</Label>
-                      <Input
+                      <CurrencyInput
                         id="phoneAllowance"
-                        type="number"
                         min="0"
                         placeholder="0.00"
                         value={phoneAllowance}
                         onChange={(e) => setPhoneAllowance(e.target.value)}
-                        onKeyDown={(e) => ['ArrowUp', 'ArrowDown'].includes(e.key) && e.preventDefault()}
                       />
                     </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="otherAllowances">Other Allowances</Label>
-                      <Input
+                      <CurrencyInput
                         id="otherAllowances"
-                        type="number"
                         min="0"
                         placeholder="0.00"
                         value={otherAllowances}
                         onChange={(e) => setOtherAllowances(e.target.value)}
-                        onKeyDown={(e) => ['ArrowUp', 'ArrowDown'].includes(e.key) && e.preventDefault()}
                       />
                     </div>
                   </div>
