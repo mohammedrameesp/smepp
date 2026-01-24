@@ -52,13 +52,13 @@ export default async function EmployeeAllAssetsPage() {
 
   // Fetch stats for badges
   const [myAssetsCount, totalCount, requestedCount] = await Promise.all([
-    // My Assets: assigned to me
+    // My Assets: assigned to me (exclude deleted and disposed)
     prisma.asset.count({
-      where: { tenantId, assignedMemberId: userId },
+      where: { tenantId, assignedMemberId: userId, deletedAt: null, status: { not: 'DISPOSED' } },
     }),
-    // Total organizational assets (for context)
+    // Total organizational assets (exclude deleted and disposed to match table default)
     prisma.asset.count({
-      where: { tenantId },
+      where: { tenantId, deletedAt: null, status: { not: 'DISPOSED' } },
     }),
     // My pending requests
     prisma.assetRequest.count({
