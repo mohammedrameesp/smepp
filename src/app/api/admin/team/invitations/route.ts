@@ -1,57 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { randomBytes } from 'crypto';
 import { z } from 'zod';
 import { sendEmail } from '@/lib/core/email';
 import { updateSetupProgress } from '@/features/onboarding/lib';
-import logger from '@/lib/core/log';
+import { withErrorHandler } from '@/lib/http/handler';
+import { validationErrorResponse, notFoundResponse, conflictResponse } from '@/lib/http/errors';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GET /api/admin/team/invitations - Get pending invitations
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export async function GET() {
-  try {
-    const session = await getServerSession(authOptions);
+export const GET = withErrorHandler(async (_request, { tenant }) => {
+  const tenantId = tenant!.tenantId;
 
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
+  const invitations = await prisma.organizationInvitation.findMany({
+    where: {
+      organizationId: tenantId,
+      acceptedAt: null,
+    },
+    orderBy: { createdAt: 'desc' },
+  });
 
-    // Only admins/owners can view invitations
-    if (!session.user.isOwner && !session.user.isAdmin) {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
-    }
-
-    const invitations = await prisma.organizationInvitation.findMany({
-      where: {
-        organizationId: session.user.organizationId,
-        acceptedAt: null,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    const now = new Date();
-    return NextResponse.json({
-      invitations: invitations.map((inv) => ({
-        id: inv.id,
-        email: inv.email,
-        role: inv.role,
-        expiresAt: inv.expiresAt,
-        createdAt: inv.createdAt,
-        isExpired: inv.expiresAt < now,
-      })),
-    });
-  } catch (error) {
-    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Failed to get invitations');
-    return NextResponse.json(
-      { error: 'Failed to get invitations' },
-      { status: 500 }
-    );
-  }
-}
+  const now = new Date();
+  return NextResponse.json({
+    invitations: invitations.map((inv) => ({
+      id: inv.id,
+      email: inv.email,
+      role: inv.role,
+      expiresAt: inv.expiresAt,
+      createdAt: inv.createdAt,
+      isExpired: inv.expiresAt < now,
+      isEmployee: inv.isEmployee ?? true, // Default to true for backwards compatibility
+    })),
+  });
+}, { requireAuth: true, requireAdmin: true });
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // POST /api/admin/team/invitations - Create new invitation
@@ -64,107 +47,95 @@ const createInviteSchema = z.object({
   onWPS: z.boolean().optional(),
 });
 
-export async function POST(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
+export const POST = withErrorHandler(async (request: NextRequest, { tenant }) => {
+  const tenantId = tenant!.tenantId;
+  const userId = tenant!.userId;
 
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
+  const body = await request.json();
+  const result = createInviteSchema.safeParse(body);
 
-    // Only admins/owners can invite
-    if (!session.user.isOwner && !session.user.isAdmin) {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
-    }
+  if (!result.success) {
+    return validationErrorResponse(result);
+  }
 
-    const body = await request.json();
-    const result = createInviteSchema.safeParse(body);
+  const { email, role, isEmployee, onWPS } = result.data;
 
-    if (!result.success) {
-      return NextResponse.json(
-        { error: 'Invalid input', details: result.error.flatten().fieldErrors },
-        { status: 400 }
-      );
-    }
+  // Get org details for email
+  const org = await prisma.organization.findUnique({
+    where: { id: tenantId },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      primaryColor: true,
+    },
+  });
 
-    const { email, role, isEmployee, onWPS } = result.data;
+  if (!org) {
+    return notFoundResponse('Organization');
+  }
 
-    // Get org details for email
-    const org = await prisma.organization.findUnique({
-      where: { id: session.user.organizationId },
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        primaryColor: true,
-      },
-    });
+  // Check if user is already a TeamMember (primary check)
+  const existingTeamMember = await prisma.teamMember.findFirst({
+    where: {
+      tenantId,
+      email: email.toLowerCase(),
+      isDeleted: false,
+    },
+  });
 
-    if (!org) {
-      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
-    }
+  if (existingTeamMember) {
+    return conflictResponse('This user is already a member of your organization');
+  }
 
-    // Check if user is already a TeamMember (primary check)
-    const existingTeamMember = await prisma.teamMember.findFirst({
-      where: {
-        tenantId: session.user.organizationId,
-        email: email.toLowerCase(),
-        isDeleted: false,
-      },
-    });
+  // Check for existing pending invitation
+  const existingInvite = await prisma.organizationInvitation.findFirst({
+    where: {
+      organizationId: tenantId,
+      email: email.toLowerCase(),
+      acceptedAt: null,
+    },
+  });
 
-    if (existingTeamMember) {
-      return NextResponse.json(
-        { error: 'This user is already a member of your organization' },
-        { status: 409 }
-      );
-    }
+  if (existingInvite) {
+    return conflictResponse('An invitation for this email already exists');
+  }
 
-    // Check for existing pending invitation
-    const existingInvite = await prisma.organizationInvitation.findFirst({
-      where: {
-        organizationId: session.user.organizationId,
-        email: email.toLowerCase(),
-        acceptedAt: null,
-      },
-    });
+  // Get inviter's name for email
+  const inviter = await prisma.teamMember.findFirst({
+    where: { tenantId, id: userId },
+    select: { name: true },
+  });
 
-    if (existingInvite) {
-      return NextResponse.json(
-        { error: 'An invitation for this email already exists' },
-        { status: 409 }
-      );
-    }
+  // Create invitation
+  const token = randomBytes(32).toString('hex');
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
-    // Create invitation
-    const token = randomBytes(32).toString('hex');
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+  const invitation = await prisma.organizationInvitation.create({
+    data: {
+      organizationId: tenantId,
+      email: email.toLowerCase(),
+      role,
+      token,
+      expiresAt,
+      invitedById: userId,
+      isEmployee: isEmployee,
+      isOnWps: onWPS,
+    },
+  });
 
-    const invitation = await prisma.organizationInvitation.create({
-      data: {
-        organizationId: session.user.organizationId,
-        email: email.toLowerCase(),
-        role,
-        token,
-        expiresAt,
-        invitedById: session.user.id,
-        isEmployee: isEmployee,
-        isOnWps: onWPS,
-      },
-    });
+  // Build organization-specific invite URL using subdomain
+  const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
+  const protocol = appDomain.includes('localhost') ? 'http' : 'https';
+  const inviteUrl = `${protocol}://${org.slug}.${appDomain}/invite/${token}`;
+  const inviterName = inviter?.name || 'A team member';
+  const roleName = role === 'ADMIN' ? 'Administrator' : role === 'MANAGER' ? 'Manager' : 'Team Member';
 
-    // Build organization-specific invite URL using subdomain
-    const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
-    const protocol = appDomain.includes('localhost') ? 'http' : 'https';
-    const inviteUrl = `${protocol}://${org.slug}.${appDomain}/invite/${token}`;
-    const inviterName = session.user.name || 'A team member';
-    const roleName = role === 'ADMIN' ? 'Administrator' : role === 'MANAGER' ? 'Manager' : 'Team Member';
-
-    // Send professional invitation email (email-client safe styling)
-    const emailResult = await sendEmail({
-      to: email,
-      subject: `${inviterName} invited you to join ${org.name} on Durj`,
-      html: `
+  // Send professional invitation email (email-client safe styling)
+  const emailResult = await sendEmail({
+    to: email,
+    subject: `${inviterName} invited you to join ${org.name} on Durj`,
+    html: `
 <!DOCTYPE html>
 <html>
 <head>
@@ -257,8 +228,8 @@ export async function POST(request: NextRequest) {
   </table>
 </body>
 </html>
-      `,
-      text: `Hello,
+    `,
+    text: `Hello,
 
 ${inviterName} has invited you to join ${org.name} on Durj as a ${roleName}.
 
@@ -271,30 +242,23 @@ If you did not expect this invitation, you can safely ignore this email.
 Need help? Contact support@durj.qa
 
 © ${new Date().getFullYear()} Durj. All rights reserved.`,
-    });
+  });
 
-    // Update setup progress for first team member invited (non-blocking)
-    updateSetupProgress(session.user.organizationId, 'firstTeamMemberInvited', true).catch(() => {});
+  // Update setup progress for first team member invited (non-blocking)
+  updateSetupProgress(tenantId, 'firstTeamMemberInvited', true).catch(() => {});
 
-    return NextResponse.json(
-      {
-        success: true,
-        emailSent: emailResult.success,
-        invitation: {
-          id: invitation.id,
-          email: invitation.email,
-          role: invitation.role,
-          inviteUrl,
-          expiresAt: expiresAt.toISOString(),
-        },
+  return NextResponse.json(
+    {
+      success: true,
+      emailSent: emailResult.success,
+      invitation: {
+        id: invitation.id,
+        email: invitation.email,
+        role: invitation.role,
+        inviteUrl,
+        expiresAt: expiresAt.toISOString(),
       },
-      { status: 201 }
-    );
-  } catch (error) {
-    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Failed to create invitation');
-    return NextResponse.json(
-      { error: 'Failed to create invitation' },
-      { status: 500 }
-    );
-  }
-}
+    },
+    { status: 201 }
+  );
+}, { requireAuth: true, requireAdmin: true });

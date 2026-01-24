@@ -76,6 +76,7 @@ interface Invitation {
   expiresAt: string;
   createdAt: string;
   isExpired: boolean;
+  isEmployee: boolean;
 }
 
 
@@ -153,10 +154,21 @@ export function TeamClient({ initialStats }: TeamClientProps) {
     [members]
   );
 
-  // Filter pending members (those with pendingStatus)
+  // Filter pending members based on current tab
   const pendingMembers = useMemo(() =>
-    members.filter((m) => m.pendingStatus?.isPending),
-    [members]
+    members.filter((m) =>
+      m.pendingStatus?.isPending &&
+      (currentTab === 'employees' ? m.isEmployee : !m.isEmployee)
+    ),
+    [members, currentTab]
+  );
+
+  // Filter invitations based on current tab
+  const filteredInvitations = useMemo(() =>
+    invitations.filter((inv) =>
+      currentTab === 'employees' ? inv.isEmployee : !inv.isEmployee
+    ),
+    [invitations, currentTab]
   );
 
   // Stats
@@ -511,7 +523,7 @@ export function TeamClient({ initialStats }: TeamClientProps) {
       </div>
 
       {/* Pending Invitations - People who haven't accepted yet */}
-      {invitations.length > 0 && (
+      {filteredInvitations.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -519,12 +531,12 @@ export function TeamClient({ initialStats }: TeamClientProps) {
               Pending Invitations
             </CardTitle>
             <CardDescription>
-              {invitations.length} invitation{invitations.length !== 1 ? 's' : ''} waiting to be accepted
+              {filteredInvitations.length} invitation{filteredInvitations.length !== 1 ? 's' : ''} waiting to be accepted
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="divide-y">
-              {invitations.map((inv) => (
+              {filteredInvitations.map((inv) => (
                 <div key={inv.id} className="py-4 flex items-center justify-between">
                   <div>
                     <p className="font-medium">{inv.email}</p>
