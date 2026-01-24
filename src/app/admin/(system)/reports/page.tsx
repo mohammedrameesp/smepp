@@ -74,21 +74,21 @@ export default async function AdminReportsPage() {
     activityByAction,
     activityByEntity,
   ] = await Promise.all([
-    prisma.asset.count({ where: { tenantId } }),
+    prisma.asset.count({ where: { tenantId, deletedAt: null } }),
     prisma.asset.groupBy({
       by: ['status'],
-      where: { tenantId },
+      where: { tenantId, deletedAt: null },
       _count: { status: true },
     }),
     prisma.asset.groupBy({
       by: ['type'],
-      where: { tenantId },
+      where: { tenantId, deletedAt: null },
       _count: { type: true },
       orderBy: { _count: { type: 'desc' } },
       take: 10,
     }),
     prisma.asset.aggregate({
-      where: { tenantId },
+      where: { tenantId, deletedAt: null },
       _sum: { priceQAR: true },
     }),
     prisma.subscription.count({ where: { tenantId } }),
