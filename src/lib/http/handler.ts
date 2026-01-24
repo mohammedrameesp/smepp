@@ -206,7 +206,9 @@ export function withErrorHandler(
           options.requireOperationsAccess || options.requireHRAccess || options.requireFinanceAccess) {
         const session = await getSession();
 
-        if (!session) {
+        // Session must exist AND have a valid user ID
+        // (id becomes undefined when session is invalidated due to password change)
+        if (!session || !session.user?.id) {
           const response = errorResponse('Unauthorized', 401, {
             message: 'Authentication required',
             code: ErrorCodes.AUTH_REQUIRED,

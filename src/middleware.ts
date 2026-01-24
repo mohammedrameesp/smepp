@@ -414,7 +414,7 @@ export async function middleware(request: NextRequest) {
           return NextResponse.redirect(new URL('/admin', request.url));
         }
 
-        if (token && token.organizationSlug?.toString().toLowerCase() === tenantSlug.toLowerCase()) {
+        if (token && token.id && token.organizationSlug?.toString().toLowerCase() === tenantSlug.toLowerCase()) {
           return NextResponse.redirect(new URL('/admin', request.url));
         } else {
           return NextResponse.redirect(new URL('/login', request.url));
@@ -482,7 +482,8 @@ export async function middleware(request: NextRequest) {
       }
 
       // Unauthenticated on custom domain - redirect to login
-      if (!token) {
+      // Token must exist AND have a valid id (id becomes undefined when session is invalidated)
+      if (!token || !token.id) {
         const loginUrl = new URL('/login', request.url);
         loginUrl.searchParams.set('callbackUrl', pathname);
         return NextResponse.redirect(loginUrl);
@@ -597,7 +598,7 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL('/admin', request.url));
       }
 
-      if (token && token.organizationSlug?.toString().toLowerCase() === subdomain.toLowerCase()) {
+      if (token && token.id && token.organizationSlug?.toString().toLowerCase() === subdomain.toLowerCase()) {
         return NextResponse.redirect(new URL('/admin', request.url));
       } else {
         return NextResponse.redirect(new URL('/login', request.url));
@@ -686,7 +687,8 @@ export async function middleware(request: NextRequest) {
     // ─────────────────────────────────────────────────────────────────────────────
 
     // Unauthenticated on subdomain - redirect to subdomain login (not main domain)
-    if (!token) {
+    // Token must exist AND have a valid id (id becomes undefined when session is invalidated)
+    if (!token || !token.id) {
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('callbackUrl', pathname);
       return NextResponse.redirect(loginUrl);
@@ -795,7 +797,8 @@ export async function middleware(request: NextRequest) {
       secret: process.env.NEXTAUTH_SECRET,
     });
 
-    if (token) {
+    // Token must exist AND have a valid id (id becomes undefined when session is invalidated)
+    if (token && token.id) {
       const orgSlug = token.organizationSlug as string | undefined;
       const isSuperAdmin = token.isSuperAdmin as boolean | undefined;
 
@@ -829,7 +832,8 @@ export async function middleware(request: NextRequest) {
   });
 
   // Redirect unauthenticated users to login
-  if (!token) {
+  // Token must exist AND have a valid id (id becomes undefined when session is invalidated)
+  if (!token || !token.id) {
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('callbackUrl', pathname);
     return NextResponse.redirect(loginUrl);
