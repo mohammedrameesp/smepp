@@ -103,7 +103,7 @@ export function AssetRequestListTable({
     searchFields: ['requestNumber'],
     defaultSort: 'requestNumber',
     defaultOrder: 'desc',
-    initialFilters: { status: 'PENDING', type: 'all' },
+    initialFilters: { status: 'all', type: 'all' },
     filterFn: (item, key, value) => {
       if (!value || value === 'all') return true;
       if (key === 'status') return item.status === value;
