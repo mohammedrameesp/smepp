@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
 import logger from '@/lib/core/log';
+import { handleSystemError } from '@/lib/core/error-logger';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GET /api/invitations/[token] - Get invitation details
@@ -97,7 +98,19 @@ export async function GET(
       },
     });
   } catch (error) {
-    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Failed to get invitation');
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logger.error({ error: errorMessage }, 'Failed to get invitation');
+    handleSystemError({
+      type: 'API_ERROR',
+      source: 'invitations',
+      action: 'get-invitation',
+      method: 'GET',
+      path: '/api/invitations/[token]',
+      message: errorMessage,
+      stack: error instanceof Error ? error.stack : undefined,
+      statusCode: 500,
+      severity: 'error',
+    });
     return NextResponse.json(
       { error: 'Failed to get invitation' },
       { status: 500 }
@@ -373,7 +386,8 @@ export async function POST(
 
     return NextResponse.json(result);
   } catch (error) {
-    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Failed to accept invitation');
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logger.error({ error: errorMessage }, 'Failed to accept invitation');
 
     // Handle unique constraint violations (concurrent acceptance)
     if (error instanceof Error && error.message.includes('Unique constraint')) {
@@ -382,6 +396,18 @@ export async function POST(
         { status: 410 }
       );
     }
+
+    handleSystemError({
+      type: 'API_ERROR',
+      source: 'invitations',
+      action: 'accept-invitation',
+      method: 'POST',
+      path: '/api/invitations/[token]',
+      message: errorMessage,
+      stack: error instanceof Error ? error.stack : undefined,
+      statusCode: 500,
+      severity: 'error',
+    });
 
     return NextResponse.json(
       { error: 'Failed to accept invitation' },

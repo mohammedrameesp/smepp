@@ -4,6 +4,7 @@ import { hash } from 'bcryptjs';
 import { z } from 'zod';
 import { validatePassword, DEFAULT_PASSWORD_REQUIREMENTS } from '@/lib/security/password-validation';
 import logger from '@/lib/core/log';
+import { handleSystemError } from '@/lib/core/error-logger';
 
 // SEC-010: Enhanced password validation with complexity requirements
 const setPasswordSchema = z.object({
@@ -83,7 +84,19 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Validate setup token error');
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    logger.error({ error: errorMessage }, 'Validate setup token error');
+    handleSystemError({
+      type: 'API_ERROR',
+      source: 'auth',
+      action: 'validate-setup-token',
+      method: 'GET',
+      path: '/api/auth/set-password',
+      message: errorMessage,
+      stack: error instanceof Error ? error.stack : undefined,
+      statusCode: 500,
+      severity: 'error',
+    });
     return NextResponse.json({ valid: false, reason: 'error' }, { status: 500 });
   }
 }
@@ -153,7 +166,19 @@ export async function POST(request: NextRequest) {
       message: 'Password created successfully. You can now sign in.',
     });
   } catch (error) {
-    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Set password error');
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    logger.error({ error: errorMessage }, 'Set password error');
+    handleSystemError({
+      type: 'API_ERROR',
+      source: 'auth',
+      action: 'set-password',
+      method: 'POST',
+      path: '/api/auth/set-password',
+      message: errorMessage,
+      stack: error instanceof Error ? error.stack : undefined,
+      statusCode: 500,
+      severity: 'error',
+    });
     return NextResponse.json(
       { error: 'Failed to set password' },
       { status: 500 }

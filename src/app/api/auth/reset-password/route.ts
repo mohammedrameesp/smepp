@@ -5,6 +5,7 @@ import { createHash } from 'crypto';
 import { z } from 'zod';
 import { validatePassword, DEFAULT_PASSWORD_REQUIREMENTS } from '@/lib/security/password-validation';
 import logger from '@/lib/core/log';
+import { handleSystemError } from '@/lib/core/error-logger';
 
 /**
  * Hash reset token for comparison
@@ -60,7 +61,19 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ valid: !!user });
   } catch (error) {
-    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Validate reset token error');
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    logger.error({ error: errorMessage }, 'Validate reset token error');
+    handleSystemError({
+      type: 'API_ERROR',
+      source: 'auth',
+      action: 'validate-reset-token',
+      method: 'GET',
+      path: '/api/auth/reset-password',
+      message: errorMessage,
+      stack: error instanceof Error ? error.stack : undefined,
+      statusCode: 500,
+      severity: 'error',
+    });
     return NextResponse.json({ valid: false }, { status: 500 });
   }
 }
@@ -125,7 +138,19 @@ export async function POST(request: NextRequest) {
       message: 'Password reset successful',
     });
   } catch (error) {
-    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Reset password error');
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    logger.error({ error: errorMessage }, 'Reset password error');
+    handleSystemError({
+      type: 'API_ERROR',
+      source: 'auth',
+      action: 'reset-password',
+      method: 'POST',
+      path: '/api/auth/reset-password',
+      message: errorMessage,
+      stack: error instanceof Error ? error.stack : undefined,
+      statusCode: 500,
+      severity: 'error',
+    });
     return NextResponse.json(
       { error: 'Failed to reset password' },
       { status: 500 }

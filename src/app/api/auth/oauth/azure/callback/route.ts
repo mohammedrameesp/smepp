@@ -17,6 +17,7 @@ import {
   validateEmailDomain,
 } from '@/lib/oauth/azure';
 import logger from '@/lib/core/log';
+import { handleSystemError } from '@/lib/core/error-logger';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GET /api/auth/oauth/azure/callback
@@ -181,7 +182,20 @@ export async function GET(request: NextRequest) {
     }
     return NextResponse.redirect(getTenantUrl(subdomain, redirectPath));
   } catch (error) {
-    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Azure OAuth callback error');
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logger.error({ error: errorMessage }, 'Azure OAuth callback error');
+
+    handleSystemError({
+      type: 'API_ERROR',
+      source: 'auth',
+      action: 'azure-oauth-callback',
+      method: 'GET',
+      path: '/api/auth/oauth/azure/callback',
+      message: errorMessage,
+      stack: error instanceof Error ? error.stack : undefined,
+      statusCode: 500,
+      severity: 'error',
+    });
 
     // Try to get subdomain from state for error redirect
     // Use consumeOnSuccess=false since we're only reading for error redirect

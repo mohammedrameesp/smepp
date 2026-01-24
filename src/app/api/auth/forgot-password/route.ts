@@ -4,6 +4,7 @@ import { randomBytes, createHash } from 'crypto';
 import { z } from 'zod';
 import { sendEmail } from '@/lib/core/email';
 import logger from '@/lib/core/log';
+import { handleSystemError } from '@/lib/core/error-logger';
 
 /**
  * Hash reset token for storage
@@ -221,7 +222,19 @@ Need help? Contact support@durj.qa
       message: 'If an account exists, a reset link has been sent',
     });
   } catch (error) {
-    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Forgot password error');
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    logger.error({ error: errorMessage }, 'Forgot password error');
+    handleSystemError({
+      type: 'API_ERROR',
+      source: 'auth',
+      action: 'forgot-password',
+      method: 'POST',
+      path: '/api/auth/forgot-password',
+      message: errorMessage,
+      stack: error instanceof Error ? error.stack : undefined,
+      statusCode: 500,
+      severity: 'error',
+    });
     return NextResponse.json(
       { error: 'Failed to process request' },
       { status: 500 }
