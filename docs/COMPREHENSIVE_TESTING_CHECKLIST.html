@@ -748,10 +748,6 @@ const T = {
             ["Email/password login with invalid email format", "Enter malformed email", "Validation error shown", "src/lib/core/auth.ts", "High", "Automated"],
             ["Email/password login with non-existent email", "Enter email not in system", "Generic 'Invalid credentials' error (no enumeration)", "src/lib/core/auth.ts", "Critical", "Automated"],
             ["Email/password login with wrong password", "Enter wrong password", "Invalid credentials error, attempt counted", "src/lib/core/auth.ts", "Critical", "Automated"],
-            ["Google OAuth login (new user)", "Click Google login, complete flow", "Account created, organization selection", "src/lib/oauth/google.ts", "Critical", "Manual"],
-            ["Google OAuth login (existing user)", "Click Google login with existing account", "Logged in, redirected to dashboard", "src/lib/oauth/google.ts", "Critical", "Manual"],
-            ["Microsoft/Azure AD OAuth login", "Click Microsoft login, complete flow", "User authenticated via Azure AD", "src/lib/oauth/azure.ts", "High", "Manual"],
-            ["Custom OAuth per organization (Google)", "Login via org-specific Google OAuth", "Uses org's client ID/secret", "src/lib/oauth/utils.ts", "High", "Manual"],
             ["Login redirect to correct subdomain", "Login from marketing page", "Redirected to {org}.durj.com", "src/middleware.ts", "Critical", "E2E"],
             ["Login preserves return URL", "Access protected page, login", "Redirected to original page after login", "src/lib/core/auth.ts", "High", "E2E"],
             ["Session expiration after timeout", "Leave session idle beyond timeout", "User logged out, session cleared", "src/lib/core/auth.ts", "High", "Manual"],
@@ -761,9 +757,6 @@ const T = {
             ["Deleted user login rejected", "Login with soft-deleted account (isDeleted=true)", "Error 'Invalid email or password'", "src/lib/core/auth.ts", "Critical", "Automated"],
             ["Deactivated user login rejected", "Login with canLogin=false account", "Error 'Account deactivated'", "src/lib/core/auth.ts", "Critical", "Automated"],
             ["Login on wrong subdomain", "User in org-a logs into org-b subdomain", "Error or redirect to correct subdomain", "src/middleware.ts", "High", "E2E"],
-            ["OAuth user tries password login", "User signed up via Google tries email/password", "Error 'Use Google sign-in' or works if passwordHash exists", "src/lib/core/auth.ts", "High", "Manual"],
-            ["OAuth login with deleted account", "OAuth login with soft-deleted account", "Error or creates new account based on policy", "src/lib/oauth/utils.ts", "High", "Manual"],
-            ["OAuth login while account locked", "OAuth login during lockout period", "Error 'Account locked'", "src/lib/oauth/utils.ts", "High", "Manual"],
             ["Login after password change invalidates sessions", "Change password on device A", "Device B session invalidated", "src/lib/core/auth.ts", "High", "Manual"],
             ["Email case insensitivity", "Login with different email case", "Works (case-insensitive matching)", "src/lib/core/auth.ts", "Medium", "Automated"],
             ["Email whitespace trimmed", "Login with leading/trailing spaces in email", "Works after trimming", "src/lib/core/auth.ts", "Medium", "Automated"]
@@ -857,6 +850,21 @@ const T = {
             ["Non-admin module access", "Non-admin accesses disabled module", "Redirected to /forbidden", "src/app", "Medium", "Manual"],
             ["Super admin route access", "Regular user accesses /super-admin/*", "Redirected to login or forbidden", "src/app", "Medium", "Manual"],
             ["Impersonation route protection", "Non-super-admin with impersonation URL param", "Param ignored, normal auth flow continues", "src/app", "Medium", "Manual"]
+        ],
+        "OAuth/SSO Login (requires SSO setup)": [
+            ["Google OAuth login (new user)", "Click Google login, complete flow", "Account created, organization selection", "src/lib/oauth/google.ts", "Critical", "Manual"],
+            ["Google OAuth login (existing user)", "Click Google login with existing account", "Logged in, redirected to dashboard", "src/lib/oauth/google.ts", "Critical", "Manual"],
+            ["Microsoft/Azure AD OAuth login", "Click Microsoft login, complete flow", "User authenticated via Azure AD", "src/lib/oauth/azure.ts", "High", "Manual"],
+            ["Custom OAuth per organization (Google)", "Login via org-specific Google OAuth", "Uses org's client ID/secret", "src/lib/oauth/utils.ts", "High", "Manual"],
+            ["Custom OAuth per organization (Azure)", "Login via org-specific Azure OAuth", "Uses org's client ID/secret", "src/lib/oauth/utils.ts", "High", "Manual"],
+            ["OAuth user tries password login", "User signed up via Google tries email/password", "Error 'Use Google sign-in' or works if passwordHash exists", "src/lib/core/auth.ts", "High", "Manual"],
+            ["OAuth login with deleted account", "OAuth login with soft-deleted account", "Error or creates new account based on policy", "src/lib/oauth/utils.ts", "High", "Manual"],
+            ["OAuth login while account locked", "OAuth login during lockout period", "Error 'Account locked'", "src/lib/oauth/utils.ts", "High", "Manual"],
+            ["OAuth state tampering rejected", "Modify state parameter in OAuth callback", "Error 'Invalid state'", "src/lib/oauth/utils.ts", "Critical", "Manual"],
+            ["OAuth nonce replay attack rejected", "Reuse OAuth state parameter after first use", "Error 'State already used'", "src/lib/oauth/utils.ts", "Critical", "Manual"],
+            ["OAuth domain restriction enforced", "Sign in with non-allowed email domain", "Error 'Email domain not allowed'", "src/lib/oauth/utils.ts", "High", "Manual"],
+            ["OAuth method restricted by org", "Org blocks OAuth, user tries OAuth login", "Error 'Login method not allowed'", "src/lib/oauth/utils.ts", "High", "Manual"],
+            ["OAuth with existing email different provider", "Google user tries Microsoft with same email", "Links accounts or shows conflict message", "src/lib/oauth/utils.ts", "High", "Manual"]
         ],
         "Note": [
             ["2FA availability", "Verify 2FA option exists", "2FA is only available for Super Admins - organization users (TeamMembers) do not have 2FA", "src/app", "Medium", "Manual"],
