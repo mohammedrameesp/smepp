@@ -399,7 +399,7 @@ export default function NewAssetPage() {
                     <Label htmlFor="type">Asset Type *</Label>
                     <AssetTypeCombobox
                       value={watchedType || ''}
-                      onChange={(type) => setValue('type', type)}
+                      onChange={(type) => setValue('type', type, { shouldValidate: true })}
                       onCategoryMatch={async (categoryCode) => {
                         // Auto-select category based on type match
                         if (!watchedCategoryId) {
