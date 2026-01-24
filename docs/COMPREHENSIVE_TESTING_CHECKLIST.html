@@ -965,7 +965,6 @@ const T = {
             ["Admin can assign asset to member", "Admin assigns SPARE asset", "Asset assigned, status IN_USE", "src/app/api/assets/[id]/assign/route.ts", "Critical", "E2E"],
             ["Assign to employee with login requires approval", "Assign to canLogin=true user", "Creates PENDING_USER_ACCEPTANCE request", "src/app/api/assets/[id]/assign/route.ts", "Critical", "E2E"],
             ["Assign to employee without login is auto-accepted", "Assign to canLogin=false user", "Direct assignment, no approval needed", "src/app/api/assets/[id]/assign/route.ts", "Critical", "E2E"],
-            ["Force assign skips approval", "Assign with skipAcceptance=true", "Direct assignment even for canLogin users", "src/app/api/assets/[id]/assign/route.ts", "High", "E2E"],
             ["Member must exist in same org", "Assign to member from other org", "Error: member not found", "src/app/api/assets/[id]/assign/route.ts", "Critical", "Automated"],
             ["Reassignment auto-unassigns previous", "Assign already assigned asset", "Previous member unassigned, new assigned", "src/app/api/assets/[id]/assign/route.ts", "High", "Automated"],
             ["Assignment creates history entry", "Assign asset", "AssetHistory record created", "src/features/assets/lib/asset-lifecycle.ts", "High", "Automated"],
