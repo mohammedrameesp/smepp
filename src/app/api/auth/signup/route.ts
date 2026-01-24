@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { validatePassword, DEFAULT_PASSWORD_REQUIREMENTS } from '@/lib/security/password-validation';
 import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
 import logger from '@/lib/core/log';
+import { handleSystemError } from '@/lib/core/error-logger';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // VALIDATION SCHEMA
@@ -230,7 +231,22 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Signup error');
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    logger.error({ error: errorMessage }, 'Signup error');
+
+    // Log to super admin error dashboard
+    handleSystemError({
+      type: 'API_ERROR',
+      source: 'auth',
+      action: 'signup',
+      method: 'POST',
+      path: '/api/auth/signup',
+      message: errorMessage,
+      stack: error instanceof Error ? error.stack : undefined,
+      statusCode: 500,
+      severity: 'error',
+    });
+
     return NextResponse.json(
       { error: 'Failed to create account. Please try again.' },
       { status: 500 }
