@@ -111,8 +111,11 @@ export async function POST(request: NextRequest) {
     const result = setPasswordSchema.safeParse(body);
 
     if (!result.success) {
+      // Extract the first error message for user-friendly display
+      const fieldErrors = result.error.flatten().fieldErrors;
+      const firstError = Object.values(fieldErrors).flat()[0] || 'Invalid input';
       return NextResponse.json(
-        { error: result.error.flatten().fieldErrors },
+        { error: firstError, fieldErrors },
         { status: 400 }
       );
     }
