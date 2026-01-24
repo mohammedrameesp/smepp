@@ -257,32 +257,32 @@ describe('Module Registry Tests', () => {
   });
 
   describe('canUninstallModule', () => {
-    it('should allow uninstalling employees when leave and payroll are not enabled', () => {
+    it('should block uninstalling employees as it is a core module', () => {
       const error = canUninstallModule('employees', ['employees', 'assets']);
 
-      expect(error).toBeNull();
+      expect(error).not.toBeNull();
+      expect(error).toContain('core module');
     });
 
-    it('should block uninstalling employees when leave is enabled', () => {
+    it('should block uninstalling employees even when leave is enabled', () => {
       const error = canUninstallModule('employees', ['employees', 'leave']);
 
       expect(error).not.toBeNull();
-      expect(error).toContain('Leave Management');
+      expect(error).toContain('core module');
     });
 
-    it('should block uninstalling employees when payroll is enabled', () => {
+    it('should block uninstalling employees even when payroll is enabled', () => {
       const error = canUninstallModule('employees', ['employees', 'payroll']);
 
       expect(error).not.toBeNull();
-      expect(error).toContain('Payroll');
+      expect(error).toContain('core module');
     });
 
     it('should block uninstalling employees when both leave and payroll are enabled', () => {
       const error = canUninstallModule('employees', ['employees', 'leave', 'payroll']);
 
       expect(error).not.toBeNull();
-      expect(error).toContain('Leave');
-      expect(error).toContain('Payroll');
+      expect(error).toContain('core module');
     });
 
     it('should allow uninstalling leave regardless of other modules', () => {
@@ -314,10 +314,10 @@ describe('Module Registry Tests', () => {
       expect(defaults).toContain('suppliers');
     });
 
-    it('should not include employees in defaults', () => {
+    it('should include employees in defaults as a core module', () => {
       const defaults = getDefaultEnabledModules();
 
-      expect(defaults).not.toContain('employees');
+      expect(defaults).toContain('employees');
     });
   });
 
