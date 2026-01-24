@@ -41,7 +41,7 @@ export async function getSetupProgress(tenantId: string): Promise<SetupProgressS
       where: { id: tenantId },
       select: { name: true, logoUrl: true, primaryColor: true },
     }),
-    prisma.asset.count({ where: { tenantId } }),
+    prisma.asset.count({ where: { tenantId, deletedAt: null } }),
     prisma.teamMember.count({ where: { tenantId, isDeleted: false } }),
     prisma.organizationSetupProgress.findUnique({
       where: { organizationId: tenantId },

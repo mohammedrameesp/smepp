@@ -42,7 +42,7 @@ export const GET = withErrorHandler(async (request: NextRequest, { tenant, param
   switch (moduleId) {
     case 'assets': {
       const [assets, history, maintenance, requests] = await Promise.all([
-        prisma.asset.count({ where: { tenantId } }),
+        prisma.asset.count({ where: { tenantId, deletedAt: null } }),
         prisma.assetHistory.count({ where: { asset: { tenantId } } }),
         prisma.maintenanceRecord.count({ where: { asset: { tenantId } } }),
         prisma.assetRequest.count({ where: { tenantId } }),

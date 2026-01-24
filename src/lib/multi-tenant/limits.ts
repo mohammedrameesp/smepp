@@ -48,7 +48,7 @@ export async function getOrganizationUsage(organizationId: string): Promise<{
     prisma.teamMember.count({
       where: { tenantId: organizationId, isDeleted: false },
     }),
-    prisma.asset.count({ where: { tenantId: organizationId } }),
+    prisma.asset.count({ where: { tenantId: organizationId, deletedAt: null } }),
     prisma.subscription.count({ where: { tenantId: organizationId } }),
     prisma.supplier.count({ where: { tenantId: organizationId } }),
   ]);
