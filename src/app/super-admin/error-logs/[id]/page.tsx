@@ -32,7 +32,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { formatDate } from '@/lib/core/datetime';
+import { formatDateTime } from '@/lib/core/datetime';
+import { toast } from 'sonner';
+import { Copy } from 'lucide-react';
 
 interface ErrorLog {
   id: string;
@@ -152,6 +154,17 @@ export default function ErrorLogDetailPage() {
     return <Icon className="h-4 w-4" />;
   };
 
+  const copyErrorDetails = async () => {
+    if (!error) return;
+    const text = `Error Message:\n${error.message}\n\nStack Trace:\n${error.stack || 'No stack trace available'}`;
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success('Copied to clipboard');
+    } catch {
+      toast.error('Failed to copy');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24">
@@ -229,7 +242,7 @@ export default function ErrorLogDetailPage() {
                 </p>
                 {error.resolved && error.resolvedAt && (
                   <p className="text-sm text-green-600">
-                    Resolved on {formatDate(error.resolvedAt)} by {error.resolvedBy}
+                    Resolved on {formatDateTime(error.resolvedAt)} by {error.resolvedBy}
                   </p>
                 )}
               </div>
@@ -277,7 +290,7 @@ export default function ErrorLogDetailPage() {
               <label className="text-sm font-medium text-gray-500">Timestamp</label>
               <p className="mt-1 flex items-center gap-2">
                 <Clock className="h-4 w-4 text-gray-400" />
-                {formatDate(error.createdAt)}
+                {formatDateTime(error.createdAt)}
               </p>
             </div>
             {error.requestId && (
@@ -386,11 +399,20 @@ export default function ErrorLogDetailPage() {
 
       {/* Error Message */}
       <Card className="border-red-200">
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2 text-red-700">
             <AlertTriangle className="h-4 w-4" />
             Error Message
           </CardTitle>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={copyErrorDetails}
+            className="h-8"
+          >
+            <Copy className="h-3.5 w-3.5 mr-1.5" />
+            Copy Error & Stack
+          </Button>
         </CardHeader>
         <CardContent>
           <p className="text-red-600 bg-red-50 p-3 rounded-md text-sm">
