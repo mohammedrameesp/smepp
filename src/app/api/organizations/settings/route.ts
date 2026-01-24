@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
 import { revalidatePath } from 'next/cache';
-import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
-import logger from '@/lib/core/log';
 import { z } from 'zod';
 import { updateSetupProgressBulk } from '@/features/onboarding/lib';
 import { clearPrefixCache } from '@/lib/utils/code-prefix';
+import { withErrorHandler } from '@/lib/http/handler';
+import { badRequestResponse, notFoundResponse, validationErrorResponse } from '@/lib/http/errors';
 
 // Valid module IDs
 const VALID_MODULES = [
@@ -46,145 +45,136 @@ const updateSettingsSchema = z.object({
 // GET /api/organizations/settings - Get organization settings
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export async function GET() {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
+export const GET = withErrorHandler(async (_request, { tenant }) => {
+  const tenantId = tenant!.tenantId;
 
-    const organization = await prisma.organization.findUnique({
-      where: { id: session.user.organizationId },
-      select: {
-        enabledModules: true,
-        primaryColor: true,
-        secondaryColor: true,
-        currency: true,
-        additionalCurrencies: true,
-        hasMultipleLocations: true,
-        depreciationEnabled: true,
-        onboardingCompleted: true,
-        onboardingStep: true,
-      },
-    });
+  const organization = await prisma.organization.findUnique({
+    where: { id: tenantId },
+    select: {
+      enabledModules: true,
+      primaryColor: true,
+      secondaryColor: true,
+      currency: true,
+      additionalCurrencies: true,
+      hasMultipleLocations: true,
+      depreciationEnabled: true,
+      onboardingCompleted: true,
+      onboardingStep: true,
+    },
+  });
 
-    if (!organization) {
-      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
-    }
-
-    return NextResponse.json({ settings: organization });
-  } catch (error) {
-    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Get settings error');
-    return NextResponse.json({ error: 'Failed to get settings' }, { status: 500 });
+  if (!organization) {
+    return notFoundResponse('Organization not found');
   }
-}
+
+  return NextResponse.json({ settings: organization });
+}, { requireAuth: true });
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // PUT /api/organizations/settings - Update organization settings
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export async function PUT(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+export const PUT = withErrorHandler(async (request: NextRequest, { tenant }) => {
+  const tenantId = tenant!.tenantId;
+
+  const body = await request.json();
+  const result = updateSettingsSchema.safeParse(body);
+
+  if (!result.success) {
+    return validationErrorResponse(result);
+  }
+
+  const { name, codePrefix, enabledModules, primaryColor, secondaryColor, website, currency, additionalCurrencies } = result.data;
+
+  // Validate modules
+  if (enabledModules) {
+    const invalidModules = enabledModules.filter(m => !VALID_MODULES.includes(m));
+    if (invalidModules.length > 0) {
+      return badRequestResponse(`Invalid modules: ${invalidModules.join(', ')}`);
     }
+  }
 
-    // Only admins/owners can update settings
-    if (!session.user.isOwner && !session.user.isAdmin) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  // Validate primary currency
+  if (currency && !VALID_CURRENCIES.includes(currency)) {
+    return badRequestResponse(`Invalid currency: ${currency}`);
+  }
+
+  // Validate additional currencies
+  if (additionalCurrencies) {
+    const invalidCurrencies = additionalCurrencies.filter(c => !VALID_CURRENCIES.includes(c));
+    if (invalidCurrencies.length > 0) {
+      return badRequestResponse(`Invalid currencies: ${invalidCurrencies.join(', ')}`);
     }
+  }
 
-    const body = await request.json();
-    const result = updateSettingsSchema.safeParse(body);
+  // Update organization settings
+  const organization = await prisma.organization.update({
+    where: { id: tenantId },
+    data: {
+      ...(name && { name }),
+      ...(codePrefix && { codePrefix }),
+      ...(enabledModules && { enabledModules }),
+      ...(primaryColor && { primaryColor }),
+      ...(secondaryColor && { secondaryColor }),
+      ...(website && { website }),
+      ...(currency && { currency }),
+      ...(additionalCurrencies && { additionalCurrencies }),
+      // Mark onboarding as complete when settings are saved
+      onboardingCompleted: true,
+      onboardingCompletedAt: new Date(),
+    },
+    select: {
+      name: true,
+      codePrefix: true,
+      enabledModules: true,
+      primaryColor: true,
+      secondaryColor: true,
+      website: true,
+      currency: true,
+      additionalCurrencies: true,
+      onboardingCompleted: true,
+    },
+  });
 
-    if (!result.success) {
-      return NextResponse.json(
-        { error: 'Validation failed', details: result.error.flatten().fieldErrors },
-        { status: 400 }
-      );
-    }
+  // Clear prefix cache if code prefix was updated
+  if (codePrefix) {
+    clearPrefixCache(tenantId);
 
-    const { name, codePrefix, enabledModules, primaryColor, secondaryColor, website, currency, additionalCurrencies } = result.data;
-
-    // Validate modules
-    if (enabledModules) {
-      const invalidModules = enabledModules.filter(m => !VALID_MODULES.includes(m));
-      if (invalidModules.length > 0) {
-        return NextResponse.json(
-          { error: `Invalid modules: ${invalidModules.join(', ')}` },
-          { status: 400 }
-        );
-      }
-    }
-
-    // Validate primary currency
-    if (currency && !VALID_CURRENCIES.includes(currency)) {
-      return NextResponse.json(
-        { error: `Invalid currency: ${currency}` },
-        { status: 400 }
-      );
-    }
-
-    // Validate additional currencies
-    if (additionalCurrencies) {
-      const invalidCurrencies = additionalCurrencies.filter(c => !VALID_CURRENCIES.includes(c));
-      if (invalidCurrencies.length > 0) {
-        return NextResponse.json(
-          { error: `Invalid currencies: ${invalidCurrencies.join(', ')}` },
-          { status: 400 }
-        );
-      }
-    }
-
-    // Update organization settings
-    const organization = await prisma.organization.update({
-      where: { id: session.user.organizationId },
-      data: {
-        ...(name && { name }),
-        ...(codePrefix && { codePrefix }),
-        ...(enabledModules && { enabledModules }),
-        ...(primaryColor && { primaryColor }),
-        ...(secondaryColor && { secondaryColor }),
-        ...(website && { website }),
-        ...(currency && { currency }),
-        ...(additionalCurrencies && { additionalCurrencies }),
-        // Mark onboarding as complete when settings are saved
-        onboardingCompleted: true,
-        onboardingCompletedAt: new Date(),
+    // Update owner's employee code if it has a different prefix
+    // This handles the case where owner was created before setup customized the prefix
+    const owner = await prisma.teamMember.findFirst({
+      where: {
+        tenantId,
+        isOwner: true,
+        employeeCode: { not: null },
       },
-      select: {
-        name: true,
-        codePrefix: true,
-        enabledModules: true,
-        primaryColor: true,
-        secondaryColor: true,
-        website: true,
-        currency: true,
-        additionalCurrencies: true,
-        onboardingCompleted: true,
-      },
+      select: { id: true, employeeCode: true },
     });
 
-    // Clear prefix cache if code prefix was updated
-    if (codePrefix) {
-      clearPrefixCache(session.user.organizationId);
+    if (owner?.employeeCode && !owner.employeeCode.startsWith(codePrefix)) {
+      // Extract the sequence part from the existing code and rebuild with new prefix
+      // Format: PREFIX-YYYY-SEQ (e.g., BEC-2026-001 -> BCE-2026-001)
+      const parts = owner.employeeCode.split('-');
+      if (parts.length >= 3) {
+        const newCode = `${codePrefix}-${parts.slice(1).join('-')}`;
+        await prisma.teamMember.update({
+          where: { id: owner.id },
+          data: { employeeCode: newCode },
+        });
+      }
     }
-
-    // Revalidate admin layout to reflect module changes in the navigation
-    revalidatePath('/admin', 'layout');
-
-    // Update setup progress (non-blocking)
-    const progressUpdates: Record<string, boolean> = {};
-    if (name) progressUpdates.profileComplete = true;
-    if (primaryColor) progressUpdates.brandingConfigured = true;
-    if (Object.keys(progressUpdates).length > 0) {
-      updateSetupProgressBulk(session.user.organizationId, progressUpdates).catch(() => {});
-    }
-
-    return NextResponse.json({ success: true, settings: organization });
-  } catch (error) {
-    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Update settings error');
-    return NextResponse.json({ error: 'Failed to update settings' }, { status: 500 });
   }
-}
+
+  // Revalidate admin layout to reflect module changes in the navigation
+  revalidatePath('/admin', 'layout');
+
+  // Update setup progress (non-blocking)
+  const progressUpdates: Record<string, boolean> = {};
+  if (name) progressUpdates.profileComplete = true;
+  if (primaryColor) progressUpdates.brandingConfigured = true;
+  if (Object.keys(progressUpdates).length > 0) {
+    updateSetupProgressBulk(tenantId, progressUpdates).catch(() => {});
+  }
+
+  return NextResponse.json({ success: true, settings: organization });
+}, { requireAuth: true, requireAdmin: true });
