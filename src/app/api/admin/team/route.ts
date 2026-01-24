@@ -28,7 +28,7 @@ function deriveRole(member: {
 export const GET = withErrorHandler(async (_request, { tenant }) => {
   const tenantId = tenant!.tenantId;
 
-  // Query members with User relation for auth info
+  // Query members
   const members = await prisma.teamMember.findMany({
     where: {
       tenantId,
@@ -36,6 +36,7 @@ export const GET = withErrorHandler(async (_request, { tenant }) => {
     },
     select: {
       id: true,
+      userId: true,
       name: true,
       email: true,
       image: true,
@@ -51,13 +52,6 @@ export const GET = withErrorHandler(async (_request, { tenant }) => {
       employeeCode: true,
       designation: true,
       department: true,
-      // Include User relation for auth data
-      user: {
-        select: {
-          setupToken: true,
-          passwordHash: true,
-        },
-      },
     },
     orderBy: [
       { isOwner: 'desc' },
@@ -66,10 +60,24 @@ export const GET = withErrorHandler(async (_request, { tenant }) => {
     ],
   });
 
-  // Create set of members with passwords (from User relation)
+  // Query auth data from User table separately
+  const userIds = members.map((m) => m.userId);
+  const users = await prisma.user.findMany({
+    where: { id: { in: userIds } },
+    select: {
+      id: true,
+      setupToken: true,
+      passwordHash: true,
+    },
+  });
+
+  // Create maps for quick lookup
+  const userAuthMap = new Map(users.map((u) => [u.id, u]));
+
+  // Create set of members with passwords
   const membersWithPasswordSet = new Set(
     members
-      .filter((m) => m.user?.passwordHash)
+      .filter((m) => userAuthMap.get(m.userId)?.passwordHash)
       .map((m) => m.id)
   );
 
@@ -112,10 +120,11 @@ export const GET = withErrorHandler(async (_request, { tenant }) => {
   // Determine pending status for each member
   const membersWithPendingStatus = members.map((m) => {
     // Check for pending status:
-    // 1. Credentials pending: has setupToken but no password set (from User relation)
+    // 1. Credentials pending: has setupToken but no password set
     // 2. SSO pending: has matching invitation that's not accepted
+    const userAuth = userAuthMap.get(m.userId);
     const hasPassword = membersWithPasswordSet.has(m.id);
-    const credentialsPending = !!(m.user?.setupToken && !hasPassword);
+    const credentialsPending = !!(userAuth?.setupToken && !hasPassword);
     const ssoInvite = pendingInviteMap.get(m.email.toLowerCase());
     const ssoPending = !!ssoInvite;
 
