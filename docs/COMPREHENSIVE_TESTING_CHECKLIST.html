@@ -757,7 +757,16 @@ const T = {
             ["Session expiration after timeout", "Leave session idle beyond timeout", "User logged out, session cleared", "src/lib/core/auth.ts", "High", "Manual"],
             ["Session refresh mechanism", "Continue activity within session", "Session extended automatically", "src/lib/core/auth.ts", "Medium", "Manual"],
             ["Logout clears session completely", "Click logout", "All session data cleared, cookies removed", "src/lib/core/auth.ts", "Critical", "Automated"],
-            ["Logout from all devices option", "Logout from all devices", "All sessions invalidated", "src/lib/core/auth.ts", "High", "Manual"]
+            ["Logout from all devices option", "Logout from all devices", "All sessions invalidated", "src/lib/core/auth.ts", "High", "Manual"],
+            ["Deleted user login rejected", "Login with soft-deleted account (isDeleted=true)", "Error 'Invalid email or password'", "src/lib/core/auth.ts", "Critical", "Automated"],
+            ["Deactivated user login rejected", "Login with canLogin=false account", "Error 'Account deactivated'", "src/lib/core/auth.ts", "Critical", "Automated"],
+            ["Login on wrong subdomain", "User in org-a logs into org-b subdomain", "Error or redirect to correct subdomain", "src/middleware.ts", "High", "E2E"],
+            ["OAuth user tries password login", "User signed up via Google tries email/password", "Error 'Use Google sign-in' or works if passwordHash exists", "src/lib/core/auth.ts", "High", "Manual"],
+            ["OAuth login with deleted account", "OAuth login with soft-deleted account", "Error or creates new account based on policy", "src/lib/oauth/utils.ts", "High", "Manual"],
+            ["OAuth login while account locked", "OAuth login during lockout period", "Error 'Account locked'", "src/lib/oauth/utils.ts", "High", "Manual"],
+            ["Login after password change invalidates sessions", "Change password on device A", "Device B session invalidated", "src/lib/core/auth.ts", "High", "Manual"],
+            ["Email case insensitivity", "Login with different email case", "Works (case-insensitive matching)", "src/lib/core/auth.ts", "Medium", "Automated"],
+            ["Email whitespace trimmed", "Login with leading/trailing spaces in email", "Works after trimming", "src/lib/core/auth.ts", "Medium", "Automated"]
         ],
         "Account Lockout (Progressive)": [
             ["5 failed attempts causes 5 minute lockout", "Enter wrong password 5 times", "Account locked for 5 minutes", "src/lib/security/lockout.ts", "Critical", "Automated"],
