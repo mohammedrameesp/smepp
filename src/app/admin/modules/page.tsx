@@ -18,7 +18,6 @@ import {
   Trash2,
   AlertTriangle,
   Loader2,
-  Crown,
   Lock,
   ExternalLink,
   Info,
@@ -434,7 +433,6 @@ export default function ModulesPage() {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {availableModules.map(module => {
               const Icon = ICONS[module.iconName] || Package;
-              const needsUpgrade = module.installError?.includes('requires');
               const hasMissingDeps = module.installError?.includes('installed first');
 
               return (
@@ -472,32 +470,21 @@ export default function ModulesPage() {
                     )}
 
                     <div className="flex items-center justify-end">
-                      {needsUpgrade ? (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => window.location.href = '/admin/settings/billing'}
-                        >
-                          <Crown className="h-4 w-4 mr-1" />
-                          Upgrade
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="default"
-                          size="sm"
-                          disabled={!module.canInstall || actionLoading === module.id}
-                          onClick={() => handleInstallClick(module)}
-                        >
-                          {actionLoading === module.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <>
-                              <Download className="h-4 w-4 mr-1" />
-                              Install
-                            </>
-                          )}
-                        </Button>
-                      )}
+                      <Button
+                        variant="default"
+                        size="sm"
+                        disabled={!module.canInstall || actionLoading === module.id}
+                        onClick={() => handleInstallClick(module)}
+                      >
+                        {actionLoading === module.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <>
+                            <Download className="h-4 w-4 mr-1" />
+                            Install
+                          </>
+                        )}
+                      </Button>
                     </div>
 
                     {hasMissingDeps && (
