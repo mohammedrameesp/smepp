@@ -475,7 +475,7 @@ export function TeamClient({ initialStats }: TeamClientProps) {
                             onValueChange={(value) => handleUpdateRole(member.id, value)}
                             disabled={updatingRoleId === member.id}
                           >
-                            <SelectTrigger className="w-[120px]">
+                            <SelectTrigger className="w-[140px]">
                               {updatingRoleId === member.id ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
                               ) : (
@@ -484,7 +484,10 @@ export function TeamClient({ initialStats }: TeamClientProps) {
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="ADMIN">Admin</SelectItem>
-                              <SelectItem value="MEMBER">Member</SelectItem>
+                              <SelectItem value="MANAGER">Manager</SelectItem>
+                              <SelectItem value="HR">HR</SelectItem>
+                              <SelectItem value="FINANCE">Finance</SelectItem>
+                              <SelectItem value="OPERATIONS">Operations</SelectItem>
                             </SelectContent>
                           </Select>
                         ) : (
