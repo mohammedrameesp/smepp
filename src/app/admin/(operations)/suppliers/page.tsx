@@ -1,7 +1,6 @@
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { redirect } from 'next/navigation';
+import { getAdminAuthContext, hasAccess } from '@/lib/auth/impersonation-check';
 
 import { SupplierListClient, ShareSupplierLinkButton } from '@/features/suppliers';
 import { Plus } from 'lucide-react';
@@ -9,33 +8,37 @@ import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 
 export default async function AdminSuppliersPage() {
-  const session = await getServerSession(authOptions);
+  const auth = await getAdminAuthContext();
 
-  if (!session) {
+  // If not impersonating and no session, redirect to login
+  if (!auth.isImpersonating && !auth.session) {
     redirect('/login');
   }
 
-  // Allow access for admins OR users with Operations access
-  const hasAccess = session.user.isAdmin || session.user.hasOperationsAccess;
-  if (process.env.NODE_ENV !== 'development' && !hasAccess) {
+  // Check access (operations access required)
+  if (!hasAccess(auth, 'operations')) {
     redirect('/forbidden');
   }
 
-  if (!session.user.organizationId || !session.user.organizationSlug) {
+  if (!auth.tenantId) {
     redirect('/login');
   }
 
-  const tenantId = session.user.organizationId;
-  const organizationSlug = session.user.organizationSlug;
+  const tenantId = auth.tenantId;
 
   let totalSuppliers = 0;
   let approvedSuppliers = 0;
   let pendingSuppliers = 0;
   let uniqueCategories = 0;
   let totalEngagements = 0;
+  let organizationSlug: string | undefined;
 
   try {
-    const [suppliersCount, approvedCount, pendingCount, categories, engagementsCount] = await Promise.all([
+    const [organization, suppliersCount, approvedCount, pendingCount, categories, engagementsCount] = await Promise.all([
+      prisma.organization.findUnique({
+        where: { id: tenantId },
+        select: { slug: true },
+      }),
       prisma.supplier.count({ where: { tenantId } }),
       prisma.supplier.count({ where: { tenantId, status: 'APPROVED' } }),
       prisma.supplier.count({ where: { tenantId, status: 'PENDING' } }),
@@ -46,6 +49,7 @@ export default async function AdminSuppliersPage() {
       }),
       prisma.supplierEngagement.count({ where: { tenantId } }),
     ]);
+    organizationSlug = organization?.slug;
     totalSuppliers = suppliersCount;
     approvedSuppliers = approvedCount;
     pendingSuppliers = pendingCount;
@@ -62,7 +66,9 @@ export default async function AdminSuppliersPage() {
         subtitle="Manage vendor registrations and engagements"
         actions={
           <>
-            <ShareSupplierLinkButton organizationSlug={organizationSlug} />
+            {organizationSlug && (
+              <ShareSupplierLinkButton organizationSlug={organizationSlug} />
+            )}
             <PageHeaderButton href="/suppliers/register" variant="primary">
               <Plus className="h-4 w-4" />
               Register Supplier

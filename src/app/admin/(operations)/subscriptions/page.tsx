@@ -27,10 +27,9 @@
  * - SubscriptionListTableServerSearch for data grid
  */
 
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { redirect } from 'next/navigation';
+import { getAdminAuthContext, hasAccess } from '@/lib/auth/impersonation-check';
 
 import { SubscriptionListClient } from '@/features/subscriptions';
 import { getExchangeRateToQAR } from '@/lib/core/currency';
@@ -39,23 +38,23 @@ import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 
 export default async function AdminSubscriptionsPage() {
-  const session = await getServerSession(authOptions);
+  const auth = await getAdminAuthContext();
 
-  if (!session) {
+  // If not impersonating and no session, redirect to login
+  if (!auth.isImpersonating && !auth.session) {
     redirect('/login');
   }
 
-  // Allow access for admins OR users with Operations access
-  const hasAccess = session.user.isAdmin || session.user.hasOperationsAccess;
-  if (process.env.NODE_ENV !== 'development' && !hasAccess) {
+  // Check access (operations access required)
+  if (!hasAccess(auth, 'operations')) {
     redirect('/forbidden');
   }
 
-  if (!session.user.organizationId) {
+  if (!auth.tenantId) {
     redirect('/login');
   }
 
-  const tenantId = session.user.organizationId;
+  const tenantId = auth.tenantId;
 
   const [activeCount, cancelledCount, activeSubscriptions] = await Promise.all([
     prisma.subscription.count({ where: { tenantId, status: 'ACTIVE' } }),

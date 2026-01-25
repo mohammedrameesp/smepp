@@ -1,37 +1,32 @@
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { redirect } from 'next/navigation';
+import { getAdminAuthContext, hasAccess } from '@/lib/auth/impersonation-check';
 
 import { formatDate } from '@/lib/core/datetime';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 
 export default async function ActivityLogPage() {
-  const session = await getServerSession(authOptions);
+  const auth = await getAdminAuthContext();
 
-  if (!session) {
+  // If not impersonating and no session, redirect to login
+  if (!auth.isImpersonating && !auth.session) {
     redirect('/login');
   }
 
-  // Allow access for admins OR users with any department access
-  const hasAccess = session.user.isAdmin ||
-                    session.user.hasFinanceAccess ||
-                    session.user.hasHRAccess ||
-                    session.user.hasOperationsAccess ||
-                    session.user.canApprove;
-  if (process.env.NODE_ENV !== 'development' && !hasAccess) {
+  // Check access (admin access required)
+  if (!hasAccess(auth, 'admin')) {
     redirect('/forbidden');
   }
 
-  if (!session.user.organizationId) {
+  if (!auth.tenantId) {
     redirect('/login');
   }
 
-  const tenantId = session.user.organizationId;
+  const tenantId = auth.tenantId;
 
   // Fetch recent activity logs
   const activities = await prisma.activityLog.findMany({

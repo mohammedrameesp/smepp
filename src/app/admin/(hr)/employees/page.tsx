@@ -1,30 +1,29 @@
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/core/prisma';
+import { getAdminAuthContext, hasAccess } from '@/lib/auth/impersonation-check';
 import { ClipboardList, AlertTriangle, Calendar, FileText, Trash2 } from 'lucide-react';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 import { TeamClient } from './team-client';
 
 export default async function AdminTeamPage() {
-  const session = await getServerSession(authOptions);
+  const auth = await getAdminAuthContext();
 
-  if (!session) {
+  // If not impersonating and no session, redirect to login
+  if (!auth.isImpersonating && !auth.session) {
     redirect('/login');
   }
 
-  // Allow access for admins OR users with HR access
-  const hasAccess = session.user.isAdmin || session.user.hasHRAccess;
-  if (process.env.NODE_ENV !== 'development' && !hasAccess) {
+  // Check access (HR access required)
+  if (!hasAccess(auth, 'hr')) {
     redirect('/forbidden');
   }
 
-  if (!session.user.organizationId) {
+  if (!auth.tenantId) {
     redirect('/login');
   }
 
-  const tenantId = session.user.organizationId;
+  const tenantId = auth.tenantId;
   const today = new Date();
   const thirtyDaysFromNow = new Date(today);
   thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);

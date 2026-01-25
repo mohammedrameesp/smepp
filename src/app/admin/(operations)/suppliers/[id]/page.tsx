@@ -1,6 +1,5 @@
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
+import { getAdminAuthContext, hasAccess } from '@/lib/auth/impersonation-check';
 import { redirect, notFound } from 'next/navigation';
 
 import {
@@ -29,18 +28,21 @@ interface Props {
 }
 
 export default async function SupplierDetailPage({ params }: Props) {
-  const session = await getServerSession(authOptions);
+  const auth = await getAdminAuthContext();
 
-  if (!session) {
+  if (!auth.isImpersonating && !auth.session) {
     redirect('/login');
   }
 
-  // Allow access for admins OR users with Operations access
-  const hasAccess = session.user.isAdmin || session.user.hasOperationsAccess;
-  if (process.env.NODE_ENV !== 'development' && !hasAccess) {
+  if (!hasAccess(auth, 'operations')) {
     redirect('/forbidden');
   }
 
+  if (!auth.tenantId) {
+    redirect('/login');
+  }
+
+  const tenantId = auth.tenantId;
   const { id } = await params;
 
   const supplier = await prisma.supplier.findUnique({

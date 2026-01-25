@@ -1,8 +1,7 @@
 import { Metadata } from 'next';
-import { getServerSession } from 'next-auth/next';
 import { redirect } from 'next/navigation';
-import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
+import { getAdminAuthContext, hasAccess } from '@/lib/auth/impersonation-check';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 import { AlertsClient } from './client';
@@ -229,16 +228,23 @@ async function getAlerts(tenantId: string): Promise<{ alerts: Alert[]; counts: A
 }
 
 export default async function AlertsPage() {
-  const session = await getServerSession(authOptions);
-  if (!session) {
+  const auth = await getAdminAuthContext();
+
+  if (!auth.isImpersonating && !auth.session) {
     redirect('/login');
   }
 
-  if (!session.user.organizationId) {
-    redirect('/');
+  if (!hasAccess(auth, 'admin')) {
+    redirect('/forbidden');
   }
 
-  const { alerts, counts } = await getAlerts(session.user.organizationId);
+  if (!auth.tenantId) {
+    redirect('/login');
+  }
+
+  const tenantId = auth.tenantId;
+
+  const { alerts, counts } = await getAlerts(tenantId);
 
   return (
     <>

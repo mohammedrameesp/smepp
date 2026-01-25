@@ -1,30 +1,29 @@
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { redirect } from 'next/navigation';
+import { getAdminAuthContext, hasAccess } from '@/lib/auth/impersonation-check';
 
 import { SpendRequestListClient } from '@/features/spend-requests/components';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 
 export default async function AdminSpendRequestsPage() {
-  const session = await getServerSession(authOptions);
+  const auth = await getAdminAuthContext();
 
-  if (!session) {
+  // If not impersonating and no session, redirect to login
+  if (!auth.isImpersonating && !auth.session) {
     redirect('/login');
   }
 
-  // Allow access for admins OR users with Finance access
-  const hasAccess = session.user.isAdmin || session.user.hasFinanceAccess;
-  if (process.env.NODE_ENV !== 'development' && !hasAccess) {
+  // Check access (any admin can access spend requests)
+  if (!hasAccess(auth)) {
     redirect('/forbidden');
   }
 
-  if (!session.user.organizationId) {
+  if (!auth.tenantId) {
     redirect('/login');
   }
 
-  const tenantId = session.user.organizationId;
+  const tenantId = auth.tenantId;
 
   // Fetch statistics
   const [

@@ -7,10 +7,9 @@
 // Force dynamic rendering to prevent caching of weekend days and other settings
 export const dynamic = 'force-dynamic';
 
-import { getServerSession } from 'next-auth/next';
 import { redirect } from 'next/navigation';
-import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
+import { getAdminAuthContext, hasAccess } from '@/lib/auth/impersonation-check';
 import { OrganizationTabs } from './organization-tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
@@ -18,29 +17,26 @@ import { AlertCircle } from 'lucide-react';
 import type { CodeFormatConfig } from '@/lib/utils/code-prefix';
 
 export default async function OrganizationPage() {
-  const session = await getServerSession(authOptions);
+  const auth = await getAdminAuthContext();
 
-  if (!session?.user) {
+  if (!auth.isImpersonating && !auth.session) {
     redirect('/login');
   }
 
-  if (!session.user.organizationId) {
-    return (
-      <PageContent>
-        <Alert variant="error">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            You are not part of any organization. Please contact your administrator.
-          </AlertDescription>
-        </Alert>
-      </PageContent>
-    );
+  if (!hasAccess(auth, 'admin')) {
+    redirect('/forbidden');
   }
+
+  if (!auth.tenantId) {
+    redirect('/login');
+  }
+
+  const tenantId = auth.tenantId;
 
   // Fetch organization and current membership
   const [organization, currentMembership] = await Promise.all([
     prisma.organization.findUnique({
-      where: { id: session.user.organizationId },
+      where: { id: tenantId },
       select: {
         id: true,
         name: true,
@@ -60,16 +56,17 @@ export default async function OrganizationPage() {
         _count: { select: { teamMembers: true } },
       },
     }),
-    prisma.teamMember.findFirst({
+    // When impersonating, skip membership check
+    auth.isImpersonating ? Promise.resolve(null) : prisma.teamMember.findFirst({
       where: {
-        tenantId: session.user.organizationId,
-        id: session.user.id,
+        tenantId,
+        id: auth.userId!,
         isDeleted: false,
       },
     }),
   ]);
 
-  if (!organization || !currentMembership) {
+  if (!organization || (!auth.isImpersonating && !currentMembership)) {
     return (
       <PageContent>
         <Alert variant="error">
@@ -81,6 +78,12 @@ export default async function OrganizationPage() {
       </PageContent>
     );
   }
+
+  // When impersonating, grant full owner access
+  const currentUserRole = auth.isImpersonating
+    ? 'OWNER'
+    : (currentMembership!.isOwner ? 'OWNER' : currentMembership!.isAdmin ? 'ADMIN' : 'MEMBER');
+  const isOwner = auth.isImpersonating || currentMembership!.isOwner;
 
   const orgData = {
     id: organization.id,
@@ -110,8 +113,8 @@ export default async function OrganizationPage() {
       <PageContent>
         <OrganizationTabs
           organization={orgData}
-          currentUserRole={currentMembership.isOwner ? 'OWNER' : currentMembership.isAdmin ? 'ADMIN' : 'MEMBER'}
-          isOwner={currentMembership.isOwner}
+          currentUserRole={currentUserRole}
+          isOwner={isOwner}
         />
       </PageContent>
     </>
