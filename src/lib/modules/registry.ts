@@ -147,7 +147,7 @@ export const MODULE_REGISTRY: Record<string, ModuleDefinition> = {
     category: 'hr',
     tier: 'FREE',
     isFree: true,
-    requires: ['employees'],
+    requires: [], // employees is a core module, always enabled
     requiredBy: [],
     adminRoutes: ['/admin/leave'],
     employeeRoutes: ['/employee/leave'],
@@ -166,7 +166,7 @@ export const MODULE_REGISTRY: Record<string, ModuleDefinition> = {
     category: 'hr',
     tier: 'FREE',
     isFree: true,
-    requires: ['employees'],
+    requires: [], // employees is a core module, always enabled
     requiredBy: [],
     adminRoutes: ['/admin/payroll'],
     employeeRoutes: ['/employee/payroll'],
