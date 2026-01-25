@@ -749,6 +749,7 @@ model TeamMember {
 
   // Subscriptions
   subscriptions                Subscription[]
+  subscriptionsDeleted         Subscription[]        @relation("SubscriptionDeleter")
   subscriptionHistoryPerformed SubscriptionHistory[] @relation("SubscriptionHistoryPerformer")
   subscriptionHistoryOldMember SubscriptionHistory[] @relation("SubscriptionHistoryOldMember")
   subscriptionHistoryNewMember SubscriptionHistory[] @relation("SubscriptionHistoryNewMember")
@@ -1086,6 +1087,9 @@ model Subscription {
   lastActiveRenewalDate DateTime? // Track last renewal before cancel
   cancelledAt           DateTime? // When it was cancelled
   reactivatedAt         DateTime? // When it was last reactivated
+  deletedAt             DateTime? // Soft delete timestamp (7-day recovery window)
+  deletedById           String?
+  deletedBy             TeamMember?           @relation("SubscriptionDeleter", fields: [deletedById], references: [id], onDelete: SetNull)
   history               SubscriptionHistory[]
   createdAt             DateTime              @default(now())
   updatedAt             DateTime              @updatedAt
@@ -1100,6 +1104,7 @@ model Subscription {
   @@index([subscriptionTag])
   @@index([tenantId])
   @@index([tenantId, status, renewalDate]) // Composite for "active subscriptions expiring soon" queries
+  @@index([tenantId, deletedAt]) // For soft delete queries
 }
 
 enum SubscriptionHistoryAction {

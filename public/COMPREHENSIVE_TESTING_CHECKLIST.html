@@ -1232,10 +1232,17 @@ const T = {
             ["Tenant isolation on write", "Create subscription", "tenantId automatically set to current tenant", "src/app/api/subscriptions/route.ts", "Critical", "Automated"]
         ],
         "Subscription Deletion": [
-            ["Delete subscription removes record", "Delete subscription", "Subscription hard deleted from database", "src/app/api/subscriptions/[id]/route.ts", "High", "Automated"],
-            ["Delete subscription removes history", "Delete subscription with history", "All SubscriptionHistory entries deleted", "src/app/api/subscriptions/[id]/route.ts", "High", "Automated"],
+            ["Soft delete sets deletedAt", "Delete subscription", "deletedAt timestamp set, deletedById set", "src/app/api/subscriptions/[id]/route.ts", "High", "Automated"],
+            ["Soft deleted subscriptions hidden from list", "List subscriptions after delete", "Deleted subscription not shown", "src/app/api/subscriptions/route.ts", "High", "Automated"],
+            ["Delete returns recovery deadline", "Delete subscription", "Response includes 7-day recovery deadline", "src/app/api/subscriptions/[id]/route.ts", "Medium", "Automated"],
             ["Delete confirmation required", "Click delete button", "Confirmation dialog shown", "src/app/admin/(operations)/subscriptions/[id]/page.tsx", "Medium", "Manual"],
-            ["Cannot delete non-existent subscription", "DELETE /api/subscriptions/[invalid-id]", "404 Not Found", "src/app/api/subscriptions/[id]/route.ts", "Medium", "Automated"]
+            ["Cannot delete non-existent subscription", "DELETE /api/subscriptions/[invalid-id]", "404 Not Found", "src/app/api/subscriptions/[id]/route.ts", "Medium", "Automated"],
+            ["Cannot delete already deleted subscription", "Delete same subscription twice", "404 Not Found (already in trash)", "src/app/api/subscriptions/[id]/route.ts", "Medium", "Automated"],
+            ["List deleted subscriptions", "GET /api/subscriptions/deleted", "Returns deleted subscriptions with recovery info", "src/app/api/subscriptions/deleted/route.ts", "High", "Automated"],
+            ["Restore deleted subscription", "POST /api/subscriptions/[id]/restore", "Subscription restored, deletedAt cleared", "src/app/api/subscriptions/[id]/restore/route.ts", "High", "Automated"],
+            ["Cannot restore non-deleted subscription", "Restore active subscription", "404 Not Found", "src/app/api/subscriptions/[id]/restore/route.ts", "Medium", "Automated"],
+            ["Permanent delete from trash", "DELETE /api/subscriptions/[id]/permanent-delete", "Subscription and history permanently removed", "src/app/api/subscriptions/[id]/permanent-delete/route.ts", "High", "Automated"],
+            ["Permanent delete only for trashed", "Permanent delete active subscription", "404 Must be in trash first", "src/app/api/subscriptions/[id]/permanent-delete/route.ts", "Medium", "Automated"]
         ]
     },
     "8. Suppliers Module": {

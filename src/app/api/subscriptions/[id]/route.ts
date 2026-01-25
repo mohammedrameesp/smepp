@@ -364,25 +364,23 @@ async function updateSubscriptionHandler(request: NextRequest, context: APIConte
 }
 
 /**
- * DELETE /api/subscriptions/[id] - Delete subscription
+ * DELETE /api/subscriptions/[id] - Soft delete subscription
  *
- * Permanently deletes a subscription from the system.
+ * Performs a soft delete by setting deletedAt timestamp.
+ * Subscription can be restored within 7-day recovery window.
  *
- * IMPORTANT: This is a hard delete operation. All related data including:
- * - Subscription history entries (via cascade)
- * - Assignment records (via cascade)
- * will also be deleted.
- *
- * Consider using status updates (CANCELLED, EXPIRED) instead of hard delete
- * for subscriptions that need historical tracking.
+ * Soft Delete Benefits:
+ * - 7-day recovery window for accidental deletions
+ * - History and data preserved until permanent deletion
+ * - Audit trail maintained
  *
  * @param id - Subscription ID from URL path
- * @returns Success message
- * @throws 404 if subscription not found in tenant
+ * @returns Success message with deletion timestamp and recovery deadline
+ * @throws 404 if subscription not found or already deleted
  *
  * @example
  * DELETE /api/subscriptions/sub_xyz123
- * // Returns: { message: "Subscription deleted successfully" }
+ * // Returns: { message: "Subscription deleted", deletedAt: "...", recoveryDeadline: "..." }
  */
 async function deleteSubscriptionHandler(request: NextRequest, context: APIContext) {
     const { tenant, params, prisma: tenantPrisma } = context;
@@ -398,18 +396,25 @@ async function deleteSubscriptionHandler(request: NextRequest, context: APIConte
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
-    // Get subscription using tenant-scoped prisma
+    // Get subscription using tenant-scoped prisma (only non-deleted)
     const subscription = await db.subscription.findFirst({
-      where: { id },
-      select: { id: true, serviceName: true },
+      where: { id, deletedAt: null },
+      select: { id: true, serviceName: true, subscriptionTag: true },
     });
 
     if (!subscription) {
       return NextResponse.json({ error: 'Subscription not found' }, { status: 404 });
     }
 
-    // Delete using tenant-scoped prisma (ensures tenant ownership)
-    await db.subscription.delete({ where: { id } });
+    // Soft delete: set deletedAt timestamp
+    const deletedAt = new Date();
+    await db.subscription.update({
+      where: { id },
+      data: {
+        deletedAt,
+        deletedById: currentUserId,
+      },
+    });
 
     await logAction(
       tenantId,
@@ -417,10 +422,14 @@ async function deleteSubscriptionHandler(request: NextRequest, context: APIConte
       ActivityActions.SUBSCRIPTION_DELETED,
       'Subscription',
       subscription.id,
-      { serviceName: subscription.serviceName }
+      { serviceName: subscription.serviceName, subscriptionTag: subscription.subscriptionTag, softDelete: true }
     );
 
-    return NextResponse.json({ message: 'Subscription deleted successfully' });
+    return NextResponse.json({
+      message: 'Subscription deleted',
+      deletedAt,
+      recoveryDeadline: new Date(deletedAt.getTime() + 7 * 24 * 60 * 60 * 1000),
+    });
 }
 
 export const GET = withErrorHandler(getSubscriptionHandler, { requireAuth: true, requireModule: 'subscriptions' });

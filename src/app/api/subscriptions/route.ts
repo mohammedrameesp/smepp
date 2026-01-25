@@ -91,6 +91,9 @@ async function getSubscriptionsHandler(request: NextRequest, context: APIContext
     // Note: tenantId filtering is handled automatically by tenant-scoped prisma client
     const filters: Record<string, unknown> = {};
 
+    // Exclude soft-deleted subscriptions
+    filters.deletedAt = null;
+
     if (status) filters.status = status;
     if (category) filters.category = category;
     if (billingCycle) filters.billingCycle = billingCycle;
