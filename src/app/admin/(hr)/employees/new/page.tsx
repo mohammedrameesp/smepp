@@ -579,7 +579,8 @@ export default function NewEmployeePage() {
             </CardContent>
           </Card>
 
-          {/* Section 3: Role & Permissions */}
+          {/* Section 3: Role & Permissions - only show when system access is enabled */}
+          {canLogin && (
           <Card>
             <CardHeader className="pb-4">
               <div className="flex items-center gap-2">
@@ -617,6 +618,7 @@ export default function NewEmployeePage() {
               </div>
             </CardContent>
           </Card>
+          )}
 
           {/* Info Alert */}
           {canLogin && isEmployee && (
