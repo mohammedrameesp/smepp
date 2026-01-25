@@ -38,7 +38,7 @@ export default function NotFound() {
             fontSize: 'clamp(120px, 20vw, 200px)',
             fontWeight: 800,
             lineHeight: 1,
-            color: '#f1f5f9',
+            color: '#cbd5e1',
           }}
         >
           404

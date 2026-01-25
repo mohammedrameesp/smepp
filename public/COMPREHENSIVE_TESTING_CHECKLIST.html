@@ -784,11 +784,6 @@ const T = {
             ["Common password detection", "Enter 'password123'", "Detected as common, score = 0", "src/lib/security/password-validation.ts", "Critical", "Automated"],
             ["Length bonus for 12+ characters", "Enter 12+ character password", "Score increased by length bonus", "src/lib/security/password-validation.ts", "Low", "Automated"]
         ],
-        "Password Validation (Admin Users)": [
-            ["Minimum 12 characters for admins", "Enter 11 character admin password", "Validation error: requires 12 chars", "src/lib/security/password-validation.ts", "Critical", "Automated"],
-            ["Special character required for admins", "Admin password without special char", "Validation error: requires special char", "src/lib/security/password-validation.ts", "Critical", "Automated"],
-            ["All requirements combined for admin", "Enter admin password missing requirement", "Shows all missing requirements", "src/lib/security/password-validation.ts", "High", "Automated"]
-        ],
         "Password Reset Flow": [
             ["Request password reset with valid email", "Enter email, submit", "Success message shown, email sent", "src/app/api/auth/reset-password/route.ts", "Critical", "Automated"],
             ["Request reset with non-existent email", "Enter unknown email", "Same success message (prevents enumeration)", "src/app/api/auth/reset-password/route.ts", "Critical", "Automated"],

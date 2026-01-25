@@ -454,7 +454,7 @@ export function TeamClient({ initialStats }: TeamClientProps) {
                               <span className="text-muted-foreground ml-1">(you)</span>
                             )}
                           </p>
-                          {roleIcons[member.role]}
+                          {member.isOwner ? roleIcons['OWNER'] : roleIcons[member.role]}
                         </div>
                         <p className="text-sm text-muted-foreground">{member.user.email}</p>
                         {(member.designation || member.department) && (
@@ -489,7 +489,7 @@ export function TeamClient({ initialStats }: TeamClientProps) {
                           </Select>
                         ) : (
                           <Badge variant={member.isOwner ? 'default' : 'secondary'}>
-                            {roleLabels[member.role] || member.role}
+                            {member.isOwner ? 'Owner' : (roleLabels[member.role] || member.role)}
                           </Badge>
                         )}
                         <p className="text-xs text-muted-foreground mt-1">

@@ -192,6 +192,46 @@ const AUTH_METHODS = [
   { id: 'azure-ad', label: 'Microsoft SSO', icon: Key },
 ] as const;
 
+// Industry label mapping
+const INDUSTRY_LABELS: Record<string, string> = {
+  'technology': 'Technology / Software',
+  'retail': 'Retail & E-commerce',
+  'healthcare': 'Healthcare',
+  'manufacturing': 'Manufacturing',
+  'construction': 'Construction & Trades',
+  'education': 'Education',
+  'financial-services': 'Financial Services',
+  'real-estate': 'Real Estate',
+  'hospitality': 'Hospitality & Food Services',
+  'media-marketing': 'Media, Marketing & Creative',
+  'professional-services': 'Professional Services',
+  'other': 'Other',
+};
+
+// Company size label mapping
+const COMPANY_SIZE_LABELS: Record<string, string> = {
+  '1-10': '1-10 employees',
+  '11-50': '11-50 employees',
+  '51-200': '51-200 employees',
+  '201-500': '201-500 employees',
+  '500+': '500+ employees',
+};
+
+// Helper to get display label for industry (handles custom "other:xxx" values)
+function getIndustryLabel(industry: string | null): string | null {
+  if (!industry) return null;
+  if (industry.startsWith('other:')) {
+    return industry.substring(6); // Return the custom value after "other:"
+  }
+  return INDUSTRY_LABELS[industry] || industry;
+}
+
+// Helper to get display label for company size
+function getCompanySizeLabel(size: string | null): string | null {
+  if (!size) return null;
+  return COMPANY_SIZE_LABELS[size] || size;
+}
+
 export default function OrganizationDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -1165,12 +1205,12 @@ export default function OrganizationDetailPage() {
               </Badge>
               {org.industry && (
                 <Badge variant="outline" className="text-muted-foreground">
-                  {org.industry}
+                  {getIndustryLabel(org.industry)}
                 </Badge>
               )}
               {org.companySize && (
                 <Badge variant="outline" className="text-muted-foreground">
-                  {org.companySize}
+                  {getCompanySizeLabel(org.companySize)}
                 </Badge>
               )}
               <span className="text-sm text-muted-foreground flex items-center gap-1">

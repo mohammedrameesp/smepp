@@ -784,11 +784,6 @@ const T = {
             ["Common password detection", "Enter 'password123'", "Detected as common, score = 0", "src/lib/security/password-validation.ts", "Critical", "Automated"],
             ["Length bonus for 12+ characters", "Enter 12+ character password", "Score increased by length bonus", "src/lib/security/password-validation.ts", "Low", "Automated"]
         ],
-        "Password Validation (Admin Users)": [
-            ["Minimum 12 characters for admins", "Enter 11 character admin password", "Validation error: requires 12 chars", "src/lib/security/password-validation.ts", "Critical", "Automated"],
-            ["Special character required for admins", "Admin password without special char", "Validation error: requires special char", "src/lib/security/password-validation.ts", "Critical", "Automated"],
-            ["All requirements combined for admin", "Enter admin password missing requirement", "Shows all missing requirements", "src/lib/security/password-validation.ts", "High", "Automated"]
-        ],
         "Password Reset Flow": [
             ["Request password reset with valid email", "Enter email, submit", "Success message shown, email sent", "src/app/api/auth/reset-password/route.ts", "Critical", "Automated"],
             ["Request reset with non-existent email", "Enter unknown email", "Same success message (prevents enumeration)", "src/app/api/auth/reset-password/route.ts", "Critical", "Automated"],
@@ -2164,12 +2159,6 @@ const T = {
             ["Page skeleton on load", "Navigate to data page", "Skeleton shown during load", "src/components/ui/skeleton.tsx", "Medium", "E2E"],
             ["Table skeleton", "Load data table", "Table skeleton shown", "src/components/ui/table-skeleton.tsx", "Medium", "E2E"],
             ["Infinite scroll indicator", "Scroll to load more", "Loading indicator shown", "src/components/ui/data-table.tsx", "Low", "E2E"]
-        ],
-        "Accessibility": [
-            ["Keyboard navigation", "Tab through page", "All elements reachable", "src/components/ui/button.tsx", "High", "Manual"],
-            ["Focus indicators visible", "Tab through forms", "Focus states visible", "src/styles/globals.css", "High", "Manual"],
-            ["Form labels present", "Inspect form elements", "All inputs have labels", "src/components/ui/form.tsx", "High", "Automated"],
-            ["Color contrast meets WCAG", "Check contrast ratios", "Meets WCAG AA", "src/styles/globals.css", "Medium", "Manual"]
         ]
     },
     "19. Edge Cases & Error Handling": {
@@ -3093,14 +3082,14 @@ const T = {
         ]
     },
     "62. Team Invitations": {
-        "Creating Invitations": [
-            ["Invite team member", "Enter email, send", "Invitation created", "src/app", "Medium", "Manual"],
-            ["Duplicate invite", "Invite same email twice", "Error 'already invited'", "src/app", "Medium", "Manual"],
-            ["Existing member", "Invite existing member", "Error 'already member'", "src/app", "Medium", "Manual"],
-            ["Set role", "Select role for invitee", "Role saved", "src/app", "Medium", "Manual"],
-            ["Bulk invite", "Invite multiple emails", "All invitations sent", "src/app", "Medium", "Manual"],
-            ["View pending", "Check invitations list", "Shows pending invites", "src/app", "Medium", "Manual"]
-        ],
+        // "Creating Invitations": [
+        //     ["Invite team member", "Enter email, send", "Invitation created", "src/app", "Medium", "Manual"],
+        //     ["Duplicate invite", "Invite same email twice", "Error 'already invited'", "src/app", "Medium", "Manual"],
+        //     ["Existing member", "Invite existing member", "Error 'already member'", "src/app", "Medium", "Manual"],
+        //     ["Set role", "Select role for invitee", "Role saved", "src/app", "Medium", "Manual"],
+        //     ["Bulk invite", "Invite multiple emails", "All invitations sent", "src/app", "Medium", "Manual"],
+        //     ["View pending", "Check invitations list", "Shows pending invites", "src/app", "Medium", "Manual"]
+        // ],
         "Managing Invitations": [
             ["Copy invite link", "Click copy", "Link copied to clipboard", "src/app", "Medium", "Manual"]
         ],
@@ -3309,11 +3298,11 @@ const T = {
         ]
     },
     "78. Health & Monitoring": {
-        "Health Check": [
-            ["Health endpoint", "GET /api/health", "Returns 200 OK", "src/app", "Medium", "Manual"],
-            ["Database check", "Check DB connection", "Shows DB status", "src/app", "Medium", "Manual"],
-            ["Response time", "Check response", "Fast response", "src/app", "Medium", "Manual"]
-        ],
+        // "Health Check": [
+        //     ["Health endpoint", "GET /api/health", "Returns 200 OK", "src/app", "Medium", "Manual"],
+        //     ["Database check", "Check DB connection", "Shows DB status", "src/app", "Medium", "Manual"],
+        //     ["Response time", "Check response", "Fast response", "src/app", "Medium", "Manual"]
+        // ],
         "System Alerts": [
             ["View alerts", "Navigate to alerts", "Shows system alerts", "src/app", "Medium", "Manual"],
             ["Unread alerts", "Check unread count", "Count accurate", "src/app", "Medium", "Manual"],
@@ -3354,29 +3343,21 @@ const T = {
             ["Depreciation sync", "Monthly run", "Book values updated", "src/app", "Medium", "Manual"]
         ]
     },
-    "81. Performance Tests": {
-        "Load Testing": [
-            ["100 concurrent users", "Simulate load", "Response < 500ms", "src/app", "Medium", "Manual"],
-            ["1000 assets list", "Load large list", "Response < 1s", "src/app", "Medium", "Manual"],
-            ["Large payroll run", "100 employees", "Completes successfully", "src/app", "Medium", "Manual"]
-        ]
-    },
-    "82. Browser Compatibility": {
-        "Browser Tests": [
-            ["Chrome Latest", "Test in Chrome", "Works correctly", "src/app", "Medium", "Manual"],
-            ["Firefox Latest", "Test in Firefox", "Works correctly", "src/app", "Medium", "Manual"],
-            ["Safari Latest", "Test in Safari", "Works correctly", "src/app", "Medium", "Manual"],
-            ["Edge Latest", "Test in Edge", "Works correctly", "src/app", "Medium", "Manual"]
-        ]
-    },
-    "83. Accessibility Tests": {
-        "Accessibility": [
-            ["Screen reader", "Use screen reader", "Labels read correctly", "src/app", "Medium", "Manual"],
-            ["Color contrast", "Check contrast", "Meets WCAG AA", "src/app", "Medium", "Manual"],
-            ["Focus indicators", "Tab through", "Visible focus states", "src/app", "Medium", "Manual"],
-            ["Form labels", "Check forms", "All inputs have labels", "src/app", "Medium", "Manual"]
-        ]
-    },
+    // "81. Performance Tests": {
+    //     "Load Testing": [
+    //         ["100 concurrent users", "Simulate load", "Response < 500ms", "src/app", "Medium", "Manual"],
+    //         ["1000 assets list", "Load large list", "Response < 1s", "src/app", "Medium", "Manual"],
+    //         ["Large payroll run", "100 employees", "Completes successfully", "src/app", "Medium", "Manual"]
+    //     ]
+    // },
+    // "82. Browser Compatibility": {
+    //     "Browser Tests": [
+    //         ["Chrome Latest", "Test in Chrome", "Works correctly", "src/app", "Medium", "Manual"],
+    //         ["Firefox Latest", "Test in Firefox", "Works correctly", "src/app", "Medium", "Manual"],
+    //         ["Safari Latest", "Test in Safari", "Works correctly", "src/app", "Medium", "Manual"],
+    //         ["Edge Latest", "Test in Edge", "Works correctly", "src/app", "Medium", "Manual"]
+    //     ]
+    // },
     "84. UI & Form Edge Cases": {
         "Form Behavior": [
             ["Submit with pending validation", "Click submit while validating", "Waits for validation complete", "src/app", "Medium", "Manual"],
