@@ -820,6 +820,32 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Redirect authenticated users away from signup/get-started pages
+  if (pathname === '/get-started' || pathname === '/signup') {
+    const token = await getToken({
+      req: request,
+      secret: process.env.NEXTAUTH_SECRET,
+    });
+
+    if (token && token.id) {
+      const orgSlug = token.organizationSlug as string | undefined;
+      const isSuperAdmin = token.isSuperAdmin as boolean | undefined;
+
+      if (isSuperAdmin) {
+        return NextResponse.redirect(new URL('/super-admin', request.url));
+      }
+
+      if (orgSlug) {
+        // User has org - redirect to their subdomain dashboard
+        const subdomainUrl = new URL('/admin', `${request.nextUrl.protocol}//${orgSlug}.${APP_DOMAIN}`);
+        return NextResponse.redirect(subdomainUrl);
+      } else {
+        // User has no org - go to pending
+        return NextResponse.redirect(new URL('/pending', request.url));
+      }
+    }
+  }
+
   // Skip public routes on main domain
   if (PUBLIC_ROUTES.some((route) => pathname.startsWith(route))) {
     return NextResponse.next();
