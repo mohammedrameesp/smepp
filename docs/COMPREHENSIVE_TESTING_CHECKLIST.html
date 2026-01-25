@@ -1158,7 +1158,6 @@ const T = {
             ["Filter by status ACTIVE", "Filter status=ACTIVE", "Only active subscriptions shown", "src/app/api/subscriptions/route.ts", "High", "Automated"],
             ["Filter by status CANCELLED", "Filter status=CANCELLED", "Only cancelled subscriptions shown", "src/app/api/subscriptions/route.ts", "High", "Automated"],
             ["Filter by category", "Filter category='Software'", "Only matching category shown", "src/app/api/subscriptions/route.ts", "Medium", "Automated"],
-            ["Filter by assigned member", "Filter assignedMemberId=[id]", "Only that member's subscriptions shown", "src/app/api/subscriptions/route.ts", "Medium", "Automated"],
             ["Filter by renewal window", "Filter renewalWindowDays=30", "Subscriptions renewing in 30 days", "src/app/api/subscriptions/route.ts", "High", "Automated"],
             ["Filters API returns filter options", "GET /api/subscriptions/filters", "Returns categories, statuses, billing cycles", "src/app/api/subscriptions/filters/route.ts", "Medium", "Automated"],
             ["Sort by renewal date ascending", "Sort sortBy=renewalDate&sortOrder=asc", "ACTIVE first (nearest renewals), CANCELLED last", "src/app/api/subscriptions/route.ts", "Medium", "Automated"],
@@ -1200,7 +1199,6 @@ const T = {
             ["Assignment date tracked", "Create subscription with assignment", "assignmentDate saved", "src/app/api/subscriptions/route.ts", "Medium", "Automated"],
             ["Reassignment creates history", "Change assigned member", "History entry with action=REASSIGNED", "src/app/api/subscriptions/[id]/route.ts", "High", "Automated"],
             ["View assigned member name", "View subscription detail", "Shows assigned member's name", "src/app/admin/(operations)/subscriptions/[id]/page.tsx", "Medium", "Manual"],
-            ["Filter by assigned member", "Filter by assignedMemberId", "Only that member's subscriptions", "src/app/api/subscriptions/route.ts", "Medium", "Automated"],
             ["Member dropdown shows tenant users", "Open assignment dropdown", "Shows only users in current tenant", "src/app/admin/(operations)/subscriptions/new/page.tsx", "High", "Manual"]
         ],
         "Employee View": [
