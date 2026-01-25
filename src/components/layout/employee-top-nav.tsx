@@ -213,7 +213,7 @@ export function EmployeeTopNav({
                     <DropdownMenuItem asChild>
                       <Link href="/employee/purchase-requests" className="flex items-center gap-2 cursor-pointer">
                         <ShoppingCart className="h-4 w-4 text-slate-400" />
-                        Purchase Requests
+                        Spend Requests
                       </Link>
                     </DropdownMenuItem>
                   )}

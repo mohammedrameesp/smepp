@@ -297,7 +297,7 @@ export default function LandingPage() {
               { icon: '💳', color: 'blue', title: 'Subscription Tracking', desc: 'Stop paying for unused subscriptions. Track all your SaaS and services.', list: ['Renewal date alerts', 'Cost analysis dashboard', 'Spending trends'] },
               { icon: '👥', color: 'purple', title: 'HR & Employees', desc: 'Complete employee management with document tracking.', list: ['QID & passport expiry alerts', 'Employee self-service portal', 'Profile change requests'] },
               { icon: '🏖️', color: 'amber', title: 'Leave Management', desc: 'Complete leave request and approval workflow for your team.', list: ['Balance tracking & calendar view', 'WhatsApp approval notifications', 'Multiple leave types'] },
-              { icon: '🛒', color: 'cyan', title: 'Purchase Requests', desc: 'Streamline procurement with multi-level approval workflows.', list: ['Multi-level approvals', 'WhatsApp notifications', 'Full audit trail'] },
+              { icon: '🛒', color: 'cyan', title: 'Spend Requests', desc: 'Streamline internal spending with multi-level approval workflows.', list: ['Multi-level approvals', 'WhatsApp notifications', 'Full audit trail'] },
               { icon: '💰', color: 'emerald', title: 'Payroll & WPS', desc: 'Full payroll processing with Qatar WPS compliance built-in.', list: ['WPS file generation', 'Gratuity (EOSB) calculations', 'Employee loans'], comingSoon: true },
             ].map((feature, i) => (
               <div key={i} className={`feature-card ${feature.comingSoon ? 'coming-soon' : ''}`}>

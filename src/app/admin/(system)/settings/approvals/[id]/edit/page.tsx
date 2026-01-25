@@ -26,7 +26,7 @@ import {
 
 const MODULES = [
   { value: 'LEAVE_REQUEST', label: 'Leave Requests' },
-  { value: 'PURCHASE_REQUEST', label: 'Purchase Requests' },
+  { value: 'PURCHASE_REQUEST', label: 'Spend Requests' },
   { value: 'ASSET_REQUEST', label: 'Asset Requests' },
 ];
 

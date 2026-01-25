@@ -11,7 +11,7 @@ export const approvalsContent: HelpModule = {
 
   overview: {
     summary:
-      'The Approval Workflows module lets you configure custom approval policies for leave requests, purchase requests, and asset requests. Set up multi-level approvals with role-based routing.',
+      'The Approval Workflows module lets you configure custom approval policies for leave requests, spend requests, and asset requests. Set up multi-level approvals with role-based routing.',
     keyFeatures: [
       'Create approval policies with multiple levels',
       'Configure approval thresholds (amount, days)',
@@ -54,13 +54,13 @@ export const approvalsContent: HelpModule = {
           {
             step: 3,
             title: 'Enter Policy Details',
-            description: 'Give the policy a name and select the module (Leave, Purchase, Asset).',
+            description: 'Give the policy a name and select the module (Leave, Spend, Asset).',
           },
           {
             step: 4,
             title: 'Set Thresholds',
             description:
-              'For leave: set days range. For purchases/assets: set amount range.',
+              'For leave: set days range. For spend/assets: set amount range.',
             tip: 'Create multiple policies for different thresholds (e.g., <$1000, $1000-$5000, >$5000).',
           },
           {
@@ -120,7 +120,7 @@ export const approvalsContent: HelpModule = {
     },
     {
       field: 'Module',
-      rule: 'Required. Select Leave Request, Purchase Request, or Asset Request.',
+      rule: 'Required. Select Leave Request, Spend Request, or Asset Request.',
       required: true,
       example: 'Leave Request',
     },
@@ -131,7 +131,7 @@ export const approvalsContent: HelpModule = {
     },
     {
       field: 'Min/Max Amount',
-      rule: 'Required for purchase/asset policies. Amount threshold range.',
+      rule: 'Required for spend/asset policies. Amount threshold range.',
       example: '$0 - $1000',
     },
     {
@@ -147,7 +147,7 @@ export const approvalsContent: HelpModule = {
       id: 'policy-matching',
       question: 'How are policies matched to requests?',
       answer:
-        'The system matches requests based on module type and threshold. For leave, it checks the number of days. For purchases, it checks the total amount. The most specific matching policy is applied.',
+        'The system matches requests based on module type and threshold. For leave, it checks the number of days. For spend requests, it checks the total amount. The most specific matching policy is applied.',
       roles: ['ADMIN'],
       tags: ['matching', 'policies'],
     },

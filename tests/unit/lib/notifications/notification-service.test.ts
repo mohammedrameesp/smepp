@@ -479,12 +479,12 @@ describe('Notification Service', () => {
   });
 
   // ═══════════════════════════════════════════════════════════════════════════════
-  // NOTIFICATION TEMPLATES - PURCHASE REQUESTS
+  // NOTIFICATION TEMPLATES - SPEND REQUESTS
   // ═══════════════════════════════════════════════════════════════════════════════
 
-  describe('NotificationTemplates - Purchase Requests', () => {
+  describe('NotificationTemplates - Spend Requests', () => {
     describe('purchaseRequestSubmitted', () => {
-      it('should generate purchase request submitted notification', () => {
+      it('should generate spend request submitted notification', () => {
         const result = NotificationTemplates.purchaseRequestSubmitted(
           'admin-123',
           'PR-2024-001',
@@ -496,8 +496,8 @@ describe('Notification Service', () => {
         expect(result).toEqual({
           recipientId: 'admin-123',
           type: 'PURCHASE_REQUEST_SUBMITTED',
-          title: 'New Purchase Request',
-          message: 'John Doe submitted a purchase request (PR-2024-001): Office Supplies',
+          title: 'New Spend Request',
+          message: 'John Doe submitted a spend request (PR-2024-001): Office Supplies',
           link: '/admin/purchase-requests/pr-456',
           entityType: 'PurchaseRequest',
           entityId: 'pr-456',
@@ -506,7 +506,7 @@ describe('Notification Service', () => {
     });
 
     describe('purchaseRequestApproved', () => {
-      it('should generate purchase request approval notification', () => {
+      it('should generate spend request approval notification', () => {
         const result = NotificationTemplates.purchaseRequestApproved(
           'user-123',
           'PR-2024-001'
@@ -514,14 +514,14 @@ describe('Notification Service', () => {
 
         expect(result.type).toBe('PURCHASE_REQUEST_APPROVED');
         expect(result.message).toBe(
-          'Your purchase request (PR-2024-001) has been approved.'
+          'Your spend request (PR-2024-001) has been approved.'
         );
         expect(result.link).toBe('/employee/purchase-requests');
       });
     });
 
     describe('purchaseRequestRejected', () => {
-      it('should generate purchase request rejection notification', () => {
+      it('should generate spend request rejection notification', () => {
         const result = NotificationTemplates.purchaseRequestRejected(
           'user-123',
           'PR-2024-001',
@@ -530,7 +530,7 @@ describe('Notification Service', () => {
 
         expect(result.type).toBe('PURCHASE_REQUEST_REJECTED');
         expect(result.message).toBe(
-          'Your purchase request (PR-2024-001) was rejected. Reason: Budget exceeded'
+          'Your spend request (PR-2024-001) was rejected. Reason: Budget exceeded'
         );
       });
     });

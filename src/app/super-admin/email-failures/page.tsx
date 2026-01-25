@@ -300,7 +300,7 @@ export default function EmailFailuresPage() {
                 <SelectItem value="assets">Assets</SelectItem>
                 <SelectItem value="asset-requests">Asset Requests</SelectItem>
                 <SelectItem value="leave">Leave</SelectItem>
-                <SelectItem value="purchase-requests">Purchase Requests</SelectItem>
+                <SelectItem value="purchase-requests">Spend Requests</SelectItem>
                 <SelectItem value="suppliers">Suppliers</SelectItem>
                 <SelectItem value="users">Users</SelectItem>
                 <SelectItem value="hr">HR</SelectItem>

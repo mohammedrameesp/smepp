@@ -53,8 +53,8 @@ export default async function AdminPurchaseRequestsPage() {
   return (
     <>
       <PageHeader
-        title="Purchase Requests"
-        subtitle="Review and manage all purchase requests from employees"
+        title="Spend Requests"
+        subtitle="Review and manage all spend requests from employees"
       >
         <StatChipGroup>
           <StatChip value={totalRequests} label="total" color="blue" />
@@ -75,8 +75,8 @@ export default async function AdminPurchaseRequestsPage() {
         {/* Requests Table */}
         <div className="bg-white rounded-xl border border-slate-200">
           <div className="px-4 py-4 border-b border-slate-100">
-            <h2 className="font-semibold text-slate-900">All Purchase Requests</h2>
-            <p className="text-sm text-slate-500">View, review, and manage all employee purchase requests</p>
+            <h2 className="font-semibold text-slate-900">All Spend Requests</h2>
+            <p className="text-sm text-slate-500">View, review, and manage all employee spend requests</p>
           </div>
           <div className="p-4">
             <PurchaseRequestListClient isAdmin={true} />

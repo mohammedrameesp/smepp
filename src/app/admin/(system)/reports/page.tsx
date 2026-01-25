@@ -372,11 +372,11 @@ export default async function AdminReportsPage() {
           </div>
         </div>
 
-        {/* Purchase Requests Reports */}
+        {/* Spend Requests Reports */}
         <div className="mb-8">
           <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
             <ShoppingCart className="h-5 w-5 text-pink-500" />
-            Purchase Requests Reports
+            Spend Requests Reports
           </h2>
 
           <div className="grid md:grid-cols-3 gap-6 mb-6">

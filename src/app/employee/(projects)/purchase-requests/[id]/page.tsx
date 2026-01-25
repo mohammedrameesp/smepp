@@ -118,12 +118,12 @@ export default function EmployeePurchaseRequestDetailPage({ params }: { params: 
     setLoading(true);
     try {
       const response = await fetch(`/api/purchase-requests/${resolvedParams.id}`);
-      if (!response.ok) throw new Error('Failed to fetch purchase request');
+      if (!response.ok) throw new Error('Failed to fetch spend request');
       const data = await response.json();
       setRequest(data);
     } catch (error) {
-      console.error('Error fetching purchase request:', error);
-      setError('Failed to load purchase request');
+      console.error('Error fetching spend request:', error);
+      setError('Failed to load spend request');
     } finally {
       setLoading(false);
     }
@@ -192,10 +192,10 @@ export default function EmployeePurchaseRequestDetailPage({ params }: { params: 
       <>
         <PageHeader
           title="Loading..."
-          subtitle="Please wait while we load the purchase request"
+          subtitle="Please wait while we load the spend request"
           breadcrumbs={[
             { label: 'Dashboard', href: '/employee' },
-            { label: 'Purchase Requests', href: '/employee/purchase-requests' },
+            { label: 'Spend Requests', href: '/employee/purchase-requests' },
             { label: 'Details' }
           ]}
         />
@@ -213,10 +213,10 @@ export default function EmployeePurchaseRequestDetailPage({ params }: { params: 
       <>
         <PageHeader
           title="Error"
-          subtitle="Failed to load purchase request"
+          subtitle="Failed to load spend request"
           breadcrumbs={[
             { label: 'Dashboard', href: '/employee' },
-            { label: 'Purchase Requests', href: '/employee/purchase-requests' },
+            { label: 'Spend Requests', href: '/employee/purchase-requests' },
             { label: 'Details' }
           ]}
         />
@@ -240,7 +240,7 @@ export default function EmployeePurchaseRequestDetailPage({ params }: { params: 
           subtitle="Purchase request not found"
           breadcrumbs={[
             { label: 'Dashboard', href: '/employee' },
-            { label: 'Purchase Requests', href: '/employee/purchase-requests' },
+            { label: 'Spend Requests', href: '/employee/purchase-requests' },
             { label: 'Details' }
           ]}
         />
@@ -263,7 +263,7 @@ export default function EmployeePurchaseRequestDetailPage({ params }: { params: 
         subtitle={request.title}
         breadcrumbs={[
           { label: 'Dashboard', href: '/employee' },
-          { label: 'Purchase Requests', href: '/employee/purchase-requests' },
+          { label: 'Spend Requests', href: '/employee/purchase-requests' },
           { label: 'Details' }
         ]}
         actions={
@@ -278,9 +278,9 @@ export default function EmployeePurchaseRequestDetailPage({ params }: { params: 
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Purchase Request</AlertDialogTitle>
+                    <AlertDialogTitle>Delete Spend Request</AlertDialogTitle>
                     <AlertDialogDescription>
-                      Are you sure you want to delete this purchase request? This action cannot be undone.
+                      Are you sure you want to delete this spend request? This action cannot be undone.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>

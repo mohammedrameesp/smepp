@@ -181,7 +181,7 @@ export const PERMISSION_GROUPS: Record<string, { label: string; permissions: { k
     ],
   },
   purchase: {
-    label: 'Purchase Requests',
+    label: 'Spend Requests',
     permissions: [
       { key: 'purchase:view', label: 'View Requests', description: 'View purchase request list' },
       { key: 'purchase:create', label: 'Create Requests', description: 'Submit purchase requests' },

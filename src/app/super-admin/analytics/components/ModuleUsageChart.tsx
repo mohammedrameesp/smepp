@@ -24,7 +24,7 @@ const MODULE_COLORS: Record<string, string> = {
   Employees: 'bg-amber-500',
   Leave: 'bg-cyan-500',
   Payroll: 'bg-rose-500',
-  'Purchase Requests': 'bg-indigo-500',
+  'Spend Requests': 'bg-indigo-500',
   Projects: 'bg-lime-500',
 };
 

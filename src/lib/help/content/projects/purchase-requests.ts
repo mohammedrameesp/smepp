@@ -3,49 +3,49 @@ import type { HelpModule } from '../../help-types';
 export const purchaseRequestsContent: HelpModule = {
   id: 'purchase-requests',
   categoryId: 'procurement',
-  name: 'Purchase Requests',
-  description: 'Internal procurement workflow and approval process',
+  name: 'Spend Requests',
+  description: 'Internal spending workflow and approval process',
   icon: 'ShoppingCart',
   adminOnly: false,
   keywords: ['purchase', 'procurement', 'request', 'approval', 'buy', 'order'],
 
   overview: {
     summary:
-      'The Purchase Requests module streamlines internal procurement. Employees can submit purchase requests for approval, and admins can review, approve, or reject them. Track all purchases from request to completion.',
+      'The Spend Requests module streamlines internal spending approvals. Employees can submit spend requests for approval, and admins can review, approve, or reject them. Track all spending from request to completion.',
     keyFeatures: [
-      'Submit purchase requests with line items',
+      'Submit spend requests with line items',
       'Multi-level approval workflow',
       'Track request status from submission to completion',
       'Attach supporting documents',
-      'Support for recurring and one-time purchases',
+      'Support for recurring and one-time spending',
     ],
     benefits: [
-      'Streamlined procurement process',
+      'Streamlined spending approval process',
       'Clear approval workflow',
       'Spending visibility and control',
-      'Audit trail for all purchases',
+      'Audit trail for all spending',
     ],
   },
 
   adminContent: {
     capabilities: [
-      'Review pending purchase requests',
+      'Review pending spend requests',
       'Approve or reject requests',
       'Track all requests across the organization',
       'Mark requests as completed',
-      'Generate purchase reports',
+      'Generate spend reports',
     ],
     workflows: [
       {
         id: 'review-request',
-        title: 'How to Review Purchase Requests',
-        description: 'Evaluate and process pending purchase requests.',
+        title: 'How to Review Spend Requests',
+        description: 'Evaluate and process pending spend requests.',
         steps: [
           {
             step: 1,
             title: 'View Pending Requests',
             description:
-              'Go to Operations > Purchase Requests. Check the pending badge count.',
+              'Go to Operations > Spend Requests. Check the pending badge count.',
           },
           {
             step: 2,
@@ -71,7 +71,7 @@ export const purchaseRequestsContent: HelpModule = {
       {
         id: 'complete-request',
         title: 'Marking Request as Completed',
-        description: 'Record when a purchase has been fulfilled.',
+        description: 'Record when a spend request has been fulfilled.',
         steps: [
           {
             step: 1,
@@ -90,14 +90,14 @@ export const purchaseRequestsContent: HelpModule = {
     ],
     tips: [
       'Process requests within 48 hours to avoid delays.',
-      'Check vendor options before approving large purchases.',
-      'Require quotes for purchases over certain amounts.',
+      'Check vendor options before approving large spend requests.',
+      'Require quotes for requests over certain amounts.',
     ],
   },
 
   employeeContent: {
     capabilities: [
-      'Submit new purchase requests',
+      'Submit new spend requests',
       'Add multiple line items',
       'Track request status',
       'Cancel pending requests',
@@ -106,19 +106,19 @@ export const purchaseRequestsContent: HelpModule = {
     workflows: [
       {
         id: 'submit-request',
-        title: 'How to Submit a Purchase Request',
-        description: 'Create a new purchase request for approval.',
+        title: 'How to Submit a Spend Request',
+        description: 'Create a new spend request for approval.',
         steps: [
           {
             step: 1,
-            title: 'Navigate to Purchase Requests',
+            title: 'Navigate to Spend Requests',
             description: 'Go to Requests > New Request from the sidebar.',
           },
           {
             step: 2,
             title: 'Enter Request Details',
             description:
-              'Add a title and optional description for the purchase.',
+              'Add a title and optional description for the spend request.',
           },
           {
             step: 3,
@@ -154,7 +154,7 @@ export const purchaseRequestsContent: HelpModule = {
           {
             step: 1,
             title: 'View My Requests',
-            description: 'Go to Requests > Purchase Requests.',
+            description: 'Go to Requests > Spend Requests.',
           },
           {
             step: 2,
@@ -227,7 +227,7 @@ export const purchaseRequestsContent: HelpModule = {
       id: 'request-status',
       question: 'What do the request statuses mean?',
       answer:
-        'PENDING: Awaiting initial review. UNDER_REVIEW: Being evaluated. APPROVED: Purchase authorized. REJECTED: Request denied. COMPLETED: Purchase fulfilled.',
+        'PENDING: Awaiting initial review. UNDER_REVIEW: Being evaluated. APPROVED: Spending authorized. REJECTED: Request denied. COMPLETED: Spending fulfilled.',
       roles: ['ADMIN', 'USER'],
       tags: ['status'],
     },
@@ -235,7 +235,7 @@ export const purchaseRequestsContent: HelpModule = {
       id: 'approval-time',
       question: 'How long does approval take?',
       answer:
-        'Standard requests are typically processed within 24-48 hours. Urgent requests may be expedited. Large purchases may require additional approvals.',
+        'Standard requests are typically processed within 24-48 hours. Urgent requests may be expedited. Large spend requests may require additional approvals.',
       roles: ['USER'],
       tags: ['approval', 'time'],
     },
@@ -248,8 +248,8 @@ export const purchaseRequestsContent: HelpModule = {
       tags: ['edit'],
     },
     {
-      id: 'recurring-purchase',
-      question: 'How do I handle recurring purchases?',
+      id: 'recurring-spending',
+      question: 'How do I handle recurring spending?',
       answer:
         'For recurring items (e.g., subscriptions), select "Monthly" or "Yearly" billing cycle. The system can track recurring costs separately.',
       roles: ['ADMIN', 'USER'],
@@ -259,7 +259,7 @@ export const purchaseRequestsContent: HelpModule = {
       id: 'budget-limit',
       question: 'Is there a spending limit?',
       answer:
-        'Limits depend on your organization\'s approval policies. Large purchases may require additional approval levels.',
+        'Limits depend on your organization\'s approval policies. Large spend requests may require additional approval levels.',
       roles: ['USER'],
       tags: ['budget', 'limit'],
     },
@@ -275,25 +275,25 @@ export const purchaseRequestsContent: HelpModule = {
 
   videos: [
     {
-      id: 'purchase-overview',
-      title: 'Purchase Requests Overview',
-      description: 'Learn how the purchase request process works.',
+      id: 'spend-overview',
+      title: 'Spend Requests Overview',
+      description: 'Learn how the spend request process works.',
       duration: '4:00',
       isPlaceholder: true,
       roles: ['ADMIN', 'USER'],
     },
     {
       id: 'submit-request-video',
-      title: 'Submitting a Purchase Request',
-      description: 'Step-by-step guide to creating purchase requests.',
+      title: 'Submitting a Spend Request',
+      description: 'Step-by-step guide to creating spend requests.',
       duration: '3:00',
       isPlaceholder: true,
       roles: ['USER'],
     },
     {
       id: 'approve-request-video',
-      title: 'Processing Purchase Requests',
-      description: 'How to review and approve purchase requests.',
+      title: 'Processing Spend Requests',
+      description: 'How to review and approve spend requests.',
       duration: '4:00',
       isPlaceholder: true,
       roles: ['ADMIN'],

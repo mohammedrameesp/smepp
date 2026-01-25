@@ -5,11 +5,11 @@ export default function NewPurchaseRequestLoading() {
   return (
     <>
       <PageHeader
-        title="New Purchase Request"
-        subtitle="Fill in the details below to submit a new purchase request"
+        title="New Spend Request"
+        subtitle="Fill in the details below to submit a new spend request"
         breadcrumbs={[
           { label: 'Dashboard', href: '/employee' },
-          { label: 'Purchase Requests', href: '/employee/purchase-requests' },
+          { label: 'Spend Requests', href: '/employee/purchase-requests' },
           { label: 'New Request' }
         ]}
         actions={<Skeleton className="h-10 w-40" />}

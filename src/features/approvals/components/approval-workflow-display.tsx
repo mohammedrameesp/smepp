@@ -31,7 +31,7 @@ const ROLE_LABELS: Record<string, string> = {
 // Module display config
 const MODULE_CONFIG: Record<string, { label: string; icon: React.ElementType }> = {
   LEAVE_REQUEST: { label: 'Leave Requests', icon: FileText },
-  PURCHASE_REQUEST: { label: 'Purchase Requests', icon: ShoppingCart },
+  PURCHASE_REQUEST: { label: 'Spend Requests', icon: ShoppingCart },
   ASSET_REQUEST: { label: 'Asset Requests', icon: Package },
 };
 

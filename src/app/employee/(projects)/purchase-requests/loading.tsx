@@ -6,11 +6,11 @@ export default function PurchaseRequestsListLoading() {
   return (
     <>
       <PageHeader
-        title="My Purchase Requests"
-        subtitle="Submit and track your purchase requests"
+        title="My Spend Requests"
+        subtitle="Submit and track your spend requests"
         breadcrumbs={[
           { label: 'Dashboard', href: '/employee' },
-          { label: 'Purchase Requests' }
+          { label: 'Spend Requests' }
         ]}
         actions={<Skeleton className="h-10 w-36" />}
       >

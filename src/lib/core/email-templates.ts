@@ -1267,7 +1267,7 @@ interface PurchaseRequestSubmittedData {
 }
 
 export function purchaseRequestSubmittedEmail(data: PurchaseRequestSubmittedData): { subject: string; html: string; text: string } {
-  const subject = `New Purchase Request: ${data.referenceNumber} - ${data.title}`;
+  const subject = `New Spend Request: ${data.referenceNumber} - ${data.title}`;
   const brandColor = data.primaryColor || DEFAULT_BRAND_COLOR;
 
   // Format priority for display
@@ -1293,16 +1293,16 @@ export function purchaseRequestSubmittedEmail(data: PurchaseRequestSubmittedData
       <tr>
         <td style="padding: 15px 20px;">
           <p style="color: #0c5460; font-size: 14px; margin: 0; font-weight: bold;">
-            New Purchase Request Submitted
+            New Spend Request Submitted
           </p>
         </td>
       </tr>
     </table>
 
-    <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 20px;">New Purchase Request</h2>
+    <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 20px;">New Spend Request</h2>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
-      A new purchase request has been submitted and requires your review.
+      A new spend request has been submitted and requires your review.
     </p>
 
     <!-- Request Details Box -->
@@ -1367,9 +1367,9 @@ export function purchaseRequestSubmittedEmail(data: PurchaseRequestSubmittedData
   `, data.orgName, brandColor);
 
   const text = `
-New Purchase Request - ${data.referenceNumber}
+New Spend Request - ${data.referenceNumber}
 
-A new purchase request has been submitted and requires your review.
+A new spend request has been submitted and requires your review.
 
 Request Details:
 - Reference Number: ${data.referenceNumber}
@@ -1422,18 +1422,18 @@ export function purchaseRequestStatusEmail(data: PurchaseRequestStatusData): { s
 
   let statusMessage = '';
   if (data.newStatus === 'Approved') {
-    statusMessage = 'Great news! Your purchase request has been approved.';
+    statusMessage = 'Great news! Your spend request has been approved.';
   } else if (data.newStatus === 'Rejected') {
-    statusMessage = 'Unfortunately, your purchase request has been rejected.';
+    statusMessage = 'Unfortunately, your spend request has been rejected.';
   } else if (data.newStatus === 'Under Review') {
-    statusMessage = 'Your purchase request is now under review by the procurement team.';
+    statusMessage = 'Your spend request is now under review by the approvers.';
   } else if (data.newStatus === 'Completed') {
-    statusMessage = 'Your purchase request has been completed.';
+    statusMessage = 'Your spend request has been completed.';
   } else {
-    statusMessage = 'The status of your purchase request has been updated.';
+    statusMessage = 'The status of your spend request has been updated.';
   }
 
-  const subject = `Purchase Request ${data.referenceNumber} - ${data.newStatus}`;
+  const subject = `Spend Request ${data.referenceNumber} - ${data.newStatus}`;
 
   const html = emailWrapper(`
     <!-- Status Banner -->
@@ -1441,13 +1441,13 @@ export function purchaseRequestStatusEmail(data: PurchaseRequestStatusData): { s
       <tr>
         <td style="padding: 15px 20px;">
           <p style="color: ${statusColor.text}; font-size: 14px; margin: 0; font-weight: bold;">
-            Purchase Request ${data.newStatus}
+            Spend Request ${data.newStatus}
           </p>
         </td>
       </tr>
     </table>
 
-    <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 20px;">Purchase Request Status Update</h2>
+    <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 20px;">Spend Request Status Update</h2>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
       Dear <strong>${escapeHtml(data.userName)}</strong>,
@@ -1531,7 +1531,7 @@ export function purchaseRequestStatusEmail(data: PurchaseRequestStatusData): { s
   `, data.orgName, brandColor);
 
   const text = `
-Purchase Request Status Update - ${data.referenceNumber}
+Spend Request Status Update - ${data.referenceNumber}
 
 Dear ${data.userName},
 

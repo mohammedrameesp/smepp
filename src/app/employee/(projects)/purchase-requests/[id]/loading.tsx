@@ -7,10 +7,10 @@ export default function PurchaseRequestDetailLoading() {
     <>
       <PageHeader
         title="Loading..."
-        subtitle="Please wait while we load the purchase request"
+        subtitle="Please wait while we load the spend request"
         breadcrumbs={[
           { label: 'Dashboard', href: '/employee' },
-          { label: 'Purchase Requests', href: '/employee/purchase-requests' },
+          { label: 'Spend Requests', href: '/employee/purchase-requests' },
           { label: 'Details' }
         ]}
         actions={<Skeleton className="h-10 w-40" />}
@@ -31,7 +31,7 @@ export default function PurchaseRequestDetailLoading() {
               </div>
               <div>
                 <h2 className="font-semibold text-slate-900">Request Details</h2>
-                <p className="text-sm text-slate-500">Purchase request information</p>
+                <p className="text-sm text-slate-500">Spend request information</p>
               </div>
             </div>
             <div className="p-5">

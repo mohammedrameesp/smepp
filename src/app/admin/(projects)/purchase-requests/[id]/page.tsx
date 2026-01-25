@@ -239,7 +239,7 @@ export default function AdminPurchaseRequestDetailPage({ params }: { params: Pro
           className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 mb-4"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to Purchase Requests
+          Back to Spend Requests
         </Link>
 
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">

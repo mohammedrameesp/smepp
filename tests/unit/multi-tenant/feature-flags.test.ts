@@ -301,7 +301,7 @@ describe('Feature Flags Tests', () => {
 
     it('should have metadata for purchase-requests module', () => {
       expect(MODULE_METADATA['purchase-requests']).toBeDefined();
-      expect(MODULE_METADATA['purchase-requests'].name).toBe('Purchase Requests');
+      expect(MODULE_METADATA['purchase-requests'].name).toBe('Spend Requests');
       expect(MODULE_METADATA['purchase-requests'].icon).toBe('ShoppingCart');
     });
 

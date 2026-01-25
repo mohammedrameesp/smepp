@@ -90,8 +90,8 @@ export function buildLeaveApprovalTemplate(
 }
 
 /**
- * Build purchase request approval template message
- * Template: "New purchase request requires your approval.
+ * Build spend request approval template message
+ * Template: "New spend request requires your approval.
  *            Requested by: {{1}}
  *            Title: {{2}}
  *            Amount: {{3}}
@@ -108,7 +108,7 @@ export function buildPurchaseApprovalTemplate(
       type: 'body',
       parameters: [
         { type: 'text', text: details.requesterName },
-        { type: 'text', text: details.title || 'Purchase Request' },
+        { type: 'text', text: details.title || 'Spend Request' },
         { type: 'text', text: formatAmount(details.totalAmount || 0, details.currency) },
       ],
     },
@@ -227,7 +227,7 @@ function getEntityName(entityType: ApprovalEntityType): string {
     case 'LEAVE_REQUEST':
       return 'leave request';
     case 'PURCHASE_REQUEST':
-      return 'purchase request';
+      return 'spend request';
     case 'ASSET_REQUEST':
       return 'asset request';
     default:

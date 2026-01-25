@@ -1326,7 +1326,7 @@ export default function OrganizationDetailPage() {
                   employees: { name: 'Employees', icon: <Users className="h-3 w-3" />, color: 'bg-orange-100 text-orange-800' },
                   leave: { name: 'Leave', icon: <CalendarDays className="h-3 w-3" />, color: 'bg-teal-100 text-teal-800' },
                   payroll: { name: 'Payroll', icon: <DollarSign className="h-3 w-3" />, color: 'bg-emerald-100 text-emerald-800' },
-                  'purchase-requests': { name: 'Purchase Requests', icon: <ShoppingCart className="h-3 w-3" />, color: 'bg-pink-100 text-pink-800' },
+                  'purchase-requests': { name: 'Spend Requests', icon: <ShoppingCart className="h-3 w-3" />, color: 'bg-pink-100 text-pink-800' },
                   documents: { name: 'Company Documents', icon: <FileCheck className="h-3 w-3" />, color: 'bg-amber-100 text-amber-800' },
                 };
                 const config = moduleConfig[moduleId] || { name: moduleId, icon: <Package className="h-3 w-3" />, color: 'bg-gray-100 text-gray-800' };
@@ -2547,7 +2547,7 @@ export default function OrganizationDetailPage() {
                 <div className="p-4 rounded-lg bg-pink-50 border border-pink-100">
                   <div className="flex items-center gap-2 mb-2">
                     <ShoppingCart className="h-4 w-4 text-pink-600" />
-                    <span className="font-medium text-pink-900">Purchase Requests</span>
+                    <span className="font-medium text-pink-900">Spend Requests</span>
                   </div>
                   <div className="space-y-1 text-sm">
                     <div className="flex justify-between">

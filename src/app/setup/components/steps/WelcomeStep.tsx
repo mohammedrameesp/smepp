@@ -25,7 +25,7 @@ const MODULE_NAMES: Record<string, string> = {
   employees: 'Employees',
   leave: 'Leave Management',
   payroll: 'Payroll',
-  'purchase-requests': 'Purchase Requests',
+  'purchase-requests': 'Spend Requests',
   documents: 'Company Documents',
 };
 

@@ -116,8 +116,8 @@ export const procurementCategory: CategoryInfo = {
   modules: [
     {
       id: 'purchase-requests',
-      name: 'Purchase Requests',
-      description: 'Internal procurement workflow and approval process',
+      name: 'Spend Requests',
+      description: 'Internal spending approval workflow',
       icon: 'ShoppingCart',
       adminOnly: false,
       href: '/help/procurement/purchase-requests',

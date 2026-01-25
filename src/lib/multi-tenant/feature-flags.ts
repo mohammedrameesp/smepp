@@ -129,6 +129,6 @@ export const MODULE_METADATA: Record<string, { name: string; description: string
   suppliers: { name: 'Supplier Management', description: 'Manage vendors and supplier relationships', icon: 'Truck' },
   leave: { name: 'Leave Management', description: 'Leave requests, balances, and approvals', icon: 'Calendar' },
   payroll: { name: 'Payroll Processing', description: 'Salary structures, payslips, and loans', icon: 'DollarSign' },
-  'purchase-requests': { name: 'Purchase Requests', description: 'Internal procurement workflow', icon: 'ShoppingCart' },
+  'purchase-requests': { name: 'Spend Requests', description: 'Internal spending approval workflow', icon: 'ShoppingCart' },
   documents: { name: 'Company Documents', description: 'Track licenses, certifications, and compliance', icon: 'FileCheck' },
 };
