@@ -1,7 +1,6 @@
 import { prisma } from '@/lib/core/prisma';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Building2, Plus, Users, Eye, UserCog, Edit } from 'lucide-react';
+import { Building2, Users, Eye, UserCog, Edit } from 'lucide-react';
 import { format } from 'date-fns';
 
 export const dynamic = 'force-dynamic';
@@ -40,13 +39,7 @@ export default async function OrganizationsPage() {
           <div className="p-12 text-center">
             <Building2 className="h-12 w-12 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">No organizations yet</h3>
-            <p className="text-gray-500 text-sm mb-4">Create your first organization to get started</p>
-            <Link href="/super-admin/organizations/new">
-              <Button className="bg-indigo-600 hover:bg-indigo-700">
-                <Plus className="h-4 w-4 mr-2" />
-                Create Organization
-              </Button>
-            </Link>
+            <p className="text-gray-500 text-sm">Organizations are created through self-service signup</p>
           </div>
         ) : (
           <>

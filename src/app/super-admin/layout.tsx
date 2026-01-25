@@ -15,7 +15,6 @@ import {
   Settings,
   LogOut,
   Search,
-  Plus,
   Loader2,
   Check,
   KeyRound,
@@ -388,12 +387,6 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <input type="text" placeholder="Search organizations..." className="pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm w-48 lg:w-64 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
               </div>
-              <Link href="/super-admin/organizations/new">
-                <Button className="bg-indigo-600 hover:bg-indigo-700" size="sm">
-                  <Plus className="h-4 w-4 lg:mr-2" />
-                  <span className="hidden lg:inline">New Organization</span>
-                </Button>
-              </Link>
             </div>
           </div>
         </header>

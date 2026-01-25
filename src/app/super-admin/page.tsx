@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/core/prisma';
 import Link from 'next/link';
-import { Building2, Users, Signal, CheckCircle, Eye, UserCog, Edit, UserPlus, BarChart3, Settings, Plus } from 'lucide-react';
+import { Building2, Users, Signal, CheckCircle, Eye, UserCog, Edit, UserPlus, BarChart3, Settings } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 
 export const dynamic = 'force-dynamic';
@@ -157,14 +157,7 @@ export default async function SuperAdminDashboard() {
           <div className="p-12 text-center">
             <Building2 className="h-12 w-12 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">No organizations yet</h3>
-            <p className="text-gray-500 text-sm mb-4">Create your first organization to get started</p>
-            <Link
-              href="/super-admin/organizations/new"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700"
-            >
-              <Plus className="h-4 w-4" />
-              Create Organization
-            </Link>
+            <p className="text-gray-500 text-sm">Organizations are created through self-service signup</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -312,15 +305,6 @@ export default async function SuperAdminDashboard() {
             <h2 className="font-semibold text-gray-900">Quick Actions</h2>
           </div>
           <div className="p-6 grid grid-cols-2 gap-4">
-            <Link
-              href="/super-admin/organizations/new"
-              className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-xl hover:border-indigo-300 hover:bg-indigo-50/50 transition-colors group"
-            >
-              <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mb-3 group-hover:bg-indigo-200">
-                <Plus className="text-indigo-600 h-5 w-5" />
-              </div>
-              <span className="text-sm font-medium text-gray-700">Create Organization</span>
-            </Link>
             <Link
               href="/super-admin/admins"
               className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-xl hover:border-emerald-300 hover:bg-emerald-50/50 transition-colors group"
