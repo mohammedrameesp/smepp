@@ -83,12 +83,13 @@ export async function POST(request: NextRequest) {
     // Generate backup codes
     const { plainCodes, hashedCodes } = await generateBackupCodes();
 
-    // Enable 2FA and store backup codes
+    // Enable 2FA, store backup codes, and mark as verified
     await prisma.user.update({
       where: { id: user.id },
       data: {
         twoFactorEnabled: true,
         twoFactorBackupCodes: hashedCodes,
+        twoFactorVerifiedAt: new Date(), // Mark as recently verified for sensitive operations
       },
     });
 

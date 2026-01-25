@@ -270,6 +270,12 @@ export default function OrganizationDetailPage() {
   // Impersonation state
   const [impersonating, setImpersonating] = useState(false);
 
+  // 2FA Re-authentication state
+  const [showReauthDialog, setShowReauthDialog] = useState(false);
+  const [reauthCode, setReauthCode] = useState('');
+  const [reauthError, setReauthError] = useState('');
+  const [isReauthing, setIsReauthing] = useState(false);
+
   // Auth config state
   const [authConfig, setAuthConfig] = useState<AuthConfig | null>(null);
   const [savingAuthConfig, setSavingAuthConfig] = useState(false);
@@ -575,12 +581,17 @@ export default function OrganizationDetailPage() {
         body: JSON.stringify({ organizationId: orgId }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const data = await response.json();
+        // Check if 2FA re-auth is required
+        if (data.error === 'Recent2FARequired' && data.requiresReAuth) {
+          setShowReauthDialog(true);
+          setImpersonating(false);
+          return;
+        }
         throw new Error(data.error || 'Failed to start impersonation');
       }
-
-      const data = await response.json();
 
       // Open the portal URL in a new tab
       window.open(data.portalUrl, '_blank');
@@ -588,6 +599,37 @@ export default function OrganizationDetailPage() {
       setError(err instanceof Error ? err.message : 'Failed to visit portal');
     } finally {
       setImpersonating(false);
+    }
+  };
+
+  const handleReauth2FA = async () => {
+    if (!reauthCode) return;
+
+    setIsReauthing(true);
+    setReauthError('');
+
+    try {
+      const response = await fetch('/api/super-admin/auth/reauth-2fa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: reauthCode }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setReauthError(data.error || 'Verification failed');
+        return;
+      }
+
+      // 2FA verified - close dialog and retry impersonation
+      setShowReauthDialog(false);
+      setReauthCode('');
+      handleVisitPortal();
+    } catch {
+      setReauthError('Verification failed');
+    } finally {
+      setIsReauthing(false);
     }
   };
 
@@ -2955,6 +2997,67 @@ export default function OrganizationDetailPage() {
                 </>
               ) : (
                 'Clear Configuration'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 2FA Re-authentication Dialog */}
+      <Dialog open={showReauthDialog} onOpenChange={setShowReauthDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5 text-amber-500" />
+              2FA Verification Required
+            </DialogTitle>
+            <DialogDescription>
+              Enter your authenticator code to impersonate <strong>{org?.name}</strong>.
+              This is required for security before accessing tenant data.
+            </DialogDescription>
+          </DialogHeader>
+
+          {reauthError && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+              {reauthError}
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <Label htmlFor="reauth-code">Verification Code</Label>
+            <Input
+              id="reauth-code"
+              type="text"
+              inputMode="numeric"
+              maxLength={6}
+              placeholder="000000"
+              value={reauthCode}
+              onChange={(e) => setReauthCode(e.target.value.replace(/\D/g, ''))}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && reauthCode.length === 6) {
+                  handleReauth2FA();
+                }
+              }}
+              className="text-center text-2xl tracking-widest font-mono"
+              autoFocus
+            />
+            <p className="text-xs text-gray-500">
+              Or enter a backup code if you don&apos;t have access to your authenticator app.
+            </p>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowReauthDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleReauth2FA}
+              disabled={reauthCode.length < 6 || isReauthing}
+            >
+              {isReauthing ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                'Verify & Continue'
               )}
             </Button>
           </DialogFooter>
