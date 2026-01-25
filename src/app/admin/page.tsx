@@ -1,11 +1,35 @@
 import Link from "next/link";
 import { getServerSession } from "next-auth";
+import { cookies } from 'next/headers';
+import { jwtVerify } from 'jose';
 import { authOptions } from "@/lib/core/auth";
 import { prisma } from '@/lib/core/prisma';
 import { redirect } from 'next/navigation';
 import { format, formatDistanceToNow } from 'date-fns';
 import { SetupChecklist } from '@/components/dashboard/SetupChecklist';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
+
+// Check for impersonation cookie
+async function checkImpersonation(): Promise<{ isImpersonating: boolean; tenantId?: string }> {
+  try {
+    const cookieStore = await cookies();
+    const cookie = cookieStore.get('durj-impersonation');
+    if (!cookie?.value) return { isImpersonating: false };
+
+    const secret = process.env.NEXTAUTH_SECRET;
+    if (!secret) return { isImpersonating: false };
+
+    const { payload } = await jwtVerify(cookie.value, new TextEncoder().encode(secret));
+    if (payload.purpose !== 'impersonation') return { isImpersonating: false };
+
+    return {
+      isImpersonating: true,
+      tenantId: payload.organizationId as string,
+    };
+  } catch {
+    return { isImpersonating: false };
+  }
+}
 
 // Avatar color palette - consistent colors based on name
 const AVATAR_COLORS = [
@@ -34,24 +58,36 @@ function getInitials(name: string): string {
 }
 
 export default async function AdminDashboard() {
+  // Check for impersonation first
+  const impersonation = await checkImpersonation();
   const session = await getServerSession(authOptions);
 
-  if (!session) {
-    redirect('/login');
+  // If impersonating, skip session-based access checks
+  if (!impersonation.isImpersonating) {
+    if (!session) {
+      redirect('/login');
+    }
+
+    // Check for admin or department-level access
+    const isAdmin = session.user.isOwner || session.user.isAdmin;
+    const hasFinanceAccess = session.user.hasFinanceAccess || false;
+    const hasHRAccess = session.user.hasHRAccess || false;
+    const hasOperationsAccess = session.user.hasOperationsAccess || false;
+    const canApprove = session.user.canApprove || false;
+
+    // Redirect if no admin access at all (must match layout.tsx logic)
+    const hasAnyAdminAccess = isAdmin || hasFinanceAccess || hasHRAccess || hasOperationsAccess || canApprove;
+    if (!hasAnyAdminAccess) {
+      redirect('/employee');
+    }
   }
 
-  // Check for admin or department-level access
-  const isAdmin = session.user.isOwner || session.user.isAdmin;
-  const hasFinanceAccess = session.user.hasFinanceAccess || false;
-  const hasHRAccess = session.user.hasHRAccess || false;
-  const hasOperationsAccess = session.user.hasOperationsAccess || false;
-  const canApprove = session.user.canApprove || false;
-
-  // Redirect if no admin access at all (must match layout.tsx logic)
-  const hasAnyAdminAccess = isAdmin || hasFinanceAccess || hasHRAccess || hasOperationsAccess || canApprove;
-  if (!hasAnyAdminAccess) {
-    redirect('/employee');
-  }
+  // When impersonating, use full admin access
+  const isAdmin = impersonation.isImpersonating ? true : (session?.user.isOwner || session?.user.isAdmin);
+  const hasFinanceAccess = impersonation.isImpersonating ? true : (session?.user.hasFinanceAccess || false);
+  const hasHRAccess = impersonation.isImpersonating ? true : (session?.user.hasHRAccess || false);
+  const hasOperationsAccess = impersonation.isImpersonating ? true : (session?.user.hasOperationsAccess || false);
+  const canApprove = impersonation.isImpersonating ? true : (session?.user.canApprove || false);
 
   // Helper to check department access
   const canAccessModule = (requiredAccess?: 'finance' | 'hr' | 'operations') => {
@@ -63,12 +99,17 @@ export default async function AdminDashboard() {
     return false;
   };
 
+  // Get tenant ID - use impersonation tenant if impersonating
+  const organizationId = impersonation.isImpersonating
+    ? impersonation.tenantId
+    : session?.user.organizationId;
+
   // Get enabled modules and org details from database
   let enabledModules: string[] = ['assets', 'subscriptions', 'suppliers'];
 
-  if (session.user.organizationId) {
+  if (organizationId) {
     const org = await prisma.organization.findUnique({
-      where: { id: session.user.organizationId },
+      where: { id: organizationId },
       select: { enabledModules: true, name: true, subscriptionTier: true },
     });
     if (org?.enabledModules?.length) {
@@ -80,9 +121,10 @@ export default async function AdminDashboard() {
 
   // Dashboard data
   let dashboardData = null;
+  const hasAnyAdminAccess = isAdmin || hasFinanceAccess || hasHRAccess || hasOperationsAccess || canApprove;
 
-  if (hasAnyAdminAccess && session.user.organizationId) {
-    const tenantId = session.user.organizationId;
+  if (hasAnyAdminAccess && organizationId) {
+    const tenantId = organizationId;
     const today = new Date();
     // Start of today (midnight) for date-only comparisons (e.g., leave requests)
     const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
@@ -303,8 +345,10 @@ export default async function AdminDashboard() {
     };
   }
 
-  // Get user's first name for greeting
-  const firstName = session.user.name?.split(' ')[0] || 'there';
+  // Get user's first name for greeting (use 'Admin' when impersonating)
+  const firstName = impersonation.isImpersonating
+    ? 'Admin'
+    : session?.user.name?.split(' ')[0] || 'there';
 
   // Get time-based greeting
   const hour = new Date().getHours();
