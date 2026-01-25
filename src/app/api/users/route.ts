@@ -129,6 +129,16 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
   const isAdmin = legacyIsAdmin ?? rolePermissions.isAdmin;
   const { canApprove, hasHRAccess, hasFinanceAccess, hasOperationsAccess } = rolePermissions;
 
+  // Validate: Service accounts (isEmployee=false) must have admin portal access
+  // Otherwise they'll be stuck in a redirect loop between /admin and /employee
+  const hasAdminPortalAccess = isAdmin || canApprove || hasHRAccess || hasFinanceAccess || hasOperationsAccess;
+  if (!isEmployee && !hasAdminPortalAccess) {
+    return NextResponse.json(
+      { error: 'Service accounts must have a role with admin portal access (Admin, Manager, HR, Finance, or Operations)' },
+      { status: 400 }
+    );
+  }
+
   // Generate email for non-login users (use placeholder to satisfy unique constraint)
   // Format: nologin-{uuid}@{tenantSlug}.internal
   let finalEmail: string = email || '';

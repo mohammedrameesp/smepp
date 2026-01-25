@@ -62,9 +62,23 @@ export default async function EmployeeLayout({
     redirect('/login');
   }
 
-  // Non-employees cannot access employee portal
+  // Non-employees (service accounts) cannot access employee portal
+  // Check if they have admin access before redirecting to prevent infinite loop
   if (session?.user?.isEmployee === false) {
-    redirect('/admin');
+    const hasAdminAccess = session?.user?.isOwner ||
+                           session?.user?.isAdmin ||
+                           session?.user?.hasFinanceAccess ||
+                           session?.user?.hasHRAccess ||
+                           session?.user?.hasOperationsAccess ||
+                           session?.user?.canApprove;
+
+    if (hasAdminAccess) {
+      redirect('/admin');
+    } else {
+      // Service account without admin access - redirect to no-access page
+      // This prevents an infinite redirect loop between /admin and /employee
+      redirect('/no-access');
+    }
   }
 
   // Check onboarding status - no longer force redirect, allow employees to skip
