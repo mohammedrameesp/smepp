@@ -20,6 +20,7 @@
  * - Purchase date required and must be valid
  * - Renewal date must be after purchase date
  * - Assignment date required when assigning to member
+ * - Assignment date cannot be before purchase date
  * - Cost must be positive if provided
  * - Notes limited to 1000 characters
  *
@@ -85,6 +86,7 @@ const pastOrPresentDateSchema = z.string().refine(
  * 1. Purchase date ≤ Renewal date
  * 2. Assignment date required when assignedMemberId provided
  * 3. Assignment date must not be in future (Qatar timezone)
+ * 4. Assignment date cannot be before purchase date
  */
 /** Base schema for subscription fields (without refinements) */
 const subscriptionBaseSchema = z.object({
@@ -133,6 +135,21 @@ export const createSubscriptionSchema = subscriptionBaseSchema.refine(
     message: 'Assignment date is required when assigning to a member',
     path: ['assignmentDate'],
   }
+).refine(
+  (data) => {
+    // Assignment date cannot be before purchase date
+    if (data.purchaseDate && data.assignmentDate) {
+      const purchase = dateInputToQatarDate(data.purchaseDate);
+      const assignment = dateInputToQatarDate(data.assignmentDate);
+      if (!purchase || !assignment) return true; // Let other validations handle invalid dates
+      return assignment >= purchase;
+    }
+    return true;
+  },
+  {
+    message: 'Assignment date cannot be before purchase date',
+    path: ['assignmentDate'],
+  }
 );
 
 export const updateSubscriptionSchema = subscriptionBaseSchema
@@ -154,6 +171,22 @@ export const updateSubscriptionSchema = subscriptionBaseSchema
     },
     {
       message: 'Assignment date is required when assigning to a member',
+      path: ['assignmentDate'],
+    }
+  )
+  .refine(
+    (data) => {
+      // Assignment date cannot be before purchase date
+      if (data.purchaseDate && data.assignmentDate) {
+        const purchase = dateInputToQatarDate(data.purchaseDate);
+        const assignment = dateInputToQatarDate(data.assignmentDate);
+        if (!purchase || !assignment) return true; // Let other validations handle invalid dates
+        return assignment >= purchase;
+      }
+      return true;
+    },
+    {
+      message: 'Assignment date cannot be before purchase date',
       path: ['assignmentDate'],
     }
   );

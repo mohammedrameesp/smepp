@@ -82,7 +82,7 @@ describe('Multi-tenant Limits Tests', () => {
       await getOrganizationUsage('org-123');
 
       expect(mockPrisma.asset.count).toHaveBeenCalledWith({
-        where: { tenantId: 'org-123' },
+        where: { tenantId: 'org-123', deletedAt: null },
       });
     });
 
