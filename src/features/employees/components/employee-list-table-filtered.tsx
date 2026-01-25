@@ -16,6 +16,7 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
@@ -112,6 +113,7 @@ interface EmployeeListTableFilteredProps {
 
 export function EmployeeListTableFiltered({ employees }: EmployeeListTableFilteredProps) {
   const router = useRouter();
+  const { data: session } = useSession();
   const [page, setPage] = useState(1);
 
   // Client-side filtering
@@ -328,6 +330,9 @@ export function EmployeeListTableFiltered({ employees }: EmployeeListTableFilter
                       <div>
                         <div className="font-medium text-gray-900">
                           {employee.name || 'No name'}
+                          {employee.id === session?.user?.id && (
+                            <span className="text-muted-foreground ml-1">(you)</span>
+                          )}
                         </div>
                         {getDisplayEmail(employee.email) && (
                           <div className="text-sm text-gray-500">{getDisplayEmail(employee.email)}</div>
