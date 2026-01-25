@@ -218,7 +218,7 @@ The codebase is organized by business domain:
 |--------|---------|-------------|
 | **HR** | Employees, Leave, Payroll | Human resources, leave management, payroll processing |
 | **Operations** | Assets, Subscriptions, Suppliers | Physical/digital assets, SaaS tracking, vendor management |
-| **Projects** | Tasks, Purchase Requests | Kanban boards, procurement |
+| **Projects** | Tasks, Spend Requests | Kanban boards, internal spending approvals |
 | **System** | Users, Settings, Reports, Billing | Administration and configuration |
 
 ### Route Structure
