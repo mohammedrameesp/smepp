@@ -29,34 +29,28 @@ async function getImpersonationFromCookie(): Promise<{
     const cookieStore = await cookies();
     const cookie = cookieStore.get(IMPERSONATION_COOKIE);
 
-    console.log('[IMPERSONATION DEBUG] Cookie found:', !!cookie?.value);
-
     if (!cookie?.value) {
       return { isImpersonating: false };
     }
 
     const secret = getJwtSecret();
     if (!secret) {
-      console.log('[IMPERSONATION DEBUG] No JWT secret');
       return { isImpersonating: false };
     }
 
     const { payload } = await jwtVerify(cookie.value, secret);
-    console.log('[IMPERSONATION DEBUG] JWT verified, purpose:', payload.purpose);
 
     // Verify the token purpose
     if (payload.purpose !== 'impersonation') {
       return { isImpersonating: false };
     }
 
-    console.log('[IMPERSONATION DEBUG] Impersonation valid, org:', payload.organizationId);
     return {
       isImpersonating: true,
       tenantId: payload.organizationId as string,
       impersonatorEmail: payload.superAdminEmail as string,
     };
-  } catch (error) {
-    console.log('[IMPERSONATION DEBUG] Error:', error);
+  } catch {
     return { isImpersonating: false };
   }
 }

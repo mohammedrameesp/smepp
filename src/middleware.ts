@@ -623,11 +623,9 @@ export async function middleware(request: NextRequest) {
 
     // First check for impersonation token in URL (first-time landing)
     const impersonateToken = request.nextUrl.searchParams.get('impersonate');
-    console.log('[MW DEBUG] Subdomain:', subdomain, 'Has impersonate token:', !!impersonateToken);
 
     if (impersonateToken) {
       const tokenData = await verifyImpersonationToken(impersonateToken);
-      console.log('[MW DEBUG] Token verification result:', !!tokenData, 'orgSlug:', tokenData?.organizationSlug);
 
       // If valid token and matches this subdomain, set cookie and redirect to strip token from URL
       if (tokenData && tokenData.organizationSlug.toLowerCase() === subdomain.toLowerCase()) {
@@ -635,8 +633,6 @@ export async function middleware(request: NextRequest) {
         // Create a clean URL without the impersonate parameter
         const cleanUrl = new URL(request.url);
         cleanUrl.searchParams.delete('impersonate');
-
-        console.log('[MW DEBUG] Setting impersonation cookie and redirecting to:', cleanUrl.toString());
 
         // Redirect to the clean URL with the cookie set
         const response = NextResponse.redirect(cleanUrl);
@@ -646,9 +642,9 @@ export async function middleware(request: NextRequest) {
         response.cookies.set(IMPERSONATION_COOKIE, impersonateToken, {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
-          sameSite: 'lax', // Changed from strict to allow redirect
+          sameSite: 'lax', // Allow cookie on redirect
           path: '/',
-          maxAge: 15 * 60, // 15 minutes (reduced from 4 hours)
+          maxAge: 15 * 60, // 15 minutes
         });
 
         return response;
@@ -657,7 +653,6 @@ export async function middleware(request: NextRequest) {
 
     // Then check for existing impersonation cookie
     const impersonation = await getImpersonationData(request);
-    console.log('[MW DEBUG] Existing impersonation cookie:', !!impersonation);
 
     // If impersonating and the subdomain matches the impersonated org
     if (impersonation && impersonation.organizationSlug.toLowerCase() === subdomain.toLowerCase()) {
