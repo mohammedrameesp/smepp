@@ -952,14 +952,21 @@ const T = {
             ["Price must be positive if provided", "Create asset with negative price", "Validation error", "src/features/assets/validations/assets.ts", "High", "Automated"],
             ["Price QAR auto-calculated from currency", "Create asset in USD", "priceQAR calculated using exchange rate", "src/features/assets/lib/currency.ts", "High", "Automated"],
             ["Status defaults to IN_USE", "Create asset without status", "Status set to IN_USE", "src/features/assets/validations/assets.ts", "Medium", "Automated"],
-            ["Empty strings transformed to null", "Submit form with empty optional fields", "Stored as null not empty string", "src/features/assets/validations/assets.ts", "Low", "Automated"]
+            ["Empty strings transformed to null", "Submit form with empty optional fields", "Stored as null not empty string", "src/features/assets/validations/assets.ts", "Low", "Automated"],
+            ["Tag collision handling", "Create 50 assets rapidly", "All get unique sequential tags", "src/app/api/assets/route.ts", "Medium", "Manual"],
+            ["Duplicate serial allowed", "Same serial in same tenant", "Allowed (serial not unique constraint)", "src/app/api/assets/route.ts", "Medium", "Manual"],
+            ["Warranty date auto-fill", "Enter purchase date, leave warranty blank", "Warranty = purchase + 1 year default", "src/app/admin/(operations)/assets/new/page.tsx", "Medium", "Manual"],
+            ["Edit asset details", "Modify model, brand, notes", "Changes saved, history recorded", "src/app/api/assets/[id]/route.ts", "Medium", "Manual"],
+            ["Change asset location", "Update location field", "Location updated on asset", "src/app/api/assets/[id]/route.ts", "Medium", "Manual"]
         ],
         "Asset Status Rules": [
             ["IN_USE requires assignedMemberId (unless shared)", "Set status IN_USE without assignee", "Validation error if not shared", "src/features/assets/validations/assets.ts", "Critical", "Automated"],
             ["Shared assets can be IN_USE without assignee", "Create shared asset as IN_USE", "Allowed", "src/features/assets/validations/assets.ts", "High", "Automated"],
             ["DISPOSED status cannot be changed back", "Try to change DISPOSED to SPARE", "Error: cannot change disposed status", "src/app/api/assets/[id]/route.ts", "Critical", "Automated"],
             ["Assignment date cannot be before purchase date", "Set assignment before purchase", "Validation error", "src/features/assets/validations/assets.ts", "Critical", "Automated"],
-            ["Status change records statusChangeDate", "Change asset status", "statusChangeDate updated", "src/app/api/assets/[id]/route.ts", "Medium", "Automated"]
+            ["Status change records statusChangeDate", "Change asset status", "statusChangeDate updated", "src/app/api/assets/[id]/route.ts", "Medium", "Automated"],
+            ["Status REPAIR", "Set status to REPAIR", "Asset marked as in repair", "src/app/api/assets/[id]/route.ts", "Medium", "Manual"],
+            ["Status transitions valid", "SPARE→IN_USE→SPARE", "All valid transitions work", "src/app/api/assets/[id]/route.ts", "Medium", "Manual"]
         ],
         "Asset Assignment": [
             ["Admin can assign asset to member", "Admin assigns SPARE asset", "Asset assigned, status IN_USE", "src/app/api/assets/[id]/assign/route.ts", "Critical", "E2E"],
@@ -969,16 +976,38 @@ const T = {
             ["Reassignment auto-unassigns previous", "Assign already assigned asset", "Previous member unassigned, new assigned", "src/app/api/assets/[id]/assign/route.ts", "High", "Automated"],
             ["Assignment creates history entry", "Assign asset", "AssetHistory record created", "src/features/assets/lib/asset-lifecycle.ts", "High", "Automated"],
             ["Assignment sends notification to assignee", "Assign asset to user with canLogin", "Notification sent", "src/lib/domains/system/notifications/notification-service.ts", "High", "Automated"],
-            ["Cannot assign if pending request exists", "Assign while PENDING_USER_ACCEPTANCE exists", "409 Conflict error", "src/app/api/assets/[id]/assign/route.ts", "High", "Automated"]
+            ["Cannot assign if pending request exists", "Assign while PENDING_USER_ACCEPTANCE exists", "409 Conflict error", "src/app/api/assets/[id]/assign/route.ts", "High", "Automated"],
+            ["Employee accepts assignment", "Employee clicks Accept", "Asset status=IN_USE, assigned to employee", "src/app/api/asset-requests/[id]/accept/route.ts", "Critical", "E2E"],
+            ["Employee declines assignment", "Employee clicks Decline with reason", "Asset stays SPARE, admins notified", "src/app/api/asset-requests/[id]/decline/route.ts", "High", "E2E"],
+            ["Unassign asset (admin)", "Admin removes assignment", "Asset=SPARE, employee notified", "src/app/api/assets/[id]/assign/route.ts", "Medium", "Manual"],
+            ["Assign to deleted employee", "Try assign to soft-deleted", "Error: Member not found", "src/app/api/assets/[id]/assign/route.ts", "Medium", "Manual"],
+            ["Assign REPAIR status asset", "Try assign asset in REPAIR status", "Warning shown, can proceed", "src/app/api/assets/[id]/assign/route.ts", "Medium", "Manual"],
+            ["Assign DISPOSED asset", "Try assign disposed asset", "Error: Cannot assign disposed asset", "src/app/api/assets/[id]/assign/route.ts", "Medium", "Manual"],
+            ["Self-assign as admin", "Admin assigns to themselves", "Works with same flow", "src/app/api/assets/[id]/assign/route.ts", "Medium", "Manual"],
+            ["Assignment date backdating", "Set assignment date in past", "Allowed for record correction", "src/app/api/assets/[id]/assign/route.ts", "Medium", "Manual"]
         ],
         "Asset Requests": [
-            ["Employee can request SPARE asset", "Submit request for spare asset", "Request created as PENDING", "src/app/api/asset-requests/route.ts", "High", "E2E"],
-            ["Return request created successfully", "Submit return for assigned asset", "RETURN_REQUEST created", "src/app/api/asset-requests/route.ts", "High", "E2E"],
+            ["Employee can request SPARE asset", "Submit request for spare asset", "Request created as PENDING_ADMIN_APPROVAL", "src/app/api/asset-requests/route.ts", "High", "E2E"],
+            ["Return request created successfully", "Submit return for assigned asset", "PENDING_RETURN_APPROVAL created", "src/app/api/asset-requests/route.ts", "High", "E2E"],
             ["General request without specific asset", "Submit general equipment request", "GENERAL_REQUEST created", "src/app/api/asset-requests/route.ts", "High", "E2E"],
             ["User can accept pending assignment", "Click accept on pending request", "Asset assigned, status ACCEPTED", "src/app/api/asset-requests/[id]/accept/route.ts", "Critical", "E2E"],
             ["User can decline pending assignment", "Click decline on pending request", "Request declined, asset back to SPARE", "src/app/api/asset-requests/[id]/decline/route.ts", "High", "E2E"],
             ["Duplicate pending request rejected", "Submit second request for same asset", "Error: already have pending request", "src/app/api/asset-requests/route.ts", "High", "Automated"],
-            ["IDOR: Cannot request other tenant's asset", "Request with other org's asset ID", "404 Not Found", "src/app/api/asset-requests/route.ts", "Critical", "Automated"]
+            ["IDOR: Cannot request other tenant's asset", "Request with other org's asset ID", "404 Not Found", "src/app/api/asset-requests/route.ts", "Critical", "Automated"],
+            ["Employee requests IN_USE asset", "Request already assigned asset", "Error: Asset not available", "src/app/api/asset-requests/route.ts", "High", "Manual"],
+            ["Cancel own pending request", "Employee cancels before approval", "Request cancelled", "src/app/api/asset-requests/[id]/route.ts", "Medium", "Manual"],
+            ["Request with reason/notes", "Add justification to request", "Notes saved and visible to approvers", "src/app/api/asset-requests/route.ts", "Medium", "Manual"],
+            ["Admin approves employee request", "Admin approves", "Status→PENDING_USER_ACCEPTANCE", "src/app/api/asset-requests/[id]/approve/route.ts", "High", "E2E"],
+            ["Admin rejects employee request", "Admin rejects with reason", "Request rejected, employee notified", "src/app/api/asset-requests/[id]/reject/route.ts", "High", "E2E"]
+        ],
+        "Asset Return Flow": [
+            ["Employee requests return", "Employee initiates return", "PENDING_RETURN_APPROVAL created", "src/app/api/asset-requests/route.ts", "High", "E2E"],
+            ["Admin approves return", "Admin approves return request", "Asset unassigned, status=SPARE", "src/app/api/asset-requests/[id]/approve/route.ts", "High", "E2E"],
+            ["Admin rejects return", "Admin rejects return request", "Asset stays assigned to employee", "src/app/api/asset-requests/[id]/reject/route.ts", "High", "E2E"],
+            ["Return non-assigned asset", "Try return SPARE asset", "Error: Asset not assigned to you", "src/app/api/asset-requests/route.ts", "Medium", "Manual"],
+            ["Return someone else's asset", "User B tries to return A's asset", "Error: Not assigned to you", "src/app/api/asset-requests/route.ts", "Medium", "Manual"],
+            ["Admin force unassign", "Admin unassigns without return request", "Direct unassign, employee notified", "src/app/api/assets/[id]/assign/route.ts", "Medium", "Manual"],
+            ["Unassign with pending return", "Pending return exists, admin unassigns", "Return request cancelled, asset unassigned", "src/app/api/assets/[id]/assign/route.ts", "Medium", "Manual"]
         ],
         "Asset Search & Filtering": [
             ["Search by asset tag", "Search with partial tag", "Matching assets returned", "src/app/api/assets/route.ts", "High", "Automated"],
@@ -987,7 +1016,9 @@ const T = {
             ["Filter by status", "Filter status=SPARE", "Only SPARE assets shown", "src/app/api/assets/route.ts", "High", "Automated"],
             ["Filter by category", "Filter by category ID", "Only that category shown", "src/app/api/assets/route.ts", "High", "Automated"],
             ["Pagination works correctly", "Request page 2 with limit 10", "Correct items returned", "src/app/api/assets/route.ts", "Medium", "Automated"],
-            ["Sort by various fields", "Sort by purchaseDate desc", "Correctly ordered results", "src/app/api/assets/route.ts", "Medium", "Automated"]
+            ["Sort by various fields", "Sort by purchaseDate desc", "Correctly ordered results", "src/app/api/assets/route.ts", "Medium", "Automated"],
+            ["Combine multiple filters", "Status + Category + Type", "Intersection of filters", "src/app/admin/(operations)/assets/page.tsx", "Medium", "Manual"],
+            ["Clear all filters", "Reset filters", "Shows all assets", "src/app/admin/(operations)/assets/page.tsx", "Medium", "Manual"]
         ],
         "Asset Depreciation": [
             ["Assign depreciation category to asset", "Select category for asset", "Category assigned, depreciation calculated", "src/features/assets/lib/depreciation/calculator.ts", "High", "Automated"],
@@ -996,165 +1027,219 @@ const T = {
             ["Pro-rata first month calculation", "Asset purchased mid-month", "First month pro-rated", "src/features/assets/lib/depreciation/calculator.ts", "High", "Automated"],
             ["View depreciation schedule", "Click depreciation tab on asset", "Monthly schedule displayed", "src/app/api/assets/[id]/depreciation/route.ts", "Medium", "E2E"],
             ["Depreciation cron runs monthly", "Wait for cron job", "Depreciation records created", "src/app/api/cron/depreciation/route.ts", "High", "Manual"],
-            ["Straight-line calculation", "Asset with depreciation category", "Monthly depreciation calculated correctly", "src/app", "Medium", "Manual"],
-            ["Pro-rata first month", "Asset purchased mid-month", "First month depreciation pro-rated", "src/app", "Medium", "Manual"],
-            ["Fully depreciated asset", "Asset past useful life", "NBV equals salvage value, no negative", "src/app", "Medium", "Manual"],
-            ["Depreciation schedule view", "View depreciation schedule", "Shows month-by-month breakdown", "src/app", "Medium", "Manual"],
-            ["Change depreciation category", "Update category on asset", "Recalculates from purchase date", "src/app", "Medium", "Manual"],
-            ["No depreciation category", "Asset without depreciation settings", "No depreciation calculated", "src/app", "Medium", "Manual"]
+            ["Change depreciation category", "Update category on asset", "Recalculates from purchase date", "src/app/api/assets/[id]/route.ts", "Medium", "Manual"],
+            ["No depreciation category", "Asset without depreciation settings", "No depreciation calculated", "src/features/assets/lib/depreciation/calculator.ts", "Medium", "Automated"]
         ],
         "Asset Disposal": [
             ["Dispose asset as SOLD", "Select SOLD, enter proceeds", "Gain/loss calculated, status DISPOSED", "src/features/assets/lib/depreciation/disposal.ts", "High", "Automated"],
             ["SOLD requires proceeds > 0", "SOLD without proceeds", "Validation error", "src/features/assets/lib/depreciation/disposal.ts", "High", "Automated"],
             ["Dispose as SCRAPPED", "Select SCRAPPED", "Asset disposed, no proceeds required", "src/features/assets/lib/depreciation/disposal.ts", "High", "Automated"],
+            ["Dispose as DONATED", "Select DONATED", "Asset disposed, no proceeds required", "src/features/assets/lib/depreciation/disposal.ts", "High", "Automated"],
+            ["Dispose as WRITTEN_OFF", "Select WRITTEN_OFF", "Records write-off for lost/stolen/obsolete assets", "src/features/assets/lib/depreciation/disposal.ts", "High", "Automated"],
             ["Disposal calculates gain/loss", "Dispose asset with proceeds", "Gain = Proceeds - NBV displayed", "src/features/assets/lib/depreciation/disposal.ts", "High", "Automated"],
             ["Future disposal date rejected", "Enter future date for disposal", "Validation error", "src/features/assets/lib/depreciation/disposal.ts", "High", "Automated"],
             ["Already disposed asset cannot be disposed", "Try to dispose DISPOSED asset", "Error: already disposed", "src/app/api/assets/[id]/dispose/route.ts", "High", "Automated"],
-            ["Dispose - Sold", "Dispose with method=SOLD", "Requires proceeds amount > 0", "src/app", "Medium", "Manual"],
-            ["Dispose - Scrapped", "Dispose with method=SCRAPPED", "No proceeds required", "src/app", "Medium", "Manual"],
-            ["Dispose - Donated", "Dispose with method=DONATED", "No proceeds required", "src/app", "Medium", "Manual"],
-            ["Dispose - Written Off", "Dispose with method=WRITTEN_OFF", "Records write-off (for lost/stolen/obsolete assets), no proceeds required", "src/app", "Medium", "Manual"],
-            ["Disposal gain/loss calculation", "Sell above/below NBV", "Gain or loss calculated correctly", "src/app", "Medium", "Manual"],
-            ["Dispose assigned asset", "Try dispose IN_USE asset", "Must unassign first or confirm", "src/app", "Medium", "Manual"],
-            ["Disposal date validation", "Future disposal date", "Error: Cannot be future date", "src/app", "Medium", "Manual"],
-            ["Disposed asset in reports", "Check disposed assets report", "Shows in disposed list, not active", "src/app", "Medium", "Manual"]
+            ["Dispose assigned asset", "Try dispose IN_USE asset", "Must unassign first or confirm", "src/app/api/assets/[id]/dispose/route.ts", "Medium", "Manual"],
+            ["Disposed asset in reports", "Check disposed assets report", "Shows in disposed list, not active", "src/app/admin/(operations)/assets/page.tsx", "Medium", "Manual"]
         ],
         "Asset Import/Export": [
             ["Export assets to CSV", "Click export button", "CSV file downloaded with all fields", "src/app/api/assets/export/route.ts", "High", "E2E"],
             ["Import assets from CSV", "Upload valid CSV file", "Assets created from data", "src/app/api/assets/import/route.ts", "High", "E2E"],
-            ["Import validates required fields", "Upload CSV missing type column", "Validation errors with row numbers", "src/features/assets/lib/import.ts", "High", "Automated"],
-            ["Import handles 500+ records", "Upload large CSV", "All records processed", "src/features/assets/lib/import.ts", "Medium", "Manual"],
-            ["Clone asset creates new with unique tag", "Click clone on asset", "New asset with new tag, no serial", "src/app/api/assets/[id]/clone/route.ts", "Medium", "E2E"]
-        ],
-        "Asset Creation & Editing": [
-            ["Create asset - minimal fields", "Enter type and model only", "Asset created with auto-generated tag", "src/app", "Medium", "Manual"],
-            ["Create asset - all fields", "Fill all optional fields", "Asset created with complete data", "src/app", "Medium", "Manual"],
-            ["Auto-tag format", "Create new asset", "Tag format: ORG-CAT-YYSEQ (e.g., BCE-CP-25001)", "src/app", "Medium", "Manual"],
-            ["Tag collision handling", "Create 50 assets rapidly", "All get unique sequential tags", "src/app", "Medium", "Manual"],
-            ["Duplicate serial allowed", "Same serial in same tenant", "Allowed (serial not unique constraint)", "src/app", "Medium", "Manual"],
-            ["Price currency conversion", "Enter price in USD/EUR", "Converted and stored in QAR", "src/app", "Medium", "Manual"],
-            ["Warranty date auto-fill", "Enter purchase date, leave warranty blank", "Warranty = purchase + 1 year default", "src/app", "Medium", "Manual"],
-            ["Edit asset details", "Modify model, brand, notes", "Changes saved, history recorded", "src/app", "Medium", "Manual"],
-            ["Change asset category", "Change type on existing asset", "Category updated, tag unchanged", "src/app", "Medium", "Manual"],
-            ["Change asset location", "Update location field", "Location history tracked", "src/app", "Medium", "Manual"]
-        ],
-        "Asset Status Management": [
-            ["Status IN_USE (default)", "Create new asset without specifying status", "Status defaults to IN_USE", "src/app", "Medium", "Manual"],
-            ["Status IN_USE requires assignee", "Set IN_USE without assignee", "Error unless shared=true", "src/app", "Medium", "Manual"],
-            ["Status IN_USE with shared=true", "Set IN_USE, shared=true, no assignee", "Valid for shared assets", "src/app", "Medium", "Manual"],
-            ["Status REPAIR", "Set status to REPAIR", "Asset marked as in repair", "src/app", "Medium", "Manual"],
-            ["Status DISPOSED", "Dispose asset", "Asset archived, not in active list", "src/app", "Medium", "Manual"],
-            ["Status transitions valid", "SPARE→IN_USE→SPARE", "All valid transitions work", "src/app", "Medium", "Manual"]
-        ],
-        "Asset Assignment Flow": [
-            ["Admin assigns to employee with login", "Assign asset to canLogin=true user", "Creates PENDING_USER_ACCEPTANCE request", "src/app", "Medium", "Manual"],
-            ["Admin assigns to employee without login", "Assign asset to canLogin=false user", "Direct assignment, auto-accepted", "src/app", "Medium", "Manual"],
-            ["Employee accepts assignment", "Employee clicks Accept", "Asset status=IN_USE, assigned to employee", "src/app", "Medium", "Manual"],
-            ["Employee declines assignment", "Employee clicks Decline with reason", "Asset stays SPARE, admins notified", "src/app", "Medium", "Manual"],
-            ["Acceptance timeout (7 days)", "Don't respond to assignment", "Request expires, admins notified", "src/app", "Medium", "Manual"],
-            ["Reassignment flow", "Assign A's asset to B", "A unassigned+notified, B gets assignment", "src/app", "Medium", "Manual"],
-            ["Unassign asset (admin)", "Admin removes assignment", "Asset=SPARE, employee notified", "src/app", "Medium", "Manual"],
-            ["Assign to deleted employee", "Try assign to soft-deleted", "Error: Member not found", "src/app", "Medium", "Manual"],
-            ["Assign while pending request exists", "Asset has pending, try new assign", "Error: Asset has pending request", "src/app", "Medium", "Manual"],
-            ["Assign REPAIR status asset", "Try assign asset in REPAIR status", "Warning shown, can proceed", "src/app", "Medium", "Manual"],
-            ["Assign DISPOSED asset", "Try assign disposed asset", "Error: Cannot assign disposed asset", "src/app", "Medium", "Manual"],
-            ["Self-assign as admin", "Admin assigns to themselves", "Works with same flow", "src/app", "Medium", "Manual"],
-            ["Assignment date backdating", "Set assignment date in past", "Allowed for record correction", "src/app", "Medium", "Manual"],
-            ["Assignment date before purchase", "Assignment before purchase date", "Validation error", "src/app", "Medium", "Manual"]
-        ],
-        "Asset Request Workflow (Employee)": [
-            ["Employee requests SPARE asset", "Employee submits request", "Request created, admins notified", "src/app", "Medium", "Manual"],
-            ["Employee requests IN_USE asset", "Request already assigned asset", "Error: Asset not available", "src/app", "Medium", "Manual"],
-            ["Duplicate pending request", "Same asset, same employee, pending exists", "Error: Request already pending", "src/app", "Medium", "Manual"],
-            ["Cancel own pending request", "Employee cancels before approval", "Request cancelled", "src/app", "Medium", "Manual"],
-            ["Request with reason/notes", "Add justification to request", "Notes saved and visible to approvers", "src/app", "Medium", "Manual"],
-            ["Admin approves employee request", "Admin approves", "Status→PENDING_USER_ACCEPTANCE", "src/app", "Medium", "Manual"],
-            ["Admin rejects employee request", "Admin rejects with reason", "Request rejected, employee notified", "src/app", "Medium", "Manual"]
-        ],
-        "Asset Return Flow": [
-            ["Employee requests return", "Employee initiates return", "PENDING_RETURN_APPROVAL created", "src/app", "Medium", "Manual"],
-            ["Admin approves return", "Admin approves return request", "Asset unassigned, status=SPARE", "src/app", "Medium", "Manual"],
-            ["Admin rejects return", "Admin rejects return request", "Asset stays assigned to employee", "src/app", "Medium", "Manual"],
-            ["Return non-assigned asset", "Try return SPARE asset", "Error: Asset not assigned to you", "src/app", "Medium", "Manual"],
-            ["Return someone else's asset", "User B tries to return A's asset", "Error: Not assigned to you", "src/app", "Medium", "Manual"],
-            ["Admin force unassign", "Admin unassigns without return request", "Direct unassign, employee notified", "src/app", "Medium", "Manual"],
-            ["Unassign with pending return", "Pending return exists, admin unassigns", "Return request cancelled, asset unassigned", "src/app", "Medium", "Manual"]
+            ["Import validates required fields", "Upload CSV missing type column", "Validation errors with row numbers", "src/features/assets/lib/asset-import.ts", "High", "Automated"],
+            ["Import handles 500+ records", "Upload large CSV", "All records processed", "src/features/assets/lib/asset-import.ts", "Medium", "Manual"],
+            ["Import preview", "Upload CSV", "Shows preview before import", "src/app/admin/(operations)/assets/page.tsx", "Medium", "Manual"],
+            ["Partial import", "Some rows invalid", "Valid rows imported, errors shown", "src/features/assets/lib/asset-import.ts", "Medium", "Manual"],
+            ["Export filtered", "Filter then export", "Only filtered assets exported", "src/app/api/assets/export/route.ts", "Medium", "Manual"]
         ],
         "Asset Clone": [
-            ["Clone basic asset", "Clone SPARE asset", "New asset created with same details", "src/app", "Medium", "Manual"],
-            ["Clone clears assignment", "Clone IN_USE asset", "Clone is SPARE, not assigned", "src/app", "Medium", "Manual"],
-            ["Clone clears serial", "Clone asset with serial number", "Clone has no serial (must be unique)", "src/app", "Medium", "Manual"],
-            ["Clone disposed asset", "Clone DISPOSED asset", "Clone created as SPARE", "src/app", "Medium", "Manual"],
-            ["Clone preserves category", "Clone asset", "Same type, auto-generated new tag", "src/app", "Medium", "Manual"]
+            ["Clone asset creates new with unique tag", "Click clone on asset", "New asset with new tag, no serial", "src/app/api/assets/[id]/clone/route.ts", "Medium", "E2E"],
+            ["Clone clears assignment", "Clone IN_USE asset", "Clone is SPARE, not assigned", "src/app/api/assets/[id]/clone/route.ts", "Medium", "Automated"],
+            ["Clone clears serial", "Clone asset with serial number", "Clone has no serial (must be unique)", "src/app/api/assets/[id]/clone/route.ts", "Medium", "Automated"],
+            ["Clone disposed asset", "Clone DISPOSED asset", "Clone created as SPARE", "src/app/api/assets/[id]/clone/route.ts", "Medium", "Manual"],
+            ["Clone preserves category", "Clone asset", "Same type, auto-generated new tag", "src/app/api/assets/[id]/clone/route.ts", "Medium", "Automated"]
         ],
-        "Asset Search & Filters": [
-            ["Search by model/brand", "Search 'MacBook'", "Finds matching assets", "src/app", "Medium", "Manual"],
-            ["Combine multiple filters", "Status + Category + Type", "Intersection of filters", "src/app", "Medium", "Manual"],
-            ["Clear all filters", "Reset filters", "Shows all assets", "src/app", "Medium", "Manual"]
+        "Asset Utilization": [
+            ["View utilization", "Check asset utilization tab", "Shows usage stats", "src/app/api/assets/[id]/utilization/route.ts", "Medium", "E2E"],
+            ["Utilization percentage", "Check percentage calculation", "Calculated correctly based on assignment history", "src/app/api/assets/[id]/utilization/route.ts", "Medium", "Automated"],
+            ["Idle assets", "Filter unassigned assets", "Shows SPARE assets", "src/app/api/assets/route.ts", "Medium", "Manual"]
         ],
-        "Asset Notifications & Alerts": [
-            ["Assignment notification", "Assign asset", "Employee receives notification", "src/app", "Medium", "Manual"],
-            ["Unassignment notification", "Unassign asset", "Employee notified of removal", "src/app", "Medium", "Manual"]
+        "Asset Categories": [
+            ["Category name required", "Leave name empty", "Validation error", "src/app/api/asset-categories/route.ts", "Medium", "Automated"],
+            ["Duplicate category name", "Use existing name", "Error: name already exists", "src/app/api/asset-categories/route.ts", "Medium", "Automated"],
+            ["Delete category with assets", "Delete category that has assets", "Error or reassign prompt", "src/app/api/asset-categories/[id]/route.ts", "Medium", "Manual"]
+        ],
+        "Depreciation Categories": [
+            ["Set useful life years", "Enter useful life for category", "Saved correctly", "src/app/api/depreciation/categories/route.ts", "Medium", "Manual"],
+            ["Set salvage value percentage", "Enter salvage value", "Saved and used in calculations", "src/app/api/depreciation/categories/route.ts", "Medium", "Manual"]
+        ],
+        "Asset Notifications": [
+            ["Assignment notification", "Assign asset", "Employee receives notification", "src/lib/domains/system/notifications/notification-service.ts", "Medium", "Manual"],
+            ["Unassignment notification", "Unassign asset", "Employee notified of removal", "src/lib/domains/system/notifications/notification-service.ts", "Medium", "Manual"]
+        ],
+        "Deleted Assets (Soft Delete)": [
+            ["View deleted assets", "Navigate to /admin/assets/deleted", "Shows deleted assets", "src/app/admin/(operations)/assets/deleted/page.tsx", "Medium", "Manual"],
+            ["Restore asset", "Click restore", "Asset restored to active list", "src/app/api/assets/[id]/restore/route.ts", "Medium", "E2E"],
+            ["Permanent delete", "Click permanent delete", "Asset gone forever", "src/app/api/assets/[id]/route.ts", "Medium", "Manual"],
+            ["Auto cleanup", "After 30 days", "Automatically purged by cron", "src/app/api/cron/cleanup-deleted-assets/route.ts", "Medium", "Manual"],
+            ["Search deleted", "Search in trash", "Finds deleted items", "src/app/admin/(operations)/assets/deleted/page.tsx", "Medium", "Manual"],
+            ["Cannot delete assigned asset", "Try to delete IN_USE asset", "Error: Must unassign asset first", "src/app/api/assets/[id]/route.ts", "High", "Automated"],
+            ["Cannot delete asset with pending request", "Try to delete asset with PENDING request", "Error: Asset has pending requests", "src/app/api/assets/[id]/route.ts", "High", "Automated"]
         ]
     },
     "7. Subscriptions Module": {
         "Subscription Creation": [
-            ["Service name required (1-255 chars)", "Create without service name", "Validation error", "src/features/subscriptions/validations/subscriptions.ts", "Critical", "Automated"],
-            ["Billing cycle required", "Create without billing cycle", "Validation error", "src/features/subscriptions/validations/subscriptions.ts", "Critical", "Automated"],
-            ["Purchase date required", "Create without purchase date", "Validation error", "src/features/subscriptions/validations/subscriptions.ts", "Critical", "Automated"],
-            ["Renewal date must be after purchase date", "Set renewal before purchase", "Validation error", "src/features/subscriptions/validations/subscriptions.ts", "Critical", "Automated"],
-            ["Cost must be positive if provided", "Enter negative cost", "Validation error", "src/features/subscriptions/validations/subscriptions.ts", "High", "Automated"],
-            ["Currency conversion to QAR", "Enter cost in USD", "costQAR auto-calculated", "src/features/subscriptions/lib/currency.ts", "High", "Automated"],
-            ["Subscription tag auto-generated", "Create subscription", "Tag: ORG-SUB-YYMMDD-SEQ", "src/features/subscriptions/lib/tag.ts", "High", "Automated"],
-            ["Assigned member required", "Create without assignee", "Validation error", "src/features/subscriptions/validations/subscriptions.ts", "High", "Automated"]
+            ["Service name required (1-255 chars)", "Create without service name", "Validation error: serviceName required", "src/features/subscriptions/validations/subscriptions.ts", "Critical", "Automated"],
+            ["Billing cycle required", "Create without billing cycle", "Validation error: billingCycle required", "src/features/subscriptions/validations/subscriptions.ts", "Critical", "Automated"],
+            ["Purchase date required", "Create without purchase date", "Validation error: purchaseDate required", "src/features/subscriptions/validations/subscriptions.ts", "Critical", "Automated"],
+            ["Renewal date must be after purchase date", "Set renewal before purchase", "Validation error: renewalDate must be after purchaseDate", "src/features/subscriptions/validations/subscriptions.ts", "Critical", "Automated"],
+            ["Assignment date cannot be before purchase date", "Set assignment date before purchase date", "Validation error: assignmentDate cannot be before purchaseDate", "src/features/subscriptions/validations/subscriptions.ts", "Critical", "Automated"],
+            ["Assigned member required", "Create without assignee", "Validation error: assignedMemberId required", "src/features/subscriptions/validations/subscriptions.ts", "Critical", "Automated"],
+            ["Cost must be positive if provided", "Enter negative cost", "Validation error: cost must be positive", "src/features/subscriptions/validations/subscriptions.ts", "High", "Automated"],
+            ["Zero-cost subscription rejected", "Create with cost = 0", "Validation error: cost must be positive or omitted", "src/features/subscriptions/validations/subscriptions.ts", "High", "Automated"],
+            ["Currency required when cost provided", "Enter cost without currency", "Validation error: currency required", "src/features/subscriptions/validations/subscriptions.ts", "High", "Automated"],
+            ["Currency conversion to QAR", "Enter cost in USD", "costQAR auto-calculated using exchange rates", "src/lib/core/currency.ts", "High", "Automated"],
+            ["Subscription tag auto-generated", "Create subscription", "Tag: ORG-SUB-YYMM-SEQ (e.g., BCE-SUB-2501-001)", "src/features/subscriptions/lib/subscription-utils.ts", "High", "Automated"],
+            ["Category autocomplete API", "Type in category field", "GET /api/subscriptions/categories returns existing categories", "src/app/api/subscriptions/categories/route.ts", "Medium", "Automated"],
+            ["Valid status on create", "Create subscription", "Status defaults to ACTIVE", "src/app/api/subscriptions/route.ts", "High", "Automated"],
+            ["History entry on create", "Create subscription", "SubscriptionHistory entry with action=CREATE", "src/app/api/subscriptions/route.ts", "Medium", "Automated"],
+            ["Notes field optional", "Create without notes", "Subscription created successfully", "src/features/subscriptions/validations/subscriptions.ts", "Low", "Automated"],
+            ["Vendor name optional", "Create without vendor", "Subscription created successfully", "src/features/subscriptions/validations/subscriptions.ts", "Low", "Automated"],
+            ["Create form UI loads correctly", "Navigate to /admin/subscriptions/new", "Form displays all fields with proper labels", "src/app/admin/(operations)/subscriptions/new/page.tsx", "Medium", "Manual"]
         ],
-        "Subscription Lifecycle": [
-            ["ACTIVE subscription can be cancelled", "Cancel active subscription", "Status = CANCELLED, cancelledAt set", "src/features/subscriptions/lib/subscription-lifecycle.ts", "High", "Automated"],
-            ["Cannot cancel already CANCELLED", "Cancel cancelled subscription", "Error: already cancelled", "src/features/subscriptions/lib/subscription-lifecycle.ts", "High", "Automated"],
-            ["CANCELLED can be reactivated", "Reactivate cancelled subscription", "Status = ACTIVE, new renewal date", "src/features/subscriptions/lib/subscription-lifecycle.ts", "High", "Automated"],
-            ["Cannot reactivate ACTIVE", "Reactivate active subscription", "Error: already active", "src/features/subscriptions/lib/subscription-lifecycle.ts", "High", "Automated"],
-            ["History entry created on status change", "Cancel or reactivate", "SubscriptionHistory record created", "src/features/subscriptions/lib/subscription-lifecycle.ts", "Medium", "Automated"]
+        "Subscription Updates": [
+            ["Edit page loads subscription data", "Navigate to /admin/subscriptions/[id]/edit", "Form pre-filled with existing data", "src/app/admin/(operations)/subscriptions/[id]/edit/page.tsx", "High", "Manual"],
+            ["Service name can be updated", "Edit service name", "Name updated, history entry created", "src/app/api/subscriptions/[id]/route.ts", "High", "Automated"],
+            ["Cost change triggers QAR recalculation", "Change cost from USD 100 to USD 200", "costQAR recalculated automatically", "src/lib/core/currency.ts", "High", "Automated"],
+            ["Currency change triggers QAR recalculation", "Change currency from USD to EUR", "costQAR recalculated for new currency", "src/lib/core/currency.ts", "High", "Automated"],
+            ["Renewal date can be updated", "Change renewal date", "Date updated successfully", "src/app/api/subscriptions/[id]/route.ts", "High", "Automated"],
+            ["Assigned member can be changed", "Change assignedMemberId", "Member updated, history entry for reassignment", "src/app/api/subscriptions/[id]/route.ts", "High", "Automated"],
+            ["Billing cycle can be changed", "Change from MONTHLY to YEARLY", "Cycle updated successfully", "src/app/api/subscriptions/[id]/route.ts", "Medium", "Automated"],
+            ["Category can be updated", "Change category", "Category updated", "src/app/api/subscriptions/[id]/route.ts", "Medium", "Automated"],
+            ["Vendor can be updated", "Change vendor name", "Vendor updated", "src/app/api/subscriptions/[id]/route.ts", "Medium", "Automated"],
+            ["Notes can be updated", "Add or change notes", "Notes saved", "src/app/api/subscriptions/[id]/route.ts", "Low", "Automated"],
+            ["Validation applies on update", "Update with invalid data", "Validation errors returned", "src/app/api/subscriptions/[id]/route.ts", "High", "Automated"],
+            ["Cannot update non-existent subscription", "PUT /api/subscriptions/[invalid-id]", "404 Not Found", "src/app/api/subscriptions/[id]/route.ts", "High", "Automated"]
+        ],
+        "Subscription Lifecycle - Cancel": [
+            ["ACTIVE subscription can be cancelled", "Cancel active subscription", "Status = CANCELLED, cancelledAt set", "src/features/subscriptions/lib/subscription-lifecycle.ts", "Critical", "Automated"],
+            ["Cannot cancel already CANCELLED", "Cancel cancelled subscription", "Error: Subscription is already cancelled", "src/features/subscriptions/lib/subscription-lifecycle.ts", "High", "Automated"],
+            ["Cancel dialog requires cancellation date", "Open cancel dialog, leave date empty", "Cannot submit without date", "src/app/admin/(operations)/subscriptions/[id]/page.tsx", "High", "Manual"],
+            ["Cancel dialog cancellation date required", "Submit cancel without date", "Validation error: cancellationDate required", "src/app/api/subscriptions/[id]/cancel/route.ts", "High", "Automated"],
+            ["Cancellation reason optional", "Cancel without reason", "Subscription cancelled, reason null", "src/app/api/subscriptions/[id]/cancel/route.ts", "Medium", "Automated"],
+            ["Cancellation reason saved when provided", "Cancel with reason text", "Reason saved to subscription and history", "src/app/api/subscriptions/[id]/cancel/route.ts", "Medium", "Automated"],
+            ["History entry created on cancel", "Cancel subscription", "SubscriptionHistory entry with action=CANCELLED", "src/features/subscriptions/lib/subscription-lifecycle.ts", "High", "Automated"],
+            ["Cancel button only shown for ACTIVE", "View CANCELLED subscription detail", "Cancel button not visible", "src/app/admin/(operations)/subscriptions/[id]/page.tsx", "Medium", "Manual"]
+        ],
+        "Subscription Lifecycle - Reactivate": [
+            ["CANCELLED can be reactivated", "Reactivate cancelled subscription", "Status = ACTIVE, cancelledAt cleared", "src/features/subscriptions/lib/subscription-lifecycle.ts", "Critical", "Automated"],
+            ["Cannot reactivate ACTIVE", "Reactivate active subscription", "Error: Subscription is already active", "src/features/subscriptions/lib/subscription-lifecycle.ts", "High", "Automated"],
+            ["Reactivate dialog requires new renewal date", "Open reactivate dialog, leave date empty", "Cannot submit without renewalDate", "src/app/admin/(operations)/subscriptions/[id]/page.tsx", "High", "Manual"],
+            ["Reactivate sets new renewal date", "Reactivate with renewalDate", "renewalDate updated to new value", "src/app/api/subscriptions/[id]/reactivate/route.ts", "High", "Automated"],
+            ["Reactivation notes optional", "Reactivate without notes", "Subscription reactivated, notes null", "src/app/api/subscriptions/[id]/reactivate/route.ts", "Medium", "Automated"],
+            ["Reactivation notes saved when provided", "Reactivate with notes", "Notes saved to history entry", "src/app/api/subscriptions/[id]/reactivate/route.ts", "Medium", "Automated"],
+            ["History entry created on reactivate", "Reactivate subscription", "SubscriptionHistory entry with action=REACTIVATED", "src/features/subscriptions/lib/subscription-lifecycle.ts", "High", "Automated"],
+            ["Reactivate button only shown for CANCELLED", "View ACTIVE subscription detail", "Reactivate button not visible", "src/app/admin/(operations)/subscriptions/[id]/page.tsx", "Medium", "Manual"],
+            ["Cancellation reason cleared on reactivate", "Reactivate subscription", "cancellationReason set to null", "src/features/subscriptions/lib/subscription-lifecycle.ts", "Medium", "Automated"]
         ],
         "Billing Cycles": [
-            ["MONTHLY adds 1 month to renewal", "Create monthly subscription", "Next renewal = purchase + 1 month", "src/features/subscriptions/utils/renewal-date.ts", "High", "Automated"],
-            ["YEARLY adds 1 year to renewal", "Create yearly subscription", "Next renewal = purchase + 1 year", "src/features/subscriptions/utils/renewal-date.ts", "High", "Automated"],
-            ["ONE_TIME has no renewal", "Create one-time subscription", "Renewal date optional/null", "src/features/subscriptions/utils/renewal-date.ts", "Medium", "Automated"],
-            ["Calculate cycles between dates", "Query billing periods", "Correct number of cycles", "src/features/subscriptions/lib/subscription-lifecycle.ts", "Medium", "Automated"]
+            ["MONTHLY subscription renewal calculation", "Create monthly subscription", "Renewal date = purchaseDate + 1 month", "src/features/subscriptions/utils/renewal-date.ts", "High", "Automated"],
+            ["YEARLY subscription renewal calculation", "Create yearly subscription", "Renewal date = purchaseDate + 1 year", "src/features/subscriptions/utils/renewal-date.ts", "High", "Automated"],
+            ["ONE_TIME subscription no auto-renewal", "Create one-time subscription", "Renewal date optional, no recurring", "src/features/subscriptions/utils/renewal-date.ts", "Medium", "Automated"],
+            ["QUARTERLY subscription renewal calculation", "Create quarterly subscription", "Renewal date = purchaseDate + 3 months", "src/features/subscriptions/utils/renewal-date.ts", "High", "Automated"],
+            ["Billing cycle displayed on list", "View subscription list", "Shows billing cycle badge (Monthly/Yearly/etc)", "src/app/admin/(operations)/subscriptions/page.tsx", "Medium", "Manual"],
+            ["Billing cycle displayed on detail", "View subscription detail", "Shows billing cycle in details section", "src/app/admin/(operations)/subscriptions/[id]/page.tsx", "Medium", "Manual"],
+            ["Filter by MONTHLY cycle", "Filter billingCycle=MONTHLY", "Only monthly subscriptions shown", "src/app/api/subscriptions/route.ts", "Medium", "Automated"],
+            ["Filter by ONE_TIME cycle", "Filter billingCycle=ONE_TIME", "Only one-time subscriptions shown", "src/app/api/subscriptions/route.ts", "Medium", "Automated"]
         ],
-        "Subscription Search & Filtering": [
-            ["Search by service name", "Search with service name", "Matching subscriptions returned", "src/app/api/subscriptions/route.ts", "High", "Automated"],
-            ["Filter by status", "Filter status=ACTIVE", "Only active shown", "src/app/api/subscriptions/route.ts", "High", "Automated"],
-            ["Filter by renewal window", "Filter renewalWindowDays=30", "Subscriptions expiring in 30 days", "src/app/api/subscriptions/route.ts", "High", "Automated"],
-            ["Filter by billing cycle", "Filter billingCycle=MONTHLY", "Only monthly shown", "src/app/api/subscriptions/route.ts", "Medium", "Automated"],
-            ["Sort by renewal date", "Sort by renewalDate asc", "Nearest renewals first", "src/app/api/subscriptions/route.ts", "Medium", "Automated"]
+        "Search and Filtering": [
+            ["Search by service name", "Search 'Microsoft 365'", "Matching subscriptions returned", "src/app/api/subscriptions/route.ts", "High", "Automated"],
+            ["Search by vendor name", "Search 'Adobe'", "Subscriptions with vendor Adobe returned", "src/app/api/subscriptions/route.ts", "High", "Automated"],
+            ["Search by subscription tag", "Search 'BCE-SUB-2501'", "Matching subscription returned", "src/app/api/subscriptions/route.ts", "High", "Automated"],
+            ["Search case-insensitive", "Search 'MICROSOFT' or 'microsoft'", "Same results returned", "src/app/api/subscriptions/route.ts", "Medium", "Automated"],
+            ["Filter by status ACTIVE", "Filter status=ACTIVE", "Only active subscriptions shown", "src/app/api/subscriptions/route.ts", "High", "Automated"],
+            ["Filter by status CANCELLED", "Filter status=CANCELLED", "Only cancelled subscriptions shown", "src/app/api/subscriptions/route.ts", "High", "Automated"],
+            ["Filter by category", "Filter category='Software'", "Only matching category shown", "src/app/api/subscriptions/route.ts", "Medium", "Automated"],
+            ["Filter by assigned member", "Filter assignedMemberId=[id]", "Only that member's subscriptions shown", "src/app/api/subscriptions/route.ts", "Medium", "Automated"],
+            ["Filter by renewal window", "Filter renewalWindowDays=30", "Subscriptions renewing in 30 days", "src/app/api/subscriptions/route.ts", "High", "Automated"],
+            ["Filters API returns filter options", "GET /api/subscriptions/filters", "Returns categories, statuses, billing cycles", "src/app/api/subscriptions/filters/route.ts", "Medium", "Automated"],
+            ["Sort by renewal date ascending", "Sort sortBy=renewalDate&sortOrder=asc", "Nearest renewals first", "src/app/api/subscriptions/route.ts", "Medium", "Automated"],
+            ["Sort by renewal date descending", "Sort sortBy=renewalDate&sortOrder=desc", "Furthest renewals first", "src/app/api/subscriptions/route.ts", "Medium", "Automated"],
+            ["Sort by cost descending", "Sort sortBy=cost&sortOrder=desc", "Highest cost first", "src/app/api/subscriptions/route.ts", "Medium", "Automated"],
+            ["Pagination works correctly", "Request page=2&limit=10", "Returns correct page of results", "src/app/api/subscriptions/route.ts", "Medium", "Automated"],
+            ["Clear all filters", "Reset all filter controls", "Shows all subscriptions", "src/app/admin/(operations)/subscriptions/page.tsx", "Medium", "Manual"],
+            ["Combined filters work", "Filter status=ACTIVE AND category=Software", "Only matching subscriptions shown", "src/app/api/subscriptions/route.ts", "Medium", "Automated"]
         ],
-        "Subscription Import/Export": [
-            ["Export subscriptions to CSV", "Click export", "CSV downloaded", "src/app/api/subscriptions/export/route.ts", "High", "E2E"],
-            ["Import subscriptions from CSV", "Upload valid CSV", "Subscriptions created", "src/app/api/subscriptions/import/route.ts", "High", "E2E"],
-            ["Export subscriptions", "Click export button", "CSV file downloaded", "src/app", "Medium", "Manual"],
-            ["Import subscriptions", "Upload valid CSV", "Subscriptions created/updated", "src/app", "Medium", "Manual"],
-            ["Import with errors", "Upload invalid CSV", "Errors displayed for invalid rows", "src/app", "Medium", "Manual"],
-            ["Download template", "Click template button", "CSV template downloaded", "src/app", "Medium", "Manual"]
+        "Import/Export": [
+            ["Export subscriptions to CSV", "Click export button", "CSV file downloaded with all fields", "src/app/api/subscriptions/export/route.ts", "High", "E2E"],
+            ["Export includes all columns", "Check exported CSV", "Contains: serviceName, vendor, cost, currency, billingCycle, dates, etc", "src/app/api/subscriptions/export/route.ts", "Medium", "Manual"],
+            ["Export respects current filters", "Filter then export", "Only filtered subscriptions exported", "src/app/api/subscriptions/export/route.ts", "Medium", "Automated"],
+            ["Download import template", "Click template button", "CSV template downloaded with headers", "src/app/admin/(operations)/subscriptions/page.tsx", "Medium", "Manual"],
+            ["Import valid CSV", "Upload valid CSV file", "Subscriptions created successfully", "src/app/api/subscriptions/import/route.ts", "High", "E2E"],
+            ["Import with missing required fields", "Upload CSV missing serviceName", "Row error: serviceName required", "src/features/subscriptions/lib/subscription-import.ts", "High", "Automated"],
+            ["Import with invalid dates", "Upload CSV with invalid date format", "Row error: invalid date format", "src/features/subscriptions/lib/subscription-import.ts", "High", "Automated"],
+            ["Import with invalid billing cycle", "Upload CSV with billingCycle=WEEKLY", "Row error: invalid billingCycle", "src/features/subscriptions/lib/subscription-import.ts", "Medium", "Automated"],
+            ["Import shows row-by-row errors", "Upload CSV with some invalid rows", "Shows which rows failed and why", "src/app/admin/(operations)/subscriptions/page.tsx", "Medium", "Manual"],
+            ["Import assigns tenant ID", "Import subscriptions", "All imported subscriptions have correct tenantId", "src/app/api/subscriptions/import/route.ts", "Critical", "Automated"],
+            ["Import generates tags", "Import subscriptions", "Tags auto-generated for each subscription", "src/app/api/subscriptions/import/route.ts", "High", "Automated"]
         ],
-        "Subscription Management": [
-            ["Create subscription", "All fields", "Tag format: ORG-SUB-YYMM-SEQ (e.g., BCE-SUB-2501-001)", "src/app", "Medium", "Manual"],
-            ["Renewal date validation", "Renewal before purchase", "Validation error", "src/app", "Medium", "Manual"],
-            ["Billing cycle", "MONTHLY, YEARLY, ONE_TIME", "All work correctly", "src/app", "Medium", "Manual"],
-            ["Cancel subscription", "Cancel active", "Status = CANCELLED", "src/app", "Medium", "Manual"],
-            ["Reactivate", "Reactivate cancelled", "Status = ACTIVE, new dates", "src/app", "Medium", "Manual"],
-            ["Assign to member", "Assign subscription", "assignedMemberId set", "src/app", "Medium", "Manual"],
-            ["Cost tracking", "Track per-subscription costs", "Calculates total cost across billing periods", "src/app", "Medium", "Manual"],
-            ["Reactivate expired subscription", "Reactivate with new renewal date", "Requires new renewalDate, creates new active period", "src/app", "Medium", "Manual"],
-            ["Unassign cancelled subscription", "Remove assignee from CANCELLED", "Works, updates record", "src/app", "Medium", "Manual"],
-            ["Renewal date manual entry", "Enter renewal date manually", "User must provide renewal date (not auto-calculated)", "src/app", "Medium", "Manual"],
-            ["Zero-cost subscription", "Create with cost = 0", "Validation error (cost must be positive or omitted)", "src/app", "Medium", "Manual"],
-            ["Currency conversion date", "USD subscription, rate changes", "Uses current or locked rate", "src/app", "Medium", "Manual"],
-            ["Mid-period cost change", "Update cost during active period", "Cost updated, affects future calculations (no pro-rating)", "src/app", "Medium", "Manual"],
-            ["Multiple subscriptions same vendor", "3 subs from same supplier", "All tracked separately", "src/app", "Medium", "Manual"]
+        "Cost Tracking": [
+            ["Cost displayed in original currency", "View subscription with USD cost", "Shows '$100 USD'", "src/app/admin/(operations)/subscriptions/[id]/page.tsx", "Medium", "Manual"],
+            ["QAR equivalent displayed", "View subscription with USD cost", "Shows QAR equivalent amount", "src/app/admin/(operations)/subscriptions/[id]/page.tsx", "Medium", "Manual"],
+            ["Exchange rate applied correctly", "Create USD subscription", "costQAR = cost * USD_TO_QAR rate", "src/lib/core/currency.ts", "High", "Automated"],
+            ["QAR subscriptions no conversion", "Create QAR subscription", "costQAR = cost (1:1)", "src/lib/core/currency.ts", "High", "Automated"],
+            ["Monthly cost summary on list page", "View subscription list", "Shows total monthly cost", "src/app/admin/(operations)/subscriptions/page.tsx", "Medium", "Manual"],
+            ["Annual cost projection", "View subscription list", "Shows annual projection based on billing cycles", "src/app/admin/(operations)/subscriptions/page.tsx", "Medium", "Manual"],
+            ["Cost included in active count only", "View cost summary", "Only ACTIVE subscriptions in totals", "src/app/api/subscriptions/route.ts", "High", "Automated"],
+            ["Cost update triggers recalculation", "Update subscription cost", "costQAR recalculated", "src/app/api/subscriptions/[id]/route.ts", "High", "Automated"],
+            ["Null cost handled", "Create subscription without cost", "cost and costQAR both null", "src/app/api/subscriptions/route.ts", "Medium", "Automated"],
+            ["Cost filtering works", "Filter by cost range", "Only subscriptions in range shown", "src/app/api/subscriptions/route.ts", "Low", "Automated"]
         ],
-        "Subscription Filters & Search": [
-            ["Search by vendor", "Search vendor name", "Finds matching subscriptions", "src/app", "Medium", "Manual"],
-            ["Clear filters", "Clear all filters", "Shows all subscriptions", "src/app", "Medium", "Manual"]
+        "Subscription Assignment": [
+            ["Subscription requires assigned member", "Create without assignedMemberId", "Validation error", "src/features/subscriptions/validations/subscriptions.ts", "Critical", "Automated"],
+            ["Assigned member must exist", "Assign to non-existent member ID", "Error: Member not found", "src/app/api/subscriptions/route.ts", "High", "Automated"],
+            ["Assigned member must be in same tenant", "Assign to member from different tenant", "Error: Member not found", "src/app/api/subscriptions/route.ts", "Critical", "Automated"],
+            ["Assignment date tracked", "Create subscription with assignment", "assignmentDate saved", "src/app/api/subscriptions/route.ts", "Medium", "Automated"],
+            ["Reassignment creates history", "Change assigned member", "History entry with action=REASSIGNED", "src/app/api/subscriptions/[id]/route.ts", "High", "Automated"],
+            ["View assigned member name", "View subscription detail", "Shows assigned member's name", "src/app/admin/(operations)/subscriptions/[id]/page.tsx", "Medium", "Manual"],
+            ["Filter by assigned member", "Filter by assignedMemberId", "Only that member's subscriptions", "src/app/api/subscriptions/route.ts", "Medium", "Automated"],
+            ["Member dropdown shows tenant users", "Open assignment dropdown", "Shows only users in current tenant", "src/app/admin/(operations)/subscriptions/new/page.tsx", "High", "Manual"]
+        ],
+        "Employee View": [
+            ["Employee can access subscriptions page", "Navigate to /employee/subscriptions", "Page loads successfully", "src/app/employee/(operations)/subscriptions/page.tsx", "High", "E2E"],
+            ["Employee sees all subscriptions read-only", "View as employee", "All subscriptions visible, no edit/delete buttons", "src/app/employee/(operations)/subscriptions/page.tsx", "High", "Manual"],
+            ["Employee cannot access create page", "Navigate to /employee/subscriptions/new", "Redirect or 403", "src/middleware.ts", "Critical", "Automated"],
+            ["Employee cannot access edit page", "Navigate to /employee/subscriptions/[id]/edit", "Redirect or 403", "src/middleware.ts", "Critical", "Automated"],
+            ["Employee can filter by 'My Subscriptions'", "Toggle 'My Subscriptions' filter", "Only subscriptions assigned to employee shown", "src/app/employee/(operations)/subscriptions/page.tsx", "Medium", "Manual"],
+            ["Employee can search subscriptions", "Search by service name", "Matching subscriptions shown", "src/app/employee/(operations)/subscriptions/page.tsx", "Medium", "Manual"],
+            ["Employee can view subscription detail", "Click on subscription row", "Detail page shows read-only view", "src/app/employee/(operations)/subscriptions/[id]/page.tsx", "Medium", "Manual"],
+            ["Employee detail page no action buttons", "View subscription detail as employee", "No Cancel/Reactivate/Edit/Delete buttons", "src/app/employee/(operations)/subscriptions/[id]/page.tsx", "High", "Manual"],
+            ["Employee can see assigned member name", "View subscription detail", "Shows who subscription is assigned to", "src/app/employee/(operations)/subscriptions/[id]/page.tsx", "Low", "Manual"],
+            ["Employee pagination works", "Navigate pages as employee", "Pagination functions correctly", "src/app/employee/(operations)/subscriptions/page.tsx", "Medium", "Manual"]
+        ],
+        "Renewal Date Calculations": [
+            ["calculateRenewalDate for MONTHLY", "Call with MONTHLY cycle", "Returns date + 1 month", "src/features/subscriptions/utils/renewal-date.ts", "High", "Automated"],
+            ["calculateRenewalDate for YEARLY", "Call with YEARLY cycle", "Returns date + 1 year", "src/features/subscriptions/utils/renewal-date.ts", "High", "Automated"],
+            ["calculateRenewalDate for QUARTERLY", "Call with QUARTERLY cycle", "Returns date + 3 months", "src/features/subscriptions/utils/renewal-date.ts", "High", "Automated"],
+            ["calculateRenewalDate for ONE_TIME", "Call with ONE_TIME cycle", "Returns null (no renewal)", "src/features/subscriptions/utils/renewal-date.ts", "Medium", "Automated"],
+            ["Month-end handling", "Calculate from Jan 31 + 1 month", "Returns Feb 28/29 (handles short months)", "src/features/subscriptions/utils/renewal-date.ts", "Medium", "Automated"],
+            ["Leap year handling", "Calculate from Feb 29 + 1 year", "Returns Feb 28 next year", "src/features/subscriptions/utils/renewal-date.ts", "Low", "Automated"],
+            ["Renewal date displayed on list", "View subscription list", "Shows renewal date column", "src/app/admin/(operations)/subscriptions/page.tsx", "Medium", "Manual"]
+        ],
+        "Access Control": [
+            ["Admin can create subscriptions", "Create as admin", "Subscription created", "src/app/api/subscriptions/route.ts", "Critical", "Automated"],
+            ["Admin can edit subscriptions", "Edit as admin", "Subscription updated", "src/app/api/subscriptions/[id]/route.ts", "Critical", "Automated"],
+            ["Admin can delete subscriptions", "Delete as admin", "Subscription deleted", "src/app/api/subscriptions/[id]/route.ts", "Critical", "Automated"],
+            ["Admin can cancel subscriptions", "Cancel as admin", "Subscription cancelled", "src/app/api/subscriptions/[id]/cancel/route.ts", "Critical", "Automated"],
+            ["Employee cannot create subscriptions", "POST /api/subscriptions as employee", "403 Forbidden", "src/app/api/subscriptions/route.ts", "Critical", "Automated"],
+            ["Employee cannot delete subscriptions", "DELETE /api/subscriptions/[id] as employee", "403 Forbidden", "src/app/api/subscriptions/[id]/route.ts", "Critical", "Automated"],
+            ["Tenant isolation on read", "Query subscriptions", "Only current tenant's subscriptions returned", "src/app/api/subscriptions/route.ts", "Critical", "Automated"],
+            ["Tenant isolation on write", "Create subscription", "tenantId automatically set to current tenant", "src/app/api/subscriptions/route.ts", "Critical", "Automated"]
+        ],
+        "Subscription Deletion": [
+            ["Delete subscription removes record", "Delete subscription", "Subscription hard deleted from database", "src/app/api/subscriptions/[id]/route.ts", "High", "Automated"],
+            ["Delete subscription removes history", "Delete subscription with history", "All SubscriptionHistory entries deleted", "src/app/api/subscriptions/[id]/route.ts", "High", "Automated"],
+            ["Delete confirmation required", "Click delete button", "Confirmation dialog shown", "src/app/admin/(operations)/subscriptions/[id]/page.tsx", "Medium", "Manual"],
+            ["Cannot delete non-existent subscription", "DELETE /api/subscriptions/[invalid-id]", "404 Not Found", "src/app/api/subscriptions/[id]/route.ts", "Medium", "Automated"]
         ]
     },
     "8. Suppliers Module": {
@@ -3026,38 +3111,15 @@ const T = {
             ["Role assigned", "Accept invitation", "Has invited role", "src/app", "Medium", "Manual"]
         ]
     },
-    "63. Asset Categories": {
-        "Category Management": [
-            ["Category name required", "Leave name empty", "Validation error", "src/app", "Medium", "Manual"],
-            ["Duplicate name", "Use existing name", "Error 'name exists'", "src/app", "Medium", "Manual"],
-            ["Delete with assets", "Delete used category", "Error or reassign prompt", "src/app", "Medium", "Manual"],
-            ["Category icon", "Set category icon", "Icon displayed", "src/app", "Medium", "Manual"]
-        ],
-        "Depreciation Categories": [
-            ["Set useful life years", "Enter years", "Saved correctly", "src/app", "Medium", "Manual"]
-        ]
-    },
     "64. Data Import & Export": {
-        "Asset Import": [
-            ["Import valid CSV", "Upload valid file", "Assets imported", "src/app", "Medium", "Manual"],
-            ["Import invalid CSV", "Upload malformed file", "Error with details", "src/app", "Medium", "Manual"],
-            ["Missing required fields", "CSV missing columns", "Validation errors listed", "src/app", "Medium", "Manual"],
-            ["Duplicate asset tags", "CSV has duplicates", "Duplicates flagged", "src/app", "Medium", "Manual"],
-            ["Import preview", "Upload CSV", "Shows preview before import", "src/app", "Medium", "Manual"],
-            ["Partial import", "Some rows invalid", "Valid rows imported, errors shown", "src/app", "Medium", "Manual"],
-            ["Large file import", "Upload 1000+ rows", "Imports successfully", "src/app", "Medium", "Manual"]
-        ],
-        "Asset Export": [
-            ["Export all assets", "Click export", "CSV downloaded", "src/app", "Medium", "Manual"],
-            ["Export filtered", "Filter then export", "Only filtered exported", "src/app", "Medium", "Manual"],
-            ["Export columns", "Check CSV columns", "All fields included", "src/app", "Medium", "Manual"]
-        ],
-        "Subscription Import/Export": [
-            ["Invalid data", "Upload bad data", "Errors shown", "src/app", "Medium", "Manual"]
-        ],
         "Purchase Request Export": [
-            ["Export PRs", "Click export", "CSV/PDF downloaded", "src/app", "Medium", "Manual"],
-            ["Export with filters", "Filter then export", "Filtered data exported", "src/app", "Medium", "Manual"]
+            ["Export PRs", "Click export", "CSV/PDF downloaded", "src/app/api/purchase-requests/export/route.ts", "Medium", "Manual"],
+            ["Export with filters", "Filter then export", "Filtered data exported", "src/app/api/purchase-requests/export/route.ts", "Medium", "Manual"]
+        ],
+        "Supplier Import/Export": [
+            ["Import suppliers", "Upload CSV", "Suppliers imported", "src/app/api/suppliers/import/route.ts", "Medium", "Manual"],
+            ["Export suppliers", "Click export", "CSV downloaded", "src/app/api/suppliers/export/route.ts", "Medium", "Manual"],
+            ["Import invalid supplier data", "Upload bad CSV", "Errors shown", "src/app/api/suppliers/import/route.ts", "Medium", "Manual"]
         ]
     },
     "65. Employee Change Requests": {
@@ -3118,14 +3180,6 @@ const T = {
         ]
     },
     "69. Soft Delete & Trash": {
-        "Deleted Assets": [
-            ["View deleted assets", "Navigate to /admin/assets/deleted", "Shows deleted assets", "src/app", "Medium", "Manual"],
-            ["Restore asset", "Click restore", "Asset restored", "src/app", "Medium", "Manual"],
-            ["Permanent delete", "Click permanent delete", "Asset gone forever", "src/app", "Medium", "Manual"],
-            ["Confirm permanent", "Confirm dialog", "Requires confirmation", "src/app", "Medium", "Manual"],
-            ["Auto cleanup", "After 30 days", "Automatically purged", "src/app", "Medium", "Manual"],
-            ["Search deleted", "Search in trash", "Finds deleted items", "src/app", "Medium", "Manual"]
-        ],
         "Deleted Employees": [
             ["View deleted employees", "Navigate to deleted", "Shows deleted employees", "src/app", "Medium", "Manual"],
             ["Restore employee", "Click restore", "Employee restored", "src/app", "Medium", "Manual"],
@@ -3194,48 +3248,6 @@ const T = {
             ["Quick actions", "Click quick action", "Navigates correctly", "src/app", "Medium", "Manual"],
             ["Widget loading", "Slow connection", "Shows loading state", "src/app", "Medium", "Manual"],
             ["Widget error", "API fails", "Shows error gracefully", "src/app", "Medium", "Manual"]
-        ]
-    },
-    "73. Asset Clone & Utilization": {
-        "Asset Clone": [
-            ["Clone asset", "Click clone button", "Opens clone dialog", "src/app", "Medium", "Manual"],
-            ["Clone with new tag", "Clone asset", "New tag generated", "src/app", "Medium", "Manual"],
-            ["Clone copies fields", "Clone asset", "All fields copied", "src/app", "Medium", "Manual"],
-            ["Clone resets assignment", "Clone assigned asset", "New asset unassigned", "src/app", "Medium", "Manual"],
-            ["Clone serial number", "Clone asset with serial", "Serial cleared/new", "src/app", "Medium", "Manual"],
-            ["Clone warranty", "Clone asset", "Warranty info copied", "src/app", "Medium", "Manual"],
-            ["Bulk clone", "Clone multiple", "All cloned", "src/app", "Medium", "Manual"]
-        ],
-        "Asset Utilization": [
-            ["View utilization", "Check asset utilization", "Shows usage stats", "src/app", "Medium", "Manual"],
-            ["Utilization percentage", "Check percentage", "Calculated correctly", "src/app", "Medium", "Manual"],
-            ["Idle assets", "Filter idle assets", "Shows unassigned", "src/app", "Medium", "Manual"],
-            ["Over-utilized", "Check over-used assets", "Flagged appropriately", "src/app", "Medium", "Manual"],
-            ["Utilization report", "Generate report", "Shows utilization data", "src/app", "Medium", "Manual"],
-            ["Utilization history", "View history", "Shows usage over time", "src/app", "Medium", "Manual"]
-        ]
-    },
-    "74. Subscription Billing": {
-        "Billing Periods": [
-            ["View billing periods", "Check subscription periods", "Shows billing history", "src/app", "Medium", "Manual"],
-            ["Current period", "Check current", "Shows active period", "src/app", "Medium", "Manual"],
-            ["Past periods", "View history", "Shows past periods", "src/app", "Medium", "Manual"],
-            ["Period dates", "Check dates", "Correct start/end", "src/app", "Medium", "Manual"],
-            ["Period cost", "Check cost", "Shows period amount", "src/app", "Medium", "Manual"]
-        ],
-        "Cost Tracking": [
-            ["Monthly cost", "Check monthly", "Shows total monthly", "src/app", "Medium", "Manual"],
-            ["Annual cost", "Check yearly", "Shows annual projection", "src/app", "Medium", "Manual"],
-            ["Cost by category", "Group by category", "Shows breakdown", "src/app", "Medium", "Manual"],
-            ["Cost trends", "View trends", "Shows cost over time", "src/app", "Medium", "Manual"],
-            ["Budget alerts", "Set budget", "Alert when exceeded", "src/app", "Medium", "Manual"]
-        ],
-        "Subscription Lifecycle": [
-            ["Cancel confirmation", "Cancel sub", "Requires confirmation", "src/app", "Medium", "Manual"],
-            ["Reactivate subscription", "Reactivate cancelled", "Status = ACTIVE", "src/app", "Medium", "Manual"],
-            ["Cannot reactivate expired", "Try reactivate expired", "Error shown", "src/app", "Medium", "Manual"],
-            ["Cancellation reason", "Cancel with reason", "Reason saved", "src/app", "Medium", "Manual"],
-            ["Cancellation date", "Cancel sub", "End date recorded", "src/app", "Medium", "Manual"]
         ]
     },
     "75. Error Handling & Edge Cases": {
