@@ -70,22 +70,24 @@ export function EmployeeLeaveSection({ userId }: EmployeeLeaveSectionProps) {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Fetch balances for this user
-        const balancesRes = await fetch(`/api/leave/balances?userId=${userId}&year=${currentYear}&ps=100`);
+        // Fetch all data in parallel for better performance
+        const [balancesRes, requestsRes, userRes] = await Promise.all([
+          fetch(`/api/leave/balances?userId=${userId}&year=${currentYear}&ps=100`),
+          fetch(`/api/leave/requests?userId=${userId}&ps=10`),
+          fetch(`/api/users/${userId}`),
+        ]);
+
+        // Process responses
         if (balancesRes.ok) {
           const data = await balancesRes.json();
           setBalances(data.balances || []);
         }
 
-        // Fetch recent requests for this user
-        const requestsRes = await fetch(`/api/leave/requests?userId=${userId}&ps=10`);
         if (requestsRes.ok) {
           const data = await requestsRes.json();
           setRequests(data.requests || []);
         }
 
-        // Fetch user's HR profile for date of joining (for accrual calculation)
-        const userRes = await fetch(`/api/users/${userId}`);
         if (userRes.ok) {
           const userData = await userRes.json();
           if (userData.hrProfile?.dateOfJoining) {
