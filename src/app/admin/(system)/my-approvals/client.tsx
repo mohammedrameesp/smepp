@@ -191,7 +191,7 @@ export function MyApprovalsClient({ approvals, grouped }: MyApprovalsClientProps
   }> = [
     { key: 'all', label: 'All', count: approvals.length },
     { key: 'LEAVE_REQUEST', label: 'Leave', count: grouped.LEAVE_REQUEST.length, icon: Palmtree },
-    { key: 'SPEND_REQUEST', label: 'Purchase', count: grouped.SPEND_REQUEST.length, icon: ShoppingCart },
+    { key: 'SPEND_REQUEST', label: 'Spend', count: grouped.SPEND_REQUEST.length, icon: ShoppingCart },
     { key: 'ASSET_REQUEST', label: 'Asset', count: grouped.ASSET_REQUEST.length, icon: Package },
   ];
 

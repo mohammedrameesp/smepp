@@ -176,7 +176,7 @@ export default async function MyApprovalsPage() {
         <StatChipGroup>
           <StatChip value={approvals.counts.total} label="total pending" color="amber" />
           <StatChip value={approvals.counts.LEAVE_REQUEST} label="leave" color="blue" hideWhenZero />
-          <StatChip value={approvals.counts.SPEND_REQUEST} label="purchase" color="emerald" hideWhenZero />
+          <StatChip value={approvals.counts.SPEND_REQUEST} label="spend" color="emerald" hideWhenZero />
           <StatChip value={approvals.counts.ASSET_REQUEST} label="asset" color="purple" hideWhenZero />
         </StatChipGroup>
       </PageHeader>

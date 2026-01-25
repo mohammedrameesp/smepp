@@ -407,7 +407,7 @@ export default async function AdminDashboard() {
       id: 'spend-requests',
       href: '/admin/spend-requests',
       icon: '🛒',
-      title: 'Purchases',
+      title: 'Spend Requests',
       description: 'Requests and approvals',
       count: dashboardData?.stats.pendingSpendRequests || 0,
       badge: dashboardData?.stats.pendingSpendRequests ? `${dashboardData.stats.pendingSpendRequests} pending` : null,
