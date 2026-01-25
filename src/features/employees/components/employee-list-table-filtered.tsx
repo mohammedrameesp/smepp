@@ -22,7 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { TableFilterBar } from '@/components/ui/table-filter-bar';
 import { useClientDataTable } from '@/hooks/use-client-data-table';
-import { Download, User, Package, Clock, CheckCircle2, Circle, ShieldCheck, Briefcase, UserCog, CircleDollarSign, Users } from 'lucide-react';
+import { Download, User, Package, Clock, CheckCircle2, Circle, ShieldCheck, Briefcase, UserCog, CircleDollarSign, Users, Crown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { EmployeeActions } from './employee-actions';
 import { SPONSORSHIP_TYPES } from '@/lib/data/constants';
@@ -32,15 +32,17 @@ import { getDisplayEmail } from '@/lib/utils/user-display';
 const PAGE_SIZE = 50;
 
 // Role derivation for simplified access control display
-type AccessRole = 'Admin' | 'Manager' | 'HR' | 'Finance' | 'Operations' | 'Employee';
+type AccessRole = 'Owner' | 'Admin' | 'Manager' | 'HR' | 'Finance' | 'Operations' | 'Employee';
 
 function deriveAccessRole(employee: {
+  isOwner?: boolean;
   isAdmin?: boolean;
   isManager?: boolean;
   hasHRAccess?: boolean;
   hasFinanceAccess?: boolean;
   hasOperationsAccess?: boolean;
 }): AccessRole {
+  if (employee.isOwner) return 'Owner';
   if (employee.isAdmin) return 'Admin';
   if (employee.isManager) return 'Manager';
   if (employee.hasHRAccess) return 'HR';
@@ -50,6 +52,7 @@ function deriveAccessRole(employee: {
 }
 
 const ROLE_STYLES: Record<AccessRole, { bg: string; text: string; icon: typeof ShieldCheck }> = {
+  Owner: { bg: 'bg-amber-100', text: 'text-amber-700', icon: Crown },
   Admin: { bg: 'bg-red-100', text: 'text-red-700', icon: ShieldCheck },
   Manager: { bg: 'bg-purple-100', text: 'text-purple-700', icon: UserCog },
   HR: { bg: 'bg-green-100', text: 'text-green-700', icon: UserCog },
@@ -65,6 +68,7 @@ export interface EmployeeListItem {
   image: string | null;
   role: string;
   createdAt: string;
+  isOwner?: boolean;
   isAdmin?: boolean;
   isManager?: boolean;
   hasOperationsAccess?: boolean;
