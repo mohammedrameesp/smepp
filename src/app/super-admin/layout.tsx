@@ -28,6 +28,7 @@ import {
   AlertOctagon,
 } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
+import { TwoFactorBanner } from '@/components/super-admin/two-factor-banner';
 
 const mainNavItems = [
   { icon: LayoutDashboard, href: '/super-admin', title: 'Dashboard' },
@@ -373,6 +374,8 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
 
       <main className="flex-1 lg:ml-56">
         <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
+          {/* 2FA Enforcement Banner */}
+          {!session.user.twoFactorEnabled && <TwoFactorBanner />}
           <div className="px-4 lg:px-8 py-4 flex items-center justify-between gap-4">
             {/* Mobile menu button */}
             <button onClick={() => setMobileMenuOpen(true)} className="lg:hidden p-2 -ml-2 text-gray-600 hover:text-gray-900">

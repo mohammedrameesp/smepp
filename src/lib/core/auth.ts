@@ -374,6 +374,7 @@ providers.push(
           name: user.name,
           isSuperAdmin: true,
           isTeamMember: false,
+          twoFactorEnabled: user.twoFactorEnabled,
         };
       } catch (error) {
         console.error('Super admin login token verification failed:', error);
@@ -644,7 +645,7 @@ export const authOptions: NextAuthOptions = {
           if (authUserId) {
             const userSecurityCheck = await prisma.user.findUnique({
               where: { id: authUserId },
-              select: { passwordChangedAt: true, isDeleted: true },
+              select: { passwordChangedAt: true, isDeleted: true, twoFactorEnabled: true },
             });
 
             if (userSecurityCheck) {
@@ -659,6 +660,11 @@ export const authOptions: NextAuthOptions = {
                 if (userSecurityCheck.passwordChangedAt.getTime() > tokenIssuedAt) {
                   return { ...token, id: undefined };
                 }
+              }
+
+              // Refresh 2FA status for super admins (updates after 2FA is enabled)
+              if (token.isSuperAdmin) {
+                token.twoFactorEnabled = userSecurityCheck.twoFactorEnabled;
               }
             }
           }
@@ -745,11 +751,12 @@ export const authOptions: NextAuthOptions = {
             // Get super admin status from database
             const dbUser = await prisma.user.findUnique({
               where: { email: user.email! },
-              select: { id: true, isSuperAdmin: true },
+              select: { id: true, isSuperAdmin: true, twoFactorEnabled: true },
             });
             if (dbUser) {
               token.id = dbUser.id;
               token.isSuperAdmin = dbUser.isSuperAdmin;
+              token.twoFactorEnabled = dbUser.twoFactorEnabled;
               // isEmployee is now on TeamMember, not User
               // Super admins are not employees (they're platform admins)
               token.isEmployee = false;
@@ -870,6 +877,7 @@ export const authOptions: NextAuthOptions = {
           session.user.email = token.email as string;
           session.user.name = token.name as string;
           session.user.isSuperAdmin = token.isSuperAdmin as boolean || false;
+          session.user.twoFactorEnabled = token.twoFactorEnabled as boolean || false;
           session.user.isEmployee = token.isEmployee as boolean ?? true;
           session.user.onboardingComplete = token.onboardingComplete as boolean ?? false;
 
@@ -986,6 +994,7 @@ declare module 'next-auth' {
       name?: string | null;
       image?: string | null;
       isSuperAdmin: boolean;
+      twoFactorEnabled: boolean; // true = 2FA is enabled for this user (super admin)
       isEmployee: boolean; // false = system/service account
       onboardingComplete: boolean; // true = completed HR profile onboarding
       // TeamMember-specific fields
@@ -1014,6 +1023,7 @@ declare module 'next-auth' {
     userId?: string; // User.id for auth operations (when isTeamMember=true, id is TeamMember.id)
     isTeamMember?: boolean;
     isSuperAdmin?: boolean;
+    twoFactorEnabled?: boolean;
     isOwner?: boolean;
     isEmployee?: boolean;
     onboardingComplete?: boolean;
