@@ -1,6 +1,6 @@
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { unstable_noStore as noStore } from 'next/cache';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
@@ -86,42 +86,52 @@ export default async function AdminLayout({
   // Prevent any caching of this layout
   noStore();
 
+  // Check for super admin impersonation (set by middleware)
+  const headersList = await headers();
+  const isImpersonating = headersList.get('x-impersonating') === 'true';
+  const impersonatorEmail = headersList.get('x-impersonator-email');
+  const impersonatedTenantId = headersList.get('x-tenant-id');
+
   const session = await getServerSession(authOptions);
 
   // PROD-003: Auth bypass only when DEV_AUTH_ENABLED is explicitly set
   // Never bypass auth based on NODE_ENV alone (could be misconfigured in production)
   const devAuthEnabled = process.env.DEV_AUTH_ENABLED === 'true';
 
-  // Redirect unauthenticated users
-  if (!session && !devAuthEnabled) {
-    redirect('/login');
-  }
+  // If impersonating, skip normal auth checks - middleware already validated the token
+  if (!isImpersonating) {
+    // Redirect unauthenticated users
+    if (!session && !devAuthEnabled) {
+      redirect('/login');
+    }
 
-  // Redirect users without any admin/department access
-  // Check isAdmin flag OR department access flags OR canApprove (managers)
-  const isAdmin = session?.user?.isOwner || session?.user?.isAdmin;
-  const hasAdminAccess = isAdmin ||
-                         session?.user?.hasFinanceAccess ||
-                         session?.user?.hasHRAccess ||
-                         session?.user?.hasOperationsAccess ||
-                         session?.user?.canApprove; // Managers can access for approvals
+    // Redirect users without any admin/department access
+    // Check isAdmin flag OR department access flags OR canApprove (managers)
+    const isAdmin = session?.user?.isOwner || session?.user?.isAdmin;
+    const hasAdminAccess = isAdmin ||
+                           session?.user?.hasFinanceAccess ||
+                           session?.user?.hasHRAccess ||
+                           session?.user?.hasOperationsAccess ||
+                           session?.user?.canApprove; // Managers can access for approvals
 
-  if (!hasAdminAccess && !devAuthEnabled) {
-    redirect('/employee');
-  }
-
-  // SEC-CRIT-1: Enforce view-mode cookie for admins who switched to employee view
-  // This prevents admins from bypassing employee view by manually navigating to /admin
-  if (isAdmin) {
-    const cookieStore = await cookies();
-    const viewModeCookie = cookieStore.get('durj-view-mode');
-    if (viewModeCookie?.value === 'employee') {
+    if (!hasAdminAccess && !devAuthEnabled) {
       redirect('/employee');
+    }
+
+    // SEC-CRIT-1: Enforce view-mode cookie for admins who switched to employee view
+    // This prevents admins from bypassing employee view by manually navigating to /admin
+    if (isAdmin) {
+      const cookieStore = await cookies();
+      const viewModeCookie = cookieStore.get('durj-view-mode');
+      if (viewModeCookie?.value === 'employee') {
+        redirect('/employee');
+      }
     }
   }
 
-  // Get tenant-scoped data
-  const tenantId = session?.user?.organizationId;
+  // Get tenant-scoped data - use impersonated tenant ID if impersonating
+  const tenantId = isImpersonating ? impersonatedTenantId : session?.user?.organizationId;
+  const isAdmin = isImpersonating ? true : (session?.user?.isOwner || session?.user?.isAdmin);
 
   let badgeCounts = {
     pendingChangeRequests: 0,
@@ -170,11 +180,13 @@ export default async function AdminLayout({
       enabledModules={orgSettings.enabledModules}
       aiChatEnabled={orgSettings.aiChatEnabled}
       isAdmin={isAdmin}
-      canApprove={session?.user?.canApprove}
-      hasFinanceAccess={session?.user?.hasFinanceAccess}
-      hasHRAccess={session?.user?.hasHRAccess}
-      hasOperationsAccess={session?.user?.hasOperationsAccess}
+      canApprove={isImpersonating ? true : session?.user?.canApprove}
+      hasFinanceAccess={isImpersonating ? true : session?.user?.hasFinanceAccess}
+      hasHRAccess={isImpersonating ? true : session?.user?.hasHRAccess}
+      hasOperationsAccess={isImpersonating ? true : session?.user?.hasOperationsAccess}
       whatsAppVerification={whatsAppVerification}
+      isImpersonating={isImpersonating}
+      impersonatorEmail={impersonatorEmail}
     >
       {children}
     </AdminLayoutClient>

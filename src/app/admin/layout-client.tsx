@@ -34,6 +34,8 @@ interface AdminLayoutClientProps {
   hasHRAccess?: boolean;
   hasOperationsAccess?: boolean;
   whatsAppVerification?: WhatsAppVerificationData;
+  isImpersonating?: boolean;
+  impersonatorEmail?: string | null;
 }
 
 export function AdminLayoutClient({
@@ -47,6 +49,10 @@ export function AdminLayoutClient({
   hasHRAccess = false,
   hasOperationsAccess = false,
   whatsAppVerification,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  isImpersonating = false,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  impersonatorEmail,
 }: AdminLayoutClientProps) {
   const [commandPaletteOpen, setCommandPaletteOpen] = React.useState(false);
   const [showWhatsAppDialog, setShowWhatsAppDialog] = React.useState(
