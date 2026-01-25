@@ -2,11 +2,58 @@ import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { cookies, headers } from 'next/headers';
 import { unstable_noStore as noStore } from 'next/cache';
+import { jwtVerify } from 'jose';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { AdminLayoutClient } from './layout-client';
 import { checkWhatsAppVerificationNeeded } from '@/lib/utils/whatsapp-verification-check';
 import type { Metadata } from 'next';
+
+// Impersonation cookie name (must match middleware)
+const IMPERSONATION_COOKIE = 'durj-impersonation';
+
+// Get JWT secret for impersonation token verification
+function getJwtSecret(): Uint8Array | null {
+  const secret = process.env.NEXTAUTH_SECRET;
+  if (!secret) return null;
+  return new TextEncoder().encode(secret);
+}
+
+// Verify impersonation cookie and extract data
+async function getImpersonationFromCookie(): Promise<{
+  isImpersonating: boolean;
+  tenantId?: string;
+  impersonatorEmail?: string;
+}> {
+  try {
+    const cookieStore = await cookies();
+    const cookie = cookieStore.get(IMPERSONATION_COOKIE);
+
+    if (!cookie?.value) {
+      return { isImpersonating: false };
+    }
+
+    const secret = getJwtSecret();
+    if (!secret) {
+      return { isImpersonating: false };
+    }
+
+    const { payload } = await jwtVerify(cookie.value, secret);
+
+    // Verify the token purpose
+    if (payload.purpose !== 'impersonation') {
+      return { isImpersonating: false };
+    }
+
+    return {
+      isImpersonating: true,
+      tenantId: payload.organizationId as string,
+      impersonatorEmail: payload.superAdminEmail as string,
+    };
+  } catch {
+    return { isImpersonating: false };
+  }
+}
 
 // Force dynamic rendering to prevent caching issues
 export const dynamic = 'force-dynamic';
@@ -86,11 +133,12 @@ export default async function AdminLayout({
   // Prevent any caching of this layout
   noStore();
 
-  // Check for super admin impersonation (set by middleware)
-  const headersList = await headers();
-  const isImpersonating = headersList.get('x-impersonating') === 'true';
-  const impersonatorEmail = headersList.get('x-impersonator-email');
-  const impersonatedTenantId = headersList.get('x-tenant-id');
+  // Check for super admin impersonation by reading the cookie directly
+  // This is more reliable than middleware headers which may not propagate correctly
+  const impersonation = await getImpersonationFromCookie();
+  const isImpersonating = impersonation.isImpersonating;
+  const impersonatorEmail = impersonation.impersonatorEmail || null;
+  const impersonatedTenantId = impersonation.tenantId || null;
 
   const session = await getServerSession(authOptions);
 
