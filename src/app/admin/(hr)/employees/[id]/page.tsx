@@ -242,25 +242,39 @@ export default async function AdminEmployeeDetailPage({ params }: Props) {
       {/* Tabbed Content */}
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
         <Tabs defaultValue="hr" className="w-full">
-          <div className="border-b border-slate-100 px-5">
-            <TabsList className="bg-transparent h-14 p-0 gap-4">
-              <TabsTrigger value="hr" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-blue-500 rounded-none h-14 px-0">
-                <FileText className="h-4 w-4 mr-2" />
-                Profile
-              </TabsTrigger>
-              <TabsTrigger value="assets" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-blue-500 rounded-none h-14 px-0">
-                <Package className="h-4 w-4 mr-2" />
-                Assets ({employee._count.assets})
-              </TabsTrigger>
-              <TabsTrigger value="subscriptions" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-blue-500 rounded-none h-14 px-0">
-                <CreditCard className="h-4 w-4 mr-2" />
-                Subscriptions ({employee._count.subscriptions})
-              </TabsTrigger>
-              <TabsTrigger value="leave" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-blue-500 rounded-none h-14 px-0">
-                <Calendar className="h-4 w-4 mr-2" />
-                Leave
-              </TabsTrigger>
-            </TabsList>
+          <div className="border-b border-slate-200 px-5">
+            <nav className="flex gap-6" aria-label="Tabs">
+              <TabsList className="bg-transparent h-auto p-0 gap-6 border-none shadow-none">
+                <TabsTrigger
+                  value="hr"
+                  className="relative bg-transparent px-0 py-4 text-sm font-medium text-slate-500 hover:text-slate-900 data-[state=active]:bg-transparent data-[state=active]:text-slate-900 data-[state=active]:shadow-none rounded-none border-none after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-transparent data-[state=active]:after:bg-blue-600"
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  Profile
+                </TabsTrigger>
+                <TabsTrigger
+                  value="assets"
+                  className="relative bg-transparent px-0 py-4 text-sm font-medium text-slate-500 hover:text-slate-900 data-[state=active]:bg-transparent data-[state=active]:text-slate-900 data-[state=active]:shadow-none rounded-none border-none after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-transparent data-[state=active]:after:bg-blue-600"
+                >
+                  <Package className="h-4 w-4 mr-2" />
+                  Assets ({employee._count.assets})
+                </TabsTrigger>
+                <TabsTrigger
+                  value="subscriptions"
+                  className="relative bg-transparent px-0 py-4 text-sm font-medium text-slate-500 hover:text-slate-900 data-[state=active]:bg-transparent data-[state=active]:text-slate-900 data-[state=active]:shadow-none rounded-none border-none after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-transparent data-[state=active]:after:bg-blue-600"
+                >
+                  <CreditCard className="h-4 w-4 mr-2" />
+                  Subscriptions ({employee._count.subscriptions})
+                </TabsTrigger>
+                <TabsTrigger
+                  value="leave"
+                  className="relative bg-transparent px-0 py-4 text-sm font-medium text-slate-500 hover:text-slate-900 data-[state=active]:bg-transparent data-[state=active]:text-slate-900 data-[state=active]:shadow-none rounded-none border-none after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-transparent data-[state=active]:after:bg-blue-600"
+                >
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Leave
+                </TabsTrigger>
+              </TabsList>
+            </nav>
           </div>
 
           <TabsContent value="hr" className="m-0 p-5">
