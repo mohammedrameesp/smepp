@@ -1104,6 +1104,7 @@ model Subscription {
 
 enum SubscriptionHistoryAction {
   CREATED
+  UPDATED
   REACTIVATED
   CANCELLED
   RENEWED

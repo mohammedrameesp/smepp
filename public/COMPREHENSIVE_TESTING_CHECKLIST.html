@@ -1108,7 +1108,7 @@ const T = {
         ],
         "Subscription Updates": [
             ["Edit page loads subscription data", "Navigate to /admin/subscriptions/[id]/edit", "Form pre-filled with existing data", "src/app/admin/(operations)/subscriptions/[id]/edit/page.tsx", "High", "Manual"],
-            ["Service name can be updated", "Edit service name", "Name updated, activity logged (no history entry)", "src/app/api/subscriptions/[id]/route.ts", "High", "Automated"],
+            ["Service name can be updated", "Edit service name", "Name updated, UPDATED history entry created", "src/app/api/subscriptions/[id]/route.ts", "High", "Automated"],
             ["Cost change triggers QAR recalculation", "Change cost from USD 100 to USD 200", "costQAR recalculated automatically", "src/lib/core/currency.ts", "High", "Automated"],
             ["Currency change triggers QAR recalculation", "Change currency from USD to EUR", "costQAR recalculated for new currency", "src/lib/core/currency.ts", "High", "Automated"],
             ["Renewal date can be updated", "Change renewal date", "Date updated successfully", "src/app/api/subscriptions/[id]/route.ts", "High", "Automated"],

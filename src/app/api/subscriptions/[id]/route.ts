@@ -244,11 +244,73 @@ async function updateSubscriptionHandler(request: NextRequest, context: APIConte
       },
     });
 
-    // Track member assignment changes in history with custom date
+    // Track general field changes in history (excluding assignment which is handled separately)
     // DESIGN: SubscriptionHistory uses global prisma (not tenant-scoped) because:
     // - SubscriptionHistory table has no tenantId column
     // - Tenant isolation is enforced via subscriptionId FK - subscription was already
     //   verified above using tenant-scoped query, so history inherits that isolation
+    const changeDescriptions: string[] = [];
+
+    // Helper to format values for comparison and display
+    const formatValue = (val: unknown): string => {
+      if (val === null || val === undefined) return '';
+      if (val instanceof Date) return val.toISOString().split('T')[0];
+      if (typeof val === 'object' && 'toNumber' in val) return String((val as { toNumber: () => number }).toNumber());
+      return String(val);
+    };
+
+    // Track changes for each field
+    if (data.serviceName !== undefined && formatValue(data.serviceName) !== formatValue(currentSubscription.serviceName)) {
+      changeDescriptions.push(`serviceName: ${currentSubscription.serviceName} → ${data.serviceName}`);
+    }
+    if (data.vendor !== undefined && formatValue(data.vendor) !== formatValue(currentSubscription.vendor)) {
+      changeDescriptions.push(`vendor: ${currentSubscription.vendor ?? 'empty'} → ${data.vendor ?? 'empty'}`);
+    }
+    if (data.category !== undefined && formatValue(data.category) !== formatValue(currentSubscription.category)) {
+      changeDescriptions.push(`category: ${currentSubscription.category ?? 'empty'} → ${data.category ?? 'empty'}`);
+    }
+    if (data.costPerCycle !== undefined && formatValue(data.costPerCycle) !== formatValue(currentSubscription.costPerCycle)) {
+      changeDescriptions.push(`costPerCycle: ${formatValue(currentSubscription.costPerCycle) || 'empty'} → ${formatValue(data.costPerCycle) || 'empty'}`);
+    }
+    if (data.costCurrency !== undefined && formatValue(data.costCurrency) !== formatValue(currentSubscription.costCurrency)) {
+      changeDescriptions.push(`costCurrency: ${currentSubscription.costCurrency ?? 'empty'} → ${data.costCurrency ?? 'empty'}`);
+    }
+    if (data.billingCycle !== undefined && formatValue(data.billingCycle) !== formatValue(currentSubscription.billingCycle)) {
+      changeDescriptions.push(`billingCycle: ${currentSubscription.billingCycle} → ${data.billingCycle}`);
+    }
+    if (purchaseDate !== undefined) {
+      const oldDate = currentSubscription.purchaseDate ? formatValue(currentSubscription.purchaseDate) : 'empty';
+      const newDate = purchaseDate ? purchaseDate : 'empty';
+      if (oldDate !== newDate) {
+        changeDescriptions.push(`purchaseDate: ${oldDate} → ${newDate}`);
+      }
+    }
+    if (renewalDate !== undefined) {
+      const oldDate = currentSubscription.renewalDate ? formatValue(currentSubscription.renewalDate) : 'empty';
+      const newDate = renewalDate ? renewalDate : 'empty';
+      if (oldDate !== newDate) {
+        changeDescriptions.push(`renewalDate: ${oldDate} → ${newDate}`);
+      }
+    }
+    if (data.notes !== undefined && formatValue(data.notes) !== formatValue(currentSubscription.notes)) {
+      changeDescriptions.push(`notes: updated`);
+    }
+
+    // Create UPDATED history entry if any tracked fields changed
+    if (changeDescriptions.length > 0) {
+      await prisma.subscriptionHistory.create({
+        data: {
+          subscriptionId: subscription.id,
+          action: 'UPDATED',
+          oldStatus: currentSubscription.status,
+          newStatus: subscription.status,
+          notes: `Updated: ${changeDescriptions.join(', ')}`,
+          performedById: currentUserId,
+        },
+      });
+    }
+
+    // Track member assignment changes in history with custom date
     if (data.assignedMemberId !== undefined && data.assignedMemberId !== currentSubscription.assignedMemberId) {
       const oldMemberName = currentSubscription.assignedMember?.name || currentSubscription.assignedMember?.email || 'Unassigned';
       const newMemberName = subscription.assignedMember?.name || subscription.assignedMember?.email || 'Unassigned';
