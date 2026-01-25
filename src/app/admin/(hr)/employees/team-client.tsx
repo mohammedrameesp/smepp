@@ -488,6 +488,9 @@ export function TeamClient({ initialStats }: TeamClientProps) {
                               <SelectItem value="HR">HR</SelectItem>
                               <SelectItem value="FINANCE">Finance</SelectItem>
                               <SelectItem value="OPERATIONS">Operations</SelectItem>
+                              {!['ADMIN', 'MANAGER', 'HR', 'FINANCE', 'OPERATIONS'].includes(member.role) && (
+                                <SelectItem value={member.role}>{roleLabels[member.role] || member.role}</SelectItem>
+                              )}
                             </SelectContent>
                           </Select>
                         ) : (
