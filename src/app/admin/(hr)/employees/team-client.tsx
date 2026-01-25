@@ -39,7 +39,7 @@ import {
   Briefcase,
   AtSign,
 } from 'lucide-react';
-import { formatDistanceToNow, format } from 'date-fns';
+import { formatDistanceToNow, format, differenceInDays, differenceInHours } from 'date-fns';
 import { EmployeeListTableClient } from '@/features/employees/components';
 import { cn } from '@/lib/core/utils';
 
@@ -550,7 +550,15 @@ export function TeamClient({ initialStats }: TeamClientProps) {
                       ) : (
                         <span className="text-xs text-amber-600 flex items-center gap-1">
                           <Clock className="h-3 w-3" />
-                          Expires {format(new Date(inv.expiresAt), 'MMM d')}
+                          {(() => {
+                            const expiryDate = new Date(inv.expiresAt);
+                            const daysLeft = differenceInDays(expiryDate, new Date());
+                            const hoursLeft = differenceInHours(expiryDate, new Date());
+                            if (daysLeft > 1) return `${daysLeft} days to accept`;
+                            if (daysLeft === 1) return '1 day to accept';
+                            if (hoursLeft > 0) return `${hoursLeft} hours to accept`;
+                            return 'Expires soon';
+                          })()}
                         </span>
                       )}
                     </div>
@@ -637,7 +645,15 @@ export function TeamClient({ initialStats }: TeamClientProps) {
                         ) : member.pendingStatus?.expiresAt ? (
                           <span className="text-xs text-amber-600 flex items-center gap-1">
                             <Clock className="h-3 w-3" />
-                            Expires {format(new Date(member.pendingStatus.expiresAt), 'MMM d')}
+                            {(() => {
+                              const expiryDate = new Date(member.pendingStatus.expiresAt);
+                              const daysLeft = differenceInDays(expiryDate, new Date());
+                              const hoursLeft = differenceInHours(expiryDate, new Date());
+                              if (daysLeft > 1) return `${daysLeft} days to accept`;
+                              if (daysLeft === 1) return '1 day to accept';
+                              if (hoursLeft > 0) return `${hoursLeft} hours to accept`;
+                              return 'Expires soon';
+                            })()}
                           </span>
                         ) : (
                           <span className="text-xs text-amber-600 flex items-center gap-1">
