@@ -116,20 +116,12 @@ async function getSubscriptionsHandler(request: NextRequest, context: APIContext
     const skip = (p - 1) * ps;
 
     // Build orderBy clause
-    // When sorting by renewalDate, show ACTIVE subscriptions first (by nearest renewal),
-    // then push CANCELLED to the bottom
-    let orderBy: Record<string, string>[] | Record<string, string>;
-
-    if (sort === 'renewalDate') {
-      // Alphabetically: ACTIVE < CANCELLED
-      // Sort by status 'asc' puts ACTIVE first, CANCELLED at bottom
-      orderBy = [
-        { status: 'asc' },
-        { renewalDate: order }
-      ];
-    } else {
-      orderBy = { [sort]: order };
-    }
+    // Always show ACTIVE subscriptions first, CANCELLED at bottom
+    // Alphabetically: ACTIVE < CANCELLED, so status 'asc' achieves this
+    const orderBy: Record<string, string>[] = [
+      { status: 'asc' },
+      { [sort]: order }
+    ];
 
     // Fetch subscriptions using tenant-scoped prisma (auto-filters by tenantId)
     const [subscriptions, total] = await Promise.all([
