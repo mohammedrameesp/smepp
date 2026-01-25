@@ -2,12 +2,14 @@
  * @file error-logger.ts
  * @description Centralized error logging service for tracking all errors across the application.
  *              Logs API errors, client errors, and service errors to the database.
+ *              Sends email notifications to super admin for all logged errors.
  * @module lib/core
  */
 
 import { prisma } from './prisma';
 import { Prisma } from '@prisma/client';
 import logger from './log';
+import { sendEmail } from './email';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -58,7 +60,8 @@ const ERROR_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes between identical errors
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Log a system error to the database. Non-blocking - failures are logged but don't throw.
+ * Log a system error to the database and notify super admin via email.
+ * Non-blocking - failures are logged but don't throw.
  * Use this function to track errors across the application.
  */
 export async function handleSystemError(context: ErrorContext): Promise<void> {
@@ -88,8 +91,11 @@ export async function handleSystemError(context: ErrorContext): Promise<void> {
       }
     }
 
-    // Persist to database
-    await persistErrorLog(context);
+    // Run both operations in parallel
+    await Promise.all([
+      persistErrorLog(context),
+      notifySuperAdmin(context),
+    ]);
   } catch (error) {
     // Never throw - just log the meta-error
     logger.error(
@@ -137,6 +143,52 @@ async function persistErrorLog(context: ErrorContext): Promise<void> {
     logger.error(
       { error: error instanceof Error ? error.message : String(error), source: context.source },
       'Failed to persist error to database'
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SUPER ADMIN NOTIFICATIONS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Send email to super admin about the system error.
+ */
+async function notifySuperAdmin(context: ErrorContext): Promise<void> {
+  const superAdminEmail = process.env.SUPER_ADMIN_EMAIL;
+  if (!superAdminEmail) {
+    logger.warn('SUPER_ADMIN_EMAIL not configured - cannot send error alert');
+    return;
+  }
+
+  try {
+    const { systemErrorAlertEmail } = await import('./error-alert-templates');
+    const emailData = systemErrorAlertEmail(context);
+
+    const result = await sendEmail({
+      to: superAdminEmail,
+      subject: emailData.subject,
+      html: emailData.html,
+      text: emailData.text,
+    });
+
+    if (result.success) {
+      logger.info(
+        { type: context.type, source: context.source, severity: context.severity },
+        'Sent error alert to super admin'
+      );
+    } else {
+      // Don't recurse - just log the meta-failure
+      logger.error(
+        { error: result.error, source: context.source },
+        'Failed to send error alert to super admin'
+      );
+    }
+  } catch (error) {
+    // Don't throw - this is already an error handler
+    logger.error(
+      { error: error instanceof Error ? error.message : String(error) },
+      'Exception while notifying super admin about error'
     );
   }
 }
