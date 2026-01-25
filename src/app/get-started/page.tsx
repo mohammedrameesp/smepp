@@ -313,7 +313,7 @@ export default function GetStartedPage() {
               The link expires in 7 days.
             </p>
             <div className="gs-didnt-receive">
-              <span>Didn&apos;t receive the email?</span>
+              <span>Didn&apos;t receive the email? Check your junk/spam folder and mark it as &quot;not junk&quot; if found.</span>
               <div className="gs-didnt-receive-actions">
                 <button
                   type="button"
