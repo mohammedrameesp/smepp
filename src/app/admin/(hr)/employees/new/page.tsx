@@ -399,6 +399,10 @@ export default function NewEmployeePage() {
                     // Reset WPS when unchecking employee
                     if (!checked) {
                       setValue('isOnWps', false);
+                      // If current role is EMPLOYEE, switch to OPERATIONS (service account default)
+                      if (role === 'EMPLOYEE') {
+                        setValue('role', 'OPERATIONS');
+                      }
                     } else {
                       setValue('isOnWps', true);
                     }
@@ -600,7 +604,9 @@ export default function NewEmployeePage() {
                     <SelectValue placeholder="Select a role" />
                   </SelectTrigger>
                   <SelectContent>
-                    {USER_ROLES.map((roleOption) => (
+                    {USER_ROLES
+                      .filter((roleOption) => isEmployee || roleOption !== 'EMPLOYEE')
+                      .map((roleOption) => (
                       <SelectItem key={roleOption} value={roleOption}>
                         <div className="flex items-center gap-2">
                           <span className={`w-2 h-2 rounded-full ${ROLE_CONFIG[roleOption].color}`} />
