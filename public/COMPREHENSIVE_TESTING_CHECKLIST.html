@@ -1145,7 +1145,6 @@ const T = {
             ["MONTHLY subscription renewal calculation", "Create monthly subscription", "Renewal date = purchaseDate + 1 month", "src/features/subscriptions/utils/renewal-date.ts", "High", "Automated"],
             ["YEARLY subscription renewal calculation", "Create yearly subscription", "Renewal date = purchaseDate + 1 year", "src/features/subscriptions/utils/renewal-date.ts", "High", "Automated"],
             ["ONE_TIME subscription no auto-renewal", "Create one-time subscription", "Renewal date optional, no recurring", "src/features/subscriptions/utils/renewal-date.ts", "Medium", "Automated"],
-            ["QUARTERLY subscription renewal calculation", "Create quarterly subscription", "Renewal date = purchaseDate + 3 months", "src/features/subscriptions/utils/renewal-date.ts", "High", "Automated"],
             ["Billing cycle displayed on list", "View subscription list", "Shows billing cycle badge (Monthly/Yearly/etc)", "src/app/admin/(operations)/subscriptions/page.tsx", "Medium", "Manual"],
             ["Billing cycle displayed on detail", "View subscription detail", "Shows billing cycle in details section", "src/app/admin/(operations)/subscriptions/[id]/page.tsx", "Medium", "Manual"],
             ["Filter by MONTHLY cycle", "Filter billingCycle=MONTHLY", "Only monthly subscriptions shown", "src/app/api/subscriptions/route.ts", "Medium", "Automated"],
@@ -1219,7 +1218,6 @@ const T = {
         "Renewal Date Calculations": [
             ["calculateRenewalDate for MONTHLY", "Call with MONTHLY cycle", "Returns date + 1 month", "src/features/subscriptions/utils/renewal-date.ts", "High", "Automated"],
             ["calculateRenewalDate for YEARLY", "Call with YEARLY cycle", "Returns date + 1 year", "src/features/subscriptions/utils/renewal-date.ts", "High", "Automated"],
-            ["calculateRenewalDate for QUARTERLY", "Call with QUARTERLY cycle", "Returns date + 3 months", "src/features/subscriptions/utils/renewal-date.ts", "High", "Automated"],
             ["calculateRenewalDate for ONE_TIME", "Call with ONE_TIME cycle", "Returns null (no renewal)", "src/features/subscriptions/utils/renewal-date.ts", "Medium", "Automated"],
             ["Month-end handling", "Calculate from Jan 31 + 1 month", "Returns Feb 28/29 (handles short months)", "src/features/subscriptions/utils/renewal-date.ts", "Medium", "Automated"],
             ["Leap year handling", "Calculate from Feb 29 + 1 year", "Returns Feb 28 next year", "src/features/subscriptions/utils/renewal-date.ts", "Low", "Automated"],
