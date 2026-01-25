@@ -19,7 +19,6 @@ import {
   AlertTriangle,
   Loader2,
   Lock,
-  ExternalLink,
   Info,
   Database,
 } from 'lucide-react';
@@ -38,7 +37,6 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
-import Link from 'next/link';
 
 // Icon mapping
 const ICONS: Record<string, React.ElementType> = {
@@ -58,18 +56,6 @@ const CATEGORY_LABELS: Record<string, string> = {
   operations: 'Operations',
   hr: 'Human Resources',
   system: 'System',
-};
-
-// Module route mapping for "Get Started" links
-const MODULE_ROUTES: Record<string, string> = {
-  assets: '/admin/assets',
-  subscriptions: '/admin/subscriptions',
-  suppliers: '/admin/suppliers',
-  employees: '/admin/employees',
-  leave: '/admin/leave',
-  payroll: '/admin/payroll',
-  'spend-requests': '/admin/spend-requests',
-  documents: '/admin/company-documents',
 };
 
 interface ModuleInfo {
@@ -531,19 +517,10 @@ export default function ModulesPage() {
               </div>
               <DialogFooter>
                 <Button
-                  variant="outline"
                   onClick={() => setInstallDialog({ open: false, module: null, success: false })}
                 >
                   Close
                 </Button>
-                {installDialog.module && MODULE_ROUTES[installDialog.module.id] && (
-                  <Button asChild>
-                    <Link href={MODULE_ROUTES[installDialog.module.id]}>
-                      Get Started
-                      <ExternalLink className="h-4 w-4 ml-2" />
-                    </Link>
-                  </Button>
-                )}
               </DialogFooter>
             </>
           ) : (
