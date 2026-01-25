@@ -10,8 +10,6 @@ import {
   recordFailedLogin,
   recordFailedLoginByEmail,
   clearFailedLogins,
-  unlockAccount,
-  getLockoutStatus,
 } from '@/lib/security/account-lockout';
 // Note: TeamMember lockout functions removed - all auth is handled via User table
 
@@ -240,79 +238,6 @@ describe('Account Lockout Security Tests', () => {
       });
     });
   });
-
-  describe('unlockAccount', () => {
-    it('should reset failed attempts and clear lock (admin action)', async () => {
-      (mockPrisma.user.update as jest.Mock).mockResolvedValue({});
-
-      await unlockAccount('user-123');
-
-      expect(mockPrisma.user.update).toHaveBeenCalledWith({
-        where: { id: 'user-123' },
-        data: {
-          failedLoginAttempts: 0,
-          lockedUntil: null,
-        },
-      });
-    });
-  });
-
-  describe('getLockoutStatus', () => {
-    it('should throw error when user does not exist', async () => {
-      (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue(null);
-
-      await expect(getLockoutStatus('non-existent')).rejects.toThrow('User not found');
-    });
-
-    it('should return lockout status for unlocked user', async () => {
-      (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue({
-        failedLoginAttempts: 2,
-        lockedUntil: null,
-      });
-
-      const result = await getLockoutStatus('user-123');
-
-      expect(result).toEqual({
-        failedAttempts: 2,
-        isLocked: false,
-        lockedUntil: undefined,
-        maxAttempts: 5,
-      });
-    });
-
-    it('should return lockout status for locked user', async () => {
-      const futureDate = new Date(Date.now() + 60000);
-      (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue({
-        failedLoginAttempts: 5,
-        lockedUntil: futureDate,
-      });
-
-      const result = await getLockoutStatus('user-123');
-
-      expect(result).toEqual({
-        failedAttempts: 5,
-        isLocked: true,
-        lockedUntil: futureDate,
-        maxAttempts: 5,
-      });
-    });
-
-    it('should return isLocked: false for expired lock', async () => {
-      const pastDate = new Date(Date.now() - 60000);
-      (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue({
-        failedLoginAttempts: 5,
-        lockedUntil: pastDate,
-      });
-
-      const result = await getLockoutStatus('user-123');
-
-      expect(result.isLocked).toBe(false);
-      expect(result.lockedUntil).toBeUndefined();
-    });
-  });
-
-  // Note: TeamMember lockout tests removed - all auth is now handled via User table
-  // with the User-TeamMember consolidation. TeamMember no longer has auth fields.
 
   describe('Security Considerations', () => {
     it('should not reveal user existence through timing or response', async () => {

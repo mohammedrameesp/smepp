@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
     // Hash new password
     const passwordHash = await hash(password, 12);
 
-    // Update User: set new password, clear reset token, and invalidate existing sessions
+    // Update User: set new password, clear reset token, clear lockout, and invalidate existing sessions
     await prisma.user.update({
       where: { id: user.id },
       data: {
@@ -131,6 +131,8 @@ export async function POST(request: NextRequest) {
         resetToken: null,
         resetTokenExpiry: null,
         passwordChangedAt: new Date(), // SECURITY: Invalidates all existing sessions
+        failedLoginAttempts: 0, // Clear lockout - user proved ownership via email
+        lockedUntil: null,
       },
     });
 
