@@ -109,6 +109,7 @@ export default function SecuritySettingsPage() {
   const handleStartSetup = async () => {
     setIsSettingUp(true);
     setSetupError('');
+    setError(''); // Clear main error too
 
     try {
       const response = await fetch('/api/super-admin/auth/setup-2fa', {
@@ -118,15 +119,16 @@ export default function SecuritySettingsPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        setSetupError(data.error || 'Failed to start setup');
+        setError(data.error || 'Failed to start setup');
         return;
       }
 
       setSetupData(data);
       setSetupStep('qr');
       setShowSetupDialog(true);
-    } catch {
-      setSetupError('Failed to start 2FA setup');
+    } catch (err) {
+      console.error('2FA setup error:', err);
+      setError('Failed to start 2FA setup. Please try again.');
     } finally {
       setIsSettingUp(false);
     }

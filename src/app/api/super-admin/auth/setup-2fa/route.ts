@@ -10,8 +10,45 @@ import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { generateTOTPSecret } from '@/lib/two-factor/totp';
 import logger from '@/lib/core/log';
+
+/**
+ * Check if encryption is properly configured
+ */
+function checkEncryptionConfig(): { ok: boolean; error?: string } {
+  const key = process.env.TWO_FACTOR_ENCRYPTION_KEY;
+
+  if (!key && process.env.NODE_ENV === 'production') {
+    return {
+      ok: false,
+      error: 'TWO_FACTOR_ENCRYPTION_KEY environment variable is not configured. Please contact your administrator.',
+    };
+  }
+
+  if (!key && !process.env.NEXTAUTH_SECRET) {
+    return {
+      ok: false,
+      error: 'Authentication is not properly configured. Please contact your administrator.',
+    };
+  }
+
+  if (key && key.length !== 64) {
+    return {
+      ok: false,
+      error: 'Encryption key is incorrectly configured. Please contact your administrator.',
+    };
+  }
+
+  return { ok: true };
+}
 export async function POST() {
   try {
+    // Check encryption configuration first
+    const configCheck = checkEncryptionConfig();
+    if (!configCheck.ok) {
+      logger.error({ error: configCheck.error }, '2FA setup failed - encryption not configured');
+      return NextResponse.json({ error: configCheck.error }, { status: 500 });
+    }
+
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.isSuperAdmin) {
@@ -58,9 +95,19 @@ export async function POST() {
       message: 'Scan the QR code with your authenticator app, then verify with a code to enable 2FA.',
     });
   } catch (error) {
-    logger.error({ error: error instanceof Error ? error.message : 'Unknown error', stack: error instanceof Error ? error.stack : undefined }, '2FA setup error');
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    logger.error({ error: errorMessage, stack: error instanceof Error ? error.stack : undefined }, '2FA setup error');
+
+    // Provide more specific error messages based on the error type
+    if (errorMessage.includes('TWO_FACTOR_ENCRYPTION_KEY') || errorMessage.includes('NEXTAUTH_SECRET')) {
+      return NextResponse.json(
+        { error: 'Server encryption is not configured. Please contact your administrator.' },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json(
-      { error: 'Failed to set up 2FA' },
+      { error: 'Failed to set up 2FA. Please try again later.' },
       { status: 500 }
     );
   }
