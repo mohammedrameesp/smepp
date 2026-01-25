@@ -8,6 +8,9 @@ import { prisma } from '@/lib/core/prisma';
 import { createSupplierSchema } from '@/features/suppliers';
 import { logAction } from '@/lib/core/activity';
 import { withErrorHandler } from '@/lib/http/handler';
+import { getAdminMembers } from '@/features/notifications/lib/notification-service';
+import { sendBulkEmailsWithFailureHandling } from '@/lib/core/email-sender';
+import { newSupplierRegistrationEmail } from '@/lib/core/email-templates';
 
 async function registerSupplierHandler(request: NextRequest) {
     // Get tenant from subdomain (set by middleware)
@@ -23,7 +26,7 @@ async function registerSupplierHandler(request: NextRequest) {
     // Look up organization by subdomain slug
     const organization = await prisma.organization.findUnique({
       where: { slug: subdomain.toLowerCase() },
-      select: { id: true, name: true },
+      select: { id: true, name: true, slug: true },
     });
 
     if (!organization) {
@@ -96,6 +99,40 @@ async function registerSupplierHandler(request: NextRequest) {
         category: supplier.category,
       }
     );
+
+    // Notify admins about new supplier registration (non-blocking)
+    const admins = await getAdminMembers(prisma, organization.id);
+    if (admins.length > 0) {
+      const emailData = newSupplierRegistrationEmail({
+        companyName: supplier.name,
+        category: supplier.category || 'General',
+        contactName: supplier.primaryContactName,
+        contactEmail: supplier.primaryContactEmail,
+        country: supplier.country,
+        registrationDate: new Date(),
+        orgSlug: organization.slug,
+        orgName: organization.name,
+      });
+
+      // Fire and forget - don't block the response for email delivery
+      sendBulkEmailsWithFailureHandling(
+        admins.map((admin) => ({
+          to: admin.email,
+          subject: emailData.subject,
+          html: emailData.html,
+          text: emailData.text,
+          module: 'suppliers' as const,
+          action: 'new-registration',
+          tenantId: organization.id,
+          orgName: organization.name,
+          orgSlug: organization.slug,
+          recipientName: admin.email,
+        }))
+      ).catch(() => {
+        // Email failures are logged by sendBulkEmailsWithFailureHandling
+        // Don't let email errors affect the supplier registration response
+      });
+    }
 
     return NextResponse.json({
       message: 'Thank you! Your registration is pending approval.',
