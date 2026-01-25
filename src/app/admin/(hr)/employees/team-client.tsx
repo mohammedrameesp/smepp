@@ -148,9 +148,9 @@ export function TeamClient({ initialStats }: TeamClientProps) {
   const isOwner = session?.user?.isOwner;
   const isAdmin = session?.user?.isOwner || session?.user?.isAdmin;
 
-  // Filter non-employees
+  // Filter non-employees (exclude pending members - they show in Pending section)
   const nonEmployees = useMemo(() =>
-    members.filter((m) => !m.isEmployee),
+    members.filter((m) => !m.isEmployee && !m.pendingStatus?.isPending),
     [members]
   );
 
@@ -171,10 +171,10 @@ export function TeamClient({ initialStats }: TeamClientProps) {
     [invitations, currentTab]
   );
 
-  // Stats
+  // Stats (exclude pending from counts - they show in Pending section)
   const stats = useMemo(() => ({
-    employees: members.filter((m) => m.isEmployee).length,
-    serviceAccounts: members.filter((m) => !m.isEmployee).length,
+    employees: members.filter((m) => m.isEmployee && !m.pendingStatus?.isPending).length,
+    serviceAccounts: members.filter((m) => !m.isEmployee && !m.pendingStatus?.isPending).length,
   }), [members]);
 
   useEffect(() => {
