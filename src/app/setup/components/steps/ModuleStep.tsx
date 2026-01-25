@@ -55,7 +55,7 @@ const DEFAULT_MODULES: Module[] = [
 // Add-on modules: optional features
 const ADDON_MODULES: Module[] = [
   { id: 'documents', name: 'Company Documents', description: 'Document management', icon: FileText },
-  { id: 'purchase-requests', name: 'Spend Requests', description: 'Internal spending approvals', icon: ShoppingCart },
+  { id: 'spend-requests', name: 'Spend Requests', description: 'Internal spending approvals', icon: ShoppingCart },
   { id: 'leave', name: 'Leave Management', description: 'Leave requests & balances', icon: Calendar },
   { id: 'payroll', name: 'Payroll', description: 'Salary & payslips', icon: DollarSign, warning: 'Requires additional configuration' },
 ];

@@ -29,9 +29,9 @@ export const GET = withErrorHandler(async (_request, { tenant }) => {
     maintenanceRecords,
     profileChangeRequests,
     // Purchase Requests
-    purchaseRequests,
-    purchaseRequestItems,
-    purchaseRequestHistory,
+    spendRequests,
+    spendRequestItems,
+    spendRequestHistory,
   ] = await Promise.all([
     prisma.teamMember.findMany({
       where: { tenantId },
@@ -212,7 +212,7 @@ export const GET = withErrorHandler(async (_request, { tenant }) => {
       },
     }),
     // Purchase Requests
-    prisma.purchaseRequest.findMany({
+    prisma.spendRequest.findMany({
       where: { tenantId },
       include: {
         requester: {
@@ -231,11 +231,11 @@ export const GET = withErrorHandler(async (_request, { tenant }) => {
         },
       },
     }),
-    prisma.purchaseRequestItem.findMany({
-      where: { purchaseRequest: { tenantId } },
+    prisma.spendRequestItem.findMany({
+      where: { spendRequest: { tenantId } },
     }),
-    prisma.purchaseRequestHistory.findMany({
-      where: { purchaseRequest: { tenantId } },
+    prisma.spendRequestHistory.findMany({
+      where: { spendRequest: { tenantId } },
       include: {
         performedBy: {
           select: {
@@ -437,7 +437,7 @@ export const GET = withErrorHandler(async (_request, { tenant }) => {
   }));
 
   // Purchase Requests
-  const purchaseRequestsData = purchaseRequests.map(r => ({
+  const spendRequestsData = spendRequests.map(r => ({
     id: r.id,
     referenceNumber: r.referenceNumber,
     requestDate: formatDateForCSV(r.requestDate),
@@ -463,9 +463,9 @@ export const GET = withErrorHandler(async (_request, { tenant }) => {
   }));
 
   // Purchase Request Items
-  const purchaseRequestItemsData = purchaseRequestItems.map(i => ({
+  const spendRequestItemsData = spendRequestItems.map(i => ({
     id: i.id,
-    purchaseRequestId: i.purchaseRequestId,
+    spendRequestId: i.spendRequestId,
     itemNumber: i.itemNumber,
     description: i.description,
     quantity: i.quantity,
@@ -482,9 +482,9 @@ export const GET = withErrorHandler(async (_request, { tenant }) => {
   }));
 
   // Purchase Request History
-  const purchaseRequestHistoryData = purchaseRequestHistory.map(h => ({
+  const spendRequestHistoryData = spendRequestHistory.map(h => ({
     id: h.id,
-    purchaseRequestId: h.purchaseRequestId,
+    spendRequestId: h.spendRequestId,
     action: h.action,
     previousStatus: h.previousStatus || '',
     newStatus: h.newStatus || '',
@@ -510,9 +510,9 @@ export const GET = withErrorHandler(async (_request, { tenant }) => {
     totalMaintenanceRecords: maintenanceRecords.length,
     totalProfileChangeRequests: profileChangeRequests.length,
     // Purchase Requests
-    totalPurchaseRequests: purchaseRequests.length,
-    totalPurchaseRequestItems: purchaseRequestItems.length,
-    totalPurchaseRequestHistory: purchaseRequestHistory.length,
+    totalSpendRequests: spendRequests.length,
+    totalSpendRequestItems: spendRequestItems.length,
+    totalSpendRequestHistory: spendRequestHistory.length,
   }];
 
   // Create Excel file with multiple sheets - ALL data included
@@ -529,9 +529,9 @@ export const GET = withErrorHandler(async (_request, { tenant }) => {
     { name: 'Maintenance', data: maintenanceRecordsData, headers: Object.keys(maintenanceRecordsData[0] || {}).map(key => ({ key, header: key })) },
     { name: 'Profile Changes', data: profileChangeRequestsData, headers: Object.keys(profileChangeRequestsData[0] || {}).map(key => ({ key, header: key })) },
     // Purchase Requests
-    { name: 'Purchase Requests', data: purchaseRequestsData, headers: Object.keys(purchaseRequestsData[0] || {}).map(key => ({ key, header: key })) },
-    { name: 'PR Items', data: purchaseRequestItemsData, headers: Object.keys(purchaseRequestItemsData[0] || {}).map(key => ({ key, header: key })) },
-    { name: 'PR History', data: purchaseRequestHistoryData, headers: Object.keys(purchaseRequestHistoryData[0] || {}).map(key => ({ key, header: key })) },
+    { name: 'Purchase Requests', data: spendRequestsData, headers: Object.keys(spendRequestsData[0] || {}).map(key => ({ key, header: key })) },
+    { name: 'PR Items', data: spendRequestItemsData, headers: Object.keys(spendRequestItemsData[0] || {}).map(key => ({ key, header: key })) },
+    { name: 'PR History', data: spendRequestHistoryData, headers: Object.keys(spendRequestHistoryData[0] || {}).map(key => ({ key, header: key })) },
   ];
 
   const excelBuffer = await arrayToCSV([], [], sheets);

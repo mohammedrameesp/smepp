@@ -224,7 +224,7 @@ export function AdminTopNav({
                 ))}
 
                 {/* My Approvals with badge - show if user is approver AND any approval-related module is enabled */}
-                {isApprover && (isModuleEnabled('leave') || isModuleEnabled('assets') || isModuleEnabled('purchase-requests')) && (
+                {isApprover && (isModuleEnabled('leave') || isModuleEnabled('assets') || isModuleEnabled('spend-requests')) && (
                   <Link
                     href="/admin/my-approvals"
                     className={cn(

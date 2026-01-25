@@ -94,7 +94,7 @@ function extractDataAccessSummary(
     getPendingLeaveRequests: 'LeaveRequest',
     getAssetDepreciation: 'Asset',
     getPayrollRunStatus: 'PayrollRun',
-    getPurchaseRequestSummary: 'PurchaseRequest',
+    getSpendRequestSummary: 'SpendRequest',
     searchSuppliers: 'Supplier',
     getProjectProgress: 'Project',
   };

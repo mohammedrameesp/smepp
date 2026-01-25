@@ -192,7 +192,7 @@ export interface ActionTokenValidationResult {
 // NOTIFICATION TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export type ApprovalEntityType = 'LEAVE_REQUEST' | 'PURCHASE_REQUEST' | 'ASSET_REQUEST';
+export type ApprovalEntityType = 'LEAVE_REQUEST' | 'SPEND_REQUEST' | 'ASSET_REQUEST';
 
 export interface ApprovalNotificationData {
   tenantId: string;

@@ -69,7 +69,7 @@ const MODULE_ROUTES: Record<string, string> = {
   employees: '/admin/employees',
   leave: '/admin/leave',
   payroll: '/admin/payroll',
-  'purchase-requests': '/admin/purchase-requests',
+  'spend-requests': '/admin/spend-requests',
   documents: '/admin/company-documents',
 };
 

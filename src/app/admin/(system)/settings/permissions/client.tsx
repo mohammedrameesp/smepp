@@ -69,7 +69,7 @@ export function PermissionsClient({
         employees: 'employees',
         leave: 'leave',
         payroll: 'payroll',
-        purchase: 'purchase-requests',
+        purchase: 'spend-requests',
       };
 
       const moduleSlug = moduleMap[modulePrefix];

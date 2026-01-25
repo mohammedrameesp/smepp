@@ -3,7 +3,7 @@
 // - hr/leave → @/features/leave/components
 // - hr/payroll → @/features/payroll/components
 // - hr/onboarding → @/features/onboarding/components
-// - projects/purchase-requests → @/features/purchase-requests/components
+// - projects/spend-requests → @/features/spend-requests/components
 // - system/users → @/features/users/components
 // - system/settings → @/features/settings/components
 // - system/approvals → @/features/approvals/lib

@@ -280,5 +280,5 @@ export const suppliersContent: HelpModule = {
     },
   ],
 
-  relatedModules: ['assets', 'purchase-requests'],
+  relatedModules: ['assets', 'spend-requests'],
 };

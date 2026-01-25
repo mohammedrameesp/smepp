@@ -1,6 +1,6 @@
 /**
- * Tests for Purchase Request Validation Schemas
- * @see src/lib/validations/purchase-request.ts
+ * Tests for Spend Request Validation Schemas
+ * @see src/lib/validations/projects/spend-request.ts
  */
 
 import {
@@ -8,12 +8,12 @@ import {
   costTypeEnum,
   paymentModeEnum,
   billingCycleEnum,
-  purchaseRequestItemSchema,
-  createPurchaseRequestSchema,
-  updatePurchaseRequestSchema,
-  updatePurchaseRequestStatusSchema,
-  updatePurchaseRequestItemSchema,
-} from '@/lib/validations/projects/purchase-request';
+  spendRequestItemSchema,
+  createSpendRequestSchema,
+  updateSpendRequestSchema,
+  updateSpendRequestStatusSchema,
+  updateSpendRequestItemSchema,
+} from '@/lib/validations/projects/spend-request';
 
 describe('Purchase Request Validation Schemas', () => {
   // ===== Enum Schemas =====
@@ -88,7 +88,7 @@ describe('Purchase Request Validation Schemas', () => {
   });
 
   // ===== Item Schema =====
-  describe('purchaseRequestItemSchema', () => {
+  describe('spendRequestItemSchema', () => {
     it('should validate a complete item', () => {
       const validItem = {
         description: 'MacBook Pro 16"',
@@ -103,7 +103,7 @@ describe('Purchase Request Validation Schemas', () => {
         amountPerCycle: null,
         productUrl: 'https://apple.com/macbook-pro',
       };
-      const result = purchaseRequestItemSchema.safeParse(validItem);
+      const result = spendRequestItemSchema.safeParse(validItem);
       expect(result.success).toBe(true);
     });
 
@@ -113,7 +113,7 @@ describe('Purchase Request Validation Schemas', () => {
         quantity: 1,
         unitPrice: 50,
       };
-      const result = purchaseRequestItemSchema.safeParse(minimalItem);
+      const result = spendRequestItemSchema.safeParse(minimalItem);
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.data.currency).toBe('QAR');
@@ -122,7 +122,7 @@ describe('Purchase Request Validation Schemas', () => {
     });
 
     it('should fail when description is missing', () => {
-      const result = purchaseRequestItemSchema.safeParse({
+      const result = spendRequestItemSchema.safeParse({
         quantity: 1,
         unitPrice: 100,
       });
@@ -130,7 +130,7 @@ describe('Purchase Request Validation Schemas', () => {
     });
 
     it('should fail when description is empty', () => {
-      const result = purchaseRequestItemSchema.safeParse({
+      const result = spendRequestItemSchema.safeParse({
         description: '',
         quantity: 1,
         unitPrice: 100,
@@ -139,7 +139,7 @@ describe('Purchase Request Validation Schemas', () => {
     });
 
     it('should fail when description exceeds 500 characters', () => {
-      const result = purchaseRequestItemSchema.safeParse({
+      const result = spendRequestItemSchema.safeParse({
         description: 'a'.repeat(501),
         quantity: 1,
         unitPrice: 100,
@@ -148,7 +148,7 @@ describe('Purchase Request Validation Schemas', () => {
     });
 
     it('should fail when quantity is less than 1', () => {
-      const result = purchaseRequestItemSchema.safeParse({
+      const result = spendRequestItemSchema.safeParse({
         description: 'Item',
         quantity: 0,
         unitPrice: 100,
@@ -157,7 +157,7 @@ describe('Purchase Request Validation Schemas', () => {
     });
 
     it('should fail when quantity is negative', () => {
-      const result = purchaseRequestItemSchema.safeParse({
+      const result = spendRequestItemSchema.safeParse({
         description: 'Item',
         quantity: -1,
         unitPrice: 100,
@@ -166,7 +166,7 @@ describe('Purchase Request Validation Schemas', () => {
     });
 
     it('should fail when unitPrice is negative', () => {
-      const result = purchaseRequestItemSchema.safeParse({
+      const result = spendRequestItemSchema.safeParse({
         description: 'Item',
         quantity: 1,
         unitPrice: -50,
@@ -175,7 +175,7 @@ describe('Purchase Request Validation Schemas', () => {
     });
 
     it('should accept zero unitPrice', () => {
-      const result = purchaseRequestItemSchema.safeParse({
+      const result = spendRequestItemSchema.safeParse({
         description: 'Free Sample',
         quantity: 1,
         unitPrice: 0,
@@ -192,12 +192,12 @@ describe('Purchase Request Validation Schemas', () => {
         durationMonths: 12,
         amountPerCycle: 150,
       };
-      const result = purchaseRequestItemSchema.safeParse(recurringItem);
+      const result = spendRequestItemSchema.safeParse(recurringItem);
       expect(result.success).toBe(true);
     });
 
     it('should fail with invalid product URL', () => {
-      const result = purchaseRequestItemSchema.safeParse({
+      const result = spendRequestItemSchema.safeParse({
         description: 'Item',
         quantity: 1,
         unitPrice: 100,
@@ -207,7 +207,7 @@ describe('Purchase Request Validation Schemas', () => {
     });
 
     it('should accept empty string for product URL', () => {
-      const result = purchaseRequestItemSchema.safeParse({
+      const result = spendRequestItemSchema.safeParse({
         description: 'Item',
         quantity: 1,
         unitPrice: 100,
@@ -217,7 +217,7 @@ describe('Purchase Request Validation Schemas', () => {
     });
 
     it('should accept valid product URL', () => {
-      const result = purchaseRequestItemSchema.safeParse({
+      const result = spendRequestItemSchema.safeParse({
         description: 'Item',
         quantity: 1,
         unitPrice: 100,
@@ -228,7 +228,7 @@ describe('Purchase Request Validation Schemas', () => {
   });
 
   // ===== Create Purchase Request Schema =====
-  describe('createPurchaseRequestSchema', () => {
+  describe('createSpendRequestSchema', () => {
     const validRequest = {
       title: 'IT Equipment Request',
       description: 'Laptops for new employees',
@@ -252,7 +252,7 @@ describe('Purchase Request Validation Schemas', () => {
     };
 
     it('should validate a complete purchase request', () => {
-      const result = createPurchaseRequestSchema.safeParse(validRequest);
+      const result = createSpendRequestSchema.safeParse(validRequest);
       expect(result.success).toBe(true);
     });
 
@@ -267,7 +267,7 @@ describe('Purchase Request Validation Schemas', () => {
           },
         ],
       };
-      const result = createPurchaseRequestSchema.safeParse(minimalRequest);
+      const result = createSpendRequestSchema.safeParse(minimalRequest);
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.data.priority).toBe('MEDIUM');
@@ -280,12 +280,12 @@ describe('Purchase Request Validation Schemas', () => {
 
     it('should fail when title is missing', () => {
       const { title: _title, ...withoutTitle } = validRequest;
-      const result = createPurchaseRequestSchema.safeParse(withoutTitle);
+      const result = createSpendRequestSchema.safeParse(withoutTitle);
       expect(result.success).toBe(false);
     });
 
     it('should fail when title is empty', () => {
-      const result = createPurchaseRequestSchema.safeParse({
+      const result = createSpendRequestSchema.safeParse({
         ...validRequest,
         title: '',
       });
@@ -293,7 +293,7 @@ describe('Purchase Request Validation Schemas', () => {
     });
 
     it('should fail when title exceeds 200 characters', () => {
-      const result = createPurchaseRequestSchema.safeParse({
+      const result = createSpendRequestSchema.safeParse({
         ...validRequest,
         title: 'a'.repeat(201),
       });
@@ -301,7 +301,7 @@ describe('Purchase Request Validation Schemas', () => {
     });
 
     it('should fail when items array is empty', () => {
-      const result = createPurchaseRequestSchema.safeParse({
+      const result = createSpendRequestSchema.safeParse({
         ...validRequest,
         items: [],
       });
@@ -310,14 +310,14 @@ describe('Purchase Request Validation Schemas', () => {
 
     it('should fail when items is missing', () => {
       const { items: _items, ...withoutItems } = validRequest;
-      const result = createPurchaseRequestSchema.safeParse(withoutItems);
+      const result = createSpendRequestSchema.safeParse(withoutItems);
       expect(result.success).toBe(false);
     });
 
     it('should validate all priority levels', () => {
       const priorities = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'];
       priorities.forEach(priority => {
-        const result = createPurchaseRequestSchema.safeParse({
+        const result = createSpendRequestSchema.safeParse({
           ...validRequest,
           priority,
         });
@@ -326,7 +326,7 @@ describe('Purchase Request Validation Schemas', () => {
     });
 
     it('should fail with invalid priority', () => {
-      const result = createPurchaseRequestSchema.safeParse({
+      const result = createSpendRequestSchema.safeParse({
         ...validRequest,
         priority: 'CRITICAL',
       });
@@ -334,7 +334,7 @@ describe('Purchase Request Validation Schemas', () => {
     });
 
     it('should require projectName when costType is PROJECT_COST', () => {
-      const result = createPurchaseRequestSchema.safeParse({
+      const result = createSpendRequestSchema.safeParse({
         ...validRequest,
         costType: 'PROJECT_COST',
         projectName: '', // Empty project name
@@ -343,7 +343,7 @@ describe('Purchase Request Validation Schemas', () => {
     });
 
     it('should pass when costType is PROJECT_COST with projectName', () => {
-      const result = createPurchaseRequestSchema.safeParse({
+      const result = createSpendRequestSchema.safeParse({
         ...validRequest,
         costType: 'PROJECT_COST',
         projectName: 'Website Redesign',
@@ -352,7 +352,7 @@ describe('Purchase Request Validation Schemas', () => {
     });
 
     it('should not require projectName when costType is OPERATING_COST', () => {
-      const result = createPurchaseRequestSchema.safeParse({
+      const result = createSpendRequestSchema.safeParse({
         ...validRequest,
         costType: 'OPERATING_COST',
         projectName: null,
@@ -361,7 +361,7 @@ describe('Purchase Request Validation Schemas', () => {
     });
 
     it('should fail with invalid vendor email', () => {
-      const result = createPurchaseRequestSchema.safeParse({
+      const result = createSpendRequestSchema.safeParse({
         ...validRequest,
         vendorEmail: 'invalid-email',
       });
@@ -369,7 +369,7 @@ describe('Purchase Request Validation Schemas', () => {
     });
 
     it('should accept empty string for vendor email', () => {
-      const result = createPurchaseRequestSchema.safeParse({
+      const result = createSpendRequestSchema.safeParse({
         ...validRequest,
         vendorEmail: '',
       });
@@ -377,7 +377,7 @@ describe('Purchase Request Validation Schemas', () => {
     });
 
     it('should validate multiple items', () => {
-      const result = createPurchaseRequestSchema.safeParse({
+      const result = createSpendRequestSchema.safeParse({
         ...validRequest,
         items: [
           { description: 'Item 1', quantity: 1, unitPrice: 100 },
@@ -393,9 +393,9 @@ describe('Purchase Request Validation Schemas', () => {
   });
 
   // ===== Update Purchase Request Schema =====
-  describe('updatePurchaseRequestSchema', () => {
+  describe('updateSpendRequestSchema', () => {
     it('should allow partial updates', () => {
-      const result = updatePurchaseRequestSchema.safeParse({
+      const result = updateSpendRequestSchema.safeParse({
         title: 'Updated Title',
         priority: 'URGENT',
       });
@@ -403,12 +403,12 @@ describe('Purchase Request Validation Schemas', () => {
     });
 
     it('should allow empty update', () => {
-      const result = updatePurchaseRequestSchema.safeParse({});
+      const result = updateSpendRequestSchema.safeParse({});
       expect(result.success).toBe(true);
     });
 
     it('should validate item updates', () => {
-      const result = updatePurchaseRequestSchema.safeParse({
+      const result = updateSpendRequestSchema.safeParse({
         items: [
           { description: 'Updated Item', quantity: 5, unitPrice: 500 },
         ],
@@ -417,14 +417,14 @@ describe('Purchase Request Validation Schemas', () => {
     });
 
     it('should fail with invalid vendor email', () => {
-      const result = updatePurchaseRequestSchema.safeParse({
+      const result = updateSpendRequestSchema.safeParse({
         vendorEmail: 'not-an-email',
       });
       expect(result.success).toBe(false);
     });
 
     it('should allow null values for optional fields', () => {
-      const result = updatePurchaseRequestSchema.safeParse({
+      const result = updateSpendRequestSchema.safeParse({
         description: null,
         justification: null,
         neededByDate: null,
@@ -437,24 +437,24 @@ describe('Purchase Request Validation Schemas', () => {
   });
 
   // ===== Update Status Schema =====
-  describe('updatePurchaseRequestStatusSchema', () => {
+  describe('updateSpendRequestStatusSchema', () => {
     it('should validate all statuses', () => {
       const statuses = ['PENDING', 'UNDER_REVIEW', 'APPROVED', 'REJECTED', 'COMPLETED'];
       statuses.forEach(status => {
-        const result = updatePurchaseRequestStatusSchema.safeParse({ status });
+        const result = updateSpendRequestStatusSchema.safeParse({ status });
         expect(result.success).toBe(true);
       });
     });
 
     it('should fail with invalid status', () => {
-      const result = updatePurchaseRequestStatusSchema.safeParse({
+      const result = updateSpendRequestStatusSchema.safeParse({
         status: 'CANCELLED',
       });
       expect(result.success).toBe(false);
     });
 
     it('should accept reviewNotes', () => {
-      const result = updatePurchaseRequestStatusSchema.safeParse({
+      const result = updateSpendRequestStatusSchema.safeParse({
         status: 'APPROVED',
         reviewNotes: 'Approved by manager',
       });
@@ -462,7 +462,7 @@ describe('Purchase Request Validation Schemas', () => {
     });
 
     it('should accept completionNotes', () => {
-      const result = updatePurchaseRequestStatusSchema.safeParse({
+      const result = updateSpendRequestStatusSchema.safeParse({
         status: 'COMPLETED',
         completionNotes: 'Items received and verified',
       });
@@ -470,7 +470,7 @@ describe('Purchase Request Validation Schemas', () => {
     });
 
     it('should fail without status', () => {
-      const result = updatePurchaseRequestStatusSchema.safeParse({
+      const result = updateSpendRequestStatusSchema.safeParse({
         reviewNotes: 'Some notes',
       });
       expect(result.success).toBe(false);
@@ -478,21 +478,21 @@ describe('Purchase Request Validation Schemas', () => {
   });
 
   // ===== Update Item Schema =====
-  describe('updatePurchaseRequestItemSchema', () => {
+  describe('updateSpendRequestItemSchema', () => {
     it('should allow partial item updates', () => {
-      const result = updatePurchaseRequestItemSchema.safeParse({
+      const result = updateSpendRequestItemSchema.safeParse({
         quantity: 10,
       });
       expect(result.success).toBe(true);
     });
 
     it('should allow empty update', () => {
-      const result = updatePurchaseRequestItemSchema.safeParse({});
+      const result = updateSpendRequestItemSchema.safeParse({});
       expect(result.success).toBe(true);
     });
 
     it('should validate updated billing cycle', () => {
-      const result = updatePurchaseRequestItemSchema.safeParse({
+      const result = updateSpendRequestItemSchema.safeParse({
         billingCycle: 'MONTHLY',
         durationMonths: 12,
         amountPerCycle: 100,
@@ -501,14 +501,14 @@ describe('Purchase Request Validation Schemas', () => {
     });
 
     it('should fail with invalid URL', () => {
-      const result = updatePurchaseRequestItemSchema.safeParse({
+      const result = updateSpendRequestItemSchema.safeParse({
         productUrl: 'invalid-url',
       });
       expect(result.success).toBe(false);
     });
 
     it('should accept empty productUrl', () => {
-      const result = updatePurchaseRequestItemSchema.safeParse({
+      const result = updateSpendRequestItemSchema.safeParse({
         productUrl: '',
       });
       expect(result.success).toBe(true);

@@ -61,8 +61,8 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   ASSET_UNASSIGNED: Package,
   ASSET_REQUEST_APPROVED: CheckCircle,
   ASSET_REQUEST_REJECTED: XCircle,
-  PURCHASE_REQUEST_APPROVED: CheckCircle,
-  PURCHASE_REQUEST_REJECTED: XCircle,
+  SPEND_REQUEST_APPROVED: CheckCircle,
+  SPEND_REQUEST_REJECTED: XCircle,
   DOCUMENT_EXPIRY_WARNING: AlertTriangle,
   GENERAL: Bell,
 };

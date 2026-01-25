@@ -86,7 +86,7 @@ async function getDetailedAnalytics() {
     'employees',
     'leave',
     'payroll',
-    'purchase-requests',
+    'spend-requests',
   ];
 
   const totalOrgs = organizations.length;

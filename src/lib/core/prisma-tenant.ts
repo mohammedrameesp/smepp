@@ -80,8 +80,8 @@ const TENANT_MODELS = [
   'Payslip',
   'EmployeeLoan',
 
-  // Purchase requests
-  'PurchaseRequest',
+  // Spend requests
+  'SpendRequest',
 
   // Suppliers
   'Supplier',

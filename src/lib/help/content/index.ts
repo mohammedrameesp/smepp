@@ -12,7 +12,7 @@ import { leaveContent } from './hr/leave';
 import { payrollContent } from './hr/payroll';
 
 // Procurement
-import { purchaseRequestsContent } from './projects/purchase-requests';
+import { spendRequestsContent } from './projects/spend-requests';
 
 // System
 import { settingsContent } from './system/settings';
@@ -33,7 +33,7 @@ const contentRegistry: Record<string, Record<string, HelpModule>> = {
     payroll: payrollContent,
   },
   procurement: {
-    'purchase-requests': purchaseRequestsContent,
+    'spend-requests': spendRequestsContent,
   },
   system: {
     settings: settingsContent,

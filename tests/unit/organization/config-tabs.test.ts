@@ -15,7 +15,7 @@ describe('Organization Configuration Tabs', () => {
     { id: 'employees', name: 'Employees', description: 'HR management' },
     { id: 'leave', name: 'Leave', description: 'Leave management' },
     { id: 'payroll', name: 'Payroll', description: 'Salary & payslips' },
-    { id: 'purchase-requests', name: 'Purchase Requests', description: 'Procurement' },
+    { id: 'spend-requests', name: 'Spend Requests', description: 'Procurement' },
     { id: 'documents', name: 'Documents', description: 'Company documents' },
   ];
 
@@ -267,7 +267,7 @@ describe('Organization Configuration Tabs', () => {
 
     it('should include other modules', () => {
       const moduleIds = AVAILABLE_MODULES.map(m => m.id);
-      expect(moduleIds).toContain('purchase-requests');
+      expect(moduleIds).toContain('spend-requests');
       expect(moduleIds).toContain('documents');
     });
 

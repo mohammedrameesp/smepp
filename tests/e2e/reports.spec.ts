@@ -328,8 +328,8 @@ test.describe('Reports & Analytics', () => {
       expect(loaded).toBeTruthy();
     });
 
-    test('Can access purchase requests export', async ({ page }) => {
-      await safeGoto(page, '/admin/purchase-requests');
+    test('Can access spend requests export', async ({ page }) => {
+      await safeGoto(page, '/admin/spend-requests');
 
       const loaded = await pageLoaded(page);
       expect(loaded).toBeTruthy();

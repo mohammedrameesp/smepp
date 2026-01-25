@@ -26,8 +26,8 @@ import {
   LeaveStatus,
   LeaveCategory,
   LeaveRequestType,
-  PurchaseRequestStatus,
-  PurchaseRequestPriority,
+  SpendRequestStatus,
+  SpendRequestPriority,
   PurchaseType,
   CostType,
   PaymentMode,
@@ -1860,18 +1860,18 @@ async function main() {
   // ═══════════════════════════════════════════════════════════════════════════════
   // 16. PURCHASE REQUESTS (IC)
   // ═══════════════════════════════════════════════════════════════════════════════
-  console.log('Creating purchase requests (IC)...');
+  console.log('Creating spend requests (IC)...');
 
-  const purchaseRequests = await sequential([
-    () => prisma.purchaseRequest.upsert({
+  const spendRequests = await sequential([
+    () => prisma.spendRequest.upsert({
       where: { tenantId_referenceNumber: { tenantId, referenceNumber: 'IC-PR-2501-0001' } },
       update: {},
       create: {
         tenantId,
         referenceNumber: 'IC-PR-2501-0001',
         requestDate: monthsAgo(1),
-        status: PurchaseRequestStatus.COMPLETED,
-        priority: PurchaseRequestPriority.HIGH,
+        status: SpendRequestStatus.COMPLETED,
+        priority: SpendRequestPriority.HIGH,
         requesterId: employee1.id,
         title: 'Coffee Bean Order (IC)',
         description: 'Monthly specialty coffee beans order',
@@ -1900,15 +1900,15 @@ async function main() {
         },
       },
     }),
-    () => prisma.purchaseRequest.upsert({
+    () => prisma.spendRequest.upsert({
       where: { tenantId_referenceNumber: { tenantId, referenceNumber: 'IC-PR-2501-0002' } },
       update: {},
       create: {
         tenantId,
         referenceNumber: 'IC-PR-2501-0002',
         requestDate: daysAgo(3),
-        status: PurchaseRequestStatus.PENDING,
-        priority: PurchaseRequestPriority.MEDIUM,
+        status: SpendRequestStatus.PENDING,
+        priority: SpendRequestPriority.MEDIUM,
         requesterId: employee2.id,
         title: 'Cafe Supplies Restock (IC)',
         description: 'Monthly supplies for the cafe',
@@ -1933,7 +1933,7 @@ async function main() {
     }),
   ]);
 
-  console.log(`Created ${purchaseRequests.length} purchase requests (IC)\n`);
+  console.log(`Created ${spendRequests.length} spend requests (IC)\n`);
 
   // ═══════════════════════════════════════════════════════════════════════════════
   // 17. COMPANY DOCUMENTS (IC)
@@ -2015,11 +2015,11 @@ async function main() {
       data: {
         tenantId,
         recipientId: admin.id,
-        type: NotificationType.PURCHASE_REQUEST_SUBMITTED,
+        type: NotificationType.SPEND_REQUEST_SUBMITTED,
         title: 'New Purchase Request (IC)',
         message: 'Cafe Supplies Restock (IC-PR-2501-0002) requires approval',
         isRead: false,
-        link: '/admin/purchase-requests',
+        link: '/admin/spend-requests',
       },
     }),
     () => prisma.notification.create({
@@ -2074,7 +2074,7 @@ async function main() {
   console.log('  - Payroll Runs: 1');
   console.log(`  - Payslips: ${payslips.length}`);
   console.log(`  - Employee Loans: ${loans.length}`);
-  console.log(`  - Purchase Requests: ${purchaseRequests.length}`);
+  console.log(`  - Spend Requests: ${spendRequests.length}`);
   console.log(`  - Company Documents: ${companyDocuments.length}`);
   console.log(`  - Notifications: ${notifications.length}`);
   console.log('');

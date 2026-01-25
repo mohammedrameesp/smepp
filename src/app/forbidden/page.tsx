@@ -29,7 +29,7 @@ const MODULE_NAMES: Record<string, string> = {
   leave: 'Leave Management',
   payroll: 'Payroll',
   tasks: 'Task Management',
-  'purchase-requests': 'Spend Requests',
+  'spend-requests': 'Spend Requests',
   'company-documents': 'Company Documents',
 };
 

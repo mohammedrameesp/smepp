@@ -78,7 +78,7 @@ export function RequestsCard({ requests, className }: RequestsCardProps) {
           <span className="text-gray-400">📋</span>
           My Requests
         </h3>
-        <Link href="/employee/purchase-requests" className="text-sm text-blue-600 font-medium hover:text-blue-700">
+        <Link href="/employee/spend-requests" className="text-sm text-blue-600 font-medium hover:text-blue-700">
           View All
         </Link>
       </div>
@@ -100,7 +100,7 @@ export function RequestsCard({ requests, className }: RequestsCardProps) {
               request.type === 'leave'
                 ? `/employee/leave/${request.id}`
                 : request.type === 'purchase'
-                ? `/employee/purchase-requests/${request.id}`
+                ? `/employee/spend-requests/${request.id}`
                 : `/employee/asset-requests/${request.id}`;
 
             return (

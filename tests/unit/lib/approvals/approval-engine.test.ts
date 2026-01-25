@@ -89,7 +89,7 @@ describe('Approval Engine', () => {
     const highValuePolicy: ApprovalPolicyWithLevels = {
       id: 'policy-2',
       name: 'High Value Approval',
-      module: 'PURCHASE_REQUEST',
+      module: 'SPEND_REQUEST',
       isActive: true,
       minAmount: new Decimal(10000),
       maxAmount: new Decimal(50000),
@@ -127,14 +127,14 @@ describe('Approval Engine', () => {
     it('should match purchase request policy by amount', async () => {
       (mockPrisma.approvalPolicy.findMany as jest.Mock).mockResolvedValue([highValuePolicy]);
 
-      const result = await findApplicablePolicy('PURCHASE_REQUEST', { amount: 25000 });
+      const result = await findApplicablePolicy('SPEND_REQUEST', { amount: 25000 });
       expect(result).toEqual(highValuePolicy);
     });
 
     it('should not match policy when amount is below minimum', async () => {
       (mockPrisma.approvalPolicy.findMany as jest.Mock).mockResolvedValue([highValuePolicy]);
 
-      const result = await findApplicablePolicy('PURCHASE_REQUEST', { amount: 5000 });
+      const result = await findApplicablePolicy('SPEND_REQUEST', { amount: 5000 });
       expect(result).toBeNull();
     });
 

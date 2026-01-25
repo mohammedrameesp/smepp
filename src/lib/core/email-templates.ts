@@ -1250,10 +1250,10 @@ ${data.orgName}
 }
 
 // ============================================================================
-// PURCHASE REQUEST SUBMITTED EMAIL (To Admins)
+// SPEND REQUEST SUBMITTED EMAIL (To Admins)
 // ============================================================================
 
-interface PurchaseRequestSubmittedData {
+interface SpendRequestSubmittedData {
   referenceNumber: string;
   requesterName: string;
   title: string;
@@ -1266,7 +1266,7 @@ interface PurchaseRequestSubmittedData {
   primaryColor?: string;
 }
 
-export function purchaseRequestSubmittedEmail(data: PurchaseRequestSubmittedData): { subject: string; html: string; text: string } {
+export function spendRequestSubmittedEmail(data: SpendRequestSubmittedData): { subject: string; html: string; text: string } {
   const subject = `New Spend Request: ${data.referenceNumber} - ${data.title}`;
   const brandColor = data.primaryColor || DEFAULT_BRAND_COLOR;
 
@@ -1352,7 +1352,7 @@ export function purchaseRequestSubmittedEmail(data: PurchaseRequestSubmittedData
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin: 25px 0;">
       <tr>
         <td align="center">
-          <a href="${getTenantPortalUrl(data.orgSlug, '/admin/purchase-requests')}"
+          <a href="${getTenantPortalUrl(data.orgSlug, '/admin/spend-requests')}"
              style="display: inline-block; padding: 14px 30px; background-color: ${brandColor}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
             Review Request
           </a>
@@ -1380,7 +1380,7 @@ Request Details:
 - Total Amount: ${data.currency} ${formattedAmount}
 
 Please log in to the portal to review and approve or reject this request.
-${getTenantPortalUrl(data.orgSlug, '/admin/purchase-requests')}
+${getTenantPortalUrl(data.orgSlug, '/admin/spend-requests')}
 
 Best regards,
 ${data.orgName}
@@ -1390,10 +1390,10 @@ ${data.orgName}
 }
 
 // ============================================================================
-// PURCHASE REQUEST STATUS CHANGE EMAIL (To Requester)
+// SPEND REQUEST STATUS CHANGE EMAIL (To Requester)
 // ============================================================================
 
-interface PurchaseRequestStatusData {
+interface SpendRequestStatusData {
   referenceNumber: string;
   userName: string;
   title: string;
@@ -1406,7 +1406,7 @@ interface PurchaseRequestStatusData {
   primaryColor?: string;
 }
 
-export function purchaseRequestStatusEmail(data: PurchaseRequestStatusData): { subject: string; html: string; text: string } {
+export function spendRequestStatusEmail(data: SpendRequestStatusData): { subject: string; html: string; text: string } {
   const brandColor = data.primaryColor || DEFAULT_BRAND_COLOR;
   const statusColors: Record<string, { bg: string; text: string; border: string }> = {
     'Pending': { bg: '#fef9c3', text: '#a16207', border: '#fde047' },
@@ -1516,7 +1516,7 @@ export function purchaseRequestStatusEmail(data: PurchaseRequestStatusData): { s
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin: 25px 0;">
       <tr>
         <td align="center">
-          <a href="${getTenantPortalUrl(data.orgSlug, '/employee/purchase-requests')}"
+          <a href="${getTenantPortalUrl(data.orgSlug, '/employee/spend-requests')}"
              style="display: inline-block; padding: 14px 30px; background-color: ${brandColor}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
             View My Requests
           </a>
@@ -1546,7 +1546,7 @@ Request Details:
 ${data.reviewNotes ? `\nReviewer Notes:\n${data.reviewNotes}` : ''}
 
 ${isNegative ? 'If you have any questions about this decision or would like to submit a revised request, please contact your manager or the procurement team.\n' : ''}
-View your requests at: ${getTenantPortalUrl(data.orgSlug, '/employee/purchase-requests')}
+View your requests at: ${getTenantPortalUrl(data.orgSlug, '/employee/spend-requests')}
 
 Best regards,
 ${data.orgName} Procurement Team

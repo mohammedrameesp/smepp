@@ -144,9 +144,9 @@ enum NotificationType {
   ASSET_ASSIGNMENT_PENDING
   ASSET_ASSIGNMENT_ACCEPTED
   ASSET_ASSIGNMENT_DECLINED
-  PURCHASE_REQUEST_SUBMITTED
-  PURCHASE_REQUEST_APPROVED
-  PURCHASE_REQUEST_REJECTED
+  SPEND_REQUEST_SUBMITTED
+  SPEND_REQUEST_APPROVED
+  SPEND_REQUEST_REJECTED
   DOCUMENT_EXPIRY_WARNING
   GENERAL
   // Multi-level approval notifications
@@ -192,7 +192,7 @@ enum AssetRequestStatus {
 
 enum ApprovalModule {
   LEAVE_REQUEST
-  PURCHASE_REQUEST
+  SPEND_REQUEST
   ASSET_REQUEST
 }
 
@@ -431,7 +431,7 @@ model Organization {
   supplierEngagements    SupplierEngagement[]
   systemSettings         SystemSettings[]
   profileChangeRequests  ProfileChangeRequest[]
-  purchaseRequests       PurchaseRequest[]
+  spendRequests          SpendRequest[]
   leaveTypes             LeaveType[]
   leaveBalances          LeaveBalance[]
   leaveRequests          LeaveRequest[]
@@ -762,10 +762,10 @@ model TeamMember {
   activityLogs          ActivityLog[]
   systemSettingsUpdated SystemSettings[] @relation("SystemSettingsUpdater")
 
-  // Purchase Requests
-  purchaseRequests         PurchaseRequest[]        @relation("PurchaseRequester")
-  reviewedPurchaseRequests PurchaseRequest[]        @relation("PurchaseReviewer")
-  purchaseRequestHistory   PurchaseRequestHistory[] @relation("PurchaseRequestHistoryPerformer")
+  // Spend Requests
+  spendRequests         SpendRequest[]        @relation("SpendRequester")
+  reviewedSpendRequests SpendRequest[]        @relation("SpendReviewer")
+  spendRequestHistory   SpendRequestHistory[] @relation("SpendRequestHistoryPerformer")
 
   // Leave Management
   leaveRequests         LeaveRequest[]        @relation("LeaveRequests")
@@ -1467,9 +1467,9 @@ enum ProfileChangeRequestStatus {
   REJECTED
 }
 
-// ===== Purchase Request Module Enums =====
+// ===== Spend Request Module Enums =====
 
-enum PurchaseRequestStatus {
+enum SpendRequestStatus {
   PENDING
   UNDER_REVIEW
   APPROVED
@@ -1477,7 +1477,7 @@ enum PurchaseRequestStatus {
   COMPLETED
 }
 
-enum PurchaseRequestPriority {
+enum SpendRequestPriority {
   LOW
   MEDIUM
   HIGH
@@ -1540,20 +1540,20 @@ model ProfileChangeRequest {
   @@index([tenantId])
 }
 
-// ===== Purchase Request Module Models =====
+// ===== Spend Request Module Models =====
 
-model PurchaseRequest {
-  id              String                  @id @default(cuid())
+model SpendRequest {
+  id              String               @id @default(cuid())
   tenantId        String
-  tenant          Organization            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  referenceNumber String // {PREFIX}-PR-YYMM-XXXX (tenant-scoped unique)
-  requestDate     DateTime                @default(now())
-  status          PurchaseRequestStatus   @default(PENDING)
-  priority        PurchaseRequestPriority @default(MEDIUM)
+  tenant          Organization         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  referenceNumber String // {PREFIX}-SR-YYMM-XXXX (tenant-scoped unique)
+  requestDate     DateTime             @default(now())
+  status          SpendRequestStatus   @default(PENDING)
+  priority        SpendRequestPriority @default(MEDIUM)
 
   // Requester info (auto-populated from logged-in member)
   requesterId String
-  requester   TeamMember @relation("PurchaseRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  requester   TeamMember @relation("SpendRequester", fields: [requesterId], references: [id], onDelete: Cascade)
 
   // Request details
   title         String
@@ -1585,7 +1585,7 @@ model PurchaseRequest {
 
   // Approval workflow
   reviewedById String?
-  reviewedBy   TeamMember? @relation("PurchaseReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  reviewedBy   TeamMember? @relation("SpendReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
   reviewedAt   DateTime?
   reviewNotes  String?
 
@@ -1594,8 +1594,8 @@ model PurchaseRequest {
   completionNotes String?
 
   // Relations
-  items   PurchaseRequestItem[]
-  history PurchaseRequestHistory[]
+  items   SpendRequestItem[]
+  history SpendRequestHistory[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1610,10 +1610,10 @@ model PurchaseRequest {
   @@index([tenantId])
 }
 
-model PurchaseRequestItem {
-  id                String          @id @default(cuid())
-  purchaseRequestId String
-  purchaseRequest   PurchaseRequest @relation(fields: [purchaseRequestId], references: [id], onDelete: Cascade)
+model SpendRequestItem {
+  id             String       @id @default(cuid())
+  spendRequestId String
+  spendRequest   SpendRequest @relation(fields: [spendRequestId], references: [id], onDelete: Cascade)
 
   itemNumber    Int // Line item number (1, 2, 3...)
   description   String
@@ -1639,27 +1639,27 @@ model PurchaseRequestItem {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([purchaseRequestId])
+  @@index([spendRequestId])
   @@index([billingCycle])
 }
 
-model PurchaseRequestHistory {
-  id                String          @id @default(cuid())
-  purchaseRequestId String
-  purchaseRequest   PurchaseRequest @relation(fields: [purchaseRequestId], references: [id], onDelete: Cascade)
+model SpendRequestHistory {
+  id             String       @id @default(cuid())
+  spendRequestId String
+  spendRequest   SpendRequest @relation(fields: [spendRequestId], references: [id], onDelete: Cascade)
 
   action         String // CREATED, STATUS_CHANGED, UPDATED, ITEM_ADDED, ITEM_REMOVED
-  previousStatus PurchaseRequestStatus?
-  newStatus      PurchaseRequestStatus?
+  previousStatus SpendRequestStatus?
+  newStatus      SpendRequestStatus?
 
   performedById String?
-  performedBy   TeamMember? @relation("PurchaseRequestHistoryPerformer", fields: [performedById], references: [id], onDelete: SetNull)
+  performedBy   TeamMember? @relation("SpendRequestHistoryPerformer", fields: [performedById], references: [id], onDelete: SetNull)
 
   details String? // JSON or text description of changes
 
   createdAt DateTime @default(now())
 
-  @@index([purchaseRequestId])
+  @@index([spendRequestId])
   @@index([performedById])
   @@index([createdAt])
 }

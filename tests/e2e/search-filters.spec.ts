@@ -151,8 +151,8 @@ test.describe('Admin Module Pages', () => {
       await expect(page.locator('body')).not.toBeEmpty();
     });
 
-    test('should load purchase requests page', async ({ page }) => {
-      await page.goto('/admin/purchase-requests');
+    test('should load spend requests page', async ({ page }) => {
+      await page.goto('/admin/spend-requests');
       await expect(page.locator('body')).not.toBeEmpty();
     });
   });

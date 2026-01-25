@@ -36,7 +36,7 @@ import { cn } from '@/lib/core/utils';
 
 interface ApprovalItem {
   id: string;
-  entityType: 'LEAVE_REQUEST' | 'PURCHASE_REQUEST' | 'ASSET_REQUEST';
+  entityType: 'LEAVE_REQUEST' | 'SPEND_REQUEST' | 'ASSET_REQUEST';
   entityId: string;
   createdAt: string;
   entityDetails: Record<string, unknown>;
@@ -46,7 +46,7 @@ interface MyApprovalsClientProps {
   approvals: ApprovalItem[];
   grouped: {
     LEAVE_REQUEST: ApprovalItem[];
-    PURCHASE_REQUEST: ApprovalItem[];
+    SPEND_REQUEST: ApprovalItem[];
     ASSET_REQUEST: ApprovalItem[];
   };
 }
@@ -63,16 +63,16 @@ const TYPE_CONFIG = {
     iconColor: 'text-blue-600',
     href: '/admin/leave/requests',
   },
-  PURCHASE_REQUEST: {
+  SPEND_REQUEST: {
     icon: ShoppingCart,
-    label: 'Purchase',
+    label: 'Spend',
     color: 'emerald',
     bgColor: 'bg-emerald-50',
     textColor: 'text-emerald-700',
     borderColor: 'border-emerald-200',
     iconBg: 'bg-emerald-100',
     iconColor: 'text-emerald-600',
-    href: '/admin/purchase-requests',
+    href: '/admin/spend-requests',
   },
   ASSET_REQUEST: {
     icon: Package,
@@ -128,7 +128,7 @@ export function MyApprovalsClient({ approvals, grouped }: MyApprovalsClientProps
   const [actionType, setActionType] = useState<'approve' | 'reject' | null>(null);
   const [selectedItem, setSelectedItem] = useState<ApprovalItem | null>(null);
   const [notes, setNotes] = useState('');
-  const [activeFilter, setActiveFilter] = useState<'all' | 'LEAVE_REQUEST' | 'PURCHASE_REQUEST' | 'ASSET_REQUEST'>('all');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'LEAVE_REQUEST' | 'SPEND_REQUEST' | 'ASSET_REQUEST'>('all');
 
   const handleAction = async () => {
     if (!selectedItem || !actionType) return;
@@ -141,8 +141,8 @@ export function MyApprovalsClient({ approvals, grouped }: MyApprovalsClientProps
         apiUrl = `/api/leave/requests/${selectedItem.entityId}/${actionType}`;
       } else if (selectedItem.entityType === 'ASSET_REQUEST') {
         apiUrl = `/api/asset-requests/${selectedItem.entityId}/${actionType}`;
-      } else if (selectedItem.entityType === 'PURCHASE_REQUEST') {
-        apiUrl = `/api/purchase-requests/${selectedItem.entityId}/${actionType}`;
+      } else if (selectedItem.entityType === 'SPEND_REQUEST') {
+        apiUrl = `/api/spend-requests/${selectedItem.entityId}/${actionType}`;
       }
 
       const response = await fetch(apiUrl, {
@@ -184,14 +184,14 @@ export function MyApprovalsClient({ approvals, grouped }: MyApprovalsClientProps
   const displayApprovals = activeFilter === 'all' ? approvals : grouped[activeFilter];
 
   const filterOptions: Array<{
-    key: 'all' | 'LEAVE_REQUEST' | 'PURCHASE_REQUEST' | 'ASSET_REQUEST';
+    key: 'all' | 'LEAVE_REQUEST' | 'SPEND_REQUEST' | 'ASSET_REQUEST';
     label: string;
     count: number;
     icon?: typeof Palmtree;
   }> = [
     { key: 'all', label: 'All', count: approvals.length },
     { key: 'LEAVE_REQUEST', label: 'Leave', count: grouped.LEAVE_REQUEST.length, icon: Palmtree },
-    { key: 'PURCHASE_REQUEST', label: 'Purchase', count: grouped.PURCHASE_REQUEST.length, icon: ShoppingCart },
+    { key: 'SPEND_REQUEST', label: 'Purchase', count: grouped.SPEND_REQUEST.length, icon: ShoppingCart },
     { key: 'ASSET_REQUEST', label: 'Asset', count: grouped.ASSET_REQUEST.length, icon: Package },
   ];
 
@@ -333,7 +333,7 @@ export function MyApprovalsClient({ approvals, grouped }: MyApprovalsClientProps
                         </div>
                       )}
 
-                      {item.entityType === 'PURCHASE_REQUEST' && (
+                      {item.entityType === 'SPEND_REQUEST' && (
                         <div className="space-y-1.5">
                           <div className="flex items-center justify-between">
                             <span className="font-medium text-slate-900 line-clamp-1">

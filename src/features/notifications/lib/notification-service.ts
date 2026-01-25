@@ -426,7 +426,7 @@ export const NotificationTemplates = {
   }),
 
   // Spend Requests
-  purchaseRequestSubmitted: (
+  spendRequestSubmitted: (
     adminMemberId: string,
     referenceNumber: string,
     requesterName: string,
@@ -434,40 +434,40 @@ export const NotificationTemplates = {
     entityId?: string
   ): CreateNotificationInput => ({
     recipientId: adminMemberId,
-    type: 'PURCHASE_REQUEST_SUBMITTED',
+    type: 'SPEND_REQUEST_SUBMITTED',
     title: 'New Spend Request',
     message: `${requesterName} submitted a spend request (${referenceNumber}): ${title}`,
-    link: `/admin/purchase-requests/${entityId}`,
-    entityType: 'PurchaseRequest',
+    link: `/admin/spend-requests/${entityId}`,
+    entityType: 'SpendRequest',
     entityId,
   }),
 
-  purchaseRequestApproved: (
+  spendRequestApproved: (
     memberId: string,
     referenceNumber: string,
     entityId?: string
   ): CreateNotificationInput => ({
     recipientId: memberId,
-    type: 'PURCHASE_REQUEST_APPROVED',
+    type: 'SPEND_REQUEST_APPROVED',
     title: 'Spend Request Approved',
     message: `Your spend request (${referenceNumber}) has been approved.`,
-    link: `/employee/purchase-requests`,
-    entityType: 'PurchaseRequest',
+    link: `/employee/spend-requests`,
+    entityType: 'SpendRequest',
     entityId,
   }),
 
-  purchaseRequestRejected: (
+  spendRequestRejected: (
     memberId: string,
     referenceNumber: string,
     reason?: string,
     entityId?: string
   ): CreateNotificationInput => ({
     recipientId: memberId,
-    type: 'PURCHASE_REQUEST_REJECTED',
+    type: 'SPEND_REQUEST_REJECTED',
     title: 'Spend Request Rejected',
     message: `Your spend request (${referenceNumber}) was rejected.${reason ? ` Reason: ${reason}` : ''}`,
-    link: `/employee/purchase-requests`,
-    entityType: 'PurchaseRequest',
+    link: `/employee/spend-requests`,
+    entityType: 'SpendRequest',
     entityId,
   }),
 

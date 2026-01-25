@@ -60,9 +60,9 @@ export default async function AdminReportsPage() {
     usersByAdmin,
     ,
     ,
-    purchaseRequestsByStatus,
-    purchaseRequestsByPriority,
-    purchaseRequestsByCostType,
+    spendRequestsByStatus,
+    spendRequestsByPriority,
+    spendRequestsByCostType,
     ,
     ,
     totalEmployees,
@@ -141,27 +141,27 @@ export default async function AdminReportsPage() {
     prisma.teamMember.count({
       where: { tenantId, isDeleted: false },
     }),
-    prisma.purchaseRequest.count({ where: { tenantId } }),
-    prisma.purchaseRequest.groupBy({
+    prisma.spendRequest.count({ where: { tenantId } }),
+    prisma.spendRequest.groupBy({
       by: ['status'],
       where: { tenantId },
       _count: { status: true },
     }),
-    prisma.purchaseRequest.groupBy({
+    prisma.spendRequest.groupBy({
       by: ['priority'],
       where: { tenantId },
       _count: { priority: true },
     }),
-    prisma.purchaseRequest.groupBy({
+    prisma.spendRequest.groupBy({
       by: ['costType'],
       where: { tenantId },
       _count: { costType: true },
     }),
-    prisma.purchaseRequest.aggregate({
+    prisma.spendRequest.aggregate({
       where: { tenantId },
       _sum: { totalAmount: true },
     }),
-    prisma.purchaseRequest.count({
+    prisma.spendRequest.count({
       where: { tenantId, status: 'PENDING' },
     }),
     prisma.teamMember.count({
@@ -387,7 +387,7 @@ export default async function AdminReportsPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {purchaseRequestsByStatus.map((item) => (
+                  {spendRequestsByStatus.map((item) => (
                     <div key={item.status} className="flex justify-between items-center">
                       <span className="capitalize text-gray-700">{item.status.replace('_', ' ').toLowerCase()}</span>
                       <span className="font-semibold">{item._count.status}</span>
@@ -404,7 +404,7 @@ export default async function AdminReportsPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {purchaseRequestsByPriority.map((item) => (
+                  {spendRequestsByPriority.map((item) => (
                     <div key={item.priority} className="flex justify-between items-center">
                       <span className="capitalize text-gray-700">{item.priority.toLowerCase()}</span>
                       <span className="font-semibold">{item._count.priority}</span>
@@ -421,7 +421,7 @@ export default async function AdminReportsPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {purchaseRequestsByCostType.map((item) => (
+                  {spendRequestsByCostType.map((item) => (
                     <div key={item.costType} className="flex justify-between items-center">
                       <span className="text-gray-700">{item.costType === 'OPERATING_COST' ? 'Operating Cost' : 'Project Cost'}</span>
                       <span className="font-semibold">{item._count.costType}</span>

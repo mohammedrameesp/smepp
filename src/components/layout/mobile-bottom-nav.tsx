@@ -48,7 +48,7 @@ export function MobileBottomNav({
 
   // Users with isAdmin or canApprove flags can access approval workflows
   const isApprover = isAdmin || canApprove;
-  const hasApprovalModules = isModuleEnabled('leave') || isModuleEnabled('assets') || isModuleEnabled('purchase-requests');
+  const hasApprovalModules = isModuleEnabled('leave') || isModuleEnabled('assets') || isModuleEnabled('spend-requests');
 
   const navItems = [
     {

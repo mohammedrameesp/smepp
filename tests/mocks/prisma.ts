@@ -63,10 +63,10 @@ export const mockPrisma = {
   supplier: createModelMock(),
   supplierEngagement: createModelMock(),
 
-  // Purchase Request models
-  purchaseRequest: createModelMock(),
-  purchaseRequestItem: createModelMock(),
-  purchaseRequestHistory: createModelMock(),
+  // Spend Request models
+  spendRequest: createModelMock(),
+  spendRequestItem: createModelMock(),
+  spendRequestHistory: createModelMock(),
 
   // Leave Management models
   leaveType: createModelMock(),

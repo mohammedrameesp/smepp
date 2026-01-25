@@ -50,8 +50,8 @@ function toApprovalModule(entityType: ApprovalEntityType): ApprovalModule {
   switch (entityType) {
     case 'LEAVE_REQUEST':
       return ApprovalModule.LEAVE_REQUEST;
-    case 'PURCHASE_REQUEST':
-      return ApprovalModule.PURCHASE_REQUEST;
+    case 'SPEND_REQUEST':
+      return ApprovalModule.SPEND_REQUEST;
     case 'ASSET_REQUEST':
       return ApprovalModule.ASSET_REQUEST;
     default:

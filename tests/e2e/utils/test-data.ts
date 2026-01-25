@@ -92,16 +92,16 @@ export function generateColumnData() {
 }
 
 /**
- * Generate test data for Purchase Requests
+ * Generate test data for Spend Requests
  */
-export function generatePurchaseRequestData() {
+export function generateSpendRequestData() {
   const timestamp = Date.now();
   const neededByDate = new Date();
   neededByDate.setDate(neededByDate.getDate() + 14); // Needed in 14 days
 
   return {
-    title: `TEST Purchase Request ${timestamp}`,
-    description: 'Test purchase request for E2E testing',
+    title: `TEST Spend Request ${timestamp}`,
+    description: 'Test spend request for E2E testing',
     justification: 'Required for testing purposes',
     priority: 'MEDIUM',
     neededByDate: formatDate(neededByDate),
@@ -118,7 +118,7 @@ export function generatePurchaseRequestData() {
   };
 }
 
-export function generatePurchaseRequestItemData() {
+export function generateSpendRequestItemData() {
   const timestamp = Date.now();
   return {
     description: `Test Item ${timestamp}`,

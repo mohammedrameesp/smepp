@@ -343,8 +343,8 @@ function getEntityLabel(entityType: ApprovalModule): string {
       return 'Leave Request';
     case 'ASSET_REQUEST':
       return 'Asset Request';
-    case 'PURCHASE_REQUEST':
-      return 'Purchase Request';
+    case 'SPEND_REQUEST':
+      return 'Spend Request';
     default:
       return 'Request';
   }
@@ -359,8 +359,8 @@ function getEntityTypeName(entityType: ApprovalModule): string {
       return 'LeaveRequest';
     case 'ASSET_REQUEST':
       return 'AssetRequest';
-    case 'PURCHASE_REQUEST':
-      return 'PurchaseRequest';
+    case 'SPEND_REQUEST':
+      return 'SpendRequest';
     default:
       return 'Request';
   }
@@ -375,8 +375,8 @@ function getEntityLink(entityType: ApprovalModule, entityId: string): string {
       return `/admin/leave/requests/${entityId}`;
     case 'ASSET_REQUEST':
       return `/admin/asset-requests/${entityId}`;
-    case 'PURCHASE_REQUEST':
-      return `/admin/purchase-requests/${entityId}`;
+    case 'SPEND_REQUEST':
+      return `/admin/spend-requests/${entityId}`;
     default:
       return '/admin';
   }

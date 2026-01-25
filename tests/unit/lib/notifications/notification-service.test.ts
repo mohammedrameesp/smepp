@@ -483,9 +483,9 @@ describe('Notification Service', () => {
   // ═══════════════════════════════════════════════════════════════════════════════
 
   describe('NotificationTemplates - Spend Requests', () => {
-    describe('purchaseRequestSubmitted', () => {
+    describe('spendRequestSubmitted', () => {
       it('should generate spend request submitted notification', () => {
-        const result = NotificationTemplates.purchaseRequestSubmitted(
+        const result = NotificationTemplates.spendRequestSubmitted(
           'admin-123',
           'PR-2024-001',
           'John Doe',
@@ -495,40 +495,40 @@ describe('Notification Service', () => {
 
         expect(result).toEqual({
           recipientId: 'admin-123',
-          type: 'PURCHASE_REQUEST_SUBMITTED',
+          type: 'SPEND_REQUEST_SUBMITTED',
           title: 'New Spend Request',
           message: 'John Doe submitted a spend request (PR-2024-001): Office Supplies',
-          link: '/admin/purchase-requests/pr-456',
-          entityType: 'PurchaseRequest',
+          link: '/admin/spend-requests/pr-456',
+          entityType: 'SpendRequest',
           entityId: 'pr-456',
         });
       });
     });
 
-    describe('purchaseRequestApproved', () => {
+    describe('spendRequestApproved', () => {
       it('should generate spend request approval notification', () => {
-        const result = NotificationTemplates.purchaseRequestApproved(
+        const result = NotificationTemplates.spendRequestApproved(
           'user-123',
           'PR-2024-001'
         );
 
-        expect(result.type).toBe('PURCHASE_REQUEST_APPROVED');
+        expect(result.type).toBe('SPEND_REQUEST_APPROVED');
         expect(result.message).toBe(
           'Your spend request (PR-2024-001) has been approved.'
         );
-        expect(result.link).toBe('/employee/purchase-requests');
+        expect(result.link).toBe('/employee/spend-requests');
       });
     });
 
-    describe('purchaseRequestRejected', () => {
+    describe('spendRequestRejected', () => {
       it('should generate spend request rejection notification', () => {
-        const result = NotificationTemplates.purchaseRequestRejected(
+        const result = NotificationTemplates.spendRequestRejected(
           'user-123',
           'PR-2024-001',
           'Budget exceeded'
         );
 
-        expect(result.type).toBe('PURCHASE_REQUEST_REJECTED');
+        expect(result.type).toBe('SPEND_REQUEST_REJECTED');
         expect(result.message).toBe(
           'Your spend request (PR-2024-001) was rejected. Reason: Budget exceeded'
         );

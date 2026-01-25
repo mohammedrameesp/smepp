@@ -212,7 +212,7 @@ export const AssetRequestTransition = createTransitionFactory({
   entityIdField: 'assetRequestId',
 });
 
-export const PurchaseRequestTransition = createTransitionFactory({
-  historyModel: 'purchaseRequestHistory',
-  entityIdField: 'purchaseRequestId',
+export const SpendRequestTransition = createTransitionFactory({
+  historyModel: 'spendRequestHistory',
+  entityIdField: 'spendRequestId',
 });

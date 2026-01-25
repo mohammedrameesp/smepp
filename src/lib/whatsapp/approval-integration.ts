@@ -25,8 +25,8 @@ function toEntityType(module: ApprovalModule): ApprovalEntityType {
   switch (module) {
     case 'LEAVE_REQUEST':
       return 'LEAVE_REQUEST';
-    case 'PURCHASE_REQUEST':
-      return 'PURCHASE_REQUEST';
+    case 'SPEND_REQUEST':
+      return 'SPEND_REQUEST';
     case 'ASSET_REQUEST':
       return 'ASSET_REQUEST';
     default:
@@ -59,10 +59,10 @@ async function getLeaveRequestDetails(requestId: string): Promise<ApprovalDetail
 }
 
 /**
- * Get approval details for a purchase request
+ * Get approval details for a spend request
  */
-async function getPurchaseRequestDetails(requestId: string): Promise<ApprovalDetails | null> {
-  const request = await prisma.purchaseRequest.findUnique({
+async function getSpendRequestDetails(requestId: string): Promise<ApprovalDetails | null> {
+  const request = await prisma.spendRequest.findUnique({
     where: { id: requestId },
     include: {
       requester: { select: { name: true } },
@@ -111,8 +111,8 @@ async function getApprovalDetails(
   switch (entityType) {
     case 'LEAVE_REQUEST':
       return getLeaveRequestDetails(entityId);
-    case 'PURCHASE_REQUEST':
-      return getPurchaseRequestDetails(entityId);
+    case 'SPEND_REQUEST':
+      return getSpendRequestDetails(entityId);
     case 'ASSET_REQUEST':
       return getAssetRequestDetails(entityId);
     default:

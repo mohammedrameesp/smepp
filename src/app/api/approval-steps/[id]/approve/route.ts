@@ -61,8 +61,8 @@ async function approveStepHandler(request: NextRequest, context: APIContext) {
       select: { memberId: true },
     });
     requesterId = request?.memberId;
-  } else if (step.entityType === 'PURCHASE_REQUEST') {
-    const request = await db.purchaseRequest.findUnique({
+  } else if (step.entityType === 'SPEND_REQUEST') {
+    const request = await db.spendRequest.findUnique({
       where: { id: step.entityId },
       select: { requesterId: true },
     });
@@ -170,8 +170,8 @@ async function handleFinalApproval(
       ),
       tenantId
     );
-  } else if (entityType === 'PURCHASE_REQUEST') {
-    const purchaseRequest = await db.purchaseRequest.update({
+  } else if (entityType === 'SPEND_REQUEST') {
+    const spendRequest = await db.spendRequest.update({
       where: { id: entityId },
       data: {
         status: 'APPROVED',
@@ -184,9 +184,9 @@ async function handleFinalApproval(
     });
 
     await createNotification(
-      NotificationTemplates.purchaseRequestApproved(
-        purchaseRequest.requesterId,
-        purchaseRequest.referenceNumber,
+      NotificationTemplates.spendRequestApproved(
+        spendRequest.requesterId,
+        spendRequest.referenceNumber,
         entityId
       ),
       tenantId
@@ -264,8 +264,8 @@ async function notifyNextApprover(
         link: `/admin/leave/requests/${entityId}`,
       };
     }
-  } else if (entityType === 'PURCHASE_REQUEST') {
-    const request = await db.purchaseRequest.findUnique({
+  } else if (entityType === 'SPEND_REQUEST') {
+    const request = await db.spendRequest.findUnique({
       where: { id: entityId },
       include: {
         requester: { select: { name: true, email: true } },
@@ -273,9 +273,9 @@ async function notifyNextApprover(
     });
     if (request) {
       entityDetails = {
-        title: `Purchase Request (${request.referenceNumber})`,
+        title: `Spend Request (${request.referenceNumber})`,
         requesterName: request.requester?.name || request.requester?.email || 'User',
-        link: `/admin/purchase-requests/${entityId}`,
+        link: `/admin/spend-requests/${entityId}`,
       };
     }
   } else if (entityType === 'ASSET_REQUEST') {

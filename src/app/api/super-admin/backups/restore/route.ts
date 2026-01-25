@@ -107,8 +107,8 @@ export async function POST(request: NextRequest) {
         await tx.leaveRequest.deleteMany({ where: { tenantId } });
         await tx.leaveBalance.deleteMany({ where: { tenantId } });
         await tx.leaveType.deleteMany({ where: { tenantId } });
-        await tx.purchaseRequestItem.deleteMany({ where: { purchaseRequest: { tenantId } } });
-        await tx.purchaseRequest.deleteMany({ where: { tenantId } });
+        await tx.spendRequestItem.deleteMany({ where: { spendRequest: { tenantId } } });
+        await tx.spendRequest.deleteMany({ where: { tenantId } });
         await tx.maintenanceRecord.deleteMany({ where: { tenantId } });
         await tx.systemSettings.deleteMany({ where: { tenantId } });
         await tx.activityLog.deleteMany({ where: { tenantId } });
@@ -181,14 +181,14 @@ export async function POST(request: NextRequest) {
           results.push({ table: 'maintenanceRecords', count: backupData.maintenanceRecords.length, success: true });
         }
 
-        if (backupData.purchaseRequests?.length) {
-          await tx.purchaseRequest.createMany({ data: backupData.purchaseRequests, skipDuplicates: true });
-          results.push({ table: 'purchaseRequests', count: backupData.purchaseRequests.length, success: true });
+        if (backupData.spendRequests?.length) {
+          await tx.spendRequest.createMany({ data: backupData.spendRequests, skipDuplicates: true });
+          results.push({ table: 'spendRequests', count: backupData.spendRequests.length, success: true });
         }
 
-        if (backupData.purchaseRequestItems?.length) {
-          await tx.purchaseRequestItem.createMany({ data: backupData.purchaseRequestItems, skipDuplicates: true });
-          results.push({ table: 'purchaseRequestItems', count: backupData.purchaseRequestItems.length, success: true });
+        if (backupData.spendRequestItems?.length) {
+          await tx.spendRequestItem.createMany({ data: backupData.spendRequestItems, skipDuplicates: true });
+          results.push({ table: 'spendRequestItems', count: backupData.spendRequestItems.length, success: true });
         }
 
         if (backupData.leaveTypes?.length) {

@@ -9,7 +9,7 @@ export const badgeKeys = [
   'pendingChangeRequests',
   'pendingLeaveRequests',
   'pendingSuppliers',
-  'pendingPurchaseRequests',
+  'pendingSpendRequests',
   'pendingAssetRequests',
   'myPendingAssignments',
   'pendingApprovals',

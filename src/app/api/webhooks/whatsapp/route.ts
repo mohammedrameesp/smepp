@@ -230,8 +230,8 @@ async function executeApprovalAction(
   switch (entityType) {
     case 'LEAVE_REQUEST':
       return executeLeaveAction(tenantId, entityId, action, approverId);
-    case 'PURCHASE_REQUEST':
-      return executePurchaseAction(tenantId, entityId, action, approverId);
+    case 'SPEND_REQUEST':
+      return executeSpendAction(tenantId, entityId, action, approverId);
     case 'ASSET_REQUEST':
       return executeAssetAction(tenantId, entityId, action, approverId);
     default:
@@ -326,15 +326,15 @@ async function executeLeaveAction(
 }
 
 /**
- * Execute purchase request approval/rejection
+ * Execute spend request approval/rejection
  */
-async function executePurchaseAction(
+async function executeSpendAction(
   tenantId: string,
   entityId: string,
   action: 'approve' | 'reject',
   approverId: string
 ): Promise<{ requesterName: string; title?: string }> {
-  const request = await prisma.purchaseRequest.findUnique({
+  const request = await prisma.spendRequest.findUnique({
     where: { id: entityId },
     include: {
       requester: { select: { name: true } },
@@ -342,16 +342,16 @@ async function executePurchaseAction(
   });
 
   if (!request || request.tenantId !== tenantId) {
-    throw new Error('Purchase request not found');
+    throw new Error('Spend request not found');
   }
 
   if (request.status !== 'PENDING' && request.status !== 'UNDER_REVIEW') {
-    throw new Error('Purchase request already processed');
+    throw new Error('Spend request already processed');
   }
 
   const newStatus = action === 'approve' ? 'APPROVED' : 'REJECTED';
 
-  await prisma.purchaseRequest.update({
+  await prisma.spendRequest.update({
     where: { id: entityId },
     data: {
       status: newStatus,
@@ -361,9 +361,9 @@ async function executePurchaseAction(
     },
   });
 
-  await prisma.purchaseRequestHistory.create({
+  await prisma.spendRequestHistory.create({
     data: {
-      purchaseRequestId: entityId,
+      spendRequestId: entityId,
       action: 'STATUS_CHANGED',
       previousStatus: request.status,
       newStatus,
@@ -373,7 +373,7 @@ async function executePurchaseAction(
   });
 
   // Invalidate all other tokens for this entity
-  await invalidateTokensForEntity('PURCHASE_REQUEST', entityId);
+  await invalidateTokensForEntity('SPEND_REQUEST', entityId);
 
   return {
     requesterName: request.requester.name || 'Employee',

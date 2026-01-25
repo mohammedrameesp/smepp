@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 
 const MODULE_LABELS = {
   LEAVE_REQUEST: 'Leave Requests',
-  PURCHASE_REQUEST: 'Spend Requests',
+  SPEND_REQUEST: 'Spend Requests',
   ASSET_REQUEST: 'Asset Requests',
 };
 

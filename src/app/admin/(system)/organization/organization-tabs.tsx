@@ -76,7 +76,7 @@ const MODULE_NAMES: Record<string, string> = {
   employees: 'Employees',
   leave: 'Leave',
   payroll: 'Payroll',
-  'purchase-requests': 'Spend Requests',
+  'spend-requests': 'Spend Requests',
   documents: 'Documents',
 };
 
@@ -859,11 +859,11 @@ export function OrganizationTabs({
 
             {/* Approvals Sub-Tab */}
             <TabsContent value="approvals" className="space-y-6 mt-6">
-              {(enabledModules.includes('leave') || enabledModules.includes('assets') || enabledModules.includes('purchase-requests')) ? (
+              {(enabledModules.includes('leave') || enabledModules.includes('assets') || enabledModules.includes('spend-requests')) ? (
                 <ApprovalWorkflowDisplay enabledModules={enabledModules} />
               ) : (
                 <ModuleRequiredPlaceholder
-                  moduleName="Leave, Assets, or Purchase Requests"
+                  moduleName="Leave, Assets, or Spend Requests"
                   onEnableClick={() => setConfigTab('general')}
                 />
               )}

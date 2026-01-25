@@ -17,7 +17,7 @@ import logger from './log';
 
 export interface EmailFailureContext {
   // Module information
-  module: 'assets' | 'asset-requests' | 'leave' | 'purchase-requests' | 'suppliers' | 'users' | 'hr' | 'auth' | 'other';
+  module: 'assets' | 'asset-requests' | 'leave' | 'spend-requests' | 'suppliers' | 'users' | 'hr' | 'auth' | 'other';
   action: string; // e.g., "assignment", "approval", "rejection"
 
   // Tenant context

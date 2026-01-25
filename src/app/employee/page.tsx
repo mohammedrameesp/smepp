@@ -94,7 +94,7 @@ export default async function EmployeeDashboard() {
     const [
       subscriptionHistory,
       assetHistory,
-      purchaseRequests,
+      spendRequests,
       memberProfile,
       leaveRequests,
       leaveBalances,
@@ -104,7 +104,7 @@ export default async function EmployeeDashboard() {
     ] = await Promise.all([
       getMemberSubscriptionHistory(session.user.id),
       getMemberAssetHistory(session.user.id, organizationId),
-      prisma.purchaseRequest.findMany({
+      prisma.spendRequest.findMany({
         where: { requesterId: session.user.id },
         orderBy: { createdAt: 'desc' },
         take: 10,
@@ -184,12 +184,12 @@ export default async function EmployeeDashboard() {
     // Calculate stats
     const activeAssets = assetHistory.filter((a) => a && a.isCurrentlyAssigned);
     const activeSubscriptions = subscriptionHistory.filter((s) => s.status === 'ACTIVE');
-    const pendingPurchaseRequests = purchaseRequests.filter((pr) => pr.status === 'PENDING');
+    const pendingSpendRequests = spendRequests.filter((pr) => pr.status === 'PENDING');
     const pendingLeaveRequests = leaveRequests.filter((lr) => lr.status === 'PENDING');
     const pendingAssetRequests = assetRequests.filter((ar) => ar.status === 'PENDING_ADMIN_APPROVAL');
     const approvedLeaveRequests = leaveRequests.filter((lr) => lr.status === 'APPROVED');
 
-    const totalPendingRequests = pendingPurchaseRequests.length + pendingLeaveRequests.length + pendingAssetRequests.length;
+    const totalPendingRequests = pendingSpendRequests.length + pendingLeaveRequests.length + pendingAssetRequests.length;
 
     // Calculate total available leave days
     const dateOfJoining = memberProfile?.dateOfJoining;
@@ -291,7 +291,7 @@ export default async function EmployeeDashboard() {
 
     // Transform data for components
     const unifiedRequests = [
-      ...purchaseRequests.slice(0, 3).map((pr) => ({
+      ...spendRequests.slice(0, 3).map((pr) => ({
         id: pr.id,
         type: 'purchase' as const,
         title: pr.title,
@@ -448,7 +448,7 @@ export default async function EmployeeDashboard() {
               <Palmtree className="h-5 w-5 mb-1" />
               <span className="text-xs font-medium">Leave</span>
             </Link>
-            <Link href="/employee/purchase-requests/new" className="flex flex-col items-center py-2 px-1 rounded-lg hover:bg-violet-50 text-gray-500 hover:text-violet-600">
+            <Link href="/employee/spend-requests/new" className="flex flex-col items-center py-2 px-1 rounded-lg hover:bg-violet-50 text-gray-500 hover:text-violet-600">
               <svg className="h-5 w-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>

@@ -386,14 +386,14 @@ async function deleteModuleDataWithTx(
       await tx.salaryStructure.deleteMany({ where: { tenantId } });
       break;
 
-    case 'purchase-requests':
-      await tx.purchaseRequestHistory.deleteMany({
-        where: { purchaseRequest: { tenantId } },
+    case 'spend-requests':
+      await tx.spendRequestHistory.deleteMany({
+        where: { spendRequest: { tenantId } },
       });
-      await tx.purchaseRequestItem.deleteMany({
-        where: { purchaseRequest: { tenantId } },
+      await tx.spendRequestItem.deleteMany({
+        where: { spendRequest: { tenantId } },
       });
-      await tx.purchaseRequest.deleteMany({ where: { tenantId } });
+      await tx.spendRequest.deleteMany({ where: { tenantId } });
       break;
 
     case 'documents':

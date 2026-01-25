@@ -55,7 +55,7 @@ export async function GET() {
       'employees',
       'leave',
       'payroll',
-      'purchase-requests',
+      'spend-requests',
     ];
 
     allModules.forEach((module) => {

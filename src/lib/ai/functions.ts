@@ -240,8 +240,8 @@ export const chatFunctions: ChatFunction[] = [
     requiresAdmin: true,
   },
   {
-    name: 'getPurchaseRequestSummary',
-    description: 'Get summary of purchase requests by status',
+    name: 'getSpendRequestSummary',
+    description: 'Get summary of spend requests by status',
     parameters: {
       type: 'object',
       properties: {
@@ -776,11 +776,11 @@ async function executeFunctionInternal(
       }));
     }
 
-    case 'getPurchaseRequestSummary': {
+    case 'getSpendRequestSummary': {
       const status = args.status as string | undefined;
 
       // Get counts by status
-      const statusCounts = await prisma.purchaseRequest.groupBy({
+      const statusCounts = await prisma.spendRequest.groupBy({
         by: ['status'],
         where: { tenantId },
         _count: { id: true },
@@ -792,7 +792,7 @@ async function executeFunctionInternal(
       if (status) {
         const validStatuses = ['PENDING', 'UNDER_REVIEW', 'APPROVED', 'REJECTED', 'COMPLETED'];
         if (validStatuses.includes(status.toUpperCase())) {
-          recentRequests = await prisma.purchaseRequest.findMany({
+          recentRequests = await prisma.spendRequest.findMany({
             where: {
               tenantId,
               status: status.toUpperCase() as 'PENDING' | 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED' | 'COMPLETED',

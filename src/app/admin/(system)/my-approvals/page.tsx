@@ -32,8 +32,8 @@ async function getPendingApprovals(tenantId: string, userId: string, isAdmin: bo
     if (directReportIds.length === 0) {
       return {
         all: [],
-        grouped: { LEAVE_REQUEST: [], PURCHASE_REQUEST: [], ASSET_REQUEST: [] },
-        counts: { LEAVE_REQUEST: 0, PURCHASE_REQUEST: 0, ASSET_REQUEST: 0, total: 0 },
+        grouped: { LEAVE_REQUEST: [], SPEND_REQUEST: [], ASSET_REQUEST: [] },
+        counts: { LEAVE_REQUEST: 0, SPEND_REQUEST: 0, ASSET_REQUEST: 0, total: 0 },
       };
     }
   }
@@ -66,8 +66,8 @@ async function getPendingApprovals(tenantId: string, userId: string, isAdmin: bo
     },
   });
 
-  // Fetch pending purchase requests
-  const pendingPurchaseRequests = await prisma.purchaseRequest.findMany({
+  // Fetch pending spend requests
+  const pendingSpendRequests = await prisma.spendRequest.findMany({
     where: { tenantId, status: 'PENDING', ...requesterFilter },
     orderBy: { createdAt: 'desc' },
     include: {
@@ -107,9 +107,9 @@ async function getPendingApprovals(tenantId: string, userId: string, isAdmin: bo
     },
   }));
 
-  const purchaseApprovals = pendingPurchaseRequests.map((req) => ({
+  const spendApprovals = pendingSpendRequests.map((req) => ({
     id: req.id,
-    entityType: 'PURCHASE_REQUEST' as const,
+    entityType: 'SPEND_REQUEST' as const,
     entityId: req.id,
     createdAt: req.createdAt.toISOString(),
     entityDetails: {
@@ -124,7 +124,7 @@ async function getPendingApprovals(tenantId: string, userId: string, isAdmin: bo
   }));
 
   // Combine and sort by date
-  const all = [...leaveApprovals, ...assetApprovals, ...purchaseApprovals].sort(
+  const all = [...leaveApprovals, ...assetApprovals, ...spendApprovals].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 
@@ -132,12 +132,12 @@ async function getPendingApprovals(tenantId: string, userId: string, isAdmin: bo
     all,
     grouped: {
       LEAVE_REQUEST: leaveApprovals,
-      PURCHASE_REQUEST: purchaseApprovals,
+      SPEND_REQUEST: spendApprovals,
       ASSET_REQUEST: assetApprovals,
     },
     counts: {
       LEAVE_REQUEST: leaveApprovals.length,
-      PURCHASE_REQUEST: purchaseApprovals.length,
+      SPEND_REQUEST: spendApprovals.length,
       ASSET_REQUEST: assetApprovals.length,
       total: all.length,
     },
@@ -176,7 +176,7 @@ export default async function MyApprovalsPage() {
         <StatChipGroup>
           <StatChip value={approvals.counts.total} label="total pending" color="amber" />
           <StatChip value={approvals.counts.LEAVE_REQUEST} label="leave" color="blue" hideWhenZero />
-          <StatChip value={approvals.counts.PURCHASE_REQUEST} label="purchase" color="emerald" hideWhenZero />
+          <StatChip value={approvals.counts.SPEND_REQUEST} label="purchase" color="emerald" hideWhenZero />
           <StatChip value={approvals.counts.ASSET_REQUEST} label="asset" color="purple" hideWhenZero />
         </StatChipGroup>
       </PageHeader>

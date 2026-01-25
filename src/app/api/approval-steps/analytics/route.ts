@@ -22,7 +22,7 @@ const analyticsQuerySchema = z.object({
   startDate: z.string().optional(),
   endDate: z.string().optional(),
   // Module filter
-  module: z.enum(['LEAVE_REQUEST', 'PURCHASE_REQUEST', 'ASSET_REQUEST']).optional(),
+  module: z.enum(['LEAVE_REQUEST', 'SPEND_REQUEST', 'ASSET_REQUEST']).optional(),
   // Include detailed breakdowns
   includeByModule: z.enum(['true', 'false']).transform(v => v === 'true').optional(),
   includeByRole: z.enum(['true', 'false']).transform(v => v === 'true').optional(),
@@ -134,7 +134,7 @@ async function getApprovalAnalyticsHandler(request: NextRequest, context: APICon
   // Breakdown by module
   if (includeByModule) {
     const moduleStats = await Promise.all(
-      (['LEAVE_REQUEST', 'PURCHASE_REQUEST', 'ASSET_REQUEST'] as ApprovalModule[]).map(async (mod) => {
+      (['LEAVE_REQUEST', 'SPEND_REQUEST', 'ASSET_REQUEST'] as ApprovalModule[]).map(async (mod) => {
         const [total, pending, approved, rejected] = await Promise.all([
           db.approvalStep.count({ where: { ...baseWhere, entityType: mod } }),
           db.approvalStep.count({ where: { ...baseWhere, entityType: mod, status: 'PENDING' } }),

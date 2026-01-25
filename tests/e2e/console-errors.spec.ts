@@ -156,7 +156,7 @@ const ADMIN_PAGES = [
   '/admin/payroll/salary-structures/new',
 
   // Projects
-  '/admin/purchase-requests',
+  '/admin/spend-requests',
 
   // System
   '/admin/users',
@@ -231,7 +231,7 @@ const EMPLOYEE_PAGES = [
   '/employee/payroll/gratuity',
 
   // Projects
-  '/employee/purchase-requests',
+  '/employee/spend-requests',
 ];
 
 test.describe('Console Errors - Employee Pages', () => {

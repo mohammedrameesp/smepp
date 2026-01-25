@@ -15,7 +15,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { GitBranch, ArrowRight, Info, Settings, FileText, Package, ShoppingCart } from 'lucide-react';
 import {
   DEFAULT_LEAVE_POLICIES,
-  DEFAULT_PURCHASE_POLICIES,
+  DEFAULT_SPEND_POLICIES,
   DEFAULT_ASSET_POLICIES,
 } from '../lib/default-policies';
 import Link from 'next/link';
@@ -31,13 +31,13 @@ const ROLE_LABELS: Record<string, string> = {
 // Module display config
 const MODULE_CONFIG: Record<string, { label: string; icon: React.ElementType }> = {
   LEAVE_REQUEST: { label: 'Leave Requests', icon: FileText },
-  PURCHASE_REQUEST: { label: 'Spend Requests', icon: ShoppingCart },
+  SPEND_REQUEST: { label: 'Spend Requests', icon: ShoppingCart },
   ASSET_REQUEST: { label: 'Asset Requests', icon: Package },
 };
 
 // Transform imported defaults to display format
 function transformDefaultsForDisplay(
-  defaults: typeof DEFAULT_LEAVE_POLICIES | typeof DEFAULT_PURCHASE_POLICIES | typeof DEFAULT_ASSET_POLICIES,
+  defaults: typeof DEFAULT_LEAVE_POLICIES | typeof DEFAULT_SPEND_POLICIES | typeof DEFAULT_ASSET_POLICIES,
   prefix: string
 ): ApprovalPolicy[] {
   return defaults.map((policy, idx) => ({
@@ -61,7 +61,7 @@ function transformDefaultsForDisplay(
 // Default policies derived from single source of truth
 const DEFAULT_POLICIES: Record<string, ApprovalPolicy[]> = {
   LEAVE_REQUEST: transformDefaultsForDisplay(DEFAULT_LEAVE_POLICIES, 'leave'),
-  PURCHASE_REQUEST: transformDefaultsForDisplay(DEFAULT_PURCHASE_POLICIES, 'purchase'),
+  SPEND_REQUEST: transformDefaultsForDisplay(DEFAULT_SPEND_POLICIES, 'spend'),
   ASSET_REQUEST: transformDefaultsForDisplay(DEFAULT_ASSET_POLICIES, 'asset'),
 };
 
@@ -242,7 +242,7 @@ export function ApprovalWorkflowDisplay({ enabledModules, className }: ApprovalW
   // Map enabled module names to API module names
   const moduleMapping: Record<string, string> = {
     leave: 'LEAVE_REQUEST',
-    'purchase-requests': 'PURCHASE_REQUEST',
+    'spend-requests': 'SPEND_REQUEST',
     assets: 'ASSET_REQUEST',
   };
 

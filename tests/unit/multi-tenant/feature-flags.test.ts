@@ -62,7 +62,7 @@ describe('Feature Flags Tests', () => {
           'suppliers',
           'leave',
           'payroll',
-          'purchase-requests',
+          'spend-requests',
           'documents',
         ];
         expect(freeTier.modules).toEqual(expect.arrayContaining(expectedModules));
@@ -111,7 +111,7 @@ describe('Feature Flags Tests', () => {
     });
 
     it('should return true for any module regardless of tier', () => {
-      const modules = ['assets', 'subscriptions', 'suppliers', 'leave', 'payroll', 'purchase-requests', 'documents'];
+      const modules = ['assets', 'subscriptions', 'suppliers', 'leave', 'payroll', 'spend-requests', 'documents'];
 
       modules.forEach((module) => {
         expect(hasModuleAccess('FREE' as SubscriptionTier, module)).toBe(true);
@@ -194,7 +194,7 @@ describe('Feature Flags Tests', () => {
     it('should include operational modules', () => {
       const modules = getAvailableModules('FREE' as SubscriptionTier);
 
-      expect(modules).toContain('purchase-requests');
+      expect(modules).toContain('spend-requests');
       expect(modules).toContain('documents');
     });
   });
@@ -244,7 +244,7 @@ describe('Feature Flags Tests', () => {
     });
 
     it('should return null for any module', () => {
-      const modules = ['assets', 'subscriptions', 'suppliers', 'leave', 'payroll', 'purchase-requests'];
+      const modules = ['assets', 'subscriptions', 'suppliers', 'leave', 'payroll', 'spend-requests'];
 
       modules.forEach((module) => {
         expect(needsUpgradeForModule('FREE' as SubscriptionTier, module)).toBeNull();
@@ -299,10 +299,10 @@ describe('Feature Flags Tests', () => {
       expect(MODULE_METADATA.payroll.icon).toBe('DollarSign');
     });
 
-    it('should have metadata for purchase-requests module', () => {
-      expect(MODULE_METADATA['purchase-requests']).toBeDefined();
-      expect(MODULE_METADATA['purchase-requests'].name).toBe('Spend Requests');
-      expect(MODULE_METADATA['purchase-requests'].icon).toBe('ShoppingCart');
+    it('should have metadata for spend-requests module', () => {
+      expect(MODULE_METADATA['spend-requests']).toBeDefined();
+      expect(MODULE_METADATA['spend-requests'].name).toBe('Spend Requests');
+      expect(MODULE_METADATA['spend-requests'].icon).toBe('ShoppingCart');
     });
 
     it('should have metadata for documents module', () => {

@@ -200,8 +200,8 @@ function getTemplateName(entityType: ApprovalEntityType): string {
   switch (entityType) {
     case 'LEAVE_REQUEST':
       return 'leave_approval_request';
-    case 'PURCHASE_REQUEST':
-      return 'purchase_approval_request';
+    case 'SPEND_REQUEST':
+      return 'purchase_approval_request'; // Template name kept for backward compatibility with Meta
     case 'ASSET_REQUEST':
       return 'asset_approval_request';
     default:

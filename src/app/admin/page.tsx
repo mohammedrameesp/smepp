@@ -99,7 +99,7 @@ export default async function AdminDashboard() {
       totalAssets,
       totalSubscriptions,
       totalSuppliers,
-      pendingPurchaseRequests,
+      pendingSpendRequests,
       totalCompanyDocuments,
       pendingLeaveCount,
       onLeaveTodayCount,
@@ -124,7 +124,7 @@ export default async function AdminDashboard() {
       prisma.asset.count({ where: { tenantId, deletedAt: null, status: { not: 'DISPOSED' } } }),
       prisma.subscription.count({ where: { tenantId, status: 'ACTIVE' } }),
       prisma.supplier.count({ where: { tenantId, status: 'APPROVED' } }),
-      prisma.purchaseRequest.count({ where: { tenantId, status: 'PENDING' } }),
+      prisma.spendRequest.count({ where: { tenantId, status: 'PENDING' } }),
       prisma.companyDocument.count({ where: { tenantId } }),
       prisma.leaveRequest.count({ where: { tenantId, status: 'PENDING' } }),
       prisma.leaveRequest.count({
@@ -270,7 +270,7 @@ export default async function AdminDashboard() {
     ]);
 
     // Calculate total pending approvals (including asset requests and returns)
-    const totalPendingApprovals = pendingApprovals + pendingLeaveCount + pendingPurchaseRequests + pendingSuppliers + pendingChangeRequests + pendingAssetRequests + pendingAssetReturns;
+    const totalPendingApprovals = pendingApprovals + pendingLeaveCount + pendingSpendRequests + pendingSuppliers + pendingChangeRequests + pendingAssetRequests + pendingAssetReturns;
 
     // Calculate expiring documents count
     const expiringDocsCount = expiringCompanyDocs.length + expiringSubscriptions.length + expiringEmployeeDocs.length;
@@ -281,7 +281,7 @@ export default async function AdminDashboard() {
         assets: totalAssets,
         subscriptions: totalSubscriptions,
         suppliers: totalSuppliers,
-        pendingPurchaseRequests,
+        pendingSpendRequests,
         companyDocuments: totalCompanyDocuments,
         pendingLeave: pendingLeaveCount,
         onLeaveToday: onLeaveTodayCount,
@@ -404,15 +404,15 @@ export default async function AdminDashboard() {
       requiredAccess: 'finance' as const,
     },
     {
-      id: 'purchase-requests',
-      href: '/admin/purchase-requests',
+      id: 'spend-requests',
+      href: '/admin/spend-requests',
       icon: '🛒',
       title: 'Purchases',
       description: 'Requests and approvals',
-      count: dashboardData?.stats.pendingPurchaseRequests || 0,
-      badge: dashboardData?.stats.pendingPurchaseRequests ? `${dashboardData.stats.pendingPurchaseRequests} pending` : null,
+      count: dashboardData?.stats.pendingSpendRequests || 0,
+      badge: dashboardData?.stats.pendingSpendRequests ? `${dashboardData.stats.pendingSpendRequests} pending` : null,
       badgeColor: 'bg-red-500',
-      enabled: isModuleEnabled('purchase-requests'),
+      enabled: isModuleEnabled('spend-requests'),
       requiredAccess: 'finance' as const,
     },
     {

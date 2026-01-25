@@ -66,7 +66,7 @@ export async function GET(
       employeesCount,
       leaveRequestsCount,
       payrollRunsCount,
-      purchaseRequestsCount,
+      spendRequestsCount,
       companyDocsCount,
       assetRequestsCount,
     ] = await Promise.all([
@@ -75,7 +75,7 @@ export async function GET(
       prisma.teamMember.count({ where: { tenantId: id, isEmployee: true, isDeleted: false } }),
       prisma.leaveRequest.count({ where: { tenantId: id } }),
       prisma.payrollRun.count({ where: { tenantId: id } }),
-      prisma.purchaseRequest.count({ where: { tenantId: id } }),
+      prisma.spendRequest.count({ where: { tenantId: id } }),
       prisma.companyDocument.count({ where: { tenantId: id } }),
       prisma.assetRequest.count({ where: { tenantId: id } }),
     ]);
@@ -95,12 +95,12 @@ export async function GET(
     // Get pending items counts
     const [
       pendingLeaveRequests,
-      pendingPurchaseRequests,
+      pendingSpendRequests,
       pendingSuppliers,
       pendingAssetRequests,
     ] = await Promise.all([
       prisma.leaveRequest.count({ where: { tenantId: id, status: 'PENDING' } }),
-      prisma.purchaseRequest.count({ where: { tenantId: id, status: 'PENDING' } }),
+      prisma.spendRequest.count({ where: { tenantId: id, status: 'PENDING' } }),
       prisma.supplier.count({ where: { tenantId: id, status: 'PENDING' } }),
       prisma.assetRequest.count({ where: { tenantId: id, status: 'PENDING_ADMIN_APPROVAL' } }),
     ]);
@@ -129,9 +129,9 @@ export async function GET(
       payroll: {
         totalRuns: payrollRunsCount,
       },
-      'purchase-requests': {
-        total: purchaseRequestsCount,
-        pending: pendingPurchaseRequests,
+      'spend-requests': {
+        total: spendRequestsCount,
+        pending: pendingSpendRequests,
       },
       documents: {
         total: companyDocsCount,

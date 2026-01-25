@@ -1,6 +1,6 @@
 /**
- * Tests for Purchase Request Utilities
- * @see src/lib/purchase-request-utils.ts
+ * Tests for Spend Request Utilities
+ * @see src/features/spend-requests/lib/spend-request-utils.ts
  */
 
 import {
@@ -21,7 +21,7 @@ import {
   canEditRequest,
   canDeleteRequest,
   getAllowedStatusTransitions,
-} from '@/features/purchase-requests/lib/purchase-request-utils';
+} from '@/features/spend-requests/lib/spend-request-utils';
 
 describe('Purchase Request Utilities', () => {
   // ===== Constants =====

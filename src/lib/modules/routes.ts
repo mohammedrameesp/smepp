@@ -34,9 +34,9 @@ const MODULE_ROUTE_MAP: Array<{ prefix: string; moduleId: string }> = [
   // Payroll
   { prefix: '/admin/payroll', moduleId: 'payroll' },
   { prefix: '/employee/payroll', moduleId: 'payroll' },
-  // Purchase Requests
-  { prefix: '/admin/purchase-requests', moduleId: 'purchase-requests' },
-  { prefix: '/employee/purchase-requests', moduleId: 'purchase-requests' },
+  // Spend Requests
+  { prefix: '/admin/spend-requests', moduleId: 'spend-requests' },
+  { prefix: '/employee/spend-requests', moduleId: 'spend-requests' },
   // Documents
   { prefix: '/admin/company-documents', moduleId: 'documents' },
 ];
@@ -96,7 +96,7 @@ const PERMISSION_ROUTE_MAP: Array<{ prefix: string; permission: PermissionFlag }
   { prefix: '/admin/leave', permission: 'hasHRAccess' },
   // Finance module routes
   { prefix: '/admin/payroll', permission: 'hasFinanceAccess' },
-  { prefix: '/admin/purchase-requests', permission: 'hasFinanceAccess' },
+  { prefix: '/admin/spend-requests', permission: 'hasFinanceAccess' },
 ];
 
 export interface PermissionContext {

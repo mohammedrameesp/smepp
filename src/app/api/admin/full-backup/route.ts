@@ -27,8 +27,8 @@ export const GET = withErrorHandler(async (_request, { tenant }) => {
       suppliers,
       supplierEngagements,
       profileChangeRequests,
-      purchaseRequests,
-      purchaseRequestItems,
+      spendRequests,
+      spendRequestItems,
     ] = await Promise.all([
       prisma.teamMember.findMany({
         where: { tenantId },
@@ -103,16 +103,16 @@ export const GET = withErrorHandler(async (_request, { tenant }) => {
           member: { select: { email: true, name: true } },
         },
       }), []),
-      safeQuery(prisma.purchaseRequest.findMany({
+      safeQuery(prisma.spendRequest.findMany({
         where: { tenantId },
         include: {
           requester: { select: { email: true, name: true } },
         },
       }), []),
-      safeQuery(prisma.purchaseRequestItem.findMany({
-        where: { purchaseRequest: { tenantId } },
+      safeQuery(prisma.spendRequestItem.findMany({
+        where: { spendRequest: { tenantId } },
         include: {
-          purchaseRequest: { select: { referenceNumber: true } },
+          spendRequest: { select: { referenceNumber: true } },
         },
       }), []),
     ]);
@@ -499,8 +499,8 @@ export const GET = withErrorHandler(async (_request, { tenant }) => {
     });
 
     // 12. Purchase Requests Sheet
-    const purchaseRequestsSheet = workbook.addWorksheet('Purchase Requests');
-    purchaseRequestsSheet.columns = [
+    const spendRequestsSheet = workbook.addWorksheet('Purchase Requests');
+    spendRequestsSheet.columns = [
       { header: 'ID', key: 'id', width: 30 },
       { header: 'Reference Number', key: 'referenceNumber', width: 20 },
       { header: 'Title', key: 'title', width: 30 },
@@ -525,8 +525,8 @@ export const GET = withErrorHandler(async (_request, { tenant }) => {
       { header: 'Created At', key: 'createdAt', width: 20 },
       { header: 'Updated At', key: 'updatedAt', width: 20 },
     ];
-    purchaseRequests.forEach(pr => {
-      purchaseRequestsSheet.addRow({
+    spendRequests.forEach(pr => {
+      spendRequestsSheet.addRow({
         id: pr.id,
         referenceNumber: pr.referenceNumber,
         title: pr.title,
@@ -554,10 +554,10 @@ export const GET = withErrorHandler(async (_request, { tenant }) => {
     });
 
     // 13. Purchase Request Items Sheet
-    const purchaseRequestItemsSheet = workbook.addWorksheet('Purchase Request Items');
-    purchaseRequestItemsSheet.columns = [
+    const spendRequestItemsSheet = workbook.addWorksheet('Purchase Request Items');
+    spendRequestItemsSheet.columns = [
       { header: 'ID', key: 'id', width: 30 },
-      { header: 'Purchase Request ID', key: 'purchaseRequestId', width: 30 },
+      { header: 'Purchase Request ID', key: 'spendRequestId', width: 30 },
       { header: 'Reference Number', key: 'referenceNumber', width: 20 },
       { header: 'Item Number', key: 'itemNumber', width: 12 },
       { header: 'Description', key: 'description', width: 40 },
@@ -573,11 +573,11 @@ export const GET = withErrorHandler(async (_request, { tenant }) => {
       { header: 'Created At', key: 'createdAt', width: 20 },
       { header: 'Updated At', key: 'updatedAt', width: 20 },
     ];
-    purchaseRequestItems.forEach(item => {
-      purchaseRequestItemsSheet.addRow({
+    spendRequestItems.forEach(item => {
+      spendRequestItemsSheet.addRow({
         id: item.id,
-        purchaseRequestId: item.purchaseRequestId,
-        referenceNumber: item.purchaseRequest?.referenceNumber || '',
+        spendRequestId: item.spendRequestId,
+        referenceNumber: item.spendRequest?.referenceNumber || '',
         itemNumber: item.itemNumber,
         description: item.description,
         quantity: item.quantity,
@@ -606,8 +606,8 @@ export const GET = withErrorHandler(async (_request, { tenant }) => {
       suppliersSheet,
       supplierEngagementsSheet,
       changeRequestsSheet,
-      purchaseRequestsSheet,
-      purchaseRequestItemsSheet,
+      spendRequestsSheet,
+      spendRequestItemsSheet,
     ].forEach(sheet => {
       sheet.getRow(1).font = { bold: true };
       sheet.getRow(1).fill = {

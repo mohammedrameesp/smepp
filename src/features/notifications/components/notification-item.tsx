@@ -46,9 +46,9 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   ASSET_ASSIGNMENT_PENDING: Package,
   ASSET_ASSIGNMENT_ACCEPTED: CheckCircle,
   ASSET_ASSIGNMENT_DECLINED: XCircle,
-  PURCHASE_REQUEST_SUBMITTED: FileText,
-  PURCHASE_REQUEST_APPROVED: CheckCircle,
-  PURCHASE_REQUEST_REJECTED: XCircle,
+  SPEND_REQUEST_SUBMITTED: FileText,
+  SPEND_REQUEST_APPROVED: CheckCircle,
+  SPEND_REQUEST_REJECTED: XCircle,
   DOCUMENT_EXPIRY_WARNING: AlertTriangle,
   // Multi-level approval notifications
   APPROVAL_PENDING: ClipboardCheck,

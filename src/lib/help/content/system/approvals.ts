@@ -196,5 +196,5 @@ export const approvalsContent: HelpModule = {
     },
   ],
 
-  relatedModules: ['leave', 'purchase-requests'],
+  relatedModules: ['leave', 'spend-requests'],
 };

@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
       activityLogs,
       systemSettings,
       maintenanceRecords,
-      purchaseRequests,
+      spendRequests,
     ] = await Promise.all([
       prisma.teamMember.findMany({ where: { ...tenantFilter, isDeleted: false } }),
       prisma.asset.findMany({ where: tenantFilter }),
@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
       prisma.activityLog.findMany({ where: tenantFilter }),
       safeQuery(prisma.systemSettings.findMany({ where: tenantFilter }), []),
       safeQuery(prisma.maintenanceRecord.findMany({ where: tenantFilter }), []),
-      safeQuery(prisma.purchaseRequest.findMany({ where: tenantFilter }), []),
+      safeQuery(prisma.spendRequest.findMany({ where: tenantFilter }), []),
     ]);
 
     const timestamp = new Date().toISOString();
@@ -98,7 +98,7 @@ export async function GET(request: NextRequest) {
         activityLogs: activityLogs.length,
         systemSettings: systemSettings.length,
         maintenanceRecords: maintenanceRecords.length,
-        purchaseRequests: purchaseRequests.length,
+        spendRequests: spendRequests.length,
       },
       teamMembers,
       assets,
@@ -111,7 +111,7 @@ export async function GET(request: NextRequest) {
       activityLogs,
       systemSettings,
       maintenanceRecords,
-      purchaseRequests,
+      spendRequests,
     };
 
     const backupJson = JSON.stringify(backupData, null, 2);

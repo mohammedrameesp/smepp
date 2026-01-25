@@ -27,7 +27,7 @@ describe('Module Registry Tests', () => {
         'employees',
         'leave',
         'payroll',
-        'purchase-requests',
+        'spend-requests',
         'documents',
       ];
 

@@ -24,7 +24,7 @@ const defaultActions: QuickAction[] = [
   },
   {
     label: 'New Purchase',
-    href: '/employee/purchase-requests/new',
+    href: '/employee/spend-requests/new',
     icon: ShoppingCart,
     bgColor: 'bg-gray-50',
     hoverBgColor: 'hover:bg-gray-100',

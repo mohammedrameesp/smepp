@@ -346,6 +346,6 @@ export const MODULE_PERMISSION_MAP: Record<string, string[]> = {
   employees: ['employees'],
   leave: ['leave'],
   payroll: ['payroll'],
-  'purchase-requests': ['purchase'],
+  'spend-requests': ['purchase'],
   'company-documents': ['documents'],
 };

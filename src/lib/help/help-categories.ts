@@ -115,12 +115,12 @@ export const procurementCategory: CategoryInfo = {
   bgColor: 'bg-purple-50',
   modules: [
     {
-      id: 'purchase-requests',
+      id: 'spend-requests',
       name: 'Spend Requests',
       description: 'Internal spending approval workflow',
       icon: 'ShoppingCart',
       adminOnly: false,
-      href: '/help/procurement/purchase-requests',
+      href: '/help/procurement/spend-requests',
     },
   ],
 };
@@ -309,11 +309,11 @@ export const quickLinks: QuickLink[] = [
     priority: 3,
   },
   {
-    id: 'submit-purchase',
-    title: 'Submit Purchase Request',
-    description: 'Create a new purchase request',
+    id: 'submit-spend',
+    title: 'Submit Spend Request',
+    description: 'Create a new spend request',
     icon: 'ShoppingCart',
-    url: '/help/projects/purchase-requests#submit-request',
+    url: '/help/procurement/spend-requests#submit-request',
     roles: ['ADMIN', 'USER'],
     priority: 4,
   },
@@ -465,10 +465,10 @@ export const popularTopics: PopularTopic[] = [
     roles: ['ADMIN'],
   },
   {
-    id: 'purchase-request',
-    title: 'How do I submit a purchase request?',
-    category: 'Purchase Requests',
-    url: '/help/projects/purchase-requests#submit-request',
+    id: 'spend-request',
+    title: 'How do I submit a spend request?',
+    category: 'Spend Requests',
+    url: '/help/procurement/spend-requests#submit-request',
     roles: ['ADMIN', 'USER'],
   },
   {

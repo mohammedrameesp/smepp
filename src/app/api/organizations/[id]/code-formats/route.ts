@@ -15,7 +15,7 @@ const codeFormatsSchema = z.object({
     employees: z.string().optional(),
     assets: z.string().optional(),
     loans: z.string().optional(),
-    'purchase-requests': z.string().optional(),
+    'spend-requests': z.string().optional(),
     'asset-requests': z.string().optional(),
     'leave-requests': z.string().optional(),
     'payroll-runs': z.string().optional(),

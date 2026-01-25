@@ -23,8 +23,8 @@ import {
   LeaveStatus,
   LeaveCategory,
   LeaveRequestType,
-  PurchaseRequestStatus,
-  PurchaseRequestPriority,
+  SpendRequestStatus,
+  SpendRequestPriority,
   PurchaseType,
   CostType,
   PaymentMode,
@@ -2746,19 +2746,19 @@ async function main() {
   // ═══════════════════════════════════════════════════════════════════════════════
   // 17. PURCHASE REQUESTS
   // ═══════════════════════════════════════════════════════════════════════════════
-  console.log('Creating purchase requests...');
+  console.log('Creating spend requests...');
 
-  const purchaseRequests = await sequential([
+  const spendRequests = await sequential([
     // Approved & Completed
-    () => prisma.purchaseRequest.upsert({
+    () => prisma.spendRequest.upsert({
       where: { tenantId_referenceNumber: { tenantId, referenceNumber: 'PR-2501-0001' } },
       update: {},
       create: {
         tenantId,
         referenceNumber: 'PR-2501-0001',
         requestDate: monthsAgo(2),
-        status: PurchaseRequestStatus.COMPLETED,
-        priority: PurchaseRequestPriority.HIGH,
+        status: SpendRequestStatus.COMPLETED,
+        priority: SpendRequestPriority.HIGH,
         requesterId: employee1.id,
         title: 'Development Laptops for New Hires',
         description: 'MacBook Pro laptops for 2 new developers joining next month',
@@ -2800,15 +2800,15 @@ async function main() {
       },
     }),
     // Pending approval
-    () => prisma.purchaseRequest.upsert({
+    () => prisma.spendRequest.upsert({
       where: { tenantId_referenceNumber: { tenantId, referenceNumber: 'PR-2501-0002' } },
       update: {},
       create: {
         tenantId,
         referenceNumber: 'PR-2501-0002',
         requestDate: daysAgo(3),
-        status: PurchaseRequestStatus.PENDING,
-        priority: PurchaseRequestPriority.MEDIUM,
+        status: SpendRequestStatus.PENDING,
+        priority: SpendRequestPriority.MEDIUM,
         requesterId: employee1.id,
         title: 'Office Supplies - Q1 2025',
         description: 'Quarterly office supplies replenishment',
@@ -2832,15 +2832,15 @@ async function main() {
       },
     }),
     // Under Review
-    () => prisma.purchaseRequest.upsert({
+    () => prisma.spendRequest.upsert({
       where: { tenantId_referenceNumber: { tenantId, referenceNumber: 'PR-2501-0003' } },
       update: {},
       create: {
         tenantId,
         referenceNumber: 'PR-2501-0003',
         requestDate: daysAgo(7),
-        status: PurchaseRequestStatus.UNDER_REVIEW,
-        priority: PurchaseRequestPriority.HIGH,
+        status: SpendRequestStatus.UNDER_REVIEW,
+        priority: SpendRequestPriority.HIGH,
         requesterId: admin.id,
         title: 'Annual Software Subscriptions Renewal',
         description: 'Renewal of critical software subscriptions for 2025',
@@ -2866,15 +2866,15 @@ async function main() {
       },
     }),
     // Rejected
-    () => prisma.purchaseRequest.upsert({
+    () => prisma.spendRequest.upsert({
       where: { tenantId_referenceNumber: { tenantId, referenceNumber: 'PR-2501-0004' } },
       update: {},
       create: {
         tenantId,
         referenceNumber: 'PR-2501-0004',
         requestDate: daysAgo(14),
-        status: PurchaseRequestStatus.REJECTED,
-        priority: PurchaseRequestPriority.LOW,
+        status: SpendRequestStatus.REJECTED,
+        priority: SpendRequestPriority.LOW,
         requesterId: employee1.id,
         title: 'Standing Desks for Team',
         description: 'Electric standing desks for improved ergonomics',
@@ -2898,7 +2898,7 @@ async function main() {
     }),
   ]);
 
-  console.log(`Created ${purchaseRequests.length} purchase requests\n`);
+  console.log(`Created ${spendRequests.length} spend requests\n`);
 
   // ═══════════════════════════════════════════════════════════════════════════════
   // 18. COMPANY DOCUMENTS
@@ -3039,11 +3039,11 @@ async function main() {
       data: {
         tenantId,
         recipientId: admin.id,
-        type: NotificationType.PURCHASE_REQUEST_SUBMITTED,
+        type: NotificationType.SPEND_REQUEST_SUBMITTED,
         title: 'New Purchase Request',
         message: 'Office Supplies - Q1 2025 (PR-2501-0002) requires your approval',
         isRead: false,
-        link: '/admin/purchase-requests',
+        link: '/admin/spend-requests',
       },
     }),
     // Document expiry warning
@@ -3127,8 +3127,8 @@ async function main() {
   console.log(`    - Payslips: ${payslips.length}`);
   console.log(`    - Employee Loans: ${loans.length}`);
   console.log('');
-  console.log('  Purchase Requests Module:');
-  console.log(`    - Purchase Requests: ${purchaseRequests.length}`);
+  console.log('  Spend Requests Module:');
+  console.log(`    - Spend Requests: ${spendRequests.length}`);
   console.log('    - Purchase Request Items: 10'); // 2+3+4+1 items
   console.log('');
   console.log('  Documents Module:');

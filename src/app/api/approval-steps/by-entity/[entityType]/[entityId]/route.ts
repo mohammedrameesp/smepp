@@ -14,7 +14,7 @@ export const GET = withErrorHandler(async (request: NextRequest, { params }) => 
   }
 
   // Validate entityType
-  if (!['LEAVE_REQUEST', 'PURCHASE_REQUEST', 'ASSET_REQUEST'].includes(entityType)) {
+  if (!['LEAVE_REQUEST', 'SPEND_REQUEST', 'ASSET_REQUEST'].includes(entityType)) {
     return badRequestResponse('Invalid entity type');
   }
 

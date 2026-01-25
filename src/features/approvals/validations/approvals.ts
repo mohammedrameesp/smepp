@@ -9,7 +9,7 @@
  *
  * MODULES SUPPORTED:
  * - LEAVE_REQUEST: Employee leave approvals (threshold: days)
- * - PURCHASE_REQUEST: Procurement approvals (threshold: amount)
+ * - SPEND_REQUEST: Spend/procurement approvals (threshold: amount)
  * - ASSET_REQUEST: Asset allocation approvals (threshold: amount)
  *
  * APPROVAL ROLES:
@@ -30,7 +30,7 @@ import { z } from 'zod';
  */
 export const approvalModuleEnum = z.enum([
   'LEAVE_REQUEST',
-  'PURCHASE_REQUEST',
+  'SPEND_REQUEST',
   'ASSET_REQUEST',
 ]);
 
@@ -119,8 +119,8 @@ export const createApprovalPolicySchema = z.object({
     if (data.module === 'LEAVE_REQUEST') {
       return data.minDays !== undefined || data.maxDays !== undefined;
     }
-    // For purchase/asset requests, amount thresholds should be used
-    if (data.module === 'PURCHASE_REQUEST' || data.module === 'ASSET_REQUEST') {
+    // For spend/asset requests, amount thresholds should be used
+    if (data.module === 'SPEND_REQUEST' || data.module === 'ASSET_REQUEST') {
       return data.minAmount !== undefined || data.maxAmount !== undefined;
     }
     return true;

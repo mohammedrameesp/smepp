@@ -59,9 +59,9 @@ export async function POST() {
     results.profileChangeRequests = (await prisma.profileChangeRequest.deleteMany()).count;
 
     // Purchase Requests
-    results.purchaseRequestHistory = (await prisma.purchaseRequestHistory.deleteMany()).count;
-    results.purchaseRequestItems = (await prisma.purchaseRequestItem.deleteMany()).count;
-    results.purchaseRequests = (await prisma.purchaseRequest.deleteMany()).count;
+    results.spendRequestHistory = (await prisma.spendRequestHistory.deleteMany()).count;
+    results.spendRequestItems = (await prisma.spendRequestItem.deleteMany()).count;
+    results.spendRequests = (await prisma.spendRequest.deleteMany()).count;
 
     // Assets
     results.depreciationRecords = (await prisma.depreciationRecord.deleteMany()).count;

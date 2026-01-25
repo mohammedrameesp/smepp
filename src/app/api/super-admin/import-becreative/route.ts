@@ -62,8 +62,8 @@ export async function POST(request: NextRequest) {
       subscriptions: { created: 0, skipped: 0 },
       suppliers: { created: 0, skipped: 0 },
       hrProfiles: { created: 0, skipped: 0 },
-      purchaseRequests: { created: 0, skipped: 0 },
-      purchaseRequestItems: { created: 0, skipped: 0 },
+      spendRequests: { created: 0, skipped: 0 },
+      spendRequestItems: { created: 0, skipped: 0 },
     };
 
     // 1. Import Users
@@ -312,8 +312,8 @@ export async function POST(request: NextRequest) {
       (await prisma.supplier.findMany({ where: { tenantId }, select: { id: true } })).map(s => s.id)
     );
 
-    for (const pr of backupData.purchaseRequests || []) {
-      const existingPR = await prisma.purchaseRequest.findFirst({
+    for (const pr of backupData.spendRequests || []) {
+      const existingPR = await prisma.spendRequest.findFirst({
         where: { referenceNumber: pr.referenceNumber, tenantId },
       });
 
@@ -324,7 +324,7 @@ export async function POST(request: NextRequest) {
             ? pr.requesterId
             : null;
 
-          await prisma.purchaseRequest.create({
+          await prisma.spendRequest.create({
             data: {
               id: pr.id,
               tenantId,
@@ -344,19 +344,19 @@ export async function POST(request: NextRequest) {
               updatedAt: new Date(pr.updatedAt),
             },
           });
-          results.purchaseRequests.created++;
+          results.spendRequests.created++;
         } catch {
-          results.purchaseRequests.skipped++;
+          results.spendRequests.skipped++;
         }
       } else {
-        results.purchaseRequests.skipped++;
+        results.spendRequests.skipped++;
       }
     }
 
     // 8. Import Purchase Request Items
-    for (const item of backupData.purchaseRequestItems || []) {
+    for (const item of backupData.spendRequestItems || []) {
       try {
-        const existingItem = await prisma.purchaseRequestItem.findUnique({
+        const existingItem = await prisma.spendRequestItem.findUnique({
           where: { id: item.id },
         });
 
@@ -366,10 +366,10 @@ export async function POST(request: NextRequest) {
           const unitPrice = item.estimatedUnitPrice || item.unitPrice || 0;
           const totalPrice = item.totalPrice || (quantity * unitPrice);
 
-          await prisma.purchaseRequestItem.create({
+          await prisma.spendRequestItem.create({
             data: {
               id: item.id,
-              purchaseRequestId: item.purchaseRequestId,
+              spendRequestId: item.spendRequestId,
               itemNumber: item.itemNumber || 1,
               description: item.description,
               quantity,
@@ -385,12 +385,12 @@ export async function POST(request: NextRequest) {
               updatedAt: new Date(item.updatedAt),
             },
           });
-          results.purchaseRequestItems.created++;
+          results.spendRequestItems.created++;
         } else {
-          results.purchaseRequestItems.skipped++;
+          results.spendRequestItems.skipped++;
         }
       } catch {
-        results.purchaseRequestItems.skipped++;
+        results.spendRequestItems.skipped++;
       }
     }
 

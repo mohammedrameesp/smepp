@@ -39,13 +39,13 @@ export const DEFAULT_LEAVE_POLICIES = [
 ];
 
 /**
- * Default purchase request approval policies configuration.
+ * Default spend request approval policies configuration.
  * Amount-based thresholds in QAR.
  */
-export const DEFAULT_PURCHASE_POLICIES = [
+export const DEFAULT_SPEND_POLICIES = [
   {
-    name: 'Small Purchase (up to 500 QAR)',
-    module: 'PURCHASE_REQUEST' as ApprovalModule,
+    name: 'Small Spend (up to 500 QAR)',
+    module: 'SPEND_REQUEST' as ApprovalModule,
     minAmount: 0,
     maxAmount: 500,
     priority: 10, // Higher priority - matches first
@@ -55,8 +55,8 @@ export const DEFAULT_PURCHASE_POLICIES = [
     ],
   },
   {
-    name: 'Large Purchase (501+ QAR)',
-    module: 'PURCHASE_REQUEST' as ApprovalModule,
+    name: 'Large Spend (501+ QAR)',
+    module: 'SPEND_REQUEST' as ApprovalModule,
     minAmount: 501,
     maxAmount: null, // No upper limit
     priority: 0, // Lower priority - catch-all
@@ -123,14 +123,14 @@ export async function ensureDefaultApprovalPolicies(
   }
 
   // Get the appropriate default policies based on module
-  let defaultPolicies: typeof DEFAULT_LEAVE_POLICIES | typeof DEFAULT_PURCHASE_POLICIES | typeof DEFAULT_ASSET_POLICIES;
+  let defaultPolicies: typeof DEFAULT_LEAVE_POLICIES | typeof DEFAULT_SPEND_POLICIES | typeof DEFAULT_ASSET_POLICIES;
 
   switch (module) {
     case 'LEAVE_REQUEST':
       defaultPolicies = DEFAULT_LEAVE_POLICIES;
       break;
-    case 'PURCHASE_REQUEST':
-      defaultPolicies = DEFAULT_PURCHASE_POLICIES;
+    case 'SPEND_REQUEST':
+      defaultPolicies = DEFAULT_SPEND_POLICIES;
       break;
     case 'ASSET_REQUEST':
       defaultPolicies = DEFAULT_ASSET_POLICIES;

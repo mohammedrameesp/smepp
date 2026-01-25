@@ -192,7 +192,7 @@ export function buildApprovalTemplate(
   switch (entityType) {
     case 'LEAVE_REQUEST':
       return buildLeaveApprovalTemplate(to, details, approveToken, rejectToken);
-    case 'PURCHASE_REQUEST':
+    case 'SPEND_REQUEST':
       return buildPurchaseApprovalTemplate(to, details, approveToken, rejectToken);
     case 'ASSET_REQUEST':
       return buildAssetApprovalTemplate(to, details, approveToken, rejectToken);
@@ -226,7 +226,7 @@ function getEntityName(entityType: ApprovalEntityType): string {
   switch (entityType) {
     case 'LEAVE_REQUEST':
       return 'leave request';
-    case 'PURCHASE_REQUEST':
+    case 'SPEND_REQUEST':
       return 'spend request';
     case 'ASSET_REQUEST':
       return 'asset request';

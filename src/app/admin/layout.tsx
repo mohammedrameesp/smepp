@@ -50,7 +50,7 @@ async function getBadgeCounts(tenantId: string) {
     pendingChangeRequests,
     pendingLeaveRequests,
     pendingSuppliers,
-    pendingPurchaseRequests,
+    pendingSpendRequests,
     pendingAssetRequestsCount,
     pendingAssetReturnsCount,
     pendingApprovalSteps,
@@ -58,7 +58,7 @@ async function getBadgeCounts(tenantId: string) {
     prisma.profileChangeRequest.count({ where: { tenantId, status: 'PENDING' } }),
     prisma.leaveRequest.count({ where: { tenantId, status: 'PENDING' } }),
     prisma.supplier.count({ where: { tenantId, status: 'PENDING' } }),
-    prisma.purchaseRequest.count({ where: { tenantId, status: 'PENDING' } }),
+    prisma.spendRequest.count({ where: { tenantId, status: 'PENDING' } }),
     prisma.assetRequest.count({ where: { tenantId, status: 'PENDING_ADMIN_APPROVAL' } }),
     prisma.assetRequest.count({ where: { tenantId, status: 'PENDING_RETURN_APPROVAL' } }),
     // Count distinct entities with pending approval steps (tenant-scoped)
@@ -72,7 +72,7 @@ async function getBadgeCounts(tenantId: string) {
     pendingChangeRequests,
     pendingLeaveRequests,
     pendingSuppliers,
-    pendingPurchaseRequests,
+    pendingSpendRequests,
     pendingAssetRequests: pendingAssetRequestsCount + pendingAssetReturnsCount,
     pendingApprovals: pendingApprovalSteps,
   };
@@ -127,7 +127,7 @@ export default async function AdminLayout({
     pendingChangeRequests: 0,
     pendingLeaveRequests: 0,
     pendingSuppliers: 0,
-    pendingPurchaseRequests: 0,
+    pendingSpendRequests: 0,
     pendingAssetRequests: 0,
     pendingApprovals: 0,
   };

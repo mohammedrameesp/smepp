@@ -49,8 +49,8 @@ async function rejectStepHandler(request: NextRequest, context: APIContext) {
         select: { memberId: true },
       });
       requesterId = request?.memberId;
-    } else if (step.entityType === 'PURCHASE_REQUEST') {
-      const request = await db.purchaseRequest.findUnique({
+    } else if (step.entityType === 'SPEND_REQUEST') {
+      const request = await db.spendRequest.findUnique({
         where: { id: step.entityId },
         select: { requesterId: true },
       });
@@ -149,8 +149,8 @@ async function handleRejection(
       ),
       tenantId
     );
-  } else if (entityType === 'PURCHASE_REQUEST') {
-    const purchaseRequest = await db.purchaseRequest.update({
+  } else if (entityType === 'SPEND_REQUEST') {
+    const spendRequest = await db.spendRequest.update({
       where: { id: entityId },
       data: {
         status: 'REJECTED',
@@ -164,9 +164,9 @@ async function handleRejection(
     });
 
     await createNotification(
-      NotificationTemplates.purchaseRequestRejected(
-        purchaseRequest.requesterId,
-        purchaseRequest.referenceNumber,
+      NotificationTemplates.spendRequestRejected(
+        spendRequest.requesterId,
+        spendRequest.referenceNumber,
         reason,
         entityId
       ),

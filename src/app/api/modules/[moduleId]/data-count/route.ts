@@ -124,16 +124,16 @@ export const GET = withErrorHandler(async (request: NextRequest, { tenant, param
       break;
     }
 
-    case 'purchase-requests': {
+    case 'spend-requests': {
       const [requests, items, history] = await Promise.all([
-        prisma.purchaseRequest.count({ where: { tenantId } }),
-        prisma.purchaseRequestItem.count({ where: { purchaseRequest: { tenantId } } }),
-        prisma.purchaseRequestHistory.count({ where: { purchaseRequest: { tenantId } } }),
+        prisma.spendRequest.count({ where: { tenantId } }),
+        prisma.spendRequestItem.count({ where: { spendRequest: { tenantId } } }),
+        prisma.spendRequestHistory.count({ where: { spendRequest: { tenantId } } }),
       ]);
       counts.push(
-        { entity: 'purchaseRequest', label: 'Purchase requests', count: requests },
-        { entity: 'purchaseRequestItem', label: 'Line items', count: items },
-        { entity: 'purchaseRequestHistory', label: 'History records', count: history }
+        { entity: 'spendRequest', label: 'Purchase requests', count: requests },
+        { entity: 'spendRequestItem', label: 'Line items', count: items },
+        { entity: 'spendRequestHistory', label: 'History records', count: history }
       );
       break;
     }

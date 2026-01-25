@@ -104,8 +104,8 @@ export async function findApplicablePolicy(
       }
     }
 
-    // For purchase/asset requests, check amount threshold
-    if ((module === 'PURCHASE_REQUEST' || module === 'ASSET_REQUEST') && options?.amount !== undefined) {
+    // For spend/asset requests, check amount threshold
+    if ((module === 'SPEND_REQUEST' || module === 'ASSET_REQUEST') && options?.amount !== undefined) {
       const minAmount = policy.minAmount ? Number(policy.minAmount) : 0;
       const maxAmount = policy.maxAmount ? Number(policy.maxAmount) : Infinity;
       if (options.amount >= minAmount && options.amount <= maxAmount) {

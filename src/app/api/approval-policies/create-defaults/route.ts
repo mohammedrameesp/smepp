@@ -5,7 +5,7 @@ import { ApprovalModule } from '@prisma/client';
 import { z } from 'zod';
 
 const createDefaultsSchema = z.object({
-  module: z.enum(['LEAVE_REQUEST', 'PURCHASE_REQUEST', 'ASSET_REQUEST']),
+  module: z.enum(['LEAVE_REQUEST', 'SPEND_REQUEST', 'ASSET_REQUEST']),
 });
 
 /**

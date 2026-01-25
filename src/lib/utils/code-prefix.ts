@@ -27,7 +27,7 @@ export type EntityType =
   | 'employees'
   | 'assets'
   | 'loans'
-  | 'purchase-requests'
+  | 'spend-requests'
   | 'asset-requests'
   | 'leave-requests'
   | 'payroll-runs'
@@ -39,7 +39,7 @@ export interface CodeFormatConfig {
   employees?: string;
   assets?: string;
   loans?: string;
-  'purchase-requests'?: string;
+  'spend-requests'?: string;
   'asset-requests'?: string;
   'leave-requests'?: string;
   'payroll-runs'?: string;
@@ -53,7 +53,7 @@ export const DEFAULT_FORMATS: Required<CodeFormatConfig> = {
   employees: '{PREFIX}-{YYYY}-{SEQ:3}',
   assets: '{PREFIX}-{TYPE}-{YYMM}-{SEQ:3}',
   loans: '{PREFIX}-LOAN-{SEQ:5}',
-  'purchase-requests': '{PREFIX}-PR-{YYMM}-{SEQ:3}',
+  'spend-requests': '{PREFIX}-SR-{YYMM}-{SEQ:3}',
   'asset-requests': '{PREFIX}-AR-{YYMM}-{SEQ:3}',
   'leave-requests': '{PREFIX}-LR-{YYMM}-{SEQ:3}',
   'payroll-runs': '{PREFIX}-PAY-{YYYYMM}-{SEQ:2}',
@@ -67,7 +67,7 @@ export const ENTITY_LABELS: Record<EntityType, string> = {
   employees: 'Employee ID',
   assets: 'Asset Tag',
   loans: 'Loan Reference',
-  'purchase-requests': 'Purchase Request',
+  'spend-requests': 'Spend Request',
   'asset-requests': 'Asset Request',
   'leave-requests': 'Leave Request',
   'payroll-runs': 'Payroll Run',
@@ -82,7 +82,7 @@ export const ENTITY_TO_MODULE: Record<EntityType, string> = {
   assets: 'assets',
   suppliers: 'suppliers',
   'leave-requests': 'leave',
-  'purchase-requests': 'purchase-requests',
+  'spend-requests': 'spend-requests',
   'asset-requests': 'assets',
   loans: 'payroll',
   'payroll-runs': 'payroll',

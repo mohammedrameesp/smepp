@@ -84,7 +84,7 @@ export function EmployeeTopNav({
   const navItems = [
     { label: 'Dashboard', href: '/employee', exact: true },
     { label: 'Leave', href: '/employee/leave', moduleId: 'leave' },
-    { label: 'Purchases', href: '/employee/purchase-requests', moduleId: 'purchase-requests' },
+    { label: 'Purchases', href: '/employee/spend-requests', moduleId: 'spend-requests' },
     { label: 'My Holdings', href: '/employee/my-assets', moduleId: 'assets' },
     { label: 'Suppliers', href: '/employee/suppliers', moduleId: 'suppliers' },
   ].filter(item => !item.moduleId || isModuleEnabled(item.moduleId));
@@ -209,9 +209,9 @@ export function EmployeeTopNav({
                       </Link>
                     </DropdownMenuItem>
                   )}
-                  {isModuleEnabled('purchase-requests') && (
+                  {isModuleEnabled('spend-requests') && (
                     <DropdownMenuItem asChild>
-                      <Link href="/employee/purchase-requests" className="flex items-center gap-2 cursor-pointer">
+                      <Link href="/employee/spend-requests" className="flex items-center gap-2 cursor-pointer">
                         <ShoppingCart className="h-4 w-4 text-slate-400" />
                         Spend Requests
                       </Link>

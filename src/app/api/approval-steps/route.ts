@@ -21,15 +21,15 @@ export const GET = withErrorHandler(
     const leaveRequestIds = pendingSteps
       .filter((s) => s.entityType === 'LEAVE_REQUEST')
       .map((s) => s.entityId);
-    const purchaseRequestIds = pendingSteps
-      .filter((s) => s.entityType === 'PURCHASE_REQUEST')
+    const spendRequestIds = pendingSteps
+      .filter((s) => s.entityType === 'SPEND_REQUEST')
       .map((s) => s.entityId);
     const assetRequestIds = pendingSteps
       .filter((s) => s.entityType === 'ASSET_REQUEST')
       .map((s) => s.entityId);
 
     // Batch fetch all entities in parallel (3 queries instead of N*3)
-    const [leaveRequests, purchaseRequests, assetRequests] = await Promise.all([
+    const [leaveRequests, spendRequests, assetRequests] = await Promise.all([
       leaveRequestIds.length > 0
         ? prisma.leaveRequest.findMany({
             where: { id: { in: leaveRequestIds } },
@@ -44,9 +44,9 @@ export const GET = withErrorHandler(
             },
           })
         : Promise.resolve([]),
-      purchaseRequestIds.length > 0
-        ? prisma.purchaseRequest.findMany({
-            where: { id: { in: purchaseRequestIds } },
+      spendRequestIds.length > 0
+        ? prisma.spendRequest.findMany({
+            where: { id: { in: spendRequestIds } },
             select: {
               id: true,
               referenceNumber: true,
@@ -73,7 +73,7 @@ export const GET = withErrorHandler(
 
     // Create lookup maps for O(1) access
     const leaveRequestMap = new Map(leaveRequests.map((lr) => [lr.id, lr]));
-    const purchaseRequestMap = new Map(purchaseRequests.map((pr) => [pr.id, pr]));
+    const spendRequestMap = new Map(spendRequests.map((sr) => [sr.id, sr]));
     const assetRequestMap = new Map(assetRequests.map((ar) => [ar.id, ar]));
 
     // Enrich steps with entity details (no additional queries)
@@ -92,15 +92,15 @@ export const GET = withErrorHandler(
             endDate: leaveRequest.endDate,
           };
         }
-      } else if (step.entityType === 'PURCHASE_REQUEST') {
-        const purchaseRequest = purchaseRequestMap.get(step.entityId);
-        if (purchaseRequest) {
+      } else if (step.entityType === 'SPEND_REQUEST') {
+        const spendRequest = spendRequestMap.get(step.entityId);
+        if (spendRequest) {
           entityDetails = {
-            referenceNumber: purchaseRequest.referenceNumber,
-            requesterName: purchaseRequest.requester?.name || purchaseRequest.requester?.email,
-            title: purchaseRequest.title,
-            totalAmount: purchaseRequest.totalAmount,
-            currency: purchaseRequest.currency,
+            referenceNumber: spendRequest.referenceNumber,
+            requesterName: spendRequest.requester?.name || spendRequest.requester?.email,
+            title: spendRequest.title,
+            totalAmount: spendRequest.totalAmount,
+            currency: spendRequest.currency,
           };
         }
       } else if (step.entityType === 'ASSET_REQUEST') {

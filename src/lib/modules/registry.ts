@@ -177,10 +177,10 @@ export const MODULE_REGISTRY: Record<string, ModuleDefinition> = {
   },
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // PROCUREMENT MODULE
+  // SPEND REQUEST MODULE
   // ─────────────────────────────────────────────────────────────────────────────
-  'purchase-requests': {
-    id: 'purchase-requests',
+  'spend-requests': {
+    id: 'spend-requests',
     name: 'Spend Requests',
     description: 'Internal spending approval workflow',
     icon: ShoppingCart,
@@ -190,9 +190,9 @@ export const MODULE_REGISTRY: Record<string, ModuleDefinition> = {
     isFree: true,
     requires: [],
     requiredBy: [],
-    adminRoutes: ['/admin/purchase-requests'],
-    employeeRoutes: ['/employee/purchase-requests'],
-    apiRoutes: ['/api/purchase-requests'],
+    adminRoutes: ['/admin/spend-requests'],
+    employeeRoutes: ['/employee/spend-requests'],
+    apiRoutes: ['/api/spend-requests'],
     isCore: false,
     isBeta: false,
     isDeprecated: false,

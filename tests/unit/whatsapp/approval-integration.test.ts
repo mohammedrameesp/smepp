@@ -54,7 +54,7 @@ describe('WhatsApp Approval Integration Tests', () => {
       return details.leaveType !== undefined && details.totalDays !== undefined;
     };
 
-    const isPurchaseRequest = (details: ApprovalDetails): boolean => {
+    const isSpendRequest = (details: ApprovalDetails): boolean => {
       return details.title !== undefined && details.totalAmount !== undefined;
     };
 
@@ -73,11 +73,11 @@ describe('WhatsApp Approval Integration Tests', () => {
       };
 
       expect(isLeaveRequest(details)).toBe(true);
-      expect(isPurchaseRequest(details)).toBe(false);
+      expect(isSpendRequest(details)).toBe(false);
       expect(isAssetRequest(details)).toBe(false);
     });
 
-    it('should identify purchase request details', () => {
+    it('should identify spend request details', () => {
       const details: ApprovalDetails = {
         requesterName: 'Jane Doe',
         title: 'Office Supplies',
@@ -86,7 +86,7 @@ describe('WhatsApp Approval Integration Tests', () => {
       };
 
       expect(isLeaveRequest(details)).toBe(false);
-      expect(isPurchaseRequest(details)).toBe(true);
+      expect(isSpendRequest(details)).toBe(true);
       expect(isAssetRequest(details)).toBe(false);
     });
 
@@ -99,7 +99,7 @@ describe('WhatsApp Approval Integration Tests', () => {
       };
 
       expect(isLeaveRequest(details)).toBe(false);
-      expect(isPurchaseRequest(details)).toBe(false);
+      expect(isSpendRequest(details)).toBe(false);
       expect(isAssetRequest(details)).toBe(true);
     });
   });
@@ -296,22 +296,22 @@ describe('WhatsApp Approval Integration Tests', () => {
     });
   });
 
-  describe('Purchase Request Message', () => {
-    interface PurchaseRequestDetails {
+  describe('Spend Request Message', () => {
+    interface SpendRequestDetails {
       requesterName: string;
       title: string;
       totalAmount: number;
       currency: string;
     }
 
-    const formatPurchaseNotification = (details: PurchaseRequestDetails): string => {
+    const formatSpendNotification = (details: SpendRequestDetails): string => {
       const formattedAmount = new Intl.NumberFormat('en-US', {
         style: 'decimal',
         minimumFractionDigits: 2,
       }).format(details.totalAmount);
 
       return [
-        `*New Purchase Request*`,
+        `*New Spend Request*`,
         ``,
         `Requester: ${details.requesterName}`,
         `Item: ${details.title}`,
@@ -319,17 +319,17 @@ describe('WhatsApp Approval Integration Tests', () => {
       ].join('\n');
     };
 
-    it('should format purchase notification correctly', () => {
-      const details: PurchaseRequestDetails = {
+    it('should format spend notification correctly', () => {
+      const details: SpendRequestDetails = {
         requesterName: 'Jane Doe',
         title: 'Office Equipment',
         totalAmount: 5000,
         currency: 'QAR',
       };
 
-      const message = formatPurchaseNotification(details);
+      const message = formatSpendNotification(details);
 
-      expect(message).toContain('*New Purchase Request*');
+      expect(message).toContain('*New Spend Request*');
       expect(message).toContain('Jane Doe');
       expect(message).toContain('Office Equipment');
       expect(message).toContain('QAR 5,000.00');

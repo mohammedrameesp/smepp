@@ -23,8 +23,8 @@ import {
   LeaveCategory,
   SupplierStatus,
   NotificationType,
-  PurchaseRequestStatus,
-  PurchaseRequestPriority,
+  SpendRequestStatus,
+  SpendRequestPriority,
   PurchaseType,
   CostType,
   PaymentMode,
@@ -142,7 +142,7 @@ export async function POST(request: NextRequest) {
       subscriptions: { created: 0 },
       suppliers: { created: 0 },
       supplierEngagements: { created: 0 },
-      purchaseRequests: { created: 0 },
+      spendRequests: { created: 0 },
       salaryStructures: { created: 0 },
       payrollRuns: { created: 0 },
       payslips: { created: 0 },
@@ -499,27 +499,27 @@ export async function POST(request: NextRequest) {
     // ============================================
     // 8. CREATE PURCHASE REQUESTS (12)
     // ============================================
-    const existingPRs = await prisma.purchaseRequest.count({ where: { tenantId } });
+    const existingPRs = await prisma.spendRequest.count({ where: { tenantId } });
 
     if (existingPRs < 10) {
       const prData = [
-        { title: 'Adobe Creative Cloud Renewal', type: PurchaseType.SOFTWARE_SUBSCRIPTION, status: PurchaseRequestStatus.APPROVED, amount: 24000 },
-        { title: 'MacBook Pro for New Designer', type: PurchaseType.HARDWARE, status: PurchaseRequestStatus.PENDING, amount: 12000 },
-        { title: 'Photography Equipment - Lenses', type: PurchaseType.HARDWARE, status: PurchaseRequestStatus.PENDING, amount: 8500 },
-        { title: 'Print Production - Qatar Airways', type: PurchaseType.SERVICES, status: PurchaseRequestStatus.APPROVED, amount: 35000 },
-        { title: 'Video Production Services', type: PurchaseType.SERVICES, status: PurchaseRequestStatus.APPROVED, amount: 45000 },
-        { title: 'Office Furniture Upgrade', type: PurchaseType.OTHER, status: PurchaseRequestStatus.UNDER_REVIEW, amount: 15000 },
-        { title: 'Shutterstock Annual Subscription', type: PurchaseType.SOFTWARE_SUBSCRIPTION, status: PurchaseRequestStatus.APPROVED, amount: 18000 },
-        { title: 'Event Booth Materials', type: PurchaseType.MARKETING, status: PurchaseRequestStatus.PENDING, amount: 28000 },
-        { title: 'Staff Training - UX Design', type: PurchaseType.TRAINING, status: PurchaseRequestStatus.APPROVED, amount: 5500 },
-        { title: 'Client Meeting Travel', type: PurchaseType.TRAVEL, status: PurchaseRequestStatus.REJECTED, amount: 12000 },
-        { title: 'Monitor Upgrade - Creative Team', type: PurchaseType.HARDWARE, status: PurchaseRequestStatus.COMPLETED, amount: 22000 },
-        { title: 'Catering for Product Launch', type: PurchaseType.OTHER, status: PurchaseRequestStatus.APPROVED, amount: 8000 },
+        { title: 'Adobe Creative Cloud Renewal', type: PurchaseType.SOFTWARE_SUBSCRIPTION, status: SpendRequestStatus.APPROVED, amount: 24000 },
+        { title: 'MacBook Pro for New Designer', type: PurchaseType.HARDWARE, status: SpendRequestStatus.PENDING, amount: 12000 },
+        { title: 'Photography Equipment - Lenses', type: PurchaseType.HARDWARE, status: SpendRequestStatus.PENDING, amount: 8500 },
+        { title: 'Print Production - Qatar Airways', type: PurchaseType.SERVICES, status: SpendRequestStatus.APPROVED, amount: 35000 },
+        { title: 'Video Production Services', type: PurchaseType.SERVICES, status: SpendRequestStatus.APPROVED, amount: 45000 },
+        { title: 'Office Furniture Upgrade', type: PurchaseType.OTHER, status: SpendRequestStatus.UNDER_REVIEW, amount: 15000 },
+        { title: 'Shutterstock Annual Subscription', type: PurchaseType.SOFTWARE_SUBSCRIPTION, status: SpendRequestStatus.APPROVED, amount: 18000 },
+        { title: 'Event Booth Materials', type: PurchaseType.MARKETING, status: SpendRequestStatus.PENDING, amount: 28000 },
+        { title: 'Staff Training - UX Design', type: PurchaseType.TRAINING, status: SpendRequestStatus.APPROVED, amount: 5500 },
+        { title: 'Client Meeting Travel', type: PurchaseType.TRAVEL, status: SpendRequestStatus.REJECTED, amount: 12000 },
+        { title: 'Monitor Upgrade - Creative Team', type: PurchaseType.HARDWARE, status: SpendRequestStatus.COMPLETED, amount: 22000 },
+        { title: 'Catering for Product Launch', type: PurchaseType.OTHER, status: SpendRequestStatus.APPROVED, amount: 8000 },
       ];
 
       let prNum = existingPRs + 1;
       for (const pr of prData) {
-        const purchaseRequest = await prisma.purchaseRequest.create({
+        const spendRequest = await prisma.spendRequest.create({
           data: {
             tenantId,
             referenceNumber: `DEMO-PR-${currentYear}${String(today.getMonth() + 1).padStart(2, '0')}-${String(prNum++).padStart(4, '0')}`,
@@ -527,7 +527,7 @@ export async function POST(request: NextRequest) {
             description: `Purchase request for ${pr.title.toLowerCase()}`,
             justification: 'Required for ongoing operations and client projects',
             status: pr.status,
-            priority: PurchaseRequestPriority.MEDIUM,
+            priority: SpendRequestPriority.MEDIUM,
             purchaseType: pr.type,
             costType: CostType.OPERATING_COST,
             paymentMode: PaymentMode.BANK_TRANSFER,
@@ -535,16 +535,16 @@ export async function POST(request: NextRequest) {
             totalAmount: pr.amount,
             currency: 'QAR',
             totalAmountQAR: pr.amount,
-            reviewedById: pr.status === PurchaseRequestStatus.APPROVED || pr.status === PurchaseRequestStatus.REJECTED ? createdMembers[2].user.id : null,
-            reviewedAt: pr.status === PurchaseRequestStatus.APPROVED || pr.status === PurchaseRequestStatus.REJECTED ? addDays(today, -randomInt(1, 10)) : null,
-            completedAt: pr.status === PurchaseRequestStatus.COMPLETED ? addDays(today, -randomInt(5, 20)) : null,
+            reviewedById: pr.status === SpendRequestStatus.APPROVED || pr.status === SpendRequestStatus.REJECTED ? createdMembers[2].user.id : null,
+            reviewedAt: pr.status === SpendRequestStatus.APPROVED || pr.status === SpendRequestStatus.REJECTED ? addDays(today, -randomInt(1, 10)) : null,
+            completedAt: pr.status === SpendRequestStatus.COMPLETED ? addDays(today, -randomInt(5, 20)) : null,
           },
         });
 
         // Add items
-        await prisma.purchaseRequestItem.create({
+        await prisma.spendRequestItem.create({
           data: {
-            purchaseRequestId: purchaseRequest.id,
+            spendRequestId: spendRequest.id,
             itemNumber: 1,
             description: pr.title,
             quantity: 1,
@@ -556,7 +556,7 @@ export async function POST(request: NextRequest) {
             billingCycle: pr.type === PurchaseType.SOFTWARE_SUBSCRIPTION ? BillingCycle.YEARLY : BillingCycle.ONE_TIME,
           },
         });
-        results.purchaseRequests.created++;
+        results.spendRequests.created++;
       }
     }
 
@@ -654,7 +654,7 @@ export async function POST(request: NextRequest) {
         { recipientIdx: 5, type: NotificationType.DOCUMENT_EXPIRY_WARNING, title: 'Passport Expiring Soon', message: 'Your passport will expire in 30 days' },
         { recipientIdx: 8, type: NotificationType.DOCUMENT_EXPIRY_WARNING, title: 'Health Card Expiring', message: 'Your health card will expire in 10 days' },
         { recipientIdx: 7, type: NotificationType.ASSET_ASSIGNED, title: 'Asset Assigned', message: 'Dell XPS 15 laptop has been assigned to you' },
-        { recipientIdx: 2, type: NotificationType.PURCHASE_REQUEST_SUBMITTED, title: 'New Purchase Request', message: 'Emily Davis submitted a purchase request' },
+        { recipientIdx: 2, type: NotificationType.SPEND_REQUEST_SUBMITTED, title: 'New Purchase Request', message: 'Emily Davis submitted a purchase request' },
         { recipientIdx: 0, type: NotificationType.APPROVAL_PENDING, title: 'Approval Required', message: 'You have 3 pending approvals waiting' },
         { recipientIdx: 0, type: NotificationType.GENERAL, title: 'System Maintenance', message: 'Scheduled maintenance on Sunday 2AM-4AM' },
       ];
@@ -690,7 +690,7 @@ export async function POST(request: NextRequest) {
         { action: 'SALARY_STRUCTURE_CREATED', entityType: 'SalaryStructure', userIdx: 2 },
         { action: 'SUPPLIER_APPROVED', entityType: 'Supplier', userIdx: 0 },
         { action: 'SUBSCRIPTION_CREATED', entityType: 'Subscription', userIdx: 13 },
-        { action: 'PURCHASE_REQUEST_SUBMITTED', entityType: 'PurchaseRequest', userIdx: 3 },
+        { action: 'SPEND_REQUEST_SUBMITTED', entityType: 'SpendRequest', userIdx: 3 },
       ];
 
       for (let i = 0; i < logData.length; i++) {

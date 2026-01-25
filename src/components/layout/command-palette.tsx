@@ -70,7 +70,7 @@ const COMMAND_ITEMS: CommandItem[] = [
   { id: 'nav-payroll', label: 'Payroll', icon: DollarSign, href: '/admin/payroll/runs', moduleId: 'payroll', category: 'navigation' },
   { id: 'nav-subscriptions', label: 'Subscriptions', icon: CreditCard, href: '/admin/subscriptions', moduleId: 'subscriptions', category: 'navigation' },
   { id: 'nav-suppliers', label: 'Suppliers', icon: Truck, href: '/admin/suppliers', moduleId: 'suppliers', category: 'navigation' },
-  { id: 'nav-purchase-requests', label: 'Spend Requests', icon: ShoppingCart, href: '/admin/purchase-requests', moduleId: 'purchase-requests', category: 'navigation' },
+  { id: 'nav-spend-requests', label: 'Spend Requests', icon: ShoppingCart, href: '/admin/spend-requests', moduleId: 'spend-requests', category: 'navigation' },
   { id: 'nav-reports', label: 'Reports', icon: BarChart3, href: '/admin/reports', category: 'navigation' },
   { id: 'nav-activity', label: 'Activity Log', icon: Activity, href: '/admin/activity', category: 'navigation' },
   { id: 'nav-settings', label: 'Settings', icon: Settings, href: '/admin/settings', category: 'navigation' },
