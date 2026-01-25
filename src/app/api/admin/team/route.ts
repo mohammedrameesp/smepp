@@ -66,6 +66,7 @@ export const GET = withErrorHandler(async (_request, { tenant }) => {
     select: {
       email: true,
       setupToken: true,
+      setupTokenExpiry: true,
       passwordHash: true,
     },
   });
@@ -136,10 +137,14 @@ export const GET = withErrorHandler(async (_request, { tenant }) => {
     } | null = null;
 
     if (credentialsPending) {
+      const tokenExpiry = userAuth?.setupTokenExpiry;
+      const isExpired = tokenExpiry ? new Date(tokenExpiry) < new Date() : false;
       pendingStatus = {
         isPending: true,
         type: 'credentials',
-        message: 'Awaiting password setup',
+        message: isExpired ? 'Setup link expired' : 'Awaiting password setup',
+        isExpired,
+        expiresAt: tokenExpiry || undefined,
       };
     } else if (ssoPending && ssoInvite) {
       const isExpired = new Date(ssoInvite.expiresAt) < new Date();

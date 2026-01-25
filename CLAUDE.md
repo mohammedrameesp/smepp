@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Durj** is a multi-tenant SaaS platform for business management, targeting small and medium businesses. It provides comprehensive asset management, HR, operations, and project management capabilities.
+**Durj** is a multi-tenant SaaS platform for business management, targeting small and medium businesses. It provides comprehensive asset management, HR, and operations capabilities.
 
 **Key Differentiators from internal tools:**
 - Multi-tenant architecture with tenant isolation
@@ -20,6 +20,7 @@ Built with Next.js 16 App Router, React 19, TypeScript, Prisma ORM, and PostgreS
 ```bash
 # Development
 npm run dev              # Start dev server with Turbopack
+npm run dev:network      # Dev server accessible on local network (mobile testing)
 npm run build            # Build for production (includes Prisma generate + migrate)
 npm run typecheck        # TypeScript type checking
 npm run lint             # ESLint
@@ -36,11 +37,15 @@ npm run test:watch       # Jest watch mode
 npm run test:unit        # Unit tests only (tests/unit)
 npm run test:security    # Security-focused tests (tests/security)
 npm run test:api         # Integration/API tests (tests/integration)
+npm run test:coverage    # Jest with coverage report
 npm run test:e2e         # Run Playwright E2E tests
 npm run test:e2e:ui      # Playwright with interactive UI
 npm run test:e2e:headed  # Playwright with visible browser
 npm run test:e2e:debug   # Playwright debug mode
-npm run test:all         # Run all tests (unit + E2E)
+
+# Run single test file or by pattern
+npm test -- tests/unit/some.test.ts       # Single file
+npm test -- -t "test name pattern"        # By test name
 ```
 
 ## Test Organization
@@ -190,7 +195,7 @@ Modules are the feature units that can be enabled/disabled per organization.
 Central definition in `src/lib/modules/registry.ts`:
 - Each module defines: routes (admin/employee/API), tier requirements, dependencies
 - Categories: `operations`, `hr`, `system`
-- Default enabled for new orgs: `['assets', 'subscriptions', 'suppliers']`
+- Default enabled for new orgs: `['employees', 'assets', 'subscriptions', 'suppliers']`
 
 ### Access Control
 
@@ -217,8 +222,7 @@ The codebase is organized by business domain:
 | Domain | Modules | Description |
 |--------|---------|-------------|
 | **HR** | Employees, Leave, Payroll | Human resources, leave management, payroll processing |
-| **Operations** | Assets, Subscriptions, Suppliers | Physical/digital assets, SaaS tracking, vendor management |
-| **Projects** | Tasks, Spend Requests | Kanban boards, internal spending approvals |
+| **Operations** | Assets, Subscriptions, Suppliers, Spend Requests | Physical/digital assets, SaaS tracking, vendor management, internal spending approvals |
 | **System** | Users, Settings, Reports, Billing | Administration and configuration |
 
 ### Route Structure
@@ -237,7 +241,6 @@ src/app/
 ├── admin/                   # Admin dashboard
 │   ├── (hr)/
 │   ├── (operations)/
-│   ├── (projects)/
 │   └── (system)/
 │       └── billing/        # Subscription management
 ├── employee/                # Employee self-service
@@ -317,6 +320,7 @@ model Asset {
 - `OrganizationInvitation` - Pending team invites
 - `User` - Global user profile (can belong to multiple orgs)
 - `Asset`, `Subscription`, `Supplier` - Core business entities
+- `SpendRequest`, `SpendRequestItem` - Internal spending approvals
 - `LeaveType`, `LeaveBalance`, `LeaveRequest` - HR module
 - `PayrollRun`, `Payslip` - Payroll module
 
@@ -461,4 +465,4 @@ For loading states, use corresponding skeletons from `@/components/ui/table-skel
 npx vercel --prod    # Deploy to production
 ```
 
-Database schema changes are auto-applied via `prisma db push` during Vercel build.
+Vercel build uses `prisma db push --skip-generate --accept-data-loss` to sync schema (not migrations).
