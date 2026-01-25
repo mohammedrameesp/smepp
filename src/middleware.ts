@@ -462,23 +462,28 @@ export async function middleware(request: NextRequest) {
           return NextResponse.redirect(modulesUrl);
         }
 
-        const response = NextResponse.next();
-        response.headers.set('x-custom-domain', customDomainHost);
-        response.headers.set('x-tenant-id', impersonation.organizationId);
-        response.headers.set('x-tenant-slug', impersonation.organizationSlug);
-        response.headers.set('x-user-id', impersonation.superAdminId);
-        response.headers.set('x-user-role', 'ADMIN');
-        response.headers.set('x-subscription-tier', subscriptionTier);
-        response.headers.set('x-impersonating', 'true');
-        response.headers.set('x-impersonator-id', impersonation.superAdminId);
-        response.headers.set('x-impersonator-email', impersonation.superAdminEmail);
+        // Use request headers so server components can read them via headers()
+        const requestHeaders = new Headers(request.headers);
+        requestHeaders.set('x-custom-domain', customDomainHost);
+        requestHeaders.set('x-tenant-id', impersonation.organizationId);
+        requestHeaders.set('x-tenant-slug', impersonation.organizationSlug);
+        requestHeaders.set('x-user-id', impersonation.superAdminId);
+        requestHeaders.set('x-user-role', 'ADMIN');
+        requestHeaders.set('x-subscription-tier', subscriptionTier);
+        requestHeaders.set('x-impersonating', 'true');
+        requestHeaders.set('x-impersonator-id', impersonation.superAdminId);
+        requestHeaders.set('x-impersonator-email', impersonation.superAdminEmail);
         if (impersonation.jti) {
-          response.headers.set('x-impersonation-jti', impersonation.jti);
+          requestHeaders.set('x-impersonation-jti', impersonation.jti);
         }
         if (impersonation.iat) {
-          response.headers.set('x-impersonation-iat', impersonation.iat.toString());
+          requestHeaders.set('x-impersonation-iat', impersonation.iat.toString());
         }
-        return response;
+        return NextResponse.next({
+          request: {
+            headers: requestHeaders,
+          },
+        });
       }
 
       // Unauthenticated on custom domain - redirect to login
@@ -663,23 +668,28 @@ export async function middleware(request: NextRequest) {
       }
 
       // Allow access with impersonation context
-      const response = NextResponse.next();
-      response.headers.set('x-subdomain', subdomain);
-      response.headers.set('x-tenant-id', impersonation.organizationId);
-      response.headers.set('x-tenant-slug', impersonation.organizationSlug);
-      response.headers.set('x-user-id', impersonation.superAdminId);
-      response.headers.set('x-user-role', 'ADMIN'); // Super admin acts as admin when impersonating
-      response.headers.set('x-subscription-tier', subscriptionTier);
-      response.headers.set('x-impersonating', 'true'); // Flag for impersonation
-      response.headers.set('x-impersonator-id', impersonation.superAdminId);
-      response.headers.set('x-impersonator-email', impersonation.superAdminEmail);
+      // Use request headers so server components can read them via headers()
+      const requestHeaders = new Headers(request.headers);
+      requestHeaders.set('x-subdomain', subdomain);
+      requestHeaders.set('x-tenant-id', impersonation.organizationId);
+      requestHeaders.set('x-tenant-slug', impersonation.organizationSlug);
+      requestHeaders.set('x-user-id', impersonation.superAdminId);
+      requestHeaders.set('x-user-role', 'ADMIN'); // Super admin acts as admin when impersonating
+      requestHeaders.set('x-subscription-tier', subscriptionTier);
+      requestHeaders.set('x-impersonating', 'true'); // Flag for impersonation
+      requestHeaders.set('x-impersonator-id', impersonation.superAdminId);
+      requestHeaders.set('x-impersonator-email', impersonation.superAdminEmail);
       if (impersonation.jti) {
-        response.headers.set('x-impersonation-jti', impersonation.jti);
+        requestHeaders.set('x-impersonation-jti', impersonation.jti);
       }
       if (impersonation.iat) {
-        response.headers.set('x-impersonation-iat', impersonation.iat.toString());
+        requestHeaders.set('x-impersonation-iat', impersonation.iat.toString());
       }
-      return response;
+      return NextResponse.next({
+        request: {
+          headers: requestHeaders,
+        },
+      });
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
