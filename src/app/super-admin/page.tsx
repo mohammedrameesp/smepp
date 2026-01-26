@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/core/prisma';
 import Link from 'next/link';
-import { Building2, Users, Signal, CheckCircle, Eye, UserCog, Edit, UserPlus, BarChart3, Settings } from 'lucide-react';
+import { Building2, Users, Signal, CheckCircle, Eye, Edit, UserPlus, BarChart3, Settings } from 'lucide-react';
+import { ImpersonateButton } from '@/components/super-admin/impersonate-button';
 import { formatDistanceToNow, format } from 'date-fns';
 
 export const dynamic = 'force-dynamic';
@@ -214,13 +215,10 @@ export default async function SuperAdminDashboard() {
                     </td>
                     <td className="px-4 lg:px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-1 lg:gap-2">
-                        <Link
-                          href={`/api/super-admin/impersonate?organizationId=${org.id}`}
-                          className="text-gray-400 hover:text-indigo-600 p-1.5 hover:bg-indigo-50 rounded"
-                          title="Impersonate"
-                        >
-                          <UserCog className="h-4 w-4" />
-                        </Link>
+                        <ImpersonateButton
+                          organizationId={org.id}
+                          organizationName={org.name}
+                        />
                         <Link
                           href={`/super-admin/organizations/${org.id}`}
                           className="text-gray-400 hover:text-gray-600 p-1.5 hover:bg-gray-100 rounded"
