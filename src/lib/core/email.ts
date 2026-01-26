@@ -95,6 +95,13 @@ async function getCustomSmtpTransporter(tenantId: string): Promise<{ transporter
 export async function sendEmail({ to, subject, text, html, from, tenantId }: EmailOptions) {
   const toAddresses = Array.isArray(to) ? to : [to];
 
+  // Skip placeholder emails for non-login users (nologin-xxx@org.internal)
+  const realAddresses = toAddresses.filter(email => !email.endsWith('.internal'));
+  if (realAddresses.length === 0) {
+    logger.debug({ originalTo: to }, 'Skipping email - all recipients are .internal addresses');
+    return { success: true, skipped: true };
+  }
+
   // Check for custom SMTP first if tenantId is provided
   if (tenantId) {
     const customSmtp = await getCustomSmtpTransporter(tenantId);
@@ -102,7 +109,7 @@ export async function sendEmail({ to, subject, text, html, from, tenantId }: Ema
       try {
         const info = await customSmtp.transporter.sendMail({
           from: customSmtp.from,
-          to: toAddresses.join(', '),
+          to: realAddresses.join(', '),
           subject,
           text: text || subject,
           html,
@@ -138,7 +145,7 @@ export async function sendEmail({ to, subject, text, html, from, tenantId }: Ema
     // We explicitly type the payload to match Resend's CreateEmailOptions
     const basePayload = {
       from: fromAddress,
-      to: toAddresses,
+      to: realAddresses,
       subject,
     };
 
