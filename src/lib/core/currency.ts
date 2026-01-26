@@ -11,6 +11,10 @@
  */
 
 import { prisma } from './prisma';
+import Decimal from 'decimal.js';
+
+// FIN-003: Configure Decimal.js for financial precision
+Decimal.set({ precision: 20, rounding: Decimal.ROUND_HALF_UP });
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // DEFAULT RATES (fallback when no tenant-specific rate configured)
@@ -126,6 +130,18 @@ function getCacheKey(tenantId: string, currency: string): string {
   return `${tenantId}_${currency}`;
 }
 
+/**
+ * Multiply amount by rate with financial precision.
+ * FIN-003: Uses Decimal.js, rounds to 2 decimal places.
+ * @internal
+ */
+function multiplyPrecise(amount: number, rate: number): number {
+  return new Decimal(amount)
+    .times(new Decimal(rate))
+    .toDecimalPlaces(2, Decimal.ROUND_HALF_UP)
+    .toNumber();
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // CORE FUNCTIONS
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -167,7 +183,7 @@ export async function getExchangeRateToQAR(
     });
 
     if (setting?.value) {
-      const rate = parseFloat(setting.value);
+      const rate = new Decimal(setting.value).toNumber();
       if (!isNaN(rate) && rate > 0) {
         rateCache.set(cacheKey, { rate, time: Date.now() });
         return rate;
@@ -216,7 +232,7 @@ export async function convertToQAR(
   }
 
   const rate = await getExchangeRateToQAR(tenantId, fromCurrency);
-  return amount * rate;
+  return multiplyPrecise(amount, rate);
 }
 
 /**
@@ -274,7 +290,7 @@ export function convertToQARSync(
 ): number {
   if (fromCurrency === 'QAR') return amount;
   const rate = DEFAULT_RATES_TO_QAR[fromCurrency] ?? 1;
-  return amount * rate;
+  return multiplyPrecise(amount, rate);
 }
 
 /**
