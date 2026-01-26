@@ -7,15 +7,18 @@
  *
  * PURPOSE:
  * Many API routes share the same approval workflow pattern:
- * 1. Validate ID param exists
- * 2. Parse request body with Zod schema
- * 3. Fetch entity (tenant-scoped)
- * 4. Validate current status allows transition
- * 5. Update in transaction + create history entry
- * 6. Log activity
- * 7. Invalidate WhatsApp tokens (optional)
- * 8. Send notifications (email + in-app)
- * 9. Return updated entity
+ * 1. Validate tenant context
+ * 2. Validate ID param exists
+ * 3. Parse request body with Zod schema
+ * 4. Fetch entity (tenant-scoped)
+ * 5. Prevent self-approval (optional conflict of interest check)
+ * 6. Validate current status allows transition
+ * 7. Build approval context
+ * 8. Update in transaction + create history entry
+ * 9. Log activity
+ * 10. Invalidate WhatsApp tokens (optional)
+ * 11. Send notifications (email + in-app)
+ * 12. Return updated entity
  *
  * This factory handles all common logic, letting each route focus on its unique
  * business logic via configuration callbacks.
@@ -97,6 +100,12 @@ export interface OrgInfo {
  * @typeParam TEntity - The entity type being approved/rejected
  * @typeParam TBody - The request body type (from Zod schema)
  * @typeParam TResult - The result type returned after update (defaults to TEntity)
+ *
+ * @security All approval handlers enforce:
+ * - Tenant isolation via tenant-scoped Prisma client
+ * - Status transition validation to prevent invalid state changes
+ * - Activity logging for audit trail
+ * - Optional self-approval prevention via getRequesterId callback
  */
 export interface ApprovalHandlerConfig<TEntity, TBody = unknown, TResult = TEntity> {
   /**
@@ -222,6 +231,20 @@ export interface ApprovalHandlerConfig<TEntity, TBody = unknown, TResult = TEnti
    * Optional - returns result as-is if not specified.
    */
   transformResponse?: (result: TResult) => unknown;
+
+  /**
+   * Extract the ID of the user who created/submitted the request.
+   * Used to prevent self-approval (approver cannot approve their own requests).
+   * Optional - if not provided, self-approval prevention is disabled.
+   *
+   * @security Prevents conflict of interest by blocking self-approval
+   * @param entity - The entity being approved
+   * @returns User ID of the requester, or undefined to skip check
+   *
+   * @example
+   * getRequesterId: (entity) => entity.requestedById
+   */
+  getRequesterId?: (entity: TEntity) => string | undefined;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -366,7 +389,20 @@ export function createApprovalHandler<TEntity, TBody = unknown, TResult = TEntit
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
-    // STEP 5: Validate current status allows transition
+    // STEP 5: Prevent self-approval (conflict of interest check)
+    // ─────────────────────────────────────────────────────────────────────────────
+    if (config.getRequesterId) {
+      const requesterId = config.getRequesterId(entity);
+      if (requesterId && requesterId === userId) {
+        return NextResponse.json(
+          { error: 'You cannot approve your own request' },
+          { status: 403 }
+        );
+      }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 6: Validate current status allows transition
     // ─────────────────────────────────────────────────────────────────────────────
     if (config.validateStatus) {
       // Custom validation
@@ -389,7 +425,7 @@ export function createApprovalHandler<TEntity, TBody = unknown, TResult = TEntit
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
-    // STEP 6: Build approval context
+    // STEP 7: Build approval context
     // ─────────────────────────────────────────────────────────────────────────────
     const approvalContext: ApprovalContext = {
       tenantId,
@@ -402,14 +438,14 @@ export function createApprovalHandler<TEntity, TBody = unknown, TResult = TEntit
     };
 
     // ─────────────────────────────────────────────────────────────────────────────
-    // STEP 7: Perform update in transaction
+    // STEP 8: Perform update in transaction
     // ─────────────────────────────────────────────────────────────────────────────
     const result = await db.$transaction(async (tx) => {
       return config.performUpdate(entity, body, approvalContext, tx);
     });
 
     // ─────────────────────────────────────────────────────────────────────────────
-    // STEP 8: Log activity
+    // STEP 9: Log activity
     // ─────────────────────────────────────────────────────────────────────────────
     const entityId = config.getEntityId(entity);
     const activityPayload = config.buildActivityPayload?.(entity, result, body) || {};
@@ -424,7 +460,7 @@ export function createApprovalHandler<TEntity, TBody = unknown, TResult = TEntit
     );
 
     // ─────────────────────────────────────────────────────────────────────────────
-    // STEP 9: Invalidate WhatsApp tokens (if applicable)
+    // STEP 10: Invalidate WhatsApp tokens (if applicable)
     // ─────────────────────────────────────────────────────────────────────────────
     if (config.whatsappEntityType) {
       try {
@@ -438,7 +474,7 @@ export function createApprovalHandler<TEntity, TBody = unknown, TResult = TEntit
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
-    // STEP 10: Send notifications (fire and forget)
+    // STEP 11: Send notifications (fire and forget)
     // ─────────────────────────────────────────────────────────────────────────────
     if (config.sendNotifications) {
       // Fetch org info for email templates (use raw prisma for non-tenant model)
@@ -463,7 +499,7 @@ export function createApprovalHandler<TEntity, TBody = unknown, TResult = TEntit
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
-    // STEP 11: Return response
+    // STEP 12: Return response
     // ─────────────────────────────────────────────────────────────────────────────
     const responseData = config.transformResponse ? config.transformResponse(result) : result;
     return NextResponse.json(responseData);

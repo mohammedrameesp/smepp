@@ -3,6 +3,13 @@
  * @description Factory for creating standardized export route handlers
  * @module http
  *
+ * @security EXPORT SECURITY CONSIDERATIONS:
+ * - Tenant isolation: All exports are scoped to the authenticated tenant
+ * - Permission control: Use handlerOptions.requireAdmin or requirePermission
+ * - Rate limiting: Enable rateLimit option for large exports
+ * - Audit logging: Implement via logAction callback for compliance
+ * - Data limits: Consider maxRecords config for memory protection
+ *
  * PURPOSE:
  * Eliminates duplicate boilerplate code across export routes by providing
  * a configurable factory function. Each export route (assets, subscriptions,
@@ -35,6 +42,8 @@ import { withErrorHandler, APIContext, HandlerOptions } from './handler';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { arrayToCSV } from '@/lib/core/csv-utils';
 import { ExportHeader, EXCEL_MIME_TYPE } from '@/lib/core/export-utils';
+import { logAction, ActivityActions } from '@/lib/core/activity';
+import logger from '@/lib/core/log';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -60,10 +69,19 @@ export interface AdditionalSheet<T = Record<string, unknown>> {
  */
 export interface ExportHandlerConfig<TEntity, TTransformed extends Record<string, unknown> = Record<string, string>> {
   /**
-   * Module name used for filename generation.
+   * Module name used for filename generation and audit logging.
    * Example: 'assets' produces 'assets_export_2024-01-15.xlsx'
    */
   moduleName: string;
+
+  /**
+   * Maximum number of records to export.
+   * Prevents memory exhaustion on large datasets.
+   * Optional - no limit if not specified.
+   * @default undefined (no limit)
+   * @security Recommended for production to prevent DoS via large exports
+   */
+  maxRecords?: number;
 
   /**
    * Column definitions for the primary export sheet.
@@ -126,6 +144,25 @@ export interface ExportHandlerConfig<TEntity, TTransformed extends Record<string
    * @returns Filename string (should include .xlsx extension)
    */
   getFilename?: (date: Date) => string;
+
+  /**
+   * Optional: Custom audit logging callback for compliance tracking.
+   * Called after successful export with export metadata.
+   * If not provided and enableAuditLog is true, uses default activity logging.
+   *
+   * @param tenantId - Tenant ID
+   * @param userId - User who performed the export
+   * @param recordCount - Number of records exported
+   */
+  onExport?: (tenantId: string, userId: string, recordCount: number) => Promise<void>;
+
+  /**
+   * Enable built-in audit logging for exports.
+   * Logs export action using the activity system.
+   * @default true
+   * @security Recommended for compliance and audit trails
+   */
+  enableAuditLog?: boolean;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -180,9 +217,19 @@ export interface ExportHandlerConfig<TEntity, TTransformed extends Record<string
  *   }],
  * }, { requireAdmin: true, rateLimit: true });
  */
+/**
+ * Default handler options for export handlers.
+ * Includes authentication and rate limiting.
+ * @security Rate limiting prevents DoS via repeated large exports
+ */
+const DEFAULT_EXPORT_OPTIONS: HandlerOptions = {
+  requireAuth: true,
+  rateLimit: true, // Enable rate limiting by default for exports
+};
+
 export function createExportHandler<TEntity, TTransformed extends Record<string, unknown> = Record<string, string>>(
   config: ExportHandlerConfig<TEntity, TTransformed>,
-  handlerOptions: HandlerOptions = { requireAuth: true }
+  handlerOptions: HandlerOptions = DEFAULT_EXPORT_OPTIONS
 ) {
   return withErrorHandler(async (_request: NextRequest, context: APIContext) => {
     const { tenant, prisma: tenantPrisma } = context;
@@ -199,15 +246,22 @@ export function createExportHandler<TEntity, TTransformed extends Record<string,
     // ─────────────────────────────────────────────────────────────────────────
     // STEP 2: Fetch data using tenant-scoped client
     // ─────────────────────────────────────────────────────────────────────────
-    const entities = await config.fetchData(db);
+    let entities = await config.fetchData(db);
 
     // ─────────────────────────────────────────────────────────────────────────
-    // STEP 3: Transform entities to export format
+    // STEP 3: Apply maxRecords limit if configured
+    // ─────────────────────────────────────────────────────────────────────────
+    if (config.maxRecords && entities.length > config.maxRecords) {
+      entities = entities.slice(0, config.maxRecords);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // STEP 4: Transform entities to export format
     // ─────────────────────────────────────────────────────────────────────────
     const exportData = entities.map(config.transformRow);
 
     // ─────────────────────────────────────────────────────────────────────────
-    // STEP 4: Generate Excel buffer (single or multi-sheet)
+    // STEP 5: Generate Excel buffer (single or multi-sheet)
     // ─────────────────────────────────────────────────────────────────────────
     let buffer: Buffer;
 
@@ -251,7 +305,7 @@ export function createExportHandler<TEntity, TTransformed extends Record<string,
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // STEP 5: Generate filename
+    // STEP 6: Generate filename
     // ─────────────────────────────────────────────────────────────────────────
     const date = new Date();
     const filename =
@@ -259,7 +313,37 @@ export function createExportHandler<TEntity, TTransformed extends Record<string,
       `${config.moduleName}_export_${date.toISOString().split('T')[0]}.xlsx`;
 
     // ─────────────────────────────────────────────────────────────────────────
-    // STEP 6: Return file response
+    // STEP 7: Audit logging (fire-and-forget)
+    // ─────────────────────────────────────────────────────────────────────────
+    const enableAuditLog = config.enableAuditLog ?? true; // Default to enabled
+
+    if (tenant.userId && (config.onExport || enableAuditLog)) {
+      // Fire and forget - don't block the response
+      const auditPromise = config.onExport
+        ? config.onExport(tenant.tenantId, tenant.userId, entities.length)
+        : logAction(
+            tenant.tenantId,
+            tenant.userId,
+            ActivityActions.DATA_EXPORTED,
+            config.moduleName.toUpperCase(),
+            'export',
+            {
+              moduleName: config.moduleName,
+              recordCount: entities.length,
+              filename,
+            }
+          );
+
+      auditPromise.catch((err) => {
+        logger.warn(
+          { error: err instanceof Error ? err.message : 'Unknown error' },
+          `[${config.moduleName}] Failed to log export action`
+        );
+      });
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // STEP 8: Return file response
     // ─────────────────────────────────────────────────────────────────────────
     return new NextResponse(new Uint8Array(buffer), {
       status: 200,

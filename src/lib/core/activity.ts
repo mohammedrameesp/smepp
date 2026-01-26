@@ -229,6 +229,10 @@ export const ActivityActions = {
   // Module management actions
   MODULE_INSTALLED: 'MODULE_INSTALLED',
   MODULE_UNINSTALLED: 'MODULE_UNINSTALLED',
+
+  // Data export/import actions (audit trail for compliance)
+  DATA_EXPORTED: 'DATA_EXPORTED',
+  DATA_IMPORTED: 'DATA_IMPORTED',
 } as const;
 
 export type ActivityAction = typeof ActivityActions[keyof typeof ActivityActions];

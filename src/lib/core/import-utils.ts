@@ -75,6 +75,19 @@ export interface ImportFileConfig {
 /** Default maximum file size: 10MB */
 export const DEFAULT_MAX_FILE_SIZE = 10 * 1024 * 1024;
 
+/**
+ * Magic byte signatures for file type validation.
+ * @security Validates actual file content, not just extension/MIME type
+ */
+const FILE_SIGNATURES = {
+  // XLSX/DOCX/PPTX (ZIP-based Office formats) - PK signature
+  xlsx: [0x50, 0x4b, 0x03, 0x04],
+  // XLS (Legacy Excel BIFF format) - Compound Document signature
+  xls: [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1],
+  // CSV files start with printable ASCII - we check for common patterns
+  // CSV doesn't have a magic number, so we validate it's text-like
+} as const;
+
 /** Default allowed MIME types for import files */
 export const DEFAULT_ALLOWED_TYPES = [
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
@@ -84,6 +97,56 @@ export const DEFAULT_ALLOWED_TYPES = [
 
 /** Default allowed file extensions */
 export const DEFAULT_ALLOWED_EXTENSIONS = ['xlsx', 'xls', 'csv'];
+
+/**
+ * Validates file content against magic byte signatures.
+ * @security Prevents disguised malicious files (e.g., .exe renamed to .xlsx)
+ *
+ * @param buffer - File buffer to validate
+ * @param extension - Expected file extension
+ * @returns true if file content matches expected type, false otherwise
+ */
+export function validateFileMagicBytes(buffer: Buffer, extension: string): boolean {
+  const ext = extension.toLowerCase();
+
+  if (ext === 'xlsx') {
+    // Check for ZIP/PK signature (XLSX is a ZIP archive)
+    const signature = FILE_SIGNATURES.xlsx;
+    if (buffer.length < signature.length) return false;
+    return signature.every((byte, i) => buffer[i] === byte);
+  }
+
+  if (ext === 'xls') {
+    // Check for Compound Document signature (legacy Excel)
+    const signature = FILE_SIGNATURES.xls;
+    if (buffer.length < signature.length) return false;
+    return signature.every((byte, i) => buffer[i] === byte);
+  }
+
+  if (ext === 'csv') {
+    // CSV doesn't have a magic number - validate it's text-like content
+    // Check first 1000 bytes for printable ASCII + common control chars
+    const sampleSize = Math.min(1000, buffer.length);
+    for (let i = 0; i < sampleSize; i++) {
+      const byte = buffer[i];
+      // Allow: printable ASCII (32-126), tab (9), newline (10), carriage return (13)
+      // Also allow UTF-8 continuation bytes (128-255) for international characters
+      const isValid =
+        (byte >= 32 && byte <= 126) || // Printable ASCII
+        byte === 9 ||  // Tab
+        byte === 10 || // LF
+        byte === 13 || // CR
+        byte >= 128;   // UTF-8 continuation / international chars
+      if (!isValid) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // Unknown extension - allow (fallback to MIME type validation)
+  return true;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FILE HANDLING
@@ -157,6 +220,19 @@ export async function parseImportFile(
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
 
+  // Validate file content matches expected type (magic byte validation)
+  // @security Prevents disguised malicious files
+  if (extension && !validateFileMagicBytes(buffer, extension)) {
+    return {
+      error: NextResponse.json(
+        {
+          error: `File content does not match expected ${extension.toUpperCase()} format. The file may be corrupted or incorrectly named.`,
+        },
+        { status: 400 }
+      ),
+    };
+  }
+
   return { buffer, file, duplicateStrategy };
 }
 
@@ -188,23 +264,71 @@ export async function parseImportRows<T extends ImportRow>(
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
+ * Characters that could trigger formula execution in Excel/Google Sheets
+ * when a cell value starts with them.
+ * @security Prevents CSV formula injection attacks
+ */
+const FORMULA_TRIGGER_CHARS = ['=', '+', '-', '@', '\t', '\r'];
+
+/**
+ * Sanitizes a cell value to prevent CSV formula injection.
+ * If the value starts with a formula trigger character, it's prefixed with a single quote.
+ *
+ * @security Prevents Excel/Sheets formula injection attacks
+ * @param value - Raw cell value from import
+ * @returns Sanitized value safe for database storage
+ *
+ * @example
+ * sanitizeCellValue('=HYPERLINK("http://evil.com")') // Returns "'=HYPERLINK..."
+ * sanitizeCellValue('Normal text') // Returns 'Normal text'
+ */
+export function sanitizeCellValue(value: string | undefined): string | undefined {
+  if (!value) return value;
+  const trimmed = value.trim();
+  if (trimmed.length === 0) return trimmed;
+
+  // Check if first character is a formula trigger
+  if (FORMULA_TRIGGER_CHARS.includes(trimmed[0])) {
+    // Don't sanitize if it looks like a legitimate negative number
+    if (trimmed[0] === '-' && /^-\d/.test(trimmed)) {
+      return trimmed;
+    }
+    // Don't sanitize if it looks like a positive number with + prefix
+    if (trimmed[0] === '+' && /^\+\d/.test(trimmed)) {
+      return trimmed.substring(1); // Just remove the + prefix
+    }
+    // Prefix with single quote to neutralize the formula
+    return `'${trimmed}`;
+  }
+
+  return trimmed;
+}
+
+/**
  * Creates a helper function to get values from a row with flexible column name matching
  *
  * This allows imports to work with various column naming conventions:
  * - "Asset Tag", "asset_tag", "assetTag", "Tag" all map to the same field
  *
+ * @security Uses sanitizeCellValue to prevent formula injection
  * @param row - The row to extract values from
+ * @param sanitize - Whether to sanitize cell values (default: true)
  * @returns A function that takes possible column names and returns the first match
  *
  * @example
  * const getRowValue = createRowValueGetter(row);
  * const name = getRowValue(['Name', 'name', 'Full Name']); // Returns first matching value
  */
-export function createRowValueGetter(row: ImportRow): (possibleNames: string[]) => string | undefined {
+export function createRowValueGetter(
+  row: ImportRow,
+  sanitize: boolean = true
+): (possibleNames: string[]) => string | undefined {
   return (possibleNames: string[]): string | undefined => {
     for (const name of possibleNames) {
       const value = row[name];
-      if (value && value.trim()) return value.trim();
+      if (value && value.trim()) {
+        return sanitize ? sanitizeCellValue(value.trim()) : value.trim();
+      }
     }
     return undefined;
   };

@@ -3,6 +3,24 @@
  * @description Factory for creating standardized import route handlers
  * @module http
  *
+ * @security IMPORT SECURITY CONSIDERATIONS:
+ * - File validation: Type, size, and magic bytes validated via parseImportFile
+ * - Tenant isolation: All imports scoped to authenticated tenant
+ * - Input sanitization: Use Zod schemas in parseRow for validation
+ * - Formula injection: createRowValueGetter sanitizes by default (see below)
+ * - Permission control: Default requires admin + rate limiting
+ * - Activity logging: All creates/updates + import summary logged for audit trail
+ *
+ * @breaking BREAKING CHANGE (formula sanitization):
+ * As of this version, createRowValueGetter() sanitizes cell values by default
+ * to prevent CSV formula injection. Values starting with =, +, -, @, \t, \r
+ * are prefixed with a single quote ('). Negative numbers (-123) are preserved.
+ *
+ * If you need raw unsanitized values (e.g., for formula fields), use:
+ * ```typescript
+ * const getRowValue = createRowValueGetter(row, false); // Disable sanitization
+ * ```
+ *
  * PURPOSE:
  * Eliminates duplicate boilerplate code across import routes by providing
  * a configurable factory function. Each import route (assets, subscriptions,
@@ -51,6 +69,7 @@ import {
   DuplicateStrategy,
 } from '@/lib/core/import-utils';
 import { logAction, ActivityActions } from '@/lib/core/activity';
+import logger from '@/lib/core/log';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -76,6 +95,14 @@ export interface ImportHandlerConfig<TParsed, TEntity, TCreated = Record<string,
    * Example: 'assets', 'subscriptions', 'suppliers'
    */
   moduleName: string;
+
+  /**
+   * Maximum number of rows to import.
+   * Prevents memory exhaustion and DoS via large imports.
+   * @default 5000
+   * @security Limits import size for resource protection
+   */
+  maxRecords?: number;
 
   /**
    * Entity type for activity logging.
@@ -310,13 +337,23 @@ function getUpdateAction(entityType: string, customAction?: string): string {
  *   }),
  * }, { requireAdmin: true, requireModule: 'assets' });
  */
+/**
+ * Default handler options for import handlers.
+ * Includes admin requirement and rate limiting.
+ * @security Rate limiting prevents DoS via repeated large imports
+ */
+const DEFAULT_IMPORT_OPTIONS: HandlerOptions = {
+  requireAdmin: true,
+  rateLimit: true, // Enable rate limiting by default for imports
+};
+
 export function createImportHandler<
   TParsed,
   TEntity,
   TCreated = Record<string, unknown>
 >(
   config: ImportHandlerConfig<TParsed, TEntity, TCreated>,
-  handlerOptions: HandlerOptions = { requireAdmin: true }
+  handlerOptions: HandlerOptions = DEFAULT_IMPORT_OPTIONS
 ) {
   return withErrorHandler(async (request: NextRequest, context: APIContext) => {
     const { tenant, prisma: tenantPrisma } = context;
@@ -359,7 +396,20 @@ export function createImportHandler<
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // STEP 4: Process each row
+    // STEP 4: Enforce max records limit
+    // ─────────────────────────────────────────────────────────────────────────
+    const maxRecords = config.maxRecords ?? 5000;
+    if (rows.length > maxRecords) {
+      return NextResponse.json(
+        {
+          error: `File contains too many rows (${rows.length}). Maximum allowed: ${maxRecords}`,
+        },
+        { status: 400 }
+      );
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // STEP 5: Process each row
     // ─────────────────────────────────────────────────────────────────────────
     const results = createImportResults<TCreated>();
     const createAction = getCreateAction(config.activityEntityType, config.createAction);
@@ -491,7 +541,32 @@ export function createImportHandler<
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // STEP 5: Return results
+    // STEP 6: Log import summary (audit trail)
+    // ─────────────────────────────────────────────────────────────────────────
+    // Fire-and-forget audit log for the overall import
+    logAction(
+      tenantId,
+      userId,
+      ActivityActions.DATA_IMPORTED,
+      config.activityEntityType,
+      'import',
+      {
+        moduleName: config.moduleName,
+        totalRows: rows.length,
+        created: results.success,
+        updated: results.updated,
+        skipped: results.skipped,
+        failed: results.failed,
+      }
+    ).catch((err) => {
+      logger.warn(
+        { error: err instanceof Error ? err.message : 'Unknown error' },
+        `[${config.moduleName}] Failed to log import summary`
+      );
+    });
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // STEP 7: Return results
     // ─────────────────────────────────────────────────────────────────────────
     return NextResponse.json({
       message: formatImportMessage(results),
@@ -507,6 +582,7 @@ export function createImportHandler<
 export type { ImportRow, ImportResults, DuplicateStrategy };
 export {
   createRowValueGetter,
+  sanitizeCellValue,
   parseEnumValue,
   parseBooleanValue,
   parseNumericValue,

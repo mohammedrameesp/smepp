@@ -3,6 +3,12 @@
  * @description Factory for creating paginated list handlers.
  *              Reduces boilerplate for list/search routes.
  * @module http
+ *
+ * @security LIST HANDLER SECURITY:
+ * - Tenant isolation: Uses tenant-scoped Prisma client
+ * - Sort field validation: Only allows whitelisted sortable fields (defaultSort, or via buildWhere)
+ * - Search injection: Safe via Prisma's parameterized queries
+ * - Pagination limits: Enforced max page size to prevent DoS
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -12,11 +18,18 @@ import { withErrorHandler, APIContext, HandlerOptions } from './handler';
 import { paginatedResponse } from './responses';
 
 /**
+ * Maximum page size to prevent DoS via large result sets.
+ * Can be overridden per-handler if needed.
+ * @security Limits response size for resource protection
+ */
+export const MAX_PAGE_SIZE = 100;
+
+/**
  * Base pagination parameters
  */
 export const basePaginationSchema = z.object({
   p: z.coerce.number().min(1).default(1),
-  ps: z.coerce.number().min(1).max(10000).default(20),
+  ps: z.coerce.number().min(1).max(MAX_PAGE_SIZE).default(20),
   sort: z.string().optional(),
   order: z.enum(['asc', 'desc']).default('desc'),
   q: z.string().optional(),
@@ -31,15 +44,23 @@ export interface ListHandlerConfig<TEntity, TQuery extends BasePaginationParams>
   querySchema: ZodSchema<TQuery>;
 
   /**
-   * Fields to search when 'q' parameter is provided
-   * Uses case-insensitive contains search
+   * Fields to search when 'q' parameter is provided.
+   * Uses case-insensitive contains search.
    */
   searchFields?: string[];
 
   /**
-   * Default sort field if not specified in query
+   * Default sort field if not specified in query.
    */
   defaultSort?: string;
+
+  /**
+   * Whitelist of allowed sort fields.
+   * If provided, sort parameter must be in this list.
+   * @security Prevents SQL injection via arbitrary field names in orderBy
+   * @example ['createdAt', 'name', 'status', 'email']
+   */
+  sortableFields?: string[];
 
   /**
    * Function to build additional where conditions from query params
@@ -106,6 +127,7 @@ export function createListHandler<TEntity, TQuery extends BasePaginationParams>(
     querySchema,
     searchFields,
     defaultSort,
+    sortableFields,
     buildWhere,
     fetchData,
     serialize,
@@ -164,8 +186,18 @@ export function createListHandler<TEntity, TQuery extends BasePaginationParams>(
     const skip = (page - 1) * pageSize;
     const take = pageSize;
 
-    // Build orderBy
-    const sortField = sort || defaultSort || 'createdAt';
+    // Validate and build orderBy
+    // @security: Validates sort field against whitelist to prevent injection
+    let sortField = sort || defaultSort || 'createdAt';
+
+    // If sortableFields is defined, validate the sort field
+    if (sortableFields && sortableFields.length > 0) {
+      if (sort && !sortableFields.includes(sort)) {
+        // Invalid sort field - fall back to default or first allowed field
+        sortField = defaultSort || sortableFields[0] || 'createdAt';
+      }
+    }
+
     const orderBy = { [sortField]: order };
 
     // Fetch data

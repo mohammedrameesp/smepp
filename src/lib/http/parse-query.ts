@@ -91,7 +91,10 @@ export function parsePaginationParams(request: NextRequest): {
 
   const search = searchParams.get('q') ?? searchParams.get('search') ?? undefined;
   const sort = searchParams.get('sort') ?? undefined;
-  const order = (searchParams.get('order') as 'asc' | 'desc') || 'desc';
+
+  // Validate order parameter - only allow 'asc' or 'desc'
+  const orderParam = searchParams.get('order');
+  const order: 'asc' | 'desc' = orderParam === 'asc' ? 'asc' : 'desc';
 
   return { page, pageSize, search, sort, order };
 }

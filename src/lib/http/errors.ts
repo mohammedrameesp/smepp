@@ -106,9 +106,13 @@ export class AppError extends Error {
 }
 
 export class ValidationError extends AppError {
-  constructor(message: string, _details?: unknown) {
+  /** Validation error details (field errors, etc.) */
+  public details?: ErrorDetails;
+
+  constructor(message: string, details?: ErrorDetails) {
     super(message, 400);
     this.name = 'ValidationError';
+    this.details = details;
   }
 }
 
