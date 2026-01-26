@@ -36,8 +36,16 @@ jest.mock('@/lib/http/errors', () => ({
     response: { error: 'Internal error' },
     statusCode: 500,
   }),
-  errorResponse: jest.fn().mockImplementation((message: string, status: number) => {
-    return new NextResponse(JSON.stringify({ error: message }), { status });
+  errorResponse: jest.fn().mockImplementation((
+    errorTitle: string,
+    status: number,
+    options?: { message?: string; code?: string; details?: Record<string, unknown> }
+  ) => {
+    return new NextResponse(JSON.stringify({
+      error: errorTitle,
+      message: options?.message,
+      code: options?.code,
+    }), { status });
   }),
   ErrorCodes: {
     AUTH_REQUIRED: 'AUTH_REQUIRED',
@@ -110,6 +118,7 @@ import { checkRateLimit } from '@/lib/security/rateLimit';
 import { getTenantContextFromHeaders, createTenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { hasModuleAccess } from '@/lib/modules/access';
 import { hasPermission } from '@/lib/access-control';
+import { isTokenRevoked } from '@/lib/security/impersonation';
 import { withErrorHandler, getRequestId, APIContext } from '@/lib/http/handler';
 
 const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>;
@@ -117,6 +126,7 @@ const mockCheckRateLimit = checkRateLimit as jest.MockedFunction<typeof checkRat
 const mockGetTenantContext = getTenantContextFromHeaders as jest.MockedFunction<typeof getTenantContextFromHeaders>;
 const mockHasModuleAccess = hasModuleAccess as jest.MockedFunction<typeof hasModuleAccess>;
 const mockHasPermission = hasPermission as jest.MockedFunction<typeof hasPermission>;
+const mockIsTokenRevoked = isTokenRevoked as jest.MockedFunction<typeof isTokenRevoked>;
 
 describe('API Handler Wrapper', () => {
   let mockRequest: NextRequest;
@@ -297,6 +307,117 @@ describe('API Handler Wrapper', () => {
       await wrappedHandler(postRequest, mockRouteContext);
 
       expect(mockCheckRateLimit).not.toHaveBeenCalled();
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // BODY SIZE VALIDATION TESTS
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  describe('Body size validation', () => {
+    it('should reject requests exceeding body size limit with 413', async () => {
+      const handler = jest.fn();
+      // Create a POST request with content-length exceeding the default 1MB limit
+      const largeRequest = new NextRequest('http://localhost:3000/api/test', {
+        method: 'POST',
+        headers: {
+          'content-length': '2097152', // 2MB, exceeds 1MB default
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ data: 'test' }),
+      });
+
+      // Skip rate limiting to isolate body size check
+      const wrappedHandler = withErrorHandler(handler, { skipRateLimit: true });
+      const response = await wrappedHandler(largeRequest, mockRouteContext);
+
+      expect(response.status).toBe(413);
+      expect(handler).not.toHaveBeenCalled();
+
+      const body = await response.json();
+      expect(body.error).toBe('Payload Too Large');
+      expect(body.message).toContain('exceeds maximum size');
+    });
+
+    it('should allow requests within body size limit', async () => {
+      const handler = jest.fn().mockResolvedValue(
+        NextResponse.json({ success: true })
+      );
+      const normalRequest = new NextRequest('http://localhost:3000/api/test', {
+        method: 'POST',
+        headers: {
+          'content-length': '1024', // 1KB, well under limit
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ data: 'test' }),
+      });
+
+      // Skip rate limiting to isolate body size check
+      const wrappedHandler = withErrorHandler(handler, { skipRateLimit: true });
+      const response = await wrappedHandler(normalRequest, mockRouteContext);
+
+      expect(response.status).toBe(200);
+      expect(handler).toHaveBeenCalled();
+    });
+
+    it('should respect custom maxBodySize option', async () => {
+      const handler = jest.fn();
+      // Create a request that's under default limit but over custom limit
+      const request = new NextRequest('http://localhost:3000/api/test', {
+        method: 'POST',
+        headers: {
+          'content-length': '51200', // 50KB
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ data: 'test' }),
+      });
+
+      // Set custom max body size to 10KB, skip rate limiting
+      const wrappedHandler = withErrorHandler(handler, { maxBodySize: 10240, skipRateLimit: true });
+      const response = await wrappedHandler(request, mockRouteContext);
+
+      expect(response.status).toBe(413);
+      expect(handler).not.toHaveBeenCalled();
+    });
+
+    it('should skip body size check when skipBodySizeCheck is true', async () => {
+      const handler = jest.fn().mockResolvedValue(
+        NextResponse.json({ success: true })
+      );
+      const largeRequest = new NextRequest('http://localhost:3000/api/test', {
+        method: 'POST',
+        headers: {
+          'content-length': '10485760', // 10MB
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ data: 'test' }),
+      });
+
+      // Skip both body size and rate limit checks
+      const wrappedHandler = withErrorHandler(handler, { skipBodySizeCheck: true, skipRateLimit: true });
+      const response = await wrappedHandler(largeRequest, mockRouteContext);
+
+      expect(response.status).toBe(200);
+      expect(handler).toHaveBeenCalled();
+    });
+
+    it('should not check body size for GET requests', async () => {
+      const handler = jest.fn().mockResolvedValue(
+        NextResponse.json({ success: true })
+      );
+      // GET request with large content-length header (unusual but shouldn't be blocked)
+      const getRequest = new NextRequest('http://localhost:3000/api/test', {
+        method: 'GET',
+        headers: {
+          'content-length': '10485760', // 10MB
+        },
+      });
+
+      const wrappedHandler = withErrorHandler(handler);
+      const response = await wrappedHandler(getRequest, mockRouteContext);
+
+      expect(response.status).toBe(200);
+      expect(handler).toHaveBeenCalled();
     });
   });
 
@@ -489,6 +610,114 @@ describe('API Handler Wrapper', () => {
 
       expect(response.status).toBe(200);
       expect(handler).toHaveBeenCalled();
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // IMPERSONATION TOKEN REVOCATION TESTS
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  describe('Impersonation token revocation', () => {
+    it('should return 401 and clear cookie when impersonation token is revoked', async () => {
+      const handler = jest.fn();
+
+      // Set up impersonation headers
+      const impersonationRequest = new NextRequest('http://localhost:3000/api/test', {
+        method: 'GET',
+        headers: {
+          'x-impersonating': 'true',
+          'x-impersonation-jti': 'revoked-token-123',
+          'x-impersonator-id': 'super-admin-1',
+          'x-impersonation-iat': String(Math.floor(Date.now() / 1000)),
+        },
+      });
+
+      // Mock token as revoked
+      mockIsTokenRevoked.mockResolvedValue(true);
+
+      const wrappedHandler = withErrorHandler(handler, { requireAuth: true });
+      const response = await wrappedHandler(impersonationRequest, mockRouteContext);
+
+      // Should return 401
+      expect(response.status).toBe(401);
+      expect(handler).not.toHaveBeenCalled();
+
+      // Should have request ID header
+      expect(response.headers.get('x-request-id')).toBeDefined();
+
+      // Should clear the impersonation cookie
+      const setCookieHeader = response.headers.get('set-cookie');
+      expect(setCookieHeader).toContain('durj-impersonation=');
+      expect(setCookieHeader).toContain('Max-Age=0');
+
+      // Should have appropriate error message
+      const body = await response.json();
+      expect(body.error).toBe('Unauthorized');
+      expect(body.message).toContain('revoked');
+    });
+
+    it('should allow request when impersonation token is valid', async () => {
+      const handler = jest.fn().mockResolvedValue(
+        NextResponse.json({ success: true })
+      );
+
+      // Set up impersonation headers
+      const impersonationRequest = new NextRequest('http://localhost:3000/api/test', {
+        method: 'GET',
+        headers: {
+          'x-impersonating': 'true',
+          'x-impersonation-jti': 'valid-token-123',
+          'x-impersonator-id': 'super-admin-1',
+          'x-impersonation-iat': String(Math.floor(Date.now() / 1000)),
+        },
+      });
+
+      // Mock token as valid (not revoked)
+      mockIsTokenRevoked.mockResolvedValue(false);
+
+      const wrappedHandler = withErrorHandler(handler, { requireAuth: true });
+      const response = await wrappedHandler(impersonationRequest, mockRouteContext);
+
+      expect(response.status).toBe(200);
+      expect(handler).toHaveBeenCalled();
+    });
+
+    it('should not check revocation when not impersonating', async () => {
+      const handler = jest.fn().mockResolvedValue(
+        NextResponse.json({ success: true })
+      );
+
+      // Regular request without impersonation headers
+      const wrappedHandler = withErrorHandler(handler, { requireAuth: true });
+      const response = await wrappedHandler(mockRequest, mockRouteContext);
+
+      expect(response.status).toBe(200);
+      expect(handler).toHaveBeenCalled();
+      // isTokenRevoked should not be called for non-impersonation requests
+      expect(mockIsTokenRevoked).not.toHaveBeenCalled();
+    });
+
+    it('should not check revocation when jti is missing', async () => {
+      const handler = jest.fn().mockResolvedValue(
+        NextResponse.json({ success: true })
+      );
+
+      // Impersonation flag but no jti
+      const requestWithoutJti = new NextRequest('http://localhost:3000/api/test', {
+        method: 'GET',
+        headers: {
+          'x-impersonating': 'true',
+          // No x-impersonation-jti header
+        },
+      });
+
+      const wrappedHandler = withErrorHandler(handler, { requireAuth: true });
+      const response = await wrappedHandler(requestWithoutJti, mockRouteContext);
+
+      expect(response.status).toBe(200);
+      expect(handler).toHaveBeenCalled();
+      // isTokenRevoked should not be called without jti
+      expect(mockIsTokenRevoked).not.toHaveBeenCalled();
     });
   });
 
