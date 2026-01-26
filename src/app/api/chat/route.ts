@@ -7,7 +7,7 @@ import logger from '@/lib/core/log';
 import { processChat, getConversations, getConversationMessages, deleteConversation } from '@/lib/ai/chat-service';
 import { sanitizeInput, shouldBlockInput, formatSanitizationLog } from '@/lib/ai/input-sanitizer';
 import {
-  checkRateLimit,
+  checkAIRateLimit,
   checkReadRateLimit,
   formatRateLimitError,
   acquireConcurrentSlot,
@@ -88,7 +88,7 @@ export const POST = withErrorHandler(async (request: NextRequest, { tenant }) =>
     }
 
     // Check rate limits
-    const rateLimitResult = await checkRateLimit(
+    const rateLimitResult = await checkAIRateLimit(
       userId,
       tenantId,
       org.subscriptionTier || SubscriptionTier.FREE

@@ -59,6 +59,7 @@ import {
   isValidModuleId,
   type ModuleId,
 } from './registry';
+import { type ModuleAccessCheckResult } from './routes';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -66,17 +67,12 @@ import {
 
 /**
  * Result of a module access check.
+ * This is an alias for the shared ModuleAccessCheckResult type from routes.ts.
+ *
+ * @note Both Edge Runtime (routes.ts) and Server Runtime (access.ts) use the same
+ * interface to ensure consistency across the module access system.
  */
-export interface ModuleAccessResult {
-  /** Whether access is allowed */
-  allowed: boolean;
-  /** The module ID being checked */
-  moduleId?: string;
-  /** The display name of the module */
-  moduleName?: string;
-  /** Human-readable reason for denial (only when allowed is false) */
-  reason?: string;
-}
+export type ModuleAccessResult = ModuleAccessCheckResult;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // SESSION-BASED ACCESS CHECKS

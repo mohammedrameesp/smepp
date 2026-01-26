@@ -2,10 +2,15 @@
  * @file responses.ts
  * @description Response helper functions for API route handlers.
  *              Provides standardized response formats for common API patterns.
+ *
+ * NOTE: Error responses should use functions from errors.ts for consistency.
+ * This file provides success response helpers and simple validation shortcuts.
+ *
  * @module http
  */
 
 import { NextResponse } from 'next/server';
+import { type APIError, ErrorCodes } from './errors';
 
 /**
  * Create a successful JSON response.
@@ -69,30 +74,42 @@ export function noContentResponse(): NextResponse {
 
 /**
  * Create an error response for invalid request body.
+ * Uses standardized APIError format from errors.ts.
  */
 export function invalidBodyResponse(
-  error: { issues: Array<{ path: PropertyKey[]; message: string }> }
+  error: { issues: Array<{ path: PropertyKey[]; message: string; code?: string }> }
 ): NextResponse {
-  return NextResponse.json(
-    {
-      error: 'Invalid request body',
-      details: error.issues,
-    },
-    { status: 400 }
-  );
+  const response: APIError = {
+    error: 'Validation Error',
+    message: 'Invalid request body',
+    details: error.issues.map((issue) => ({
+      field: issue.path.join('.'),
+      message: issue.message,
+      code: issue.code,
+    })),
+    code: ErrorCodes.VALIDATION_FAILED,
+    timestamp: new Date().toISOString(),
+  };
+  return NextResponse.json(response, { status: 400 });
 }
 
 /**
  * Create an error response for invalid query parameters.
+ * Uses standardized APIError format from errors.ts.
  */
 export function invalidQueryResponse(
-  error: { issues: Array<{ path: PropertyKey[]; message: string }> }
+  error: { issues: Array<{ path: PropertyKey[]; message: string; code?: string }> }
 ): NextResponse {
-  return NextResponse.json(
-    {
-      error: 'Invalid query parameters',
-      details: error.issues,
-    },
-    { status: 400 }
-  );
+  const response: APIError = {
+    error: 'Validation Error',
+    message: 'Invalid query parameters',
+    details: error.issues.map((issue) => ({
+      field: issue.path.join('.'),
+      message: issue.message,
+      code: issue.code,
+    })),
+    code: ErrorCodes.VALIDATION_FAILED,
+    timestamp: new Date().toISOString(),
+  };
+  return NextResponse.json(response, { status: 400 });
 }

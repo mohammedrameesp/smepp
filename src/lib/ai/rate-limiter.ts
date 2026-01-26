@@ -219,9 +219,10 @@ declare global {
 }
 
 /**
- * Check if a member can make an AI request
+ * Check if a member can make an AI request.
+ * Named checkAIRateLimit to distinguish from security/rateLimit.ts checkRateLimit.
  */
-export async function checkRateLimit(
+export async function checkAIRateLimit(
   memberId: string,
   tenantId: string,
   tier: SubscriptionTier

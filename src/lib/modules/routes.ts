@@ -80,15 +80,21 @@ export function getModuleForRoute(pathname: string): ModuleId | null {
 }
 
 /**
- * Result of module access check
+ * Result of a module access check.
+ * This interface is shared between Edge Runtime (routes.ts) and Server Runtime (access.ts).
+ *
+ * @note The `moduleName` field is optional and typically only populated in server-side
+ * checks where the module registry is available.
  */
 export interface ModuleAccessCheckResult {
   /** Whether access is allowed */
   allowed: boolean;
   /** The module ID that controls this route (if any) */
-  moduleId?: ModuleId;
+  moduleId?: ModuleId | string;
+  /** The display name of the module (populated in server-side checks) */
+  moduleName?: string;
   /** Reason for denial (only present when allowed is false) */
-  reason?: 'not_installed';
+  reason?: 'not_installed' | 'not_found' | 'auth_required' | string;
 }
 
 /**
