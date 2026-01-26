@@ -52,20 +52,3 @@ export {
   type ExportSheet,
 } from './export-utils';
 
-// Approval utilities (for approval workflows)
-export {
-  validateStatusTransition,
-  validateEntityExists,
-  validateIdParam,
-  createHistoryEntry,
-  logApprovalAction,
-  sendApprovalNotification,
-  invalidateApprovalTokens,
-  approvalSuccessResponse,
-  approvalErrorResponse,
-  APPROVAL_TRANSITIONS,
-  type ApprovalContext,
-  type ApprovalResult,
-  type StatusTransition,
-  type ApprovalHistoryEntry,
-} from './approval-utils';
