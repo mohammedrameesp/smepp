@@ -255,9 +255,14 @@ export function OrganizationTabs({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const allowedTypes = ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'];
+    const allowedTypes = ['image/png', 'image/webp', 'image/svg+xml'];
+    const rejectedTypes = ['image/jpeg', 'image/jpg'];
+    if (rejectedTypes.includes(file.type)) {
+      setLogoError('JPEG/JPG is not supported. Please use PNG, WebP, or SVG for better transparency support.');
+      return;
+    }
     if (!allowedTypes.includes(file.type)) {
-      setLogoError('Invalid file type. Allowed: PNG, JPEG, WebP, SVG');
+      setLogoError('Invalid file type. Allowed: PNG, WebP, SVG');
       return;
     }
 
@@ -292,7 +297,7 @@ export function OrganizationTabs({
         throw new Error(`Server error: ${response.status} ${response.statusText}`);
       }
 
-      if (!response.ok) throw new Error(data.error || 'Failed to upload');
+      if (!response.ok) throw new Error(data.message || data.error || 'Failed to upload');
 
       setLogoPreview(data.logoUrl);
       setOrg(prev => ({ ...prev, logoUrl: data.logoUrl }));
@@ -394,14 +399,14 @@ export function OrganizationTabs({
                         <Camera className="h-4 w-4 mr-2" />
                         {logoPreview ? 'Change' : 'Upload'}
                       </Button>
-                      <p className="text-xs text-muted-foreground">PNG, JPG, WebP, SVG up to 1MB</p>
+                      <p className="text-xs text-muted-foreground">PNG, WebP, SVG up to 1MB</p>
                       <p className="text-xs text-muted-foreground">Recommended: 200×200px or larger, square</p>
                       <p className="text-xs text-muted-foreground">Optimized automatically for dark backgrounds</p>
                     </div>
                     <input
                       ref={fileInputRef}
                       type="file"
-                      accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                      accept="image/png,image/webp,image/svg+xml"
                       onChange={handleLogoUpload}
                       className="hidden"
                       disabled={uploadingLogo || !isAdmin}

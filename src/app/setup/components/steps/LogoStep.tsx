@@ -36,9 +36,14 @@ export function LogoStep({
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
 
-    const allowedTypes = ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'];
+    const allowedTypes = ['image/png', 'image/webp', 'image/svg+xml'];
+    const rejectedTypes = ['image/jpeg', 'image/jpg'];
+    if (rejectedTypes.includes(selectedFile.type)) {
+      onError('JPEG/JPG is not supported. Please use PNG, WebP, or SVG for better transparency support.');
+      return;
+    }
     if (!allowedTypes.includes(selectedFile.type)) {
-      onError('Invalid file type. Allowed: PNG, JPEG, WebP, SVG');
+      onError('Invalid file type. Allowed: PNG, WebP, SVG');
       return;
     }
 
@@ -125,7 +130,7 @@ export function LogoStep({
               Drag and drop your logo here
             </p>
             <p className="text-xs text-slate-400 mb-1">
-              or click to browse (PNG, JPG, SVG up to 1MB)
+              or click to browse (PNG, WebP, SVG up to 1MB)
             </p>
             <p className="text-xs text-slate-400">
               Recommended: 200×200px or larger, square format
@@ -148,7 +153,7 @@ export function LogoStep({
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/png,image/jpeg,image/webp,image/svg+xml"
+          accept="image/png,image/webp,image/svg+xml"
           onChange={handleFileSelect}
           className="hidden"
         />

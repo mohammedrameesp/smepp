@@ -197,7 +197,7 @@ export function SetupWizardClient() {
         });
         if (!logoResponse.ok) {
           const data = await logoResponse.json();
-          throw new Error(data.error || 'Failed to upload logo');
+          throw new Error(data.message || data.error || 'Failed to upload logo');
         }
       }
 
