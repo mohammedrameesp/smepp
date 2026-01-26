@@ -1,8 +1,39 @@
 /**
  * @file prisma.ts
- * @description Prisma client singleton with serverless-optimized connection pooling
- *              and query timeout configuration
+ * @description Global Prisma client singleton - UNFILTERED, NO TENANT ISOLATION
  * @module lib/core
+ *
+ * ════════════════════════════════════════════════════════════════════════════════
+ * SECURITY WARNING: This is the RAW Prisma client with NO tenant filtering.
+ * ════════════════════════════════════════════════════════════════════════════════
+ *
+ * WHEN TO USE THIS CLIENT:
+ * ──────────────────────────────────────────────────────────────────────────────
+ * ✓ Super admin operations (cross-tenant queries)
+ * ✓ Global models without tenantId (User, Organization, Session, Account)
+ * ✓ Auth flows before tenant context exists (login, signup)
+ * ✓ Raw SQL queries with MANUAL tenant filtering
+ * ✓ Cron jobs that process multiple tenants
+ * ✓ Platform-level analytics and reporting
+ *
+ * WHEN NOT TO USE THIS CLIENT:
+ * ──────────────────────────────────────────────────────────────────────────────
+ * ✗ API routes handling tenant data - use context.prisma from handler
+ * ✗ Any query on tenant-scoped models (Asset, Employee, Leave, etc.)
+ * ✗ Server components displaying tenant data
+ * ✗ Server actions modifying tenant data
+ *
+ * FOR TENANT DATA, ALWAYS USE:
+ * ──────────────────────────────────────────────────────────────────────────────
+ * ```typescript
+ * // In API handlers - prisma is already tenant-scoped
+ * export const GET = withErrorHandler(async (req, { prisma }) => {
+ *   const assets = await prisma.asset.findMany(); // Auto-filtered by tenant
+ * }, { requireAuth: true });
+ * ```
+ *
+ * @see prisma-tenant.ts for the tenant-scoped client
+ * @security Using this client for tenant data WITHOUT manual filtering = DATA LEAK
  */
 
 import { PrismaClient } from '@prisma/client';
@@ -29,6 +60,10 @@ function getConnectionUrl(): string {
   return `${baseUrl}${separator}pool_timeout=10&statement_timeout=${QUERY_TIMEOUT_MS}`;
 }
 
+/**
+ * Global Prisma client - NO TENANT ISOLATION
+ * @security For tenant data, use context.prisma from withErrorHandler instead
+ */
 export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
