@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Check if subdomain is reserved
-    if (RESERVED_SUBDOMAINS.includes(subdomain.toLowerCase())) {
+    if (RESERVED_SUBDOMAINS.has(subdomain.toLowerCase())) {
       return NextResponse.json<TenantBrandingResponse>(
         { found: false, error: 'Invalid subdomain' },
         { status: 400 }

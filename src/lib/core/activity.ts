@@ -233,6 +233,12 @@ export const ActivityActions = {
   // Data export/import actions (audit trail for compliance)
   DATA_EXPORTED: 'DATA_EXPORTED',
   DATA_IMPORTED: 'DATA_IMPORTED',
+
+  // Custom domain actions (audit trail for compliance)
+  CUSTOM_DOMAIN_ADDED: 'CUSTOM_DOMAIN_ADDED',
+  CUSTOM_DOMAIN_REMOVED: 'CUSTOM_DOMAIN_REMOVED',
+  CUSTOM_DOMAIN_VERIFIED: 'CUSTOM_DOMAIN_VERIFIED',
+  CUSTOM_DOMAIN_VERIFICATION_FAILED: 'CUSTOM_DOMAIN_VERIFICATION_FAILED',
 } as const;
 
 export type ActivityAction = typeof ActivityActions[keyof typeof ActivityActions];

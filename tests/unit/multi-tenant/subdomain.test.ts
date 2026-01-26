@@ -97,7 +97,7 @@ describe('Subdomain Utilities Tests', () => {
 
     it('should identify reserved subdomains', () => {
       const subdomain = 'www';
-      const isReserved = RESERVED_SUBDOMAINS.includes(subdomain.toLowerCase());
+      const isReserved = RESERVED_SUBDOMAINS.has(subdomain.toLowerCase());
 
       expect(isReserved).toBe(true);
     });
@@ -128,7 +128,7 @@ describe('Subdomain Utilities Tests', () => {
 
     it('should be case-insensitive for reserved subdomain check', () => {
       const subdomain = 'WWW';
-      const isReserved = RESERVED_SUBDOMAINS.includes(subdomain.toLowerCase());
+      const isReserved = RESERVED_SUBDOMAINS.has(subdomain.toLowerCase());
 
       expect(isReserved).toBe(true);
     });
@@ -145,7 +145,7 @@ describe('Subdomain Utilities Tests', () => {
 
     it('should return null for reserved subdomain', async () => {
       const subdomain = 'www';
-      const result = RESERVED_SUBDOMAINS.includes(subdomain.toLowerCase()) ? null : 'tenant';
+      const result = RESERVED_SUBDOMAINS.has(subdomain.toLowerCase()) ? null : 'tenant';
 
       expect(result).toBeNull();
     });
@@ -282,7 +282,7 @@ describe('Subdomain Utilities Tests', () => {
 
     it('should reject reserved subdomains', () => {
       const slug = 'www';
-      const isReserved = RESERVED_SUBDOMAINS.includes(slug);
+      const isReserved = RESERVED_SUBDOMAINS.has(slug);
 
       expect(isReserved).toBe(true);
     });
@@ -292,7 +292,7 @@ describe('Subdomain Utilities Tests', () => {
       const isValid = /^[a-z0-9]+$/.test(slug) &&
                       slug.length >= 3 &&
                       slug.length <= 63 &&
-                      !RESERVED_SUBDOMAINS.includes(slug);
+                      !RESERVED_SUBDOMAINS.has(slug);
 
       expect(isValid).toBe(true);
     });
@@ -322,7 +322,7 @@ describe('Subdomain Utilities Tests', () => {
 
     it('should return false for reserved slug', () => {
       const slug = 'www';
-      const isReserved = RESERVED_SUBDOMAINS.includes(slug);
+      const isReserved = RESERVED_SUBDOMAINS.has(slug);
 
       expect(isReserved).toBe(true);
     });

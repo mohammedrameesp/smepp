@@ -37,6 +37,13 @@
     .file-item.checked label { color: #9ca3af; text-decoration: line-through; }
     .file-item .status { margin-left: 10px; }
     .file-item select { padding: 4px 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.8em; }
+    .progress-container { background: #fff; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .progress-title { font-weight: 600; color: #1f2937; }
+    .progress-percent { font-size: 1.5em; font-weight: bold; color: #3b82f6; }
+    .progress-bar { height: 24px; background: #e5e7eb; border-radius: 12px; overflow: hidden; position: relative; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #10b981); border-radius: 12px; transition: width 0.3s ease; }
+    .progress-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.85em; font-weight: 600; color: #374151; }
     .legend { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
     .legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.85em; }
     .legend-color { width: 12px; height: 12px; border-radius: 2px; }
@@ -77,6 +84,17 @@
       <div class="stat">
         <div class="stat-value" id="reviewCount">0</div>
         <div class="stat-label">Needs Review</div>
+      </div>
+    </div>
+
+    <div class="progress-container">
+      <div class="progress-header">
+        <span class="progress-title">Review Progress</span>
+        <span class="progress-percent" id="progressPercent">0%</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+        <span class="progress-text" id="progressText">0 / 949 files reviewed</span>
       </div>
     </div>
 
@@ -1240,6 +1258,7 @@
     }
 
     function updateStats() {
+      const total = files.length;
       const checked = document.querySelectorAll('.file-item input:checked').length;
       const keep = document.querySelectorAll('.file-item.status-keep').length;
       const del = document.querySelectorAll('.file-item.status-delete').length;
@@ -1249,6 +1268,12 @@
       document.getElementById('keepCount').textContent = keep;
       document.getElementById('deleteCount').textContent = del;
       document.getElementById('reviewCount').textContent = review;
+
+      // Update progress bar
+      const percent = total > 0 ? Math.round((checked / total) * 100) : 0;
+      document.getElementById('progressPercent').textContent = `${percent}%`;
+      document.getElementById('progressFill').style.width = `${percent}%`;
+      document.getElementById('progressText').textContent = `${checked} / ${total} files reviewed`;
 
       // Update section progress
       document.querySelectorAll('.section').forEach(section => {

@@ -15,6 +15,10 @@ import {
   canUninstallModule,
   getDefaultEnabledModules,
   getSerializableModules,
+  isValidModuleId,
+  validateModuleIds,
+  getModuleForRoute,
+  type ModuleId,
 } from '@/lib/modules/registry';
 
 describe('Module Registry Tests', () => {
@@ -32,8 +36,9 @@ describe('Module Registry Tests', () => {
       ];
 
       expectedModules.forEach((moduleId) => {
-        expect(MODULE_REGISTRY[moduleId]).toBeDefined();
-        expect(MODULE_REGISTRY[moduleId].id).toBe(moduleId);
+        const mod = MODULE_REGISTRY[moduleId];
+        expect(mod).toBeDefined();
+        expect(mod!.id).toBe(moduleId);
       });
     });
 
@@ -100,7 +105,9 @@ describe('Module Registry Tests', () => {
         const operationsModules = ['assets', 'subscriptions', 'suppliers'];
 
         operationsModules.forEach((moduleId) => {
-          expect(MODULE_REGISTRY[moduleId].requires).toEqual([]);
+          const mod = MODULE_REGISTRY[moduleId];
+          expect(mod).toBeDefined();
+          expect(mod!.requires).toEqual([]);
         });
       });
     });
@@ -354,9 +361,78 @@ describe('Module Registry Tests', () => {
     });
   });
 
+  describe('isValidModuleId', () => {
+    it('should return true for valid module IDs', () => {
+      const validIds: ModuleId[] = ['assets', 'employees', 'leave', 'payroll', 'subscriptions', 'suppliers', 'spend-requests', 'documents'];
+
+      validIds.forEach(id => {
+        expect(isValidModuleId(id)).toBe(true);
+      });
+    });
+
+    it('should return false for invalid module IDs', () => {
+      const invalidIds = ['invalid', 'unknown-module', '', 'ASSETS', 'Assets'];
+
+      invalidIds.forEach(id => {
+        expect(isValidModuleId(id)).toBe(false);
+      });
+    });
+  });
+
+  describe('validateModuleIds', () => {
+    it('should filter out invalid module IDs', () => {
+      const input = ['assets', 'invalid', 'leave', 'unknown'];
+      const result = validateModuleIds(input);
+
+      expect(result).toEqual(['assets', 'leave']);
+    });
+
+    it('should return empty array for all invalid IDs', () => {
+      const input = ['invalid', 'unknown'];
+      const result = validateModuleIds(input);
+
+      expect(result).toEqual([]);
+    });
+
+    it('should preserve all valid IDs', () => {
+      const input = ['assets', 'leave', 'payroll'];
+      const result = validateModuleIds(input);
+
+      expect(result).toEqual(['assets', 'leave', 'payroll']);
+    });
+  });
+
+  describe('getModuleForRoute', () => {
+    it('should return module ID for exact route match', () => {
+      expect(getModuleForRoute('/admin/assets')).toBe('assets');
+      expect(getModuleForRoute('/admin/leave')).toBe('leave');
+      expect(getModuleForRoute('/api/payroll')).toBe('payroll');
+    });
+
+    it('should return module ID for nested routes', () => {
+      expect(getModuleForRoute('/admin/assets/123')).toBe('assets');
+      expect(getModuleForRoute('/api/leave/requests/456')).toBe('leave');
+      expect(getModuleForRoute('/employee/payroll/payslips')).toBe('payroll');
+    });
+
+    it('should return null for unprotected routes', () => {
+      expect(getModuleForRoute('/admin/settings')).toBeNull();
+      expect(getModuleForRoute('/admin/users')).toBeNull();
+      expect(getModuleForRoute('/api/auth')).toBeNull();
+    });
+
+    it('should be case-insensitive for route matching', () => {
+      expect(getModuleForRoute('/ADMIN/ASSETS')).toBe('assets');
+      expect(getModuleForRoute('/Admin/Leave')).toBe('leave');
+      expect(getModuleForRoute('/API/PAYROLL')).toBe('payroll');
+    });
+  });
+
   describe('Dependency Graph Consistency', () => {
     it('should have consistent requires/requiredBy relationships', () => {
       Object.values(MODULE_REGISTRY).forEach((module) => {
+        if (!module) return;
+
         // For each module that requires another, the other should list this in requiredBy
         module.requires.forEach((requiredModuleId) => {
           const requiredModule = MODULE_REGISTRY[requiredModuleId];
@@ -408,6 +484,7 @@ describe('Module Registry Tests', () => {
 
     it('should have valid module IDs in requires arrays', () => {
       Object.values(MODULE_REGISTRY).forEach((module) => {
+        if (!module) return;
         module.requires.forEach((requiredModuleId) => {
           expect(MODULE_REGISTRY[requiredModuleId]).toBeDefined();
         });
@@ -416,6 +493,7 @@ describe('Module Registry Tests', () => {
 
     it('should have valid module IDs in requiredBy arrays', () => {
       Object.values(MODULE_REGISTRY).forEach((module) => {
+        if (!module) return;
         module.requiredBy.forEach((dependentModuleId) => {
           expect(MODULE_REGISTRY[dependentModuleId]).toBeDefined();
         });

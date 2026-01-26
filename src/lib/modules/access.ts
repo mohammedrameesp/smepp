@@ -191,8 +191,8 @@ export function getProtectedModuleForPath(pathname: string): string | null {
 
   // Check all modules for matching routes
   for (const mod of Object.values(MODULE_REGISTRY)) {
-    // Skip core modules - they're always accessible
-    if (mod.isCore) continue;
+    // Skip undefined or core modules - core modules are always accessible
+    if (!mod || mod.isCore) continue;
 
     const allRoutes = [
       ...mod.adminRoutes,
