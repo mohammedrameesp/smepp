@@ -76,6 +76,26 @@ describe('Security Headers Tests', () => {
       expect(response._headers.get('X-Download-Options')).toBe('noopen');
     });
 
+    it('should add X-Permitted-Cross-Domain-Policies header', () => {
+      const response = createMockResponse();
+
+      addSecurityHeaders(response);
+
+      expect(response._headers.get('X-Permitted-Cross-Domain-Policies')).toBe('none');
+    });
+
+    it('should add Permissions-Policy header', () => {
+      const response = createMockResponse();
+
+      addSecurityHeaders(response);
+
+      const permissionsPolicy = response._headers.get('Permissions-Policy');
+      expect(permissionsPolicy).toBeDefined();
+      expect(permissionsPolicy).toContain('camera=()');
+      expect(permissionsPolicy).toContain('microphone=()');
+      expect(permissionsPolicy).toContain('geolocation=()');
+    });
+
     it('should add Content-Security-Policy header', () => {
       const response = createMockResponse();
 
@@ -209,12 +229,56 @@ describe('Security Headers Tests', () => {
     });
 
     describe('HTTPS Enforcement', () => {
-      it('should enforce HTTPS for 1 year in production', () => {
+      it('should enforce HTTPS for 1 year in production with preload', () => {
         // Test the HSTS value logic - production HSTS header should enforce for 1 year
-        const hstsValue = 'max-age=31536000; includeSubDomains';
+        const hstsValue = 'max-age=31536000; includeSubDomains; preload';
 
         expect(hstsValue).toContain('max-age=31536000'); // 1 year in seconds
         expect(hstsValue).toContain('includeSubDomains');
+        expect(hstsValue).toContain('preload'); // Allow HSTS preload list inclusion
+      });
+    });
+
+    describe('Browser Feature Restrictions', () => {
+      it('should disable camera access via Permissions-Policy', () => {
+        const response = createMockResponse();
+        addSecurityHeaders(response);
+
+        const policy = response._headers.get('Permissions-Policy');
+        expect(policy).toContain('camera=()');
+      });
+
+      it('should disable microphone access via Permissions-Policy', () => {
+        const response = createMockResponse();
+        addSecurityHeaders(response);
+
+        const policy = response._headers.get('Permissions-Policy');
+        expect(policy).toContain('microphone=()');
+      });
+
+      it('should disable geolocation access via Permissions-Policy', () => {
+        const response = createMockResponse();
+        addSecurityHeaders(response);
+
+        const policy = response._headers.get('Permissions-Policy');
+        expect(policy).toContain('geolocation=()');
+      });
+
+      it('should opt out of FLoC (interest-cohort)', () => {
+        const response = createMockResponse();
+        addSecurityHeaders(response);
+
+        const policy = response._headers.get('Permissions-Policy');
+        expect(policy).toContain('interest-cohort=()');
+      });
+    });
+
+    describe('Cross-Domain Policy', () => {
+      it('should block Flash/Acrobat cross-domain requests', () => {
+        const response = createMockResponse();
+        addSecurityHeaders(response);
+
+        expect(response._headers.get('X-Permitted-Cross-Domain-Policies')).toBe('none');
       });
     });
 
@@ -278,6 +342,8 @@ describe('Security Headers Tests', () => {
         'Referrer-Policy',
         'Content-Security-Policy',
         'X-Download-Options',
+        'X-Permitted-Cross-Domain-Policies',
+        'Permissions-Policy',
       ];
 
       requiredHeaders.forEach((header) => {

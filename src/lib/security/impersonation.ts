@@ -3,16 +3,28 @@
  * @description Impersonation token management with revocation support
  * @module lib/security
  *
- * Security Features:
- * - Unique JTI (JWT ID) for each token
+ * ════════════════════════════════════════════════════════════════════════════════
+ * SECURITY FEATURES:
+ * ════════════════════════════════════════════════════════════════════════════════
+ *
+ * - Unique JTI (JWT ID) for each token using crypto.randomBytes
  * - Token revocation via database lookup
+ * - Bulk revocation support (revoke all tokens for a super admin)
  * - Automatic cleanup of expired revocation records
- * - Audit logging for all impersonation events
+ * - Audit logging via activity log
+ *
+ * FAIL-SAFE BEHAVIOR:
+ * - On database error during revocation check, treat token as revoked
+ * - This prevents access in case of database connectivity issues
+ *
+ * @security All tokens are tracked in RevokedImpersonationToken table
+ * @security Bulk revocation invalidates all tokens issued before the revocation
  */
 
 import { prisma } from '@/lib/core/prisma';
 import { randomBytes } from 'crypto';
 import { logAction, ActivityActions } from '@/lib/core/activity';
+import logger from '@/lib/core/log';
 
 /**
  * Generate a unique JWT ID for impersonation tokens
@@ -59,7 +71,10 @@ export async function isTokenRevoked(
     return false;
   } catch (error) {
     // On database error, fail safe - treat as revoked
-    console.error('[SECURITY] Error checking token revocation:', error);
+    logger.error(
+      { event: 'IMPERSONATION_REVOCATION_CHECK_ERROR', error: error instanceof Error ? error.message : String(error) },
+      'Error checking token revocation - failing safe (treating as revoked)'
+    );
     return true;
   }
 }

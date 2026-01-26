@@ -1,15 +1,51 @@
 /**
  * @file password-validation.ts
  * @description Password validation utility with strength scoring and complexity requirements.
- *              Supports configurable requirements for regular users and stricter admin requirements.
  * @module security
+ *
+ * ════════════════════════════════════════════════════════════════════════════════
+ * PASSWORD REQUIREMENTS:
+ * ════════════════════════════════════════════════════════════════════════════════
+ *
+ * Default (regular users):
+ * - Minimum 8 characters
+ * - At least one uppercase letter
+ * - At least one lowercase letter
+ * - At least one number
+ * - Special characters optional but recommended
+ *
+ * Admin (elevated privileges):
+ * - Minimum 12 characters
+ * - All character types required
+ * - Special characters mandatory
+ *
+ * SCORING:
+ * - +1 for meeting length requirement
+ * - +0.5 for 12+ characters, +0.5 for 16+ characters
+ * - +1 for uppercase, lowercase, numbers, special chars
+ * - -1 for only letters or only numbers
+ * - -0.5 for repeated characters (aaa, 111)
+ * - Score 0 for common passwords
+ *
+ * STRENGTH CLASSIFICATION:
+ * - 0-1: weak (red)
+ * - 2: fair (orange)
+ * - 3: good (yellow)
+ * - 4: strong (green)
  */
 
+/**
+ * Result of password validation
+ */
 export interface PasswordValidationResult {
+  /** Whether the password meets all requirements */
   valid: boolean;
+  /** List of error messages for failed requirements */
   errors: string[];
+  /** Strength classification for UI display */
   strength: 'weak' | 'fair' | 'good' | 'strong';
-  score: number; // 0-4
+  /** Numeric score 0-4 */
+  score: number;
 }
 
 export interface PasswordRequirements {
@@ -39,7 +75,36 @@ export const ADMIN_PASSWORD_REQUIREMENTS: PasswordRequirements = {
 };
 
 /**
+ * Common password prefixes that should be rejected
+ * @security These are the most commonly used password patterns
+ */
+const COMMON_PASSWORD_PATTERNS = [
+  'password',
+  '123456',
+  'qwerty',
+  'admin',
+  'letmein',
+  'welcome',
+  'monkey',
+  'dragon',
+  'master',
+  'login',
+  'abc123',
+  'iloveyou',
+];
+
+/**
  * Validate password against requirements
+ *
+ * @param password - The password string to validate
+ * @param requirements - Password requirements to validate against
+ * @returns Validation result with errors and strength score
+ *
+ * @example
+ * const result = validatePassword('MyP@ssw0rd!');
+ * if (!result.valid) {
+ *   console.log(result.errors);
+ * }
  */
 export function validatePassword(
   password: string,
@@ -48,12 +113,22 @@ export function validatePassword(
   const errors: string[] = [];
   let score = 0;
 
+  // Input validation - handle null/undefined gracefully
+  if (typeof password !== 'string') {
+    return {
+      valid: false,
+      errors: ['Password is required'],
+      strength: 'weak',
+      score: 0,
+    };
+  }
+
   // Check minimum length
   if (password.length < requirements.minLength) {
     errors.push(`Password must be at least ${requirements.minLength} characters`);
   } else {
     score++;
-    // Bonus for longer passwords
+    // Bonus for longer passwords (encourages length over complexity)
     if (password.length >= 12) score += 0.5;
     if (password.length >= 16) score += 0.5;
   }
@@ -90,18 +165,27 @@ export function validatePassword(
     score++;
   }
 
-  // Check for common patterns (deduct points)
+  // Check for weak patterns (deduct points)
   if (/^[a-z]+$/i.test(password)) {
-    score = Math.max(0, score - 1); // Only letters
+    score = Math.max(0, score - 1); // Only letters - low entropy
   }
   if (/^[0-9]+$/.test(password)) {
-    score = Math.max(0, score - 1); // Only numbers
+    score = Math.max(0, score - 1); // Only numbers - low entropy
   }
   if (/(.)\1{2,}/.test(password)) {
     score = Math.max(0, score - 0.5); // Repeated characters (aaa, 111)
   }
-  if (/^(password|123456|qwerty|admin)/i.test(password)) {
-    score = 0; // Common passwords
+  if (/^(.)\1+$/.test(password)) {
+    score = 0; // Single repeated character (aaaaaaa)
+  }
+
+  // Check for common passwords (case-insensitive prefix match)
+  const lowerPassword = password.toLowerCase();
+  const isCommon = COMMON_PASSWORD_PATTERNS.some(pattern =>
+    lowerPassword.startsWith(pattern)
+  );
+  if (isCommon) {
+    score = 0;
     if (errors.length === 0) {
       errors.push('Password is too common');
     }

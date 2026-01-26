@@ -26,13 +26,21 @@ jest.mock('@/lib/core/prisma', () => ({
 }));
 
 // Mock logger to suppress output during tests
+interface MockLogger {
+  info: jest.Mock;
+  warn: jest.Mock;
+  error: jest.Mock;
+  debug: jest.Mock;
+  child: jest.Mock;
+}
+
 jest.mock('@/lib/core/log', () => {
-  const mockLogger = {
+  const mockLogger: MockLogger = {
     info: jest.fn(),
     warn: jest.fn(),
     error: jest.fn(),
     debug: jest.fn(),
-    child: jest.fn(() => mockLogger),
+    child: jest.fn((): MockLogger => mockLogger),
   };
   return {
     __esModule: true,

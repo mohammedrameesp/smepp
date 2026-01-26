@@ -1,11 +1,31 @@
 /**
  * @file rateLimit.ts
  * @description Rate limiting with Redis (Upstash) and in-memory fallback using token bucket algorithm.
- *              Provides general API rate limiting and stricter authentication endpoint limits.
  * @module security
+ *
+ * ════════════════════════════════════════════════════════════════════════════════
+ * RATE LIMITING CONFIGURATION:
+ * ════════════════════════════════════════════════════════════════════════════════
+ *
+ * General API:
+ * - Default: 60 requests per minute (configurable via RATE_LIMIT_MAX)
+ * - Window: 60 seconds (configurable via RATE_LIMIT_WINDOW_MS)
+ * - Identifier: IP + tenant/user context
+ *
+ * Authentication:
+ * - Limit: 5 attempts per 15 minutes
+ * - Identifier: IP only (prevents user enumeration)
+ *
+ * Storage:
+ * - Primary: Redis (Upstash) with sliding window
+ * - Fallback: In-memory token bucket (single-instance only)
+ *
+ * @security Redis rate limiting provides distributed protection
+ * @security In-memory fallback is instance-local (use Redis in production)
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import logger from '@/lib/core/log';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // REDIS RATE LIMITER
@@ -58,7 +78,10 @@ async function initRedisRateLimiter() {
 
     useRedis = true;
   } catch (error) {
-    console.error('[RateLimit] Failed to initialize Redis, falling back to in-memory:', error);
+    logger.error(
+      { event: 'RATE_LIMIT_INIT_ERROR', error: error instanceof Error ? error.message : String(error) },
+      'Failed to initialize Redis rate limiter, falling back to in-memory'
+    );
   }
 }
 
@@ -202,7 +225,10 @@ export async function checkRateLimit(request: NextRequest): Promise<RateLimitRes
         resetIn: Math.max(0, result.reset - Date.now()),
       };
     } catch (error) {
-      console.error('[RateLimit] Redis error, falling back to in-memory:', error);
+      logger.error(
+        { event: 'RATE_LIMIT_REDIS_ERROR', error: error instanceof Error ? error.message : String(error) },
+        'Redis error in general rate limiter, falling back to in-memory'
+      );
       // Fall through to in-memory
     }
   }
@@ -227,7 +253,10 @@ export async function checkAuthRateLimit(request: NextRequest): Promise<RateLimi
         resetIn: Math.max(0, result.reset - Date.now()),
       };
     } catch (error) {
-      console.error('[RateLimit] Redis error, falling back to in-memory:', error);
+      logger.error(
+        { event: 'RATE_LIMIT_REDIS_ERROR', error: error instanceof Error ? error.message : String(error) },
+        'Redis error in auth rate limiter, falling back to in-memory'
+      );
       // Fall through to in-memory
     }
   }

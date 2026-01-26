@@ -347,6 +347,44 @@ describe('Password Validation Tests', () => {
       expect(result.errors.length).toBeGreaterThan(0);
     });
 
+    it('should handle null input', () => {
+      // @ts-expect-error Testing runtime validation
+      const result = validatePassword(null);
+
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('Password is required');
+      expect(result.strength).toBe('weak');
+      expect(result.score).toBe(0);
+    });
+
+    it('should handle undefined input', () => {
+      // @ts-expect-error Testing runtime validation
+      const result = validatePassword(undefined);
+
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('Password is required');
+    });
+
+    it('should handle number input', () => {
+      // @ts-expect-error Testing runtime validation
+      const result = validatePassword(12345678);
+
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('Password is required');
+    });
+
+    it('should reject single repeated character passwords', () => {
+      const result = validatePassword('aaaaaaaaaa', {
+        minLength: 8,
+        requireUppercase: false,
+        requireLowercase: false,
+        requireNumber: false,
+        requireSpecial: false,
+      });
+
+      expect(result.score).toBe(0);
+    });
+
     it('should handle very long passwords', () => {
       const longPassword = 'A'.repeat(100) + 'a1!';
       const result = validatePassword(longPassword);
