@@ -143,7 +143,7 @@ export const MODULE_METADATA: Record<string, { name: string; description: string
 
 /*
  * ==========================================
- * FEATURE-FLAGS.TS PRODUCTION REVIEW SUMMARY
+ *REVIEW SUMMARY
  * ==========================================
  *
  * SECURITY FINDINGS:

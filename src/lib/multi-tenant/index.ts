@@ -47,22 +47,3 @@ export * from './feature-flags';
 // Usage limits
 export * from './limits';
 
-/*
- * ==========================================
- * INDEX.TS PRODUCTION REVIEW SUMMARY
- * ==========================================
- *
- * CHANGES MADE:
- * - Added explicit exports for subdomain.ts utilities
- * - Added explicit exports for custom-domain.ts utilities
- * - Added verifyCustomDomainWithAudit and VerificationResultWithRateLimit exports
- * - Changed from wildcard to named exports for clarity
- *
- * EXPORT CATEGORIES:
- * - Subdomain: Extraction, validation, slug generation, tenant resolution
- * - Custom Domain: Validation, DNS verification (with rate limiting & audit), resolution, caching
- * - Feature Flags: Tier config, module/feature access (disabled)
- * - Limits: Usage tracking, limit checking (disabled)
- *
- * REVIEWER CONFIDENCE: HIGH
- */

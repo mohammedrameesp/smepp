@@ -191,7 +191,7 @@ export async function hasActiveSubscription(_organizationId: string): Promise<bo
 
 /*
  * ==========================================
- * LIMITS.TS PRODUCTION REVIEW SUMMARY
+ SUMMARY
  * ==========================================
  *
  * SECURITY FINDINGS:
@@ -218,6 +218,5 @@ export async function hasActiveSubscription(_organizationId: string): Promise<bo
  * - When enabled, checkLimit() should be called in API create handlers
  * - Consider adding middleware-level limit checks for high-traffic endpoints
  *
- * REVIEWER CONFIDENCE: HIGH
- * STATUS: Ready for production (limits disabled by design)
+
  */

@@ -330,38 +330,4 @@ export function getMainAppUrl(): string {
   return `${protocol}://${APP_DOMAIN}`;
 }
 
-/*
- * ==========================================
- * SUBDOMAIN.TS PRODUCTION REVIEW SUMMARY
- * ==========================================
- *
- * SECURITY FINDINGS:
- * - [VERIFIED] Subdomain extracted from hostname only, not user headers
- * - [VERIFIED] Reserved subdomains blocked via Set lookup (O(1))
- * - [FIXED] Added SUBDOMAIN_REGEX for format validation
- * - [FIXED] Added security-sensitive reserved subdomains (root, system, superadmin)
- * - [VERIFIED] Database lookups use Prisma parameterized queries (no SQL injection)
- * - [VERIFIED] Case normalization applied throughout (lowercase)
- *
- * CHANGES MADE:
- * - Added SUBDOMAIN_REGEX export for format validation
- * - Converted RESERVED_SUBDOMAINS from array to Set (O(1) lookup)
- * - Added security-sensitive subdomains to reserved list
- * - Added format validation in resolveTenantFromSubdomain()
- * - Fixed generateSlug() to handle empty/short results
- * - Replaced console.error with structured logger
- * - Added comprehensive JSDoc documentation
- *
- * REMAINING CONCERNS:
- * - None identified
- *
- * REQUIRED TESTS:
- * - [EXISTING] tests/unit/multi-tenant/subdomain.test.ts (all passing)
- *
- * INTEGRATION NOTES:
- * - Used by middleware.ts for subdomain extraction (has own copy for Edge)
- * - Used by tenant-branding API for public subdomain validation
- * - generateUniqueSlug() used during org creation
- *
- * REVIEWER CONFIDENCE: HIGH
- */
+
