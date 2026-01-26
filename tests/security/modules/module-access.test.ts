@@ -10,7 +10,7 @@
 
 import {
   getModuleForRoute,
-  checkModuleAccess,
+  checkRouteModuleAccess,
   _isCoreModule,
 } from '@/lib/modules/routes';
 import { isValidModuleId } from '@/lib/modules/registry';
@@ -60,7 +60,7 @@ describe('Module Access Security Tests', () => {
 
     it('should not grant access when enabledModules contains invalid IDs', () => {
       // User might try to inject invalid module IDs to bypass checks
-      const result = checkModuleAccess('/admin/payroll', ['PAYROLL', 'payroll-bypass', '../payroll']);
+      const result = checkRouteModuleAccess('/admin/payroll', ['PAYROLL', 'payroll-bypass', '../payroll']);
       expect(result.allowed).toBe(false);
       expect(result.reason).toBe('not_installed');
     });
@@ -104,13 +104,13 @@ describe('Module Access Security Tests', () => {
     });
 
     it('should block uppercase route when module not installed', () => {
-      const result = checkModuleAccess('/ADMIN/PAYROLL', ['employees']);
+      const result = checkRouteModuleAccess('/ADMIN/PAYROLL', ['employees']);
       expect(result.allowed).toBe(false);
       expect(result.moduleId).toBe('payroll');
     });
 
     it('should allow uppercase route when module is installed', () => {
-      const result = checkModuleAccess('/ADMIN/ASSETS', ['assets']);
+      const result = checkRouteModuleAccess('/ADMIN/ASSETS', ['assets']);
       expect(result.allowed).toBe(true);
     });
 
@@ -151,7 +151,7 @@ describe('Module Access Security Tests', () => {
     });
 
     it('should allow access to unknown routes (not module-protected)', () => {
-      const result = checkModuleAccess('/admin/settings', []);
+      const result = checkRouteModuleAccess('/admin/settings', []);
       expect(result.allowed).toBe(true);
     });
 
@@ -180,7 +180,7 @@ describe('Module Access Security Tests', () => {
 
     it('should not allow query string injection to change module', () => {
       // Attacker might try to inject a different module via query string
-      const result = checkModuleAccess('/admin/assets?bypass=true&module=payroll', ['payroll']);
+      const result = checkRouteModuleAccess('/admin/assets?bypass=true&module=payroll', ['payroll']);
       expect(result.allowed).toBe(false); // assets module not enabled
       expect(result.moduleId).toBe('assets'); // correctly identified as assets
     });
@@ -202,7 +202,7 @@ describe('Module Access Security Tests', () => {
   describe('Core module security', () => {
     it('should always allow access to core modules', () => {
       // Even with empty enabledModules, core modules should be accessible
-      const result = checkModuleAccess('/admin/employees', []);
+      const result = checkRouteModuleAccess('/admin/employees', []);
       expect(result.allowed).toBe(true);
     });
 

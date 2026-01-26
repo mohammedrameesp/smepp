@@ -49,7 +49,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getToken, JWT } from 'next-auth/jwt';
 import * as jose from 'jose';
-import { checkModuleAccess, checkPermissionAccess } from '@/lib/modules/routes';
+import { checkRouteModuleAccess, checkPermissionAccess } from '@/lib/modules/routes';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPE DEFINITIONS
@@ -786,7 +786,7 @@ function checkModuleAccessAndRedirect(
   isAdmin: boolean,
   request: NextRequest
 ): NextResponse | null {
-  const moduleAccess = checkModuleAccess(pathname, enabledModules);
+  const moduleAccess = checkRouteModuleAccess(pathname, enabledModules);
 
   if (!moduleAccess.allowed && moduleAccess.moduleId) {
     if (isAdmin) {
@@ -1364,7 +1364,7 @@ async function handleImpersonatedAccess(
   const subscriptionTier = impersonation.subscriptionTier || 'FREE';
 
   // Check module access (super admin still subject to module restrictions)
-  const moduleAccess = checkModuleAccess(pathname, enabledModules);
+  const moduleAccess = checkRouteModuleAccess(pathname, enabledModules);
   if (!moduleAccess.allowed && moduleAccess.moduleId) {
     const modulesUrl = new URL('/admin/modules', request.url);
     modulesUrl.searchParams.set('install', moduleAccess.moduleId);

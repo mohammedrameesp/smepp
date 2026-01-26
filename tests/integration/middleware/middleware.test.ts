@@ -22,15 +22,15 @@ jest.mock('next-auth/jwt', () => ({
 
 // Mock module routes helper
 jest.mock('@/lib/modules/routes', () => ({
-  checkModuleAccess: jest.fn(),
+  checkRouteModuleAccess: jest.fn(),
   checkPermissionAccess: jest.fn(),
 }));
 
 import { getToken } from 'next-auth/jwt';
-import { checkModuleAccess, checkPermissionAccess } from '@/lib/modules/routes';
+import { checkRouteModuleAccess, checkPermissionAccess } from '@/lib/modules/routes';
 
 const mockGetToken = getToken as jest.MockedFunction<typeof getToken>;
-const mockCheckModuleAccess = checkModuleAccess as jest.MockedFunction<typeof checkModuleAccess>;
+const mockCheckRouteModuleAccess = checkRouteModuleAccess as jest.MockedFunction<typeof checkRouteModuleAccess>;
 const mockCheckPermissionAccess = checkPermissionAccess as jest.MockedFunction<typeof checkPermissionAccess>;
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -160,7 +160,7 @@ function shouldRedirectToOnboarding(token: MockToken | null, pathname: string): 
 describe('Middleware Integration Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockCheckModuleAccess.mockReturnValue({ allowed: true });
+    mockCheckRouteModuleAccess.mockReturnValue({ allowed: true });
     mockCheckPermissionAccess.mockReturnValue({ allowed: true });
   });
 

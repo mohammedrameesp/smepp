@@ -6,7 +6,7 @@
 import { SubscriptionTier } from '@prisma/client';
 import {
   TIER_CONFIG,
-  hasModuleAccess,
+  hasTierModuleAccess,
   hasFeatureAccess,
   getTierConfig,
   getAvailableModules,
@@ -103,23 +103,23 @@ describe('Feature Flags Tests', () => {
     });
   });
 
-  describe('hasModuleAccess', () => {
+  describe('hasTierModuleAccess', () => {
     it('should always return true (tier restrictions disabled)', () => {
-      expect(hasModuleAccess('FREE' as SubscriptionTier, 'assets')).toBe(true);
-      expect(hasModuleAccess('FREE' as SubscriptionTier, 'payroll')).toBe(true);
-      expect(hasModuleAccess('PLUS' as SubscriptionTier, 'payroll')).toBe(true);
+      expect(hasTierModuleAccess('FREE' as SubscriptionTier, 'assets')).toBe(true);
+      expect(hasTierModuleAccess('FREE' as SubscriptionTier, 'payroll')).toBe(true);
+      expect(hasTierModuleAccess('PLUS' as SubscriptionTier, 'payroll')).toBe(true);
     });
 
     it('should return true for any module regardless of tier', () => {
       const modules = ['assets', 'subscriptions', 'suppliers', 'leave', 'payroll', 'spend-requests', 'documents'];
 
       modules.forEach((module) => {
-        expect(hasModuleAccess('FREE' as SubscriptionTier, module)).toBe(true);
+        expect(hasTierModuleAccess('FREE' as SubscriptionTier, module)).toBe(true);
       });
     });
 
     it('should return true for unknown modules (lenient behavior)', () => {
-      expect(hasModuleAccess('FREE' as SubscriptionTier, 'unknown-module')).toBe(true);
+      expect(hasTierModuleAccess('FREE' as SubscriptionTier, 'unknown-module')).toBe(true);
     });
   });
 

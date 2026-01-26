@@ -126,4 +126,4 @@ export {
 // middleware.ts to avoid bundling non-Edge-compatible code from registry.ts.
 //
 // Usage in middleware:
-// import { checkModuleAccess, checkPermissionAccess } from '@/lib/modules/routes';
+// import { checkRouteModuleAccess, checkPermissionAccess } from '@/lib/modules/routes';

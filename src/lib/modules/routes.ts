@@ -26,7 +26,7 @@
  *
  * The following remain hand-written in this file:
  * - getModuleForRoute() - Route lookup logic
- * - checkModuleAccess() - Module access check logic
+ * - checkRouteModuleAccess() - Module access check logic
  * - PERMISSION_ROUTE_MAP - Permission mappings (not in registry)
  * - checkPermissionAccess() - Permission check logic
  *
@@ -103,18 +103,18 @@ export interface ModuleAccessCheckResult {
  *
  * @example
  * // Module not installed
- * checkModuleAccess('/admin/leave', ['assets']); // { allowed: false, moduleId: 'leave', reason: 'not_installed' }
+ * checkRouteModuleAccess('/admin/leave', ['assets']); // { allowed: false, moduleId: 'leave', reason: 'not_installed' }
  *
  * // Module installed
- * checkModuleAccess('/admin/assets', ['assets']); // { allowed: true }
+ * checkRouteModuleAccess('/admin/assets', ['assets']); // { allowed: true }
  *
  * // Core module (always allowed)
- * checkModuleAccess('/admin/employees', []); // { allowed: true }
+ * checkRouteModuleAccess('/admin/employees', []); // { allowed: true }
  *
  * // Unprotected route
- * checkModuleAccess('/admin/settings', []); // { allowed: true }
+ * checkRouteModuleAccess('/admin/settings', []); // { allowed: true }
  */
-export function checkModuleAccess(
+export function checkRouteModuleAccess(
   pathname: string,
   enabledModules: string[]
 ): ModuleAccessCheckResult {

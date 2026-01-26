@@ -99,7 +99,7 @@ export const TIER_CONFIG: Record<SubscriptionTier, TierConfig> = {
 // FEATURE CHECKING UTILITIES - All return true/null (tier restrictions disabled)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export function hasModuleAccess(_tier: SubscriptionTier, _module: string): boolean {
+export function hasTierModuleAccess(_tier: SubscriptionTier, _module: string): boolean {
   return true;
 }
 
@@ -166,7 +166,7 @@ export const MODULE_METADATA: Record<string, { name: string; description: string
  * - [EXISTING] tests/unit/multi-tenant/feature-flags.test.ts (all passing)
  *
  * INTEGRATION NOTES:
- * - Module access enforced in src/middleware.ts via checkModuleAccess()
+ * - Module access enforced in src/middleware.ts via checkRouteModuleAccess()
  * - Handler.ts uses requireModule option for API-level checks
  * - UI components use these for conditional rendering (UX only)
  *

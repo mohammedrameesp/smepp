@@ -5,7 +5,7 @@
 
 import {
   getModuleForRoute,
-  checkModuleAccess,
+  checkRouteModuleAccess,
   checkPermissionAccess,
   _getModuleRouteMap,
   _getPermissionRouteMap,
@@ -180,52 +180,52 @@ describe('Module Routes Tests', () => {
   // checkModuleAccess
   // ═══════════════════════════════════════════════════════════════════════════════
 
-  describe('checkModuleAccess', () => {
+  describe('checkRouteModuleAccess', () => {
     describe('Core Module Access', () => {
       it('should allow /admin/employees even without it in enabledModules', () => {
-        const result = checkModuleAccess('/admin/employees', []);
+        const result = checkRouteModuleAccess('/admin/employees', []);
         expect(result.allowed).toBe(true);
       });
 
       it('should allow /api/employees for core module', () => {
-        const result = checkModuleAccess('/api/employees', []);
+        const result = checkRouteModuleAccess('/api/employees', []);
         expect(result.allowed).toBe(true);
       });
     });
 
     describe('Installed Module Access', () => {
       it('should allow /admin/assets when assets is enabled', () => {
-        const result = checkModuleAccess('/admin/assets', ['assets']);
+        const result = checkRouteModuleAccess('/admin/assets', ['assets']);
         expect(result.allowed).toBe(true);
       });
 
       it('should allow /admin/leave when leave is enabled', () => {
-        const result = checkModuleAccess('/admin/leave', ['leave']);
+        const result = checkRouteModuleAccess('/admin/leave', ['leave']);
         expect(result.allowed).toBe(true);
       });
 
       it('should allow /api/payroll when payroll is enabled', () => {
-        const result = checkModuleAccess('/api/payroll', ['payroll']);
+        const result = checkRouteModuleAccess('/api/payroll', ['payroll']);
         expect(result.allowed).toBe(true);
       });
     });
 
     describe('Not Installed Module Access', () => {
       it('should block /admin/assets when assets not enabled', () => {
-        const result = checkModuleAccess('/admin/assets', ['leave', 'payroll']);
+        const result = checkRouteModuleAccess('/admin/assets', ['leave', 'payroll']);
         expect(result.allowed).toBe(false);
         expect(result.moduleId).toBe('assets');
         expect(result.reason).toBe('not_installed');
       });
 
       it('should block /admin/leave when leave not enabled', () => {
-        const result = checkModuleAccess('/admin/leave', ['assets']);
+        const result = checkRouteModuleAccess('/admin/leave', ['assets']);
         expect(result.allowed).toBe(false);
         expect(result.moduleId).toBe('leave');
       });
 
       it('should block /api/payroll when payroll not enabled', () => {
-        const result = checkModuleAccess('/api/payroll', ['assets']);
+        const result = checkRouteModuleAccess('/api/payroll', ['assets']);
         expect(result.allowed).toBe(false);
         expect(result.moduleId).toBe('payroll');
       });
@@ -233,25 +233,25 @@ describe('Module Routes Tests', () => {
 
     describe('Unprotected Route Access', () => {
       it('should allow /admin/settings regardless of modules', () => {
-        const result = checkModuleAccess('/admin/settings', []);
+        const result = checkRouteModuleAccess('/admin/settings', []);
         expect(result.allowed).toBe(true);
       });
 
       it('should allow /admin regardless of modules', () => {
-        const result = checkModuleAccess('/admin', []);
+        const result = checkRouteModuleAccess('/admin', []);
         expect(result.allowed).toBe(true);
       });
     });
 
     describe('Case Insensitive (Security)', () => {
       it('should block /ADMIN/ASSETS when assets not enabled', () => {
-        const result = checkModuleAccess('/ADMIN/ASSETS', []);
+        const result = checkRouteModuleAccess('/ADMIN/ASSETS', []);
         expect(result.allowed).toBe(false);
         expect(result.moduleId).toBe('assets');
       });
 
       it('should allow /Admin/Assets when assets is enabled', () => {
-        const result = checkModuleAccess('/Admin/Assets', ['assets']);
+        const result = checkRouteModuleAccess('/Admin/Assets', ['assets']);
         expect(result.allowed).toBe(true);
       });
     });
@@ -259,21 +259,21 @@ describe('Module Routes Tests', () => {
     describe('Invalid/Unknown Routes', () => {
       it('should allow access to routes that do not map to any module', () => {
         // Routes that don't match any MODULE_ROUTE_MAP entry are not module-protected
-        const result = checkModuleAccess('/admin/fake-module', []);
+        const result = checkRouteModuleAccess('/admin/fake-module', []);
         expect(result.allowed).toBe(true);
         expect(result.moduleId).toBeUndefined();
       });
 
       it('should allow access when path looks like a module but is not registered', () => {
         // A path that might look like a module route but isn't in the mapping
-        const result = checkModuleAccess('/admin/inventory', ['assets']);
+        const result = checkRouteModuleAccess('/admin/inventory', ['assets']);
         expect(result.allowed).toBe(true);
         expect(result.moduleId).toBeUndefined();
       });
 
       it('should not grant access when enabledModules contains invalid module IDs', () => {
         // Even if enabledModules contains garbage, a valid protected route should check correctly
-        const result = checkModuleAccess('/admin/assets', ['invalid-module', 'fake', 'not-real']);
+        const result = checkRouteModuleAccess('/admin/assets', ['invalid-module', 'fake', 'not-real']);
         expect(result.allowed).toBe(false);
         expect(result.moduleId).toBe('assets');
         expect(result.reason).toBe('not_installed');
@@ -281,7 +281,7 @@ describe('Module Routes Tests', () => {
 
       it('should not be affected by similar but different module names in enabledModules', () => {
         // 'asset' (singular) should not grant access to 'assets' route
-        const result = checkModuleAccess('/admin/assets', ['asset', 'Assets', 'ASSETS']);
+        const result = checkRouteModuleAccess('/admin/assets', ['asset', 'Assets', 'ASSETS']);
         expect(result.allowed).toBe(false);
         expect(result.moduleId).toBe('assets');
       });
