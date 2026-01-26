@@ -4,22 +4,20 @@
  * @module security
  *
  * ════════════════════════════════════════════════════════════════════════════════
- * PASSWORD REQUIREMENTS:
+ * PASSWORD REQUIREMENTS
  * ════════════════════════════════════════════════════════════════════════════════
  *
- * Default (regular users):
+ * All users:
  * - Minimum 8 characters
  * - At least one uppercase letter
  * - At least one lowercase letter
  * - At least one number
- * - Special characters optional but recommended
+ * - At least one special character (!@#$%^&*...)
  *
- * Admin (elevated privileges):
- * - Minimum 12 characters
- * - All character types required
- * - Special characters mandatory
+ * ════════════════════════════════════════════════════════════════════════════════
+ * SCORING
+ * ════════════════════════════════════════════════════════════════════════════════
  *
- * SCORING:
  * - +1 for meeting length requirement
  * - +0.5 for 12+ characters, +0.5 for 16+ characters
  * - +1 for uppercase, lowercase, numbers, special chars
@@ -27,11 +25,31 @@
  * - -0.5 for repeated characters (aaa, 111)
  * - Score 0 for common passwords
  *
- * STRENGTH CLASSIFICATION:
+ * ════════════════════════════════════════════════════════════════════════════════
+ * STRENGTH CLASSIFICATION
+ * ════════════════════════════════════════════════════════════════════════════════
+ *
  * - 0-1: weak (red)
  * - 2: fair (orange)
  * - 3: good (yellow)
  * - 4: strong (green)
+ *
+ * ════════════════════════════════════════════════════════════════════════════════
+ * USAGE EXAMPLE
+ * ════════════════════════════════════════════════════════════════════════════════
+ *
+ * @example
+ * ```typescript
+ * import { validatePassword, getPasswordStrength } from '@/lib/security/password-validation';
+ *
+ * const result = validatePassword('MyP@ssw0rd!');
+ * if (!result.valid) {
+ *   console.log(result.errors); // Array of error messages
+ * }
+ *
+ * // For UI strength indicator
+ * const { strength, color } = getPasswordStrength('MyP@ssw0rd!');
+ * ```
  */
 
 /**
@@ -56,18 +74,9 @@ export interface PasswordRequirements {
   requireSpecial: boolean;
 }
 
-// Default requirements for production use
+// Password requirements for all users
 export const DEFAULT_PASSWORD_REQUIREMENTS: PasswordRequirements = {
   minLength: 8,
-  requireUppercase: true,
-  requireLowercase: true,
-  requireNumber: true,
-  requireSpecial: false, // Special chars optional but recommended
-};
-
-// Stricter requirements for admin/super-admin accounts
-export const ADMIN_PASSWORD_REQUIREMENTS: PasswordRequirements = {
-  minLength: 12,
   requireUppercase: true,
   requireLowercase: true,
   requireNumber: true,

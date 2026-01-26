@@ -1,10 +1,62 @@
 /**
  * @file cron-auth.ts
- * @description Secure authentication utilities for cron job endpoints
+ * @description Secure authentication for cron job API endpoints
  * @module security
  *
- * SECURITY: All cron authentication uses timing-safe comparison to prevent
- * timing attacks that could leak secret information.
+ * Verifies that incoming requests to cron endpoints are legitimate
+ * (from Vercel Cron or authorized external schedulers).
+ *
+ * ════════════════════════════════════════════════════════════════════════════════
+ * AUTHENTICATION METHODS
+ * ════════════════════════════════════════════════════════════════════════════════
+ *
+ * | Method          | Use Case                | Headers                              |
+ * |-----------------|-------------------------|--------------------------------------|
+ * | Bearer Token    | Vercel Cron (simple)    | Authorization: Bearer {CRON_SECRET}  |
+ * | HMAC Signature  | External cron services  | X-Cron-Timestamp + X-Cron-Signature  |
+ *
+ * ════════════════════════════════════════════════════════════════════════════════
+ * SECURITY FEATURES
+ * ════════════════════════════════════════════════════════════════════════════════
+ *
+ * 1. Timing-safe comparison - Uses crypto.timingSafeEqual to prevent timing
+ *    attacks that could leak the secret
+ * 2. Replay protection - HMAC method rejects requests with timestamps older
+ *    than 5 minutes
+ * 3. HMAC-SHA256 - Signature format: HMAC-SHA256(timestamp + ":" + path)
+ *
+ * ════════════════════════════════════════════════════════════════════════════════
+ * CONFIGURATION
+ * ════════════════════════════════════════════════════════════════════════════════
+ *
+ * Requires CRON_SECRET environment variable to be set.
+ *
+ * ════════════════════════════════════════════════════════════════════════════════
+ * WHERE IT'S USED
+ * ════════════════════════════════════════════════════════════════════════════════
+ *
+ * Protects cron endpoints like:
+ * - /api/super-admin/backups/cron - Daily database backups
+ * - Subscription renewal alerts
+ * - Warranty expiry alerts
+ * - Document expiry alerts
+ *
+ * ════════════════════════════════════════════════════════════════════════════════
+ * USAGE EXAMPLE
+ * ════════════════════════════════════════════════════════════════════════════════
+ *
+ * @example
+ * ```typescript
+ * import { verifyCronAuth } from '@/lib/security/cron-auth';
+ *
+ * export async function GET(request: NextRequest) {
+ *   const authResult = verifyCronAuth(request);
+ *   if (!authResult.valid) {
+ *     return NextResponse.json({ error: authResult.error }, { status: 401 });
+ *   }
+ *   // ... cron job logic
+ * }
+ * ```
  */
 
 import { NextRequest } from 'next/server';

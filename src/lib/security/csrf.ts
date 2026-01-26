@@ -1,13 +1,80 @@
 /**
  * @file csrf.ts
- * @description CSRF (Cross-Site Request Forgery) protection using signed tokens for form submissions
- *              and origin validation for JSON API requests.
+ * @description CSRF (Cross-Site Request Forgery) protection for the application
  * @module security
  *
- * SECURITY: Uses a separate CSRF_SECRET to ensure key separation.
- * If CSRF_SECRET is not set, we derive a unique key from NEXTAUTH_SECRET using HKDF.
- * This ensures that even if one secret is compromised, other security mechanisms
- * remain protected.
+ * Prevents attackers from tricking users into making unwanted requests
+ * to the application by validating request origin and signed tokens.
+ *
+ * ════════════════════════════════════════════════════════════════════════════════
+ * PROTECTION METHODS
+ * ════════════════════════════════════════════════════════════════════════════════
+ *
+ * | Request Type      | Protection Method                        |
+ * |-------------------|------------------------------------------|
+ * | JSON API          | Origin/Referer header validation         |
+ * | Form submissions  | Signed CSRF token (cookie + header)      |
+ *
+ * ════════════════════════════════════════════════════════════════════════════════
+ * KEY FUNCTIONS
+ * ════════════════════════════════════════════════════════════════════════════════
+ *
+ * | Function                    | Purpose                                    |
+ * |-----------------------------|--------------------------------------------|
+ * | generateCSRFToken()         | Creates random 32-byte token               |
+ * | signCSRFToken(token)        | Signs token with HMAC-SHA256               |
+ * | verifyCSRFToken(signedToken)| Validates signature (timing-safe)         |
+ * | setCSRFCookie(response)     | Sets __Host-csrf-token cookie              |
+ * | validateOriginForJSON(req)  | Validates Origin header for JSON APIs      |
+ * | validateCSRF(request)       | Main validation function                   |
+ * | csrfMiddleware(request)     | Middleware for API routes                  |
+ *
+ * ════════════════════════════════════════════════════════════════════════════════
+ * SECURITY FEATURES
+ * ════════════════════════════════════════════════════════════════════════════════
+ *
+ * - Key separation: Uses CSRF_SECRET or derives unique key from NEXTAUTH_SECRET
+ * - Timing-safe comparison: Prevents timing attacks on token verification
+ * - __Host- cookie prefix: Enforces secure, same-origin cookies
+ * - SameSite=Strict: Prevents cross-site cookie sending
+ * - Skips safe methods: GET, HEAD, OPTIONS don't need CSRF protection
+ * - Skips auth/webhooks: They use their own authentication mechanisms
+ *
+ * ════════════════════════════════════════════════════════════════════════════════
+ * COOKIE SETTINGS
+ * ════════════════════════════════════════════════════════════════════════════════
+ *
+ * - httpOnly: true (not accessible via JavaScript)
+ * - secure: true (production only, HTTPS required)
+ * - sameSite: 'strict' (not sent on cross-site requests)
+ * - maxAge: 24 hours
+ * - path: '/'
+ *
+ * ════════════════════════════════════════════════════════════════════════════════
+ * CONFIGURATION
+ * ════════════════════════════════════════════════════════════════════════════════
+ *
+ * - CSRF_SECRET: Dedicated secret for CSRF tokens (recommended)
+ * - NEXTAUTH_SECRET: Fallback - derives unique CSRF key via HKDF-like derivation
+ *
+ * Key separation ensures that if one secret is compromised, other security
+ * mechanisms remain protected.
+ *
+ * ════════════════════════════════════════════════════════════════════════════════
+ * USAGE EXAMPLE
+ * ════════════════════════════════════════════════════════════════════════════════
+ *
+ * @example
+ * ```typescript
+ * // In middleware.ts
+ * import { csrfMiddleware } from '@/lib/security/csrf';
+ *
+ * const csrfResponse = csrfMiddleware(request);
+ * if (csrfResponse) return csrfResponse; // Returns 403 if CSRF validation fails
+ *
+ * // In forms - include token in hidden field or header
+ * <input type="hidden" name="csrf-token" value={csrfToken} />
+ * ```
  */
 
 import { NextRequest, NextResponse } from 'next/server';

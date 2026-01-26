@@ -8,7 +8,6 @@ import {
   isPasswordValid,
   getPasswordStrength,
   DEFAULT_PASSWORD_REQUIREMENTS,
-  ADMIN_PASSWORD_REQUIREMENTS,
   type PasswordRequirements,
 } from '@/lib/security/password-validation';
 
@@ -23,7 +22,7 @@ describe('Password Validation Tests', () => {
       });
 
       it('should accept passwords meeting minimum length', () => {
-        const result = validatePassword('LongEnough1');
+        const result = validatePassword('LongEnough1!');
 
         expect(result.valid).toBe(true);
         expect(result.errors).not.toContain(expect.stringContaining('characters'));
@@ -53,7 +52,7 @@ describe('Password Validation Tests', () => {
       });
 
       it('should accept passwords with uppercase', () => {
-        const result = validatePassword('Uppercase123');
+        const result = validatePassword('Uppercase123!');
 
         expect(result.errors).not.toContain('Password must contain at least one uppercase letter');
       });
@@ -84,7 +83,7 @@ describe('Password Validation Tests', () => {
       });
 
       it('should accept passwords with lowercase', () => {
-        const result = validatePassword('UPPERCASElower123');
+        const result = validatePassword('UPPERCASElower123!');
 
         expect(result.errors).not.toContain('Password must contain at least one lowercase letter');
       });
@@ -99,36 +98,37 @@ describe('Password Validation Tests', () => {
       });
 
       it('should accept passwords with numbers', () => {
-        const result = validatePassword('HasNumber1!');
+        const result = validatePassword('HasNumbers1!');
 
         expect(result.errors).not.toContain('Password must contain at least one number');
       });
     });
 
     describe('Special Character Requirements', () => {
-      it('should not require special characters by default', () => {
+      it('should require special characters by default', () => {
         const result = validatePassword('NoSpecial123');
-
-        expect(result.valid).toBe(true);
-        expect(result.errors).not.toContain(expect.stringContaining('special character'));
-      });
-
-      it('should require special characters for admin passwords', () => {
-        const result = validatePassword('AdminPass123', ADMIN_PASSWORD_REQUIREMENTS);
 
         expect(result.valid).toBe(false);
         expect(result.errors).toContain('Password must contain at least one special character (!@#$%^&*...)');
       });
 
-      it('should accept passwords with special characters when required', () => {
-        const result = validatePassword('AdminPass123!', ADMIN_PASSWORD_REQUIREMENTS);
+      it('should accept passwords with special characters', () => {
+        const result = validatePassword('Password123!');
 
         expect(result.errors).not.toContain(expect.stringContaining('special character'));
       });
 
       it('should increase score when password has special characters', () => {
-        const withoutSpecial = validatePassword('Password123');
-        const withSpecial = validatePassword('Password123!');
+        const requirementsWithoutSpecial: PasswordRequirements = {
+          minLength: 8,
+          requireUppercase: true,
+          requireLowercase: true,
+          requireNumber: true,
+          requireSpecial: false,
+        };
+
+        const withoutSpecial = validatePassword('Password123', requirementsWithoutSpecial);
+        const withSpecial = validatePassword('Password123!', requirementsWithoutSpecial);
 
         // Both may have same score at cap, but special chars adds to raw score
         expect(withSpecial.score).toBeGreaterThanOrEqual(withoutSpecial.score);
@@ -232,11 +232,15 @@ describe('Password Validation Tests', () => {
 
   describe('isPasswordValid', () => {
     it('should return true for valid passwords', () => {
-      expect(isPasswordValid('ValidPass1')).toBe(true);
+      expect(isPasswordValid('ValidPass1!')).toBe(true);
     });
 
     it('should return false for invalid passwords', () => {
       expect(isPasswordValid('short')).toBe(false);
+    });
+
+    it('should return false for passwords without special characters', () => {
+      expect(isPasswordValid('ValidPass1')).toBe(false);
     });
 
     it('should use custom requirements when provided', () => {
@@ -311,30 +315,8 @@ describe('Password Validation Tests', () => {
         expect(DEFAULT_PASSWORD_REQUIREMENTS.requireNumber).toBe(true);
       });
 
-      it('should not require special characters by default', () => {
-        expect(DEFAULT_PASSWORD_REQUIREMENTS.requireSpecial).toBe(false);
-      });
-    });
-
-    describe('ADMIN_PASSWORD_REQUIREMENTS', () => {
-      it('should have minimum length of 12', () => {
-        expect(ADMIN_PASSWORD_REQUIREMENTS.minLength).toBe(12);
-      });
-
-      it('should require uppercase', () => {
-        expect(ADMIN_PASSWORD_REQUIREMENTS.requireUppercase).toBe(true);
-      });
-
-      it('should require lowercase', () => {
-        expect(ADMIN_PASSWORD_REQUIREMENTS.requireLowercase).toBe(true);
-      });
-
-      it('should require numbers', () => {
-        expect(ADMIN_PASSWORD_REQUIREMENTS.requireNumber).toBe(true);
-      });
-
       it('should require special characters', () => {
-        expect(ADMIN_PASSWORD_REQUIREMENTS.requireSpecial).toBe(true);
+        expect(DEFAULT_PASSWORD_REQUIREMENTS.requireSpecial).toBe(true);
       });
     });
   });
@@ -422,23 +404,20 @@ describe('Password Validation Tests', () => {
   });
 
   describe('Security Best Practices', () => {
-    it('should enforce minimum 8 characters for user passwords', () => {
+    it('should enforce minimum 8 characters for passwords', () => {
       expect(DEFAULT_PASSWORD_REQUIREMENTS.minLength).toBeGreaterThanOrEqual(8);
     });
 
-    it('should enforce minimum 12 characters for admin passwords', () => {
-      expect(ADMIN_PASSWORD_REQUIREMENTS.minLength).toBeGreaterThanOrEqual(12);
-    });
-
-    it('should require multiple character types for complexity', () => {
+    it('should require all character types for complexity', () => {
       const requirements = DEFAULT_PASSWORD_REQUIREMENTS;
       const requiredTypes = [
         requirements.requireUppercase,
         requirements.requireLowercase,
         requirements.requireNumber,
+        requirements.requireSpecial,
       ].filter(Boolean);
 
-      expect(requiredTypes.length).toBeGreaterThanOrEqual(2);
+      expect(requiredTypes.length).toBe(4);
     });
 
     it('should detect dictionary words in common password check', () => {
