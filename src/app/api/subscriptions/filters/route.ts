@@ -9,10 +9,10 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
-import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
+import { prisma as globalPrisma } from '@/lib/core/prisma';
 
 async function getHandler(request: NextRequest, context: APIContext) {
-  const { tenant, prisma: tenantPrisma } = context;
+  const { tenant } = context;
 
   // Defensive check for tenant context
   if (!tenant?.tenantId) {
@@ -20,10 +20,10 @@ async function getHandler(request: NextRequest, context: APIContext) {
   }
 
   const tenantId = tenant.tenantId;
-  const db = tenantPrisma as TenantPrismaClient;
 
   // Get categories with counts using raw query for better performance
-  const categoryGroups = await db.$queryRaw<{ category: string; count: bigint }[]>`
+  // Note: Raw queries must use global prisma with manual tenant filtering
+  const categoryGroups = await globalPrisma.$queryRaw<{ category: string; count: bigint }[]>`
     SELECT category, COUNT(*) as count
     FROM "Subscription"
     WHERE "tenantId" = ${tenantId} AND category IS NOT NULL
@@ -33,7 +33,7 @@ async function getHandler(request: NextRequest, context: APIContext) {
   `;
 
   // Get billing cycles with counts
-  const billingCycleGroups = await db.$queryRaw<{ billingCycle: string; count: bigint }[]>`
+  const billingCycleGroups = await globalPrisma.$queryRaw<{ billingCycle: string; count: bigint }[]>`
     SELECT "billingCycle", COUNT(*) as count
     FROM "Subscription"
     WHERE "tenantId" = ${tenantId}
