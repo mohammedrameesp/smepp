@@ -1424,8 +1424,34 @@
       a.click();
     }
 
-    // Pre-defined reviewed files (security review completed 2026-01-26)
+    // Pre-defined reviewed files (reviewed 2026-01-26)
     const reviewedFiles = {
+      // Middleware
+      "src/middleware.ts": { checked: true, status: "keep" },
+      // Core
+      "src/lib/core/auth.ts": { checked: true, status: "keep" },
+      "src/lib/core/prisma.ts": { checked: true, status: "keep" },
+      "src/lib/core/prisma-tenant.ts": { checked: true, status: "keep" },
+      // HTTP layer
+      "src/lib/http/approval-handler.ts": { checked: true, status: "keep" },
+      "src/lib/http/errors.ts": { checked: true, status: "keep" },
+      "src/lib/http/export-handler.ts": { checked: true, status: "keep" },
+      "src/lib/http/handler.ts": { checked: true, status: "keep" },
+      "src/lib/http/import-handler.ts": { checked: true, status: "keep" },
+      "src/lib/http/list-handler.ts": { checked: true, status: "keep" },
+      "src/lib/http/responses.ts": { checked: true, status: "keep" },
+      // Modules layer
+      "src/lib/modules/access.ts": { checked: true, status: "keep" },
+      "src/lib/modules/index.ts": { checked: true, status: "keep" },
+      "src/lib/modules/registry.ts": { checked: true, status: "keep" },
+      "src/lib/modules/routes.ts": { checked: true, status: "keep" },
+      // Multi-tenant
+      "src/lib/multi-tenant/custom-domain.ts": { checked: true, status: "keep" },
+      "src/lib/multi-tenant/feature-flags.ts": { checked: true, status: "keep" },
+      "src/lib/multi-tenant/index.ts": { checked: true, status: "keep" },
+      "src/lib/multi-tenant/limits.ts": { checked: true, status: "keep" },
+      "src/lib/multi-tenant/subdomain.ts": { checked: true, status: "keep" },
+      // Security
       "src/lib/security/account-lockout.ts": { checked: true, status: "keep" },
       "src/lib/security/backup-encryption.ts": { checked: true, status: "keep" },
       "src/lib/security/cron-auth.ts": { checked: true, status: "keep" },
