@@ -6,153 +6,43 @@
  * aren't compatible with Edge Runtime (like lucide-react icons).
  *
  * ════════════════════════════════════════════════════════════════════════════════
- * IMPORTANT: SYNC REQUIREMENTS
+ * AUTO-GENERATION
  * ════════════════════════════════════════════════════════════════════════════════
  *
- * This file MUST be kept in sync with registry.ts module definitions:
- * - When adding a new module, add its routes here
- * - When adding new routes to a module in registry.ts, add them here
- * - Run tests to verify route coverage: npm test -- routes.test.ts
+ * Module route mappings are AUTO-GENERATED from registry.ts:
+ * - ModuleId type
+ * - CORE_MODULES set
+ * - MODULE_ROUTE_MAP array
  *
- * The duplication exists because:
- * 1. registry.ts imports lucide-react (not Edge Runtime compatible)
- * 2. middleware.ts runs in Edge Runtime and can only import this file
+ * To update route mappings:
+ * 1. Edit the module definitions in registry.ts
+ * 2. Run: npm run generate:routes
+ *
+ * The generated file (routes.generated.ts) is committed to git for CI/CD.
  *
  * ════════════════════════════════════════════════════════════════════════════════
- * SECURITY
+ * HAND-WRITTEN CODE
  * ════════════════════════════════════════════════════════════════════════════════
  *
- * @security This file enforces module access at the Edge before requests reach handlers
- * @security Route matching is CASE-INSENSITIVE to prevent bypass attacks
- * @security All module-protected routes MUST be listed here or they're accessible without module
+ * The following remain hand-written in this file:
+ * - getModuleForRoute() - Route lookup logic
+ * - checkModuleAccess() - Module access check logic
+ * - PERMISSION_ROUTE_MAP - Permission mappings (not in registry)
+ * - checkPermissionAccess() - Permission check logic
  *
  * @module lib/modules/routes
  */
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// CORE MODULE CONFIGURATION
-// ═══════════════════════════════════════════════════════════════════════════════
+// Import auto-generated data from registry
+import {
+  type ModuleId,
+  CORE_MODULES,
+  MODULE_ROUTE_MAP,
+} from './routes.generated';
 
-/**
- * Core modules are always enabled and cannot be uninstalled.
- * Keep in sync with isCore: true in registry.ts.
- *
- * @security These modules bypass the "module not installed" check
- */
-const CORE_MODULES = new Set(['employees']);
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// MODULE ROUTE MAPPING
-// ═══════════════════════════════════════════════════════════════════════════════
-
-/**
- * Valid module IDs (must match registry.ts ModuleId type)
- * Used for type checking within this Edge-compatible file
- */
-type ModuleId =
-  | 'assets'
-  | 'subscriptions'
-  | 'suppliers'
-  | 'employees'
-  | 'leave'
-  | 'payroll'
-  | 'spend-requests'
-  | 'documents';
-
-/**
- * Route prefix to module mapping.
- * Routes are matched using prefix comparison (startsWith).
- *
- * @security All routes protected by a module MUST be listed here
- * @security Missing routes will be accessible without the module installed
- */
-const MODULE_ROUTE_MAP: ReadonlyArray<{ prefix: string; moduleId: ModuleId }> = [
-  // ─────────────────────────────────────────────────────────────────────────────
-  // ASSETS MODULE
-  // ─────────────────────────────────────────────────────────────────────────────
-  // Admin routes
-  { prefix: '/admin/assets', moduleId: 'assets' },
-  { prefix: '/admin/asset-requests', moduleId: 'assets' },
-  // Employee routes
-  { prefix: '/employee/assets', moduleId: 'assets' },
-  { prefix: '/employee/my-assets', moduleId: 'assets' },
-  { prefix: '/employee/asset-requests', moduleId: 'assets' },
-  // API routes
-  { prefix: '/api/assets', moduleId: 'assets' },
-  { prefix: '/api/asset-requests', moduleId: 'assets' },
-  { prefix: '/api/asset-categories', moduleId: 'assets' },
-  { prefix: '/api/asset-types', moduleId: 'assets' },
-  { prefix: '/api/asset-type-mappings', moduleId: 'assets' },
-
-  // ─────────────────────────────────────────────────────────────────────────────
-  // SUBSCRIPTIONS MODULE
-  // ─────────────────────────────────────────────────────────────────────────────
-  // Admin routes
-  { prefix: '/admin/subscriptions', moduleId: 'subscriptions' },
-  // Employee routes
-  { prefix: '/employee/subscriptions', moduleId: 'subscriptions' },
-  // API routes
-  { prefix: '/api/subscriptions', moduleId: 'subscriptions' },
-
-  // ─────────────────────────────────────────────────────────────────────────────
-  // SUPPLIERS MODULE
-  // ─────────────────────────────────────────────────────────────────────────────
-  // Admin routes
-  { prefix: '/admin/suppliers', moduleId: 'suppliers' },
-  // Employee routes
-  { prefix: '/employee/suppliers', moduleId: 'suppliers' },
-  // API routes
-  { prefix: '/api/suppliers', moduleId: 'suppliers' },
-
-  // ─────────────────────────────────────────────────────────────────────────────
-  // EMPLOYEES MODULE (CORE - always enabled)
-  // ─────────────────────────────────────────────────────────────────────────────
-  // Admin routes
-  { prefix: '/admin/employees', moduleId: 'employees' },
-  // Note: /profile is accessible to all users; HR content is conditionally shown based on isEmployee flag
-  // API routes
-  { prefix: '/api/employees', moduleId: 'employees' },
-
-  // ─────────────────────────────────────────────────────────────────────────────
-  // LEAVE MODULE
-  // ─────────────────────────────────────────────────────────────────────────────
-  // Admin routes
-  { prefix: '/admin/leave', moduleId: 'leave' },
-  // Employee routes
-  { prefix: '/employee/leave', moduleId: 'leave' },
-  // API routes
-  { prefix: '/api/leave', moduleId: 'leave' },
-
-  // ─────────────────────────────────────────────────────────────────────────────
-  // PAYROLL MODULE
-  // ─────────────────────────────────────────────────────────────────────────────
-  // Admin routes
-  { prefix: '/admin/payroll', moduleId: 'payroll' },
-  // Employee routes
-  { prefix: '/employee/payroll', moduleId: 'payroll' },
-  // API routes
-  { prefix: '/api/payroll', moduleId: 'payroll' },
-  { prefix: '/api/settings/payroll-percentages', moduleId: 'payroll' },
-
-  // ─────────────────────────────────────────────────────────────────────────────
-  // SPEND REQUESTS MODULE
-  // ─────────────────────────────────────────────────────────────────────────────
-  // Admin routes
-  { prefix: '/admin/spend-requests', moduleId: 'spend-requests' },
-  // Employee routes
-  { prefix: '/employee/spend-requests', moduleId: 'spend-requests' },
-  // API routes
-  { prefix: '/api/spend-requests', moduleId: 'spend-requests' },
-
-  // ─────────────────────────────────────────────────────────────────────────────
-  // DOCUMENTS MODULE
-  // ─────────────────────────────────────────────────────────────────────────────
-  // Admin routes
-  { prefix: '/admin/company-documents', moduleId: 'documents' },
-  // API routes
-  { prefix: '/api/company-documents', moduleId: 'documents' },
-  { prefix: '/api/company-document-types', moduleId: 'documents' },
-];
+// Re-export for consumers
+export type { ModuleId };
+export { CORE_MODULES, MODULE_ROUTE_MAP };
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MODULE ACCESS FUNCTIONS
@@ -260,6 +150,9 @@ export type PermissionFlag = 'hasOperationsAccess' | 'hasHRAccess' | 'hasFinance
  *
  * @note Only admin routes are permission-protected. Employee routes are
  * accessible to all employees if the module is enabled.
+ *
+ * @note This mapping is NOT auto-generated because permission associations
+ * are not part of module definitions in registry.ts.
  */
 const PERMISSION_ROUTE_MAP: ReadonlyArray<{ prefix: string; permission: PermissionFlag }> = [
   // Operations department routes
@@ -384,64 +277,3 @@ export function _getPermissionRouteMap(): ReadonlyArray<{ prefix: string; permis
 export function _isCoreModule(moduleId: string): boolean {
   return CORE_MODULES.has(moduleId);
 }
-
-/*
- * ════════════════════════════════════════════════════════════════════════════════
- * ROUTES.TS PRODUCTION REVIEW SUMMARY
- * ════════════════════════════════════════════════════════════════════════════════
- *
- * SECURITY FINDINGS:
- * ──────────────────────────────────────────────────────────────────────────────
- * 1. [FIXED] Route matching now CASE-INSENSITIVE (prevents /Admin/Assets bypass)
- * 2. [FIXED] Query strings now stripped before matching
- * 3. [FIXED] CORE_MODULES changed from Array to Set for O(1) lookup
- * 4. [ADDED] API routes to MODULE_ROUTE_MAP (were missing protection)
- * 5. [VERIFIED] Admin/Owner bypass is intentional (full access)
- *
- * CHANGES MADE:
- * ──────────────────────────────────────────────────────────────────────────────
- * 1. Added comprehensive JSDoc file header with sync requirements
- * 2. Added ModuleId type for type safety
- * 3. Changed CORE_MODULES from Array to Set
- * 4. Added all API routes to MODULE_ROUTE_MAP (assets, subscriptions, suppliers,
- *    employees, leave, payroll, spend-requests, documents)
- * 5. Made getModuleForRoute() case-insensitive with query string stripping
- * 6. Made checkPermissionAccess() case-insensitive with query string stripping
- * 7. Added ModuleAccessCheckResult and PermissionAccessCheckResult interfaces
- * 8. Made MODULE_ROUTE_MAP and PERMISSION_ROUTE_MAP readonly
- * 9. Added internal test helper functions (_getModuleRouteMap, etc.)
- * 10. Added comprehensive JSDoc with @security tags and examples
- *
- * ROUTE COVERAGE:
- * ──────────────────────────────────────────────────────────────────────────────
- * Admin routes: 10 (assets, asset-requests, subscriptions, suppliers, employees,
- *                   leave, payroll, spend-requests, company-documents)
- * Employee routes: 8 (assets, my-assets, asset-requests, subscriptions, suppliers,
- *                     leave, payroll, spend-requests)
- * API routes: 13 (all module endpoints)
- *
- * REMAINING CONCERNS:
- * ──────────────────────────────────────────────────────────────────────────────
- * 1. This file duplicates route definitions from registry.ts - necessary for
- *    Edge Runtime compatibility but creates sync risk
- * 2. New routes added to registry.ts must be manually added here
- *
- * REQUIRED TESTS (tests/unit/lib/modules/routes.test.ts):
- * ──────────────────────────────────────────────────────────────────────────────
- * - [ ] getModuleForRoute returns correct module for all route prefixes
- * - [ ] getModuleForRoute is case-insensitive
- * - [ ] getModuleForRoute strips query strings
- * - [ ] getModuleForRoute returns null for unprotected routes
- * - [ ] checkModuleAccess allows core modules without enablement
- * - [ ] checkModuleAccess blocks non-installed modules
- * - [ ] checkModuleAccess is case-insensitive
- * - [ ] checkPermissionAccess allows admin/owner bypass
- * - [ ] checkPermissionAccess blocks users without permission
- * - [ ] checkPermissionAccess is case-insensitive
- * - [ ] Route map matches registry.ts definitions (sync verification)
- *
- * REVIEWER CONFIDENCE: HIGH
- * PRODUCTION READY: YES
- *
- * ════════════════════════════════════════════════════════════════════════════════
- */

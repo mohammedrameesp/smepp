@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "dev:network": "next dev --turbopack -H 0.0.0.0",
+    "generate:routes": "npx tsx scripts/generate-routes.ts",
+    "prebuild": "npm run generate:routes",
     "build": "prisma generate && prisma migrate deploy && next build",
+    "prebuild:vercel": "npm run generate:routes",
     "build:vercel": "prisma generate && prisma db push --skip-generate --accept-data-loss && next build",
     "start": "next start",
     "lint": "eslint",
