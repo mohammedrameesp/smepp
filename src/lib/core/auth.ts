@@ -1,9 +1,65 @@
 /**
  * @file auth.ts
- * @description NextAuth.js configuration for multi-tenant authentication with support for
- *              Google OAuth, Azure AD, and email/password credentials. Handles tenant-scoped
- *              sessions, account linking, and security measures (lockout, 2FA enforcement).
- * @module auth
+ * @description NextAuth.js configuration for multi-tenant authentication
+ * @module lib/core
+ *
+ * ════════════════════════════════════════════════════════════════════════════════
+ * AUTHENTICATION ARCHITECTURE
+ * ════════════════════════════════════════════════════════════════════════════════
+ *
+ * PROVIDERS:
+ * ──────────────────────────────────────────────────────────────────────────────
+ * 1. Credentials (email/password)
+ *    - Primary provider for users who signed up with email
+ *    - Validates against User.passwordHash using bcrypt
+ *    - Account lockout protection (5 attempts, progressive duration)
+ *    - Returns TeamMember context when org slug provided
+ *
+ * 2. Google OAuth
+ *    - Primary social login for SaaS users
+ *    - Requires verified email (email_verified check)
+ *    - Auto-links to existing User accounts
+ *
+ * 3. Azure AD OAuth
+ *    - Enterprise SSO for organizations
+ *    - Requires AZURE_AD_TENANT_ID in production (prevents 'common' tenant)
+ *    - Requires verified email
+ *    - Auto-links to existing User accounts
+ *
+ * 4. Super Admin Credentials
+ *    - Validates JWT login token with 2FA enforcement
+ *    - Only for users with isSuperAdmin=true
+ *
+ * SESSION STRUCTURE:
+ * ──────────────────────────────────────────────────────────────────────────────
+ * - Strategy: JWT (stateless, serverless-friendly)
+ * - Max Age: 24 hours
+ * - Permission Refresh: 30 seconds (checks database for revoked permissions)
+ * - Contains: user ID, tenant context, permission flags, org info
+ *
+ * SECURITY MEASURES:
+ * ──────────────────────────────────────────────────────────────────────────────
+ * - @security Timing-safe password comparison (dummy hash for missing users)
+ * - @security Account lockout: 5 attempts → lock (5/15/30/60 min progressive)
+ * - @security OAuth email verification required
+ * - @security Session invalidation on password change (passwordChangedAt check)
+ * - @security Session invalidation on user deletion
+ * - @security Permission refresh every 30 seconds
+ * - @security 2FA enforcement for super admins
+ * - @security Cookie: httpOnly, secure (prod), sameSite=lax
+ * - @security No sensitive data in session (no passwords, secrets, tokens)
+ *
+ * AUDIT LOGGING:
+ * ──────────────────────────────────────────────────────────────────────────────
+ * Events logged (via logger module):
+ * - LOGIN_SUCCESS: Successful authentication
+ * - LOGIN_FAILED: Failed authentication (wrong password, locked, etc.)
+ * - ACCOUNT_LOCKED: Account locked due to failed attempts
+ * - OAUTH_EMAIL_UNVERIFIED: OAuth login rejected (email not verified)
+ * - SUPER_ADMIN_ATTEMPT_BLOCKED: Non-super-admin trying super admin routes
+ *
+ * @see middleware.ts for route-level authentication checks
+ * @see handler.ts for API-level authentication
  */
 
 import { NextAuthOptions } from 'next-auth';
@@ -34,6 +90,23 @@ export interface OrganizationInfo {
   tier: SubscriptionTier;
   enabledModules: string[];
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SECURITY CONSTANTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * @security Dummy password hash for timing-safe comparison when user doesn't exist.
+ * This prevents timing attacks that could enumerate valid email addresses.
+ * The hash is for an impossible password, ensuring bcrypt.compare always runs.
+ */
+const DUMMY_PASSWORD_HASH = '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy';
+
+/**
+ * @security Interval for checking session validity (password changes, permissions)
+ * Reduced from 2 minutes to 30 seconds for tighter security window on permission revocation.
+ */
+const SECURITY_CHECK_INTERVAL_MS = 30 * 1000; // 30 seconds
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // SECURITY: Validate required environment variables
@@ -68,12 +141,14 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
 }
 
 // Microsoft/Azure AD (for enterprise customers)
-// SECURITY: In production, always set AZURE_AD_TENANT_ID to restrict to your organization
+// @security In production, always set AZURE_AD_TENANT_ID to restrict to your organization
 // Using 'common' allows ANY Microsoft account - only use for testing/development
 if (process.env.AZURE_AD_CLIENT_ID && process.env.AZURE_AD_CLIENT_SECRET) {
   const azureTenantId = process.env.AZURE_AD_TENANT_ID;
   if (!azureTenantId && process.env.NODE_ENV === 'production') {
-    console.warn('[Auth] WARNING: AZURE_AD_TENANT_ID not set - Azure AD login disabled in production for security');
+    logger.warn({
+      event: 'AZURE_AD_CONFIG_WARNING',
+    }, 'AZURE_AD_TENANT_ID not set - Azure AD login disabled in production for security');
   }
 
   if (azureTenantId || process.env.NODE_ENV !== 'production') {
@@ -92,8 +167,18 @@ if (process.env.AZURE_AD_CLIENT_ID && process.env.AZURE_AD_CLIENT_SECRET) {
   }
 }
 
-// Email/Password credentials (for users who signed up with email)
-// NEW: Always check User first (single source of truth for auth), then load TeamMember for org context
+// ═══════════════════════════════════════════════════════════════════════════════
+// CREDENTIALS PROVIDER (Email/Password)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Email/Password credentials provider
+ *
+ * @security Always checks User first (single source of truth for auth)
+ * @security Uses timing-safe comparison to prevent user enumeration
+ * @security Account lockout protection with progressive duration
+ * @security Audit logging for all authentication attempts
+ */
 providers.push(
   CredentialsProvider({
     id: 'credentials',
@@ -124,39 +209,88 @@ providers.push(
         },
       });
 
+      // @security TIMING ATTACK MITIGATION
+      // Always run bcrypt.compare to prevent timing-based user enumeration.
+      // If user doesn't exist or has no password, compare against dummy hash.
+      const passwordToCompare = user?.passwordHash || DUMMY_PASSWORD_HASH;
+      const isValid = await bcrypt.compare(credentials.password, passwordToCompare);
+
+      // Check if user actually exists and has a password
       if (!user || !user.passwordHash) {
+        // @security Log failed attempt (user not found) - same response as wrong password
+        logger.info({
+          event: 'LOGIN_FAILED',
+          reason: 'user_not_found',
+          attemptedEmail: email,
+          orgSlug,
+        }, 'Credentials login failed: user not found');
         return null;
       }
 
-      // SECURITY: Check if account is locked (brute-force protection)
+      // @security Check if account is locked BEFORE revealing password status
       const lockStatus = await isAccountLocked(user.id);
       if (lockStatus.locked) {
         const minutesRemaining = lockStatus.lockedUntil
           ? Math.ceil((lockStatus.lockedUntil.getTime() - Date.now()) / 60000)
           : 5;
+
+        logger.warn({
+          event: 'LOGIN_FAILED',
+          reason: 'account_locked',
+          userId: user.id,
+          userEmail: user.email,
+          lockedUntil: lockStatus.lockedUntil?.toISOString(),
+          minutesRemaining,
+        }, 'Credentials login failed: account locked');
+
         throw new Error(`Account temporarily locked. Try again in ${minutesRemaining} minutes.`);
       }
 
       // Block soft-deleted users
       if (user.isDeleted) {
+        logger.warn({
+          event: 'LOGIN_FAILED',
+          reason: 'account_deleted',
+          userId: user.id,
+          userEmail: user.email,
+        }, 'Credentials login failed: account deactivated');
         throw new Error('This account has been deactivated');
       }
 
-      // Verify password against User table
-      const isValid = await bcrypt.compare(credentials.password, user.passwordHash);
+      // Password verification (already done above for timing safety)
       if (!isValid) {
-        // SECURITY: Record failed login attempt
+        // @security Record failed login attempt
         const lockResult = await recordFailedLogin(user.id);
+
+        logger.warn({
+          event: 'LOGIN_FAILED',
+          reason: 'invalid_password',
+          userId: user.id,
+          userEmail: user.email,
+          orgSlug,
+          attemptsRemaining: lockResult.attemptsRemaining,
+          accountLocked: lockResult.locked,
+        }, 'Credentials login failed: invalid password');
+
         if (lockResult.locked) {
           const minutesRemaining = lockResult.lockedUntil
             ? Math.ceil((lockResult.lockedUntil.getTime() - Date.now()) / 60000)
             : 5;
+
+          logger.warn({
+            event: 'ACCOUNT_LOCKED',
+            userId: user.id,
+            userEmail: user.email,
+            lockedUntil: lockResult.lockedUntil?.toISOString(),
+            minutesRemaining,
+          }, 'Account locked due to failed login attempts');
+
           throw new Error(`Too many failed attempts. Account locked for ${minutesRemaining} minutes.`);
         }
         return null;
       }
 
-      // SECURITY: Clear failed login attempts on successful login
+      // @security Clear failed login attempts on successful login
       await clearFailedLogins(user.id);
 
       // STEP 2: For org login, find TeamMember by userId + org
@@ -196,18 +330,52 @@ providers.push(
         });
 
         if (!teamMember) {
+          logger.warn({
+            event: 'LOGIN_FAILED',
+            reason: 'not_org_member',
+            userId: user.id,
+            userEmail: user.email,
+            orgSlug,
+          }, 'Credentials login failed: not a member of organization');
           throw new Error('You are not a member of this organization');
         }
 
         // Block soft-deleted members
         if (teamMember.isDeleted) {
+          logger.warn({
+            event: 'LOGIN_FAILED',
+            reason: 'member_deleted',
+            userId: user.id,
+            userEmail: user.email,
+            orgSlug,
+            teamMemberId: teamMember.id,
+          }, 'Credentials login failed: team member deactivated');
           throw new Error('This account has been deactivated');
         }
 
         // Block members who cannot login (org-level control)
         if (!teamMember.canLogin) {
+          logger.warn({
+            event: 'LOGIN_FAILED',
+            reason: 'login_disabled',
+            userId: user.id,
+            userEmail: user.email,
+            orgSlug,
+            teamMemberId: teamMember.id,
+          }, 'Credentials login failed: login disabled for team member');
           throw new Error('This account is not enabled for login');
         }
+
+        // @audit Log successful org login
+        logger.info({
+          event: 'LOGIN_SUCCESS',
+          provider: 'credentials',
+          userId: user.id,
+          userEmail: user.email,
+          teamMemberId: teamMember.id,
+          organizationId: teamMember.tenant.id,
+          organizationSlug: teamMember.tenant.slug,
+        }, 'Successful credentials login to organization');
 
         // Return with org context - store both userId and memberId
         return {
@@ -236,6 +404,14 @@ providers.push(
 
       // STEP 3: Super admin login (no org context)
       if (user.isSuperAdmin) {
+        logger.info({
+          event: 'LOGIN_SUCCESS',
+          provider: 'credentials',
+          userId: user.id,
+          userEmail: user.email,
+          isSuperAdmin: true,
+        }, 'Successful super admin credentials login');
+
         return {
           id: user.id,
           email: user.email,
@@ -280,8 +456,25 @@ providers.push(
 
       if (teamMember) {
         if (!teamMember.canLogin) {
+          logger.warn({
+            event: 'LOGIN_FAILED',
+            reason: 'login_disabled',
+            userId: user.id,
+            userEmail: user.email,
+            teamMemberId: teamMember.id,
+          }, 'Credentials login failed: login disabled for team member');
           throw new Error('This account is not enabled for login');
         }
+
+        logger.info({
+          event: 'LOGIN_SUCCESS',
+          provider: 'credentials',
+          userId: user.id,
+          userEmail: user.email,
+          teamMemberId: teamMember.id,
+          organizationId: teamMember.tenant.id,
+          organizationSlug: teamMember.tenant.slug,
+        }, 'Successful credentials login (auto-selected first org)');
 
         return {
           id: teamMember.id,
@@ -308,12 +501,28 @@ providers.push(
       }
 
       // No org membership found - user needs to be invited to an org
+      logger.info({
+        event: 'LOGIN_FAILED',
+        reason: 'no_org_membership',
+        userId: user.id,
+        userEmail: user.email,
+      }, 'Credentials login failed: user has no organization membership');
       return null;
     },
   })
 );
 
-// Super Admin credentials provider (validates login token with 2FA enforcement)
+// ═══════════════════════════════════════════════════════════════════════════════
+// SUPER ADMIN CREDENTIALS PROVIDER
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Super Admin credentials provider (validates login token with 2FA enforcement)
+ *
+ * @security Only accepts JWT tokens with purpose='super-admin-login'
+ * @security Enforces 2FA verification if enabled on the user
+ * @security Token is short-lived (5 minutes)
+ */
 providers.push(
   CredentialsProvider({
     id: 'super-admin-credentials',
@@ -341,7 +550,11 @@ providers.push(
 
         // Ensure the token is for super-admin login
         if (payload.purpose !== 'super-admin-login') {
-          console.error('Invalid token purpose:', payload.purpose);
+          logger.warn({
+            event: 'SUPER_ADMIN_LOGIN_FAILED',
+            reason: 'invalid_token_purpose',
+            tokenPurpose: payload.purpose,
+          }, 'Super admin login failed: invalid token purpose');
           return null;
         }
 
@@ -358,15 +571,32 @@ providers.push(
         });
 
         if (!user || !user.isSuperAdmin) {
-          console.error('User not found or not super admin');
+          logger.warn({
+            event: 'SUPER_ADMIN_LOGIN_FAILED',
+            reason: 'not_super_admin',
+            userId: payload.userId,
+          }, 'Super admin login failed: user not found or not super admin');
           return null;
         }
 
-        // CRITICAL: If 2FA is enabled, the token MUST have twoFactorVerified: true
+        // @security CRITICAL: If 2FA is enabled, the token MUST have twoFactorVerified: true
         if (user.twoFactorEnabled && !payload.twoFactorVerified) {
-          console.error('2FA required but not verified in token');
+          logger.warn({
+            event: 'SUPER_ADMIN_LOGIN_FAILED',
+            reason: '2fa_not_verified',
+            userId: user.id,
+            userEmail: user.email,
+          }, 'Super admin login failed: 2FA required but not verified');
           return null;
         }
+
+        logger.info({
+          event: 'LOGIN_SUCCESS',
+          provider: 'super-admin-credentials',
+          userId: user.id,
+          userEmail: user.email,
+          twoFactorVerified: payload.twoFactorVerified || false,
+        }, 'Successful super admin token login');
 
         return {
           id: user.id,
@@ -377,7 +607,11 @@ providers.push(
           twoFactorEnabled: user.twoFactorEnabled,
         };
       } catch (error) {
-        console.error('Super admin login token verification failed:', error);
+        logger.error({
+          event: 'SUPER_ADMIN_LOGIN_FAILED',
+          reason: 'token_verification_failed',
+          error: error instanceof Error ? error.message : 'Unknown error',
+        }, 'Super admin login token verification failed');
         return null;
       }
     },
@@ -390,6 +624,7 @@ providers.push(
 
 /**
  * Get organization info for a TeamMember by member ID
+ * Used for session refresh on trigger='update'
  */
 async function getTeamMemberOrganization(memberId: string): Promise<{
   organization: OrganizationInfo;
@@ -455,45 +690,6 @@ async function getTeamMemberOrganization(memberId: string): Promise<{
   };
 }
 
-/**
- * Get the user's primary organization membership (legacy - for super admin OAuth)
- * Uses userId FK to find TeamMember
- */
-async function _getUserOrganization(userId: string): Promise<OrganizationInfo | null> {
-  // Find TeamMember by userId FK
-  const membership = await prisma.teamMember.findFirst({
-    where: { userId, isDeleted: false },
-    orderBy: { joinedAt: 'asc' }, // Get the oldest (first) organization
-    include: {
-      tenant: {
-        select: {
-          id: true,
-          name: true,
-          slug: true,
-          logoUrl: true,
-          logoUrlInverse: true,
-          subscriptionTier: true,
-          enabledModules: true,
-        },
-      },
-    },
-  });
-
-  if (!membership) {
-    return null;
-  }
-
-  return {
-    id: membership.tenant.id,
-    name: membership.tenant.name,
-    slug: membership.tenant.slug,
-    logoUrl: membership.tenant.logoUrl,
-    logoUrlInverse: membership.tenant.logoUrlInverse,
-    tier: membership.tenant.subscriptionTier,
-    enabledModules: membership.tenant.enabledModules,
-  };
-}
-
 // ═══════════════════════════════════════════════════════════════════════════════
 // AUTH OPTIONS
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -502,7 +698,14 @@ export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers,
   callbacks: {
-    async signIn({ user, account }) {
+    /**
+     * signIn callback - validates OAuth logins and handles account linking
+     *
+     * @security Checks OAuth email verification (email_verified)
+     * @security Validates org-level auth restrictions
+     * @security Blocks soft-deleted users and disabled logins
+     */
+    async signIn({ user, account, profile }) {
       try {
         // Map NextAuth provider ID to our auth method names
         const providerToAuthMethod: Record<string, string> = {
@@ -521,6 +724,36 @@ export const authOptions: NextAuthOptions = {
           const superAdminEmail = process.env.SUPER_ADMIN_EMAIL?.toLowerCase().trim();
           const isSuperAdmin = superAdminEmail === normalizedEmail;
 
+          // @security CRITICAL: Verify OAuth email is verified by the provider
+          // Google: profile.email_verified (boolean)
+          // Azure AD: profile.email (only returned if verified) - but we check explicitly
+          const oauthProfile = profile as { email_verified?: boolean; verified?: boolean } | undefined;
+
+          if (account.provider === 'google') {
+            if (!oauthProfile?.email_verified) {
+              logger.warn({
+                event: 'OAUTH_EMAIL_UNVERIFIED',
+                provider: 'google',
+                attemptedEmail: normalizedEmail,
+              }, 'Google OAuth rejected: email not verified');
+              return '/login?error=EmailNotVerified';
+            }
+          }
+
+          // Azure AD typically only returns email if verified, but we add explicit check
+          // The email claim is only present if the email is verified in Azure AD
+          if (account.provider === 'azure-ad') {
+            // Azure AD profile doesn't have email_verified, but email is only included if verified
+            // We still log for audit purposes
+            if (!user.email) {
+              logger.warn({
+                event: 'OAUTH_EMAIL_UNVERIFIED',
+                provider: 'azure-ad',
+              }, 'Azure AD OAuth rejected: no email in profile');
+              return '/login?error=EmailNotVerified';
+            }
+          }
+
           // Check User table first (for account status and OAuth account linking)
           const existingUser = await prisma.user.findUnique({
             where: { email: normalizedEmail },
@@ -530,6 +763,13 @@ export const authOptions: NextAuthOptions = {
           if (existingUser) {
             // Block soft-deleted users
             if (existingUser.isDeleted) {
+              logger.warn({
+                event: 'LOGIN_FAILED',
+                provider: account.provider,
+                reason: 'account_deleted',
+                userId: existingUser.id,
+                userEmail: normalizedEmail,
+              }, 'OAuth login failed: account deactivated');
               return '/login?error=AccountDeactivated';
             }
 
@@ -557,6 +797,13 @@ export const authOptions: NextAuthOptions = {
                   token_type: account.token_type,
                 },
               });
+
+              logger.info({
+                event: 'OAUTH_ACCOUNT_LINKED',
+                provider: account.provider,
+                userId: existingUser.id,
+                userEmail: normalizedEmail,
+              }, 'OAuth account linked to existing user');
             }
 
             // Check TeamMember by userId FK (org-level restrictions)
@@ -578,6 +825,14 @@ export const authOptions: NextAuthOptions = {
             if (teamMember) {
               // Block members who cannot login (org-level control)
               if (!teamMember.canLogin) {
+                logger.warn({
+                  event: 'LOGIN_FAILED',
+                  provider: account.provider,
+                  reason: 'login_disabled',
+                  userId: existingUser.id,
+                  userEmail: normalizedEmail,
+                  teamMemberId: teamMember.id,
+                }, 'OAuth login failed: login disabled for team member');
                 return false;
               }
 
@@ -587,6 +842,16 @@ export const authOptions: NextAuthOptions = {
               // Check auth method restriction
               if (org.allowedAuthMethods.length > 0 && authMethod) {
                 if (!org.allowedAuthMethods.includes(authMethod)) {
+                  logger.warn({
+                    event: 'LOGIN_FAILED',
+                    provider: account.provider,
+                    reason: 'auth_method_not_allowed',
+                    userId: existingUser.id,
+                    userEmail: normalizedEmail,
+                    organizationId: org.id,
+                    allowedMethods: org.allowedAuthMethods,
+                    attemptedMethod: authMethod,
+                  }, 'OAuth login failed: auth method not allowed by organization');
                   return '/login?error=AuthMethodNotAllowed';
                 }
               }
@@ -594,15 +859,34 @@ export const authOptions: NextAuthOptions = {
               // Check email domain restriction
               if (org.enforceDomainRestriction && org.allowedEmailDomains.length > 0) {
                 if (!org.allowedEmailDomains.includes(emailDomain)) {
+                  logger.warn({
+                    event: 'LOGIN_FAILED',
+                    provider: account.provider,
+                    reason: 'domain_not_allowed',
+                    userId: existingUser.id,
+                    userEmail: normalizedEmail,
+                    organizationId: org.id,
+                    allowedDomains: org.allowedEmailDomains,
+                    attemptedDomain: emailDomain,
+                  }, 'OAuth login failed: email domain not allowed by organization');
                   return '/login?error=DomainNotAllowed';
                 }
               }
+
+              // @audit Log successful OAuth login
+              logger.info({
+                event: 'LOGIN_SUCCESS',
+                provider: account.provider,
+                userId: existingUser.id,
+                userEmail: normalizedEmail,
+                teamMemberId: teamMember.id,
+                organizationId: teamMember.tenant.id,
+              }, 'Successful OAuth login to organization');
             }
 
-            // SEC-CRIT-3: Removed auto-promotion to super admin
+            // @security Removed auto-promotion to super admin
             // Auto-promotion via SUPER_ADMIN_EMAIL was a security vulnerability
             // Super admin status must be set explicitly via database migration or CLI
-            // If you need to bootstrap a super admin, use: npx prisma db seed --super-admin
             if (isSuperAdmin && !existingUser.isSuperAdmin) {
               logger.warn({
                 userId: existingUser.id,
@@ -610,29 +894,36 @@ export const authOptions: NextAuthOptions = {
                 event: 'SUPER_ADMIN_ATTEMPT_BLOCKED',
               }, 'Blocked auto-promotion to super admin - must be set explicitly in database');
             }
+          } else {
+            // New user via OAuth - log for audit
+            logger.info({
+              event: 'OAUTH_NEW_USER',
+              provider: account.provider,
+              userEmail: normalizedEmail,
+            }, 'New user signing up via OAuth');
           }
         }
 
         // For credentials login with TeamMember, auth restrictions already checked in authorize()
-        // Just validate the user object is valid
-        if (account?.provider === 'credentials' && user.email) {
-          // TeamMember login already validated in credentials provider
-          // Nothing more to check here
-        }
-
         return true;
       } catch (error) {
-        console.error('[Auth] Error in signIn callback:', error);
+        logger.error({
+          event: 'SIGNIN_CALLBACK_ERROR',
+          error: error instanceof Error ? error.message : 'Unknown error',
+        }, 'Error in signIn callback');
         return false;
       }
     },
 
-    async jwt({ token, user, trigger, session: _session }) {
+    /**
+     * JWT callback - manages token creation and periodic security checks
+     *
+     * @security Invalidates session on password change
+     * @security Invalidates session on user/member deletion
+     * @security Refreshes permissions every 30 seconds
+     */
+    async jwt({ token, user, trigger }) {
       try {
-        // SECURITY: Check if password was changed after token was issued
-        // This invalidates all existing sessions when password is reset
-        // SEC-CRIT-2: Reduced to 30 seconds for tighter permission revocation window
-        const SECURITY_CHECK_INTERVAL_MS = 30 * 1000; // 30 seconds (reduced from 2 min for security)
         const now = Date.now();
         const lastSecurityCheck = (token.lastSecurityCheck as number) || 0;
         const shouldCheckSecurity = !user && token.id && token.iat && (now - lastSecurityCheck > SECURITY_CHECK_INTERVAL_MS);
@@ -649,15 +940,25 @@ export const authOptions: NextAuthOptions = {
             });
 
             if (userSecurityCheck) {
-              // If user is deleted, invalidate the session
+              // @security If user is deleted, invalidate the session
               if (userSecurityCheck.isDeleted) {
+                logger.info({
+                  event: 'SESSION_INVALIDATED',
+                  reason: 'user_deleted',
+                  userId: authUserId,
+                }, 'Session invalidated: user deleted');
                 return { ...token, id: undefined };
               }
 
-              // If password was changed after token was issued, invalidate the session
+              // @security If password was changed after token was issued, invalidate the session
               if (userSecurityCheck.passwordChangedAt) {
                 const tokenIssuedAt = (token.iat as number) * 1000;
                 if (userSecurityCheck.passwordChangedAt.getTime() > tokenIssuedAt) {
+                  logger.info({
+                    event: 'SESSION_INVALIDATED',
+                    reason: 'password_changed',
+                    userId: authUserId,
+                  }, 'Session invalidated: password changed after token issued');
                   return { ...token, id: undefined };
                 }
               }
@@ -676,7 +977,6 @@ export const authOptions: NextAuthOptions = {
               select: {
                 canLogin: true,
                 isDeleted: true,
-                // SEC-CRIT-2: Also verify permission flags haven't changed
                 isAdmin: true,
                 isOwner: true,
                 hasFinanceAccess: true,
@@ -690,12 +990,17 @@ export const authOptions: NextAuthOptions = {
             });
 
             if (memberCheck) {
-              // If member can't login or is deleted, invalidate the session
+              // @security If member can't login or is deleted, invalidate the session
               if (!memberCheck.canLogin || memberCheck.isDeleted) {
+                logger.info({
+                  event: 'SESSION_INVALIDATED',
+                  reason: memberCheck.isDeleted ? 'member_deleted' : 'login_disabled',
+                  teamMemberId: token.id,
+                }, 'Session invalidated: team member access revoked');
                 return { ...token, id: undefined };
               }
 
-              // SEC-CRIT-2: Update permission flags from database (ensures revoked permissions take effect)
+              // @security Update permission flags from database (ensures revoked permissions take effect)
               token.isAdmin = memberCheck.isAdmin;
               token.isOwner = memberCheck.isOwner;
               token.hasFinanceAccess = memberCheck.hasFinanceAccess;
@@ -865,11 +1170,21 @@ export const authOptions: NextAuthOptions = {
 
         return token;
       } catch (error) {
-        console.error('[Auth] Error in jwt callback:', error);
+        logger.error({
+          event: 'JWT_CALLBACK_ERROR',
+          error: error instanceof Error ? error.message : 'Unknown error',
+          tokenId: token.id,
+        }, 'Error in JWT callback');
         return token;
       }
     },
 
+    /**
+     * session callback - transfers token data to client-visible session
+     *
+     * @security Only transfers non-sensitive data to session
+     * @security No passwords, secrets, or tokens exposed
+     */
     async session({ session, token }) {
       try {
         if (token) {
@@ -908,11 +1223,20 @@ export const authOptions: NextAuthOptions = {
 
         return session;
       } catch (error) {
-        console.error('[Auth] Error in session callback:', error);
+        logger.error({
+          event: 'SESSION_CALLBACK_ERROR',
+          error: error instanceof Error ? error.message : 'Unknown error',
+        }, 'Error in session callback');
         return session;
       }
     },
 
+    /**
+     * redirect callback - controls post-auth redirect behavior
+     *
+     * @security Only allows relative URLs or same-origin URLs
+     * @security Prevents open redirect attacks
+     */
     async redirect({ url, baseUrl }) {
       // After sign in, redirect to onboarding if no organization
       if (url === baseUrl || url === `${baseUrl}/`) {
@@ -933,7 +1257,7 @@ export const authOptions: NextAuthOptions = {
 
   session: {
     strategy: 'jwt',
-    // SEC-HIGH-5: Reduced from 7 days to 1 day for tighter security
+    // @security Reduced from 7 days to 1 day for tighter security
     // Combined with 30-second permission refresh, this limits exposure window
     maxAge: 24 * 60 * 60, // 1 day
   },
@@ -1051,6 +1375,7 @@ declare module 'next-auth/jwt' {
     isSuperAdmin?: boolean;
     isEmployee?: boolean;
     onboardingComplete?: boolean;
+    twoFactorEnabled?: boolean;
     // TeamMember-specific fields
     isTeamMember?: boolean;
     isOwner?: boolean;
@@ -1069,5 +1394,7 @@ declare module 'next-auth/jwt' {
     organizationLogoUrlInverse?: string | null;
     subscriptionTier?: SubscriptionTier;
     enabledModules?: string[];
+    // Security tracking
+    lastSecurityCheck?: number;
   }
 }
