@@ -101,14 +101,20 @@ describe('Module Registry Tests', () => {
     });
 
     describe('operations modules', () => {
-      it('should have no dependencies', () => {
-        const operationsModules = ['assets', 'subscriptions', 'suppliers'];
+      it('should require employees for asset-related modules', () => {
+        const modulesRequiringEmployees = ['assets', 'subscriptions', 'spend-requests'];
 
-        operationsModules.forEach((moduleId) => {
+        modulesRequiringEmployees.forEach((moduleId) => {
           const mod = MODULE_REGISTRY[moduleId];
           expect(mod).toBeDefined();
-          expect(mod!.requires).toEqual([]);
+          expect(mod!.requires).toContain('employees');
         });
+      });
+
+      it('should have no dependencies for suppliers', () => {
+        const mod = MODULE_REGISTRY['suppliers'];
+        expect(mod).toBeDefined();
+        expect(mod!.requires).toEqual([]);
       });
     });
   });
@@ -181,10 +187,10 @@ describe('Module Registry Tests', () => {
       expect(deps).toContain('employees');
     });
 
-    it('should return empty array for assets module', () => {
+    it('should return employees for assets module', () => {
       const deps = getModuleDependencies('assets');
 
-      expect(deps).toEqual([]);
+      expect(deps).toContain('employees');
     });
 
     it('should return empty array for invalid module', () => {
@@ -236,10 +242,17 @@ describe('Module Registry Tests', () => {
       expect(error).toContain('Employee Management');
     });
 
-    it('should allow installing assets without dependencies', () => {
-      const error = canInstallModule('assets', [], 'FREE');
+    it('should allow installing assets when employees is enabled', () => {
+      const error = canInstallModule('assets', ['employees'], 'FREE');
 
       expect(error).toBeNull();
+    });
+
+    it('should block installing assets without employees', () => {
+      const error = canInstallModule('assets', [], 'FREE');
+
+      expect(error).not.toBeNull();
+      expect(error).toContain('Employee Management');
     });
 
     it('should allow installing employees without dependencies', () => {

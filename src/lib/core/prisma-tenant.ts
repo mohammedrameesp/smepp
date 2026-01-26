@@ -5,8 +5,7 @@
  *
  * SECURITY CRITICAL FILE
  * ════════════════════════════════════════════════════════════════════════════
- * This is the SECOND MOST CRITICAL security mechanism in Durj (after middleware).
- * It ensures complete data isolation between tenant organizations by:
+ * This ensures complete data isolation between tenant organizations by:
  *
  * 1. QUERY FILTERING: Automatically adds `WHERE tenantId = ?` to all reads
  * 2. DATA INJECTION: Automatically sets `tenantId` on all creates
@@ -542,70 +541,3 @@ export function getTenantPrismaFromHeaders(headers: Headers): TenantPrismaClient
 
   return createTenantPrismaClient(context);
 }
-
-/*
- * ════════════════════════════════════════════════════════════════════════════════
- * PRISMA-TENANT.TS PRODUCTION REVIEW SUMMARY
- * ════════════════════════════════════════════════════════════════════════════════
- *
- * SECURITY FIXES APPLIED:
- * ──────────────────────────────────────────────────────────────────────────────
- * 1. [FIXED] update() - Pre-verifies record ownership with findFirst before update
- * 2. [FIXED] delete() - Pre-verifies record ownership with findFirst before delete
- * 3. [FIXED] upsert() - Checks for cross-tenant record existence before operation
- * 4. [FIXED] Raw queries blocked ($queryRaw, $executeRaw, $queryRawUnsafe, $executeRawUnsafe)
- * 5. [FIXED] TenantId validation with CUID format check (rejects empty/whitespace/invalid)
- *
- * TENANT-SCOPED MODELS (41 models):
- * ──────────────────────────────────────────────────────────────────────────────
- * Asset, AssetCategory, AssetHistory, AssetRequest, AssetTypeMapping,
- * Subscription, Location, TeamMember, ProfileChangeRequest, LeaveType,
- * LeaveBalance, LeaveRequest, PublicHoliday, SalaryStructure, PayrollRun,
- * Payslip, EmployeeLoan, SpendRequest, Supplier, SupplierEngagement,
- * ApprovalPolicy, ApprovalStep, MaintenanceRecord, DepreciationCategory,
- * DepreciationRecord, CompanyDocumentType, CompanyDocument, ActivityLog,
- * Notification, SystemSettings, RolePermission, ChatConversation,
- * AIChatUsage, AIChatAuditLog, WhatsAppConfig, WhatsAppUserPhone,
- * WhatsAppActionToken, WhatsAppMessageLog
- *
- * GLOBAL MODELS (NO FILTERING):
- * ──────────────────────────────────────────────────────────────────────────────
- * User, Account, Session, VerificationToken, Organization,
- * OrganizationInvitation, OrganizationSetupProgress, RevokedImpersonationToken,
- * AppSetting, PlatformWhatsAppConfig, Feedback, EmailFailureLog, ErrorLog
- *
- * CHILD MODELS (Inherit isolation via CASCADE DELETE from parent):
- * ──────────────────────────────────────────────────────────────────────────────
- * SubscriptionHistory, SpendRequestItem, SpendRequestHistory,
- * LeaveRequestHistory, SalaryStructureHistory, PayrollHistory,
- * PayslipDeduction, LoanRepayment, AssetRequestHistory, ChatMessage,
- * ApprovalLevel
- *
- * PERFORMANCE NOTE:
- * ──────────────────────────────────────────────────────────────────────────────
- * The security pre-checks in update/delete/upsert add one additional query per
- * operation. This is a necessary trade-off for proper tenant isolation, as
- * Prisma's unique constraint matching in update/delete bypasses compound where.
- *
- * ISOLATION VERIFICATION:
- * ──────────────────────────────────────────────────────────────────────────────
- *   [x] findMany filtering: VERIFIED
- *   [x] findFirst filtering: VERIFIED
- *   [x] findUnique protection: VERIFIED (post-fetch check)
- *   [x] create injection: VERIFIED
- *   [x] createMany injection: VERIFIED
- *   [x] update protection: VERIFIED (pre-check query)
- *   [x] updateMany filtering: VERIFIED
- *   [x] delete protection: VERIFIED (pre-check query)
- *   [x] deleteMany filtering: VERIFIED
- *   [x] upsert protection: VERIFIED (cross-tenant check)
- *   [x] count/aggregate/groupBy: VERIFIED
- *   [x] Raw query blocking: VERIFIED
- *   [x] TenantId validation: VERIFIED (CUID format)
- *   [x] TenantId modification blocked: VERIFIED
- *
- * DATA ISOLATION CONFIDENCE: HIGH
- * PRODUCTION READY: YES
- *
- * ════════════════════════════════════════════════════════════════════════════════
- */

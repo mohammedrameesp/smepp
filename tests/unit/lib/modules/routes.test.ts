@@ -331,7 +331,7 @@ describe('Module Routes Tests', () => {
         const permissions: PermissionContext = { hasHRAccess: true };
         const result = checkPermissionAccess('/admin/assets', permissions);
         expect(result.allowed).toBe(false);
-        expect(result.requiredPermission).toBe('hasOperationsAccess');
+        expect(result.requiredPermissions).toContain('hasOperationsAccess');
       });
     });
 
@@ -350,26 +350,41 @@ describe('Module Routes Tests', () => {
         const permissions: PermissionContext = { hasOperationsAccess: true };
         const result = checkPermissionAccess('/admin/employees', permissions);
         expect(result.allowed).toBe(false);
-        expect(result.requiredPermission).toBe('hasHRAccess');
+        expect(result.requiredPermissions).toContain('hasHRAccess');
       });
     });
 
     describe('Finance Access', () => {
-      it('should allow finance access to /admin/payroll', () => {
-        const permissions: PermissionContext = { hasFinanceAccess: true };
-        expect(checkPermissionAccess('/admin/payroll', permissions).allowed).toBe(true);
-      });
-
       it('should allow finance access to /admin/spend-requests', () => {
         const permissions: PermissionContext = { hasFinanceAccess: true };
         expect(checkPermissionAccess('/admin/spend-requests', permissions).allowed).toBe(true);
       });
 
-      it('should block user without finance access from /admin/payroll', () => {
+      it('should block user without finance access from /admin/spend-requests', () => {
+        const permissions: PermissionContext = { hasOperationsAccess: true };
+        const result = checkPermissionAccess('/admin/spend-requests', permissions);
+        expect(result.allowed).toBe(false);
+        expect(result.requiredPermissions).toContain('hasFinanceAccess');
+      });
+    });
+
+    describe('Payroll Access (HR or Finance)', () => {
+      it('should allow HR access to /admin/payroll', () => {
+        const permissions: PermissionContext = { hasHRAccess: true };
+        expect(checkPermissionAccess('/admin/payroll', permissions).allowed).toBe(true);
+      });
+
+      it('should allow finance access to /admin/payroll', () => {
+        const permissions: PermissionContext = { hasFinanceAccess: true };
+        expect(checkPermissionAccess('/admin/payroll', permissions).allowed).toBe(true);
+      });
+
+      it('should block user without HR or finance access from /admin/payroll', () => {
         const permissions: PermissionContext = { hasOperationsAccess: true };
         const result = checkPermissionAccess('/admin/payroll', permissions);
         expect(result.allowed).toBe(false);
-        expect(result.requiredPermission).toBe('hasFinanceAccess');
+        expect(result.requiredPermissions).toContain('hasHRAccess');
+        expect(result.requiredPermissions).toContain('hasFinanceAccess');
       });
     });
 
@@ -378,7 +393,7 @@ describe('Module Routes Tests', () => {
         const permissions: PermissionContext = { hasHRAccess: true };
         const result = checkPermissionAccess('/ADMIN/ASSETS', permissions);
         expect(result.allowed).toBe(false);
-        expect(result.requiredPermission).toBe('hasOperationsAccess');
+        expect(result.requiredPermissions).toContain('hasOperationsAccess');
       });
 
       it('should allow /Admin/Assets with operations access', () => {

@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Module Registry Reference - Durj Platform</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --success: #16a34a;
+      --warning: #d97706;
+      --danger: #dc2626;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-800: #1f2937;
+      --gray-900: #111827;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      color: var(--gray-800);
+      background: var(--gray-50);
+      padding: 2rem;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    h1 { color: var(--gray-900); margin-bottom: 0.5rem; font-size: 2rem; }
+    h2 { color: var(--gray-800); margin: 2rem 0 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--primary); }
+    h3 { color: var(--gray-700); margin: 1.5rem 0 0.75rem; }
+    h4 { color: var(--gray-600); margin: 1rem 0 0.5rem; }
+
+    .subtitle { color: var(--gray-600); margin-bottom: 2rem; }
+
+    .card {
+      background: white;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      border: 1px solid var(--gray-200);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .badge-core { background: var(--danger); color: white; }
+    .badge-hr { background: #8b5cf6; color: white; }
+    .badge-operations { background: var(--primary); color: white; }
+    .badge-system { background: var(--gray-600); color: white; }
+    .badge-free { background: var(--success); color: white; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      font-size: 0.9rem;
+    }
+
+    th, td {
+      padding: 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    th { background: var(--gray-100); font-weight: 600; }
+    tr:hover { background: var(--gray-50); }
+
+    code {
+      background: var(--gray-100);
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 0.85rem;
+    }
+
+    pre {
+      background: var(--gray-800);
+      color: #f8f8f2;
+      padding: 1rem;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+
+    pre code { background: none; padding: 0; color: inherit; }
+
+    .flow-diagram {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      padding: 1rem;
+      background: var(--gray-100);
+      border-radius: 8px;
+      margin: 1rem 0;
+    }
+
+    .flow-box {
+      background: white;
+      border: 2px solid var(--primary);
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      text-align: center;
+      min-width: 120px;
+    }
+
+    .flow-arrow { font-size: 1.5rem; color: var(--gray-400); }
+
+    .dependency-graph {
+      display: flex;
+      gap: 2rem;
+      align-items: flex-start;
+      margin: 1rem 0;
+    }
+
+    .dep-node {
+      background: white;
+      border: 2px solid var(--gray-300);
+      padding: 1rem;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .dep-node.core { border-color: var(--danger); }
+    .dep-node.dependent { border-color: var(--primary); }
+
+    .dep-arrow {
+      display: flex;
+      align-items: center;
+      color: var(--gray-400);
+      font-size: 1.5rem;
+    }
+
+    .route-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .route-tag {
+      background: var(--gray-100);
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 0.8rem;
+    }
+
+    .route-tag.admin { border-left: 3px solid var(--danger); }
+    .route-tag.employee { border-left: 3px solid var(--success); }
+    .route-tag.api { border-left: 3px solid var(--primary); }
+
+    .warning-box {
+      background: #fef3c7;
+      border: 1px solid #f59e0b;
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 1rem 0;
+    }
+
+    .info-box {
+      background: #dbeafe;
+      border: 1px solid var(--primary);
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 1rem 0;
+    }
+
+    .security-box {
+      background: #fee2e2;
+      border: 1px solid var(--danger);
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 1rem 0;
+    }
+
+    .toc {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-bottom: 2rem;
+      border: 1px solid var(--gray-200);
+    }
+
+    .toc ul { list-style: none; padding-left: 1rem; }
+    .toc li { margin: 0.5rem 0; }
+    .toc a { color: var(--primary); text-decoration: none; }
+    .toc a:hover { text-decoration: underline; }
+
+    .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; }
+
+    .function-sig {
+      background: var(--gray-800);
+      color: #a5d6ff;
+      padding: 0.5rem 1rem;
+      border-radius: 4px 4px 0 0;
+      font-family: monospace;
+      font-size: 0.85rem;
+    }
+
+    .function-body {
+      background: var(--gray-100);
+      padding: 1rem;
+      border-radius: 0 0 4px 4px;
+      border: 1px solid var(--gray-200);
+      border-top: none;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Module Registry Reference</h1>
+<p class="subtitle">
+  <code>src/lib/modules/registry.ts</code> - Central source of truth for all feature modules in Durj
+</p>
+
+<!-- Table of Contents -->
+<div class="toc">
+  <h3>Table of Contents</h3>
+  <ul>
+    <li><a href="#overview">1. Overview - What is the Module Registry?</a></li>
+    <li><a href="#how-it-works">2. How Module Access Control Works</a></li>
+    <li><a href="#all-modules">3. All Modules (8 Total)</a></li>
+    <li><a href="#dependencies">4. Module Dependencies</a></li>
+    <li><a href="#routes">5. Route Protection</a></li>
+    <li><a href="#permissions">6. Permission-Based Access Control</a></li>
+    <li><a href="#functions">7. Helper Functions</a></li>
+    <li><a href="#security">8. Security Considerations</a></li>
+    <li><a href="#adding-modules">9. How to Add a New Module</a></li>
+  </ul>
+</div>
+
+<!-- Section 1: Overview -->
+<h2 id="overview">1. Overview - What is the Module Registry?</h2>
+
+<div class="card">
+  <p>The <strong>Module Registry</strong> is the single source of truth that defines all feature modules in Durj. Think of it as a "catalog" of features that organizations can enable or disable.</p>
+
+  <h4>What it stores for each module:</h4>
+  <table>
+    <tr><th>Property</th><th>Purpose</th><th>Example</th></tr>
+    <tr><td><code>id</code></td><td>Unique identifier (kebab-case)</td><td><code>'spend-requests'</code></td></tr>
+    <tr><td><code>name</code></td><td>Display name for UI</td><td><code>'Spend Requests'</code></td></tr>
+    <tr><td><code>description</code></td><td>Short description</td><td><code>'Internal spending approval workflow'</code></td></tr>
+    <tr><td><code>icon</code></td><td>Lucide React icon component</td><td><code>ShoppingCart</code></td></tr>
+    <tr><td><code>category</code></td><td>Grouping category</td><td><code>'operations'</code> | <code>'hr'</code> | <code>'system'</code></td></tr>
+    <tr><td><code>requires</code></td><td>Dependencies (must be enabled first)</td><td><code>['employees']</code></td></tr>
+    <tr><td><code>requiredBy</code></td><td>Modules that depend on this (auto-computed)</td><td><code>['leave', 'payroll']</code></td></tr>
+    <tr><td><code>adminRoutes</code></td><td>Protected admin URL prefixes</td><td><code>['/admin/leave']</code></td></tr>
+    <tr><td><code>employeeRoutes</code></td><td>Protected employee URL prefixes</td><td><code>['/employee/leave']</code></td></tr>
+    <tr><td><code>apiRoutes</code></td><td>Protected API URL prefixes</td><td><code>['/api/leave']</code></td></tr>
+    <tr><td><code>isCore</code></td><td>Cannot be uninstalled if true</td><td><code>true</code> (employees only)</td></tr>
+    <tr><td><code>isFree</code></td><td>Available on free tier</td><td><code>true</code> (all currently)</td></tr>
+  </table>
+</div>
+
+<!-- Section 2: How it Works -->
+<h2 id="how-it-works">2. How Module Access Control Works</h2>
+
+<div class="card">
+  <h4>The 3-Level Protection System</h4>
+  <p>Module access is enforced at three levels to ensure security:</p>
+
+  <div class="flow-diagram">
+    <div class="flow-box">
+      <strong>1. Middleware</strong><br>
+      <small>Edge Runtime</small><br>
+      <code>middleware.ts</code>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">
+      <strong>2. API Handler</strong><br>
+      <small>Server-side</small><br>
+      <code>handler.ts</code>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">
+      <strong>3. UI</strong><br>
+      <small>Client-side</small><br>
+      <code>modules page</code>
+    </div>
+  </div>
+
+  <h4>Level 1: Middleware (First Line of Defense)</h4>
+  <ul>
+    <li>Runs at the Edge before any server code</li>
+    <li>Checks if the requested route belongs to a module</li>
+    <li>If module is disabled → redirects to <code>/admin/modules</code></li>
+    <li>Uses <code>routes.ts</code> (auto-generated from this registry)</li>
+  </ul>
+
+  <h4>Level 2: API Handler (Second Line of Defense)</h4>
+  <ul>
+    <li>Each API route can specify <code>requireModule: 'moduleName'</code></li>
+    <li>If module is disabled → returns <code>403 MODULE_NOT_INSTALLED</code></li>
+    <li>This is a backup in case middleware is bypassed</li>
+  </ul>
+
+  <pre><code>// Example API route protection
+export const GET = withErrorHandler(async (request, { prisma }) => {
+  const payslips = await prisma.payslip.findMany();
+  return NextResponse.json(payslips);
+}, {
+  requireAuth: true,
+  requireModule: 'payroll'  // ← Blocks if payroll module not enabled
+});</code></pre>
+
+  <h4>Level 3: UI (User Experience)</h4>
+  <ul>
+    <li>Hides navigation links for disabled modules</li>
+    <li>Shows "upgrade" prompts where appropriate</li>
+    <li>This is for UX only - NOT for security (users can bypass UI)</li>
+  </ul>
+</div>
+
+<!-- Section 3: All Modules -->
+<h2 id="all-modules">3. All Modules (8 Total)</h2>
+
+<div class="info-box">
+  <strong>Note:</strong> All modules are currently FREE (tier restrictions disabled). The <code>tier</code> field exists for future use.
+</div>
+
+<!-- Operations Modules -->
+<h3>Operations Modules (4)</h3>
+<p>Enabled by default for new organizations.</p>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-operations">Operations</span>
+      <span class="badge badge-free">Free</span>
+    </div>
+    <h4>📦 Asset Management</h4>
+    <p><code>id: 'assets'</code></p>
+    <p>Track company assets, assignments, maintenance & warranties</p>
+    <p><strong>Dependencies:</strong> <code>employees</code></p>
+    <div class="route-list">
+      <span class="route-tag admin">/admin/assets</span>
+      <span class="route-tag admin">/admin/asset-requests</span>
+      <span class="route-tag employee">/employee/assets</span>
+      <span class="route-tag employee">/employee/my-assets</span>
+      <span class="route-tag api">/api/assets</span>
+      <span class="route-tag api">/api/asset-categories</span>
+      <span class="route-tag api">/api/asset-types</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-operations">Operations</span>
+      <span class="badge badge-free">Free</span>
+    </div>
+    <h4>💳 Subscription Tracking</h4>
+    <p><code>id: 'subscriptions'</code></p>
+    <p>Monitor SaaS services, renewals, and recurring costs</p>
+    <p><strong>Dependencies:</strong> <code>employees</code></p>
+    <div class="route-list">
+      <span class="route-tag admin">/admin/subscriptions</span>
+      <span class="route-tag employee">/employee/subscriptions</span>
+      <span class="route-tag api">/api/subscriptions</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-operations">Operations</span>
+      <span class="badge badge-free">Free</span>
+    </div>
+    <h4>🚚 Supplier Management</h4>
+    <p><code>id: 'suppliers'</code></p>
+    <p>Manage vendors, contracts, and supplier relationships</p>
+    <p><strong>Dependencies:</strong> None</p>
+    <div class="route-list">
+      <span class="route-tag admin">/admin/suppliers</span>
+      <span class="route-tag employee">/employee/suppliers</span>
+      <span class="route-tag api">/api/suppliers</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-operations">Operations</span>
+      <span class="badge" style="background: #059669; color: white;">Finance</span>
+      <span class="badge badge-free">Free</span>
+    </div>
+    <h4>🛒 Spend Requests</h4>
+    <p><code>id: 'spend-requests'</code></p>
+    <p>Internal spending approval workflow</p>
+    <p><strong>Dependencies:</strong> <code>employees</code></p>
+    <p><strong>Permissions:</strong> <code>hasFinanceAccess</code></p>
+    <div class="route-list">
+      <span class="route-tag admin">/admin/spend-requests</span>
+      <span class="route-tag employee">/employee/spend-requests</span>
+      <span class="route-tag api">/api/spend-requests</span>
+    </div>
+  </div>
+</div>
+
+<!-- HR Modules -->
+<h3>HR Modules (3)</h3>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-hr">HR</span>
+      <span class="badge badge-core">Core</span>
+      <span class="badge badge-free">Free</span>
+    </div>
+    <h4>👥 Employee Management</h4>
+    <p><code>id: 'employees'</code></p>
+    <p>Manage employee profiles, departments, and organizational structure</p>
+    <p><strong>Dependencies:</strong> None</p>
+    <p><strong>Required By:</strong> Leave, Payroll</p>
+    <div class="warning-box">
+      <strong>⚠️ CORE MODULE:</strong> Cannot be uninstalled. Always enabled.
+    </div>
+    <div class="route-list">
+      <span class="route-tag admin">/admin/employees</span>
+      <span class="route-tag api">/api/employees</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-hr">HR</span>
+      <span class="badge badge-free">Free</span>
+    </div>
+    <h4>📅 Leave Management</h4>
+    <p><code>id: 'leave'</code></p>
+    <p>Leave requests, balances, approvals, and team calendar</p>
+    <p><strong>Dependencies:</strong> <code>employees</code></p>
+    <div class="route-list">
+      <span class="route-tag admin">/admin/leave</span>
+      <span class="route-tag employee">/employee/leave</span>
+      <span class="route-tag api">/api/leave</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-hr">HR</span>
+      <span class="badge" style="background: #059669; color: white;">Finance</span>
+      <span class="badge badge-free">Free</span>
+    </div>
+    <h4>💵 Payroll Processing</h4>
+    <p><code>id: 'payroll'</code></p>
+    <p>Salary structures, payslips, loans, and gratuity calculations</p>
+    <p><strong>Dependencies:</strong> <code>employees</code></p>
+    <p><strong>Permissions:</strong> <code>hasHRAccess</code> OR <code>hasFinanceAccess</code></p>
+    <div class="route-list">
+      <span class="route-tag admin">/admin/payroll</span>
+      <span class="route-tag employee">/employee/payroll</span>
+      <span class="route-tag api">/api/payroll</span>
+      <span class="route-tag api">/api/settings/payroll-percentages</span>
+    </div>
+  </div>
+</div>
+
+<!-- System Modules -->
+<h3>System Modules (1)</h3>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-system">System</span>
+      <span class="badge badge-free">Free</span>
+    </div>
+    <h4>📄 Company Documents</h4>
+    <p><code>id: 'documents'</code></p>
+    <p>Track licenses, certifications, and compliance documents</p>
+    <p><strong>Dependencies:</strong> None</p>
+    <div class="route-list">
+      <span class="route-tag admin">/admin/company-documents</span>
+      <span class="route-tag api">/api/company-documents</span>
+      <span class="route-tag api">/api/company-document-types</span>
+    </div>
+  </div>
+</div>
+
+<!-- Section 4: Dependencies -->
+<h2 id="dependencies">4. Module Dependencies</h2>
+
+<div class="card">
+  <h4>Dependency Graph</h4>
+  <p>Some modules require other modules to be installed first:</p>
+
+  <div style="text-align: center; padding: 2rem; background: var(--gray-100); border-radius: 8px; margin: 1rem 0;">
+    <pre style="background: transparent; color: var(--gray-800); text-align: left; display: inline-block;">
+                         ┌─────────────┐
+                         │  EMPLOYEES  │ ← CORE (always enabled)
+                         │   (core)    │
+                         └──────┬──────┘
+                                │
+        ┌───────────┬───────────┼───────────┬───────────┐
+        │           │           │           │           │
+        ▼           ▼           ▼           ▼           ▼
+   ┌────────┐ ┌───────────┐ ┌───────┐ ┌─────────┐ ┌─────────┐
+   │ ASSETS │ │SUBSCRIP-  │ │ LEAVE │ │ PAYROLL │ │ SPEND-  │
+   └────────┘ │   TIONS   │ └───────┘ └─────────┘ │REQUESTS │
+              └───────────┘                       └─────────┘
+
+    ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─
+    No dependencies (standalone):
+
+    ┌───────────┐     ┌───────────┐
+    │ SUPPLIERS │     │ DOCUMENTS │
+    └───────────┘     └───────────┘
+    </pre>
+  </div>
+
+  <h4>Dependency Rules</h4>
+  <table>
+    <tr><th>Rule</th><th>Example</th></tr>
+    <tr>
+      <td>Cannot install a module without its dependencies</td>
+      <td>Cannot enable "Leave" without "Employees" enabled first</td>
+    </tr>
+    <tr>
+      <td>Cannot uninstall a module if others depend on it</td>
+      <td>Cannot disable "Employees" while "Leave" is enabled</td>
+    </tr>
+    <tr>
+      <td>Core modules cannot be uninstalled at all</td>
+      <td>"Employees" is always enabled (isCore: true)</td>
+    </tr>
+  </table>
+
+  <h4>How requiredBy is Auto-Computed</h4>
+  <p>You only need to set <code>requires</code>. The <code>requiredBy</code> field is automatically computed when the file loads:</p>
+
+  <pre><code>// In registry.ts - You write this:
+leave: {
+  requires: ['employees'],  // Leave depends on Employees
+  requiredBy: [],           // ← Will be auto-computed
+}
+
+// The IIFE at the bottom runs and computes:
+employees: {
+  requiredBy: ['leave', 'payroll']  // ← Auto-filled!
+}</code></pre>
+</div>
+
+<!-- Section 5: Routes -->
+<h2 id="routes">5. Route Protection</h2>
+
+<div class="card">
+  <h4>How Routes Are Protected</h4>
+  <p>Each module defines which URL paths it protects. When a user visits a protected route, the system checks if the module is enabled for their organization.</p>
+
+  <table>
+    <tr>
+      <th>Route Type</th>
+      <th>Pattern</th>
+      <th>Who Uses It</th>
+      <th>Example</th>
+    </tr>
+    <tr>
+      <td><span class="route-tag admin">Admin Routes</span></td>
+      <td><code>/admin/*</code></td>
+      <td>Organization admins/managers</td>
+      <td><code>/admin/payroll</code></td>
+    </tr>
+    <tr>
+      <td><span class="route-tag employee">Employee Routes</span></td>
+      <td><code>/employee/*</code></td>
+      <td>All employees</td>
+      <td><code>/employee/leave</code></td>
+    </tr>
+    <tr>
+      <td><span class="route-tag api">API Routes</span></td>
+      <td><code>/api/*</code></td>
+      <td>Frontend/integrations</td>
+      <td><code>/api/leave</code></td>
+    </tr>
+  </table>
+
+  <h4>Route Matching Rules</h4>
+  <ul>
+    <li><strong>Prefix matching:</strong> <code>/admin/assets</code> protects <code>/admin/assets</code>, <code>/admin/assets/123</code>, <code>/admin/assets/new</code>, etc.</li>
+    <li><strong>Case-insensitive:</strong> <code>/Admin/Assets</code> and <code>/ADMIN/ASSETS</code> are treated the same (security)</li>
+    <li><strong>Query strings stripped:</strong> <code>/admin/assets?page=1</code> matches <code>/admin/assets</code></li>
+  </ul>
+
+  <div class="warning-box">
+    <strong>⚠️ Important:</strong> Routes are defined in <code>registry.ts</code> and auto-generated to <code>routes.generated.ts</code>.
+    After adding routes, run: <code>npm run generate:routes</code>
+  </div>
+</div>
+
+<!-- Section 6: Permissions -->
+<h2 id="permissions">6. Permission-Based Access Control</h2>
+
+<div class="card">
+  <h4>Overview</h4>
+  <p>In addition to module-based access, admin routes are protected by <strong>department permissions</strong>. Users need the appropriate permission flag to access certain areas.</p>
+
+  <div class="info-box">
+    <strong>Note:</strong> Admins and Owners bypass all permission checks - they have full access to everything.
+  </div>
+
+  <h4>Permission Flags</h4>
+  <table>
+    <tr>
+      <th>Permission</th>
+      <th>Description</th>
+      <th>Protected Routes</th>
+    </tr>
+    <tr>
+      <td><code>hasOperationsAccess</code></td>
+      <td>Access to operations/inventory management</td>
+      <td>
+        <code>/admin/assets</code>, <code>/admin/asset-requests</code>,<br>
+        <code>/admin/subscriptions</code>, <code>/admin/suppliers</code>
+      </td>
+    </tr>
+    <tr>
+      <td><code>hasHRAccess</code></td>
+      <td>Access to human resources management</td>
+      <td>
+        <code>/admin/employees</code>, <code>/admin/leave</code>,<br>
+        <code>/admin/payroll</code> (shared with Finance)
+      </td>
+    </tr>
+    <tr>
+      <td><code>hasFinanceAccess</code></td>
+      <td>Access to financial operations</td>
+      <td>
+        <code>/admin/spend-requests</code>,<br>
+        <code>/admin/payroll</code> (shared with HR)
+      </td>
+    </tr>
+  </table>
+
+  <h4>Multi-Permission Routes (OR Logic)</h4>
+  <p>Some routes accept <strong>any</strong> of multiple permissions:</p>
+
+  <table>
+    <tr>
+      <th>Route</th>
+      <th>Accepted Permissions</th>
+      <th>Rationale</th>
+    </tr>
+    <tr>
+      <td><code>/admin/payroll</code></td>
+      <td><code>hasHRAccess</code> <strong>OR</strong> <code>hasFinanceAccess</code></td>
+      <td>HR manages employee compensation; Finance handles accounting</td>
+    </tr>
+  </table>
+
+  <h4>Access Check Examples</h4>
+  <pre><code>// User with HR access can view payroll
+checkPermissionAccess('/admin/payroll', { hasHRAccess: true });
+// { allowed: true }
+
+// User with Finance access can also view payroll
+checkPermissionAccess('/admin/payroll', { hasFinanceAccess: true });
+// { allowed: true }
+
+// User with only Operations access cannot view payroll
+checkPermissionAccess('/admin/payroll', { hasOperationsAccess: true });
+// { allowed: false, requiredPermissions: ['hasHRAccess', 'hasFinanceAccess'] }
+
+// Admins bypass all permission checks
+checkPermissionAccess('/admin/payroll', { isAdmin: true });
+// { allowed: true }</code></pre>
+</div>
+
+<!-- Section 7: Functions -->
+<h2 id="functions">7. Helper Functions</h2>
+
+<div class="card">
+  <h4>Validation Functions</h4>
+
+  <div class="function-sig">isValidModuleId(moduleId: string): boolean</div>
+  <div class="function-body">
+    <p>Check if a string is a valid module ID. Use for validating user input.</p>
+    <pre><code>isValidModuleId('assets')     // true
+isValidModuleId('invalid')    // false
+isValidModuleId('ASSETS')     // false (case-sensitive)</code></pre>
+  </div>
+
+  <div class="function-sig">validateModuleIds(moduleIds: string[]): ModuleId[]</div>
+  <div class="function-body">
+    <p>Filter an array to only valid module IDs.</p>
+    <pre><code>validateModuleIds(['assets', 'invalid', 'leave'])
+// Returns: ['assets', 'leave']</code></pre>
+  </div>
+</div>
+
+<div class="card">
+  <h4>Query Functions</h4>
+
+  <div class="function-sig">getModule(moduleId: string): ModuleDefinition | undefined</div>
+  <div class="function-body">
+    <p>Get full module definition by ID.</p>
+    <pre><code>const leave = getModule('leave');
+console.log(leave.name);      // "Leave Management"
+console.log(leave.requires);  // ['employees']</code></pre>
+  </div>
+
+  <div class="function-sig">getModulesByCategory(category: 'operations' | 'hr' | 'system'): ModuleDefinition[]</div>
+  <div class="function-body">
+    <p>Get all modules in a category.</p>
+    <pre><code>const hrModules = getModulesByCategory('hr');
+// Returns: [employees, leave, payroll]</code></pre>
+  </div>
+
+  <div class="function-sig">getModuleDependencies(moduleId: string): ModuleId[]</div>
+  <div class="function-body">
+    <p>Get what modules this one requires.</p>
+    <pre><code>getModuleDependencies('leave')    // ['employees']
+getModuleDependencies('assets')   // []</code></pre>
+  </div>
+
+  <div class="function-sig">getModuleDependents(moduleId: string): ModuleId[]</div>
+  <div class="function-body">
+    <p>Get what modules depend on this one.</p>
+    <pre><code>getModuleDependents('employees')  // ['leave', 'payroll']
+getModuleDependents('leave')      // []</code></pre>
+  </div>
+</div>
+
+<div class="card">
+  <h4>Installation Check Functions</h4>
+
+  <div class="function-sig">canInstallModule(moduleId: string, enabledModules: string[], tier: SubscriptionTier): string | null</div>
+  <div class="function-body">
+    <p>Check if a module can be installed. Returns error message or null if OK.</p>
+    <pre><code>// Missing dependency
+canInstallModule('leave', ['assets'], 'FREE')
+// Returns: "Leave Management requires: Employee Management"
+
+// Can install
+canInstallModule('leave', ['employees'], 'FREE')
+// Returns: null (OK to install)</code></pre>
+  </div>
+
+  <div class="function-sig">canUninstallModule(moduleId: string, enabledModules: string[]): string | null</div>
+  <div class="function-body">
+    <p>Check if a module can be uninstalled. Returns error message or null if OK.</p>
+    <pre><code>// Core module
+canUninstallModule('employees', ['employees', 'leave'])
+// Returns: "Employee Management is a core module..."
+
+// Has dependents
+canUninstallModule('employees', ['employees', 'leave'])
+// Returns: "Cannot uninstall... Leave depends on it"
+
+// Can uninstall
+canUninstallModule('leave', ['employees', 'leave'])
+// Returns: null (OK to uninstall)</code></pre>
+  </div>
+</div>
+
+<div class="card">
+  <h4>Route Functions</h4>
+
+  <div class="function-sig">getModuleForRoute(route: string): ModuleId | null</div>
+  <div class="function-body">
+    <p>Find which module protects a route.</p>
+    <pre><code>getModuleForRoute('/admin/assets')        // 'assets'
+getModuleForRoute('/admin/assets/123')    // 'assets'
+getModuleForRoute('/admin/settings')      // null (not protected)</code></pre>
+  </div>
+</div>
+
+<!-- Section 8: Security -->
+<h2 id="security">8. Security Considerations</h2>
+
+<div class="security-box">
+  <h4>🔒 Critical Security Rules</h4>
+  <ol>
+    <li><strong>Server-side enforcement is mandatory.</strong> Client-side checks are for UX only - users can bypass them.</li>
+    <li><strong>Module IDs must be validated.</strong> Use <code>isValidModuleId()</code> before processing user input.</li>
+    <li><strong>Route matching is case-insensitive.</strong> Prevents bypass via <code>/Admin/Assets</code> vs <code>/admin/assets</code>.</li>
+    <li><strong>Core modules cannot be uninstalled.</strong> The <code>employees</code> module is always enabled.</li>
+    <li><strong>Dependencies are enforced.</strong> Cannot enable <code>leave</code> without <code>employees</code>.</li>
+  </ol>
+</div>
+
+<div class="card">
+  <h4>Where Security Checks Happen</h4>
+  <table>
+    <tr><th>Location</th><th>File</th><th>What It Does</th></tr>
+    <tr>
+      <td>Edge Middleware</td>
+      <td><code>middleware.ts</code></td>
+      <td>Blocks routes for disabled modules before request reaches server</td>
+    </tr>
+    <tr>
+      <td>API Handler</td>
+      <td><code>handler.ts</code></td>
+      <td>Checks <code>requireModule</code> option, returns 403 if disabled</td>
+    </tr>
+    <tr>
+      <td>Route Validation</td>
+      <td><code>routes.ts</code></td>
+      <td>Case-insensitive matching, query string stripping</td>
+    </tr>
+    <tr>
+      <td>Module ID Validation</td>
+      <td><code>registry.ts</code></td>
+      <td><code>isValidModuleId()</code> rejects unknown/invalid IDs</td>
+    </tr>
+  </table>
+</div>
+
+<!-- Section 9: Adding Modules -->
+<h2 id="adding-modules">9. How to Add a New Module</h2>
+
+<div class="card">
+  <h4>Step-by-Step Guide</h4>
+
+  <p><strong>Step 1:</strong> Add the module ID to the <code>ModuleId</code> type:</p>
+  <pre><code>export type ModuleId =
+  | 'assets'
+  | 'subscriptions'
+  // ... existing modules
+  | 'my-new-module';  // ← Add here</code></pre>
+
+  <p><strong>Step 2:</strong> Add the module definition to <code>MODULE_REGISTRY</code>:</p>
+  <pre><code>'my-new-module': {
+  id: 'my-new-module',
+  name: 'My New Module',
+  description: 'Description of what it does',
+  icon: SomeIcon,           // Import from lucide-react
+  iconName: 'SomeIcon',
+  category: 'operations',   // or 'hr' or 'system'
+  tier: 'FREE',
+  isFree: true,
+  requires: [],             // or ['employees'] if it depends on employees
+  requiredBy: [],           // Leave empty - auto-computed
+  adminRoutes: ['/admin/my-new-module'],
+  employeeRoutes: ['/employee/my-new-module'],
+  apiRoutes: ['/api/my-new-module'],
+  isCore: false,
+  isBeta: false,
+  isDeprecated: false,
+},</code></pre>
+
+  <p><strong>Step 3:</strong> Regenerate routes:</p>
+  <pre><code>npm run generate:routes</code></pre>
+
+  <p><strong>Step 4:</strong> Add <code>requireModule</code> to your API routes:</p>
+  <pre><code>// src/app/api/my-new-module/route.ts
+export const GET = withErrorHandler(async (request, { prisma }) => {
+  // Your handler code
+}, {
+  requireAuth: true,
+  requireModule: 'my-new-module'  // ← Add this
+});</code></pre>
+
+  <p><strong>Step 5:</strong> Run tests:</p>
+  <pre><code>npm test -- tests/unit/lib/modules</code></pre>
+</div>
+
+<hr style="margin: 3rem 0;">
+
+<p style="text-align: center; color: var(--gray-600);">
+  Generated from <code>src/lib/modules/registry.ts</code><br>
+  Last updated: January 2026
+</p>
+
+</body>
+</html>

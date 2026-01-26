@@ -196,7 +196,7 @@ export const MODULE_REGISTRY: ModuleRegistry = {
     category: 'operations',
     tier: 'FREE',
     isFree: true,
-    requires: [],
+    requires: ['employees'], // Assets are assigned to employees
     requiredBy: [], // Auto-computed
     adminRoutes: ['/admin/assets', '/admin/asset-requests'],
     employeeRoutes: ['/employee/assets', '/employee/my-assets', '/employee/asset-requests'],
@@ -226,7 +226,7 @@ export const MODULE_REGISTRY: ModuleRegistry = {
     category: 'operations',
     tier: 'FREE',
     isFree: true,
-    requires: [],
+    requires: ['employees'], // Subscriptions have employee owners/managers
     requiredBy: [], // Auto-computed
     adminRoutes: ['/admin/subscriptions'],
     employeeRoutes: ['/employee/subscriptions'],
@@ -274,7 +274,7 @@ export const MODULE_REGISTRY: ModuleRegistry = {
     category: 'operations',
     tier: 'FREE',
     isFree: true,
-    requires: [],
+    requires: ['employees'], // Requests submitted/approved by employees
     requiredBy: [], // Auto-computed
     adminRoutes: ['/admin/spend-requests'],
     employeeRoutes: ['/employee/spend-requests'],
@@ -799,84 +799,3 @@ export function getSerializableModules(): SerializableModuleInfo[] {
       isBeta: m.isBeta,
     }));
 }
-
-/*
- * ════════════════════════════════════════════════════════════════════════════════
- * REGISTRY.TS PRODUCTION REVIEW SUMMARY
- * ════════════════════════════════════════════════════════════════════════════════
- *
- * MODULES DEFINED: 8
- * - assets, subscriptions, suppliers, spend-requests (Operations)
- * - employees, leave, payroll (HR)
- * - documents (System)
- *
- * SECURITY FINDINGS:
- * ────────────────────────────────────────────────────────────────────────────────
- * 1. [FIXED] Module IDs now validated via isValidModuleId() type guard
- * 2. [FIXED] Route matching now case-insensitive (prevent /Admin/Assets bypass)
- * 3. [VERIFIED] Core modules (employees) cannot be uninstalled
- * 4. [VERIFIED] Dependencies enforced before installation
- * 5. [VERIFIED] Invalid dependencies in registry logged as security event
- * 6. [VERIFIED] API routes protected by requireModule in handler.ts
- * 7. [VERIFIED] Route-level protection in middleware via routes.ts
- *
- * COMPLETENESS CHECK:
- * ────────────────────────────────────────────────────────────────────────────────
- * - [YES] All feature modules defined
- * - [YES] All admin routes protected
- * - [YES] All employee routes protected
- * - [YES] All API routes protected (via requireModule option)
- * - [YES] Dependencies correctly mapped (leave, payroll → employees)
- * - [YES] Tier restrictions documented (currently disabled)
- *
- * CHANGES MADE:
- * ────────────────────────────────────────────────────────────────────────────────
- * 1. Added comprehensive JSDoc file header with usage examples
- * 2. Added ModuleId type for type-safe module references
- * 3. Updated ModuleDefinition interface with typed arrays
- * 4. Fixed leave.requires and payroll.requires to include 'employees'
- * 5. Added isValidModuleId() type guard for security
- * 6. Added ALL_MODULE_IDS constant for validation
- * 7. Made getModuleForRoute() case-insensitive
- * 8. Added more API routes to assets module (categories, types, mappings)
- * 9. Added payroll settings API route to payroll module
- * 10. Added company-document-types API route to documents module
- * 11. Improved all function documentation with @example tags
- * 12. Added @security tags to security-critical functions
- *
- * REMAINING CONCERNS:
- * ────────────────────────────────────────────────────────────────────────────────
- * 1. routes.ts has duplicated route mappings - should be auto-generated
- *    from this registry, but that would break Edge Runtime compatibility
- * 2. New modules added to codebase must be manually added here
- *
- * SYNC VERIFICATION:
- * ────────────────────────────────────────────────────────────────────────────────
- * - [SYNCED] Admin routes match src/app/admin/ structure
- * - [SYNCED] Employee routes match src/app/employee/ structure
- * - [SYNCED] API routes match requireModule usage in handlers
- * - [NOTE] routes.ts needs manual sync with this file
- *
- * REQUIRED TESTS:
- * ────────────────────────────────────────────────────────────────────────────────
- * Unit Tests (tests/unit/lib/modules/registry.test.ts):
- * - [EXISTING] All modules defined with required fields
- * - [EXISTING] Dependencies computed correctly
- * - [EXISTING] canInstallModule respects dependencies
- * - [EXISTING] canUninstallModule respects core status
- * - [EXISTING] Circular dependency detection
- * - [ADD] isValidModuleId returns true for valid IDs
- * - [ADD] isValidModuleId returns false for invalid IDs
- * - [ADD] getModuleForRoute case-insensitive matching
- * - [ADD] validateModuleIds filters invalid IDs
- *
- * Security Tests (tests/security/modules/):
- * - [ADD] Invalid module IDs rejected at API level
- * - [ADD] Case variations in routes don't bypass protection
- * - [ADD] Unknown routes return null (no false positives)
- *
- * REVIEWER CONFIDENCE: HIGH
- * PRODUCTION READY: YES
- *
- * ════════════════════════════════════════════════════════════════════════════════
- */

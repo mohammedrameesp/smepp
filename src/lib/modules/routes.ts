@@ -148,24 +148,28 @@ export type PermissionFlag = 'hasOperationsAccess' | 'hasHRAccess' | 'hasFinance
  * Route prefixes mapped to required permission flags.
  * Admin/employee routes are protected by both module AND permission.
  *
+ * Routes can require multiple permissions (OR logic) - user needs ANY of them.
+ * Example: payroll requires hasHRAccess OR hasFinanceAccess
+ *
  * @note Only admin routes are permission-protected. Employee routes are
  * accessible to all employees if the module is enabled.
  *
  * @note This mapping is NOT auto-generated because permission associations
  * are not part of module definitions in registry.ts.
  */
-const PERMISSION_ROUTE_MAP: ReadonlyArray<{ prefix: string; permission: PermissionFlag }> = [
+const PERMISSION_ROUTE_MAP: ReadonlyArray<{ prefix: string; permissions: PermissionFlag[] }> = [
   // Operations department routes
-  { prefix: '/admin/assets', permission: 'hasOperationsAccess' },
-  { prefix: '/admin/asset-requests', permission: 'hasOperationsAccess' },
-  { prefix: '/admin/subscriptions', permission: 'hasOperationsAccess' },
-  { prefix: '/admin/suppliers', permission: 'hasOperationsAccess' },
+  { prefix: '/admin/assets', permissions: ['hasOperationsAccess'] },
+  { prefix: '/admin/asset-requests', permissions: ['hasOperationsAccess'] },
+  { prefix: '/admin/subscriptions', permissions: ['hasOperationsAccess'] },
+  { prefix: '/admin/suppliers', permissions: ['hasOperationsAccess'] },
   // HR department routes
-  { prefix: '/admin/employees', permission: 'hasHRAccess' },
-  { prefix: '/admin/leave', permission: 'hasHRAccess' },
+  { prefix: '/admin/employees', permissions: ['hasHRAccess'] },
+  { prefix: '/admin/leave', permissions: ['hasHRAccess'] },
+  // HR + Finance department routes (accessible by either)
+  { prefix: '/admin/payroll', permissions: ['hasHRAccess', 'hasFinanceAccess'] },
   // Finance department routes
-  { prefix: '/admin/payroll', permission: 'hasFinanceAccess' },
-  { prefix: '/admin/spend-requests', permission: 'hasFinanceAccess' },
+  { prefix: '/admin/spend-requests', permissions: ['hasFinanceAccess'] },
 ];
 
 /**
@@ -191,8 +195,8 @@ export interface PermissionContext {
 export interface PermissionAccessCheckResult {
   /** Whether access is allowed */
   allowed: boolean;
-  /** The permission flag required (if denied) */
-  requiredPermission?: PermissionFlag;
+  /** The permission flags that would grant access (if denied) */
+  requiredPermissions?: PermissionFlag[];
   /** Human-readable reason for denial */
   reason?: string;
 }
@@ -202,9 +206,11 @@ export interface PermissionAccessCheckResult {
  * Admin and Owner bypass all permission checks.
  * Edge Runtime compatible.
  *
+ * For routes with multiple permissions, user needs ANY of them (OR logic).
+ *
  * @param pathname - The request pathname
  * @param permissions - User's permission flags from token
- * @returns Permission check result with allowed status and required permission if denied
+ * @returns Permission check result with allowed status and required permissions if denied
  *
  * @security Route matching is CASE-INSENSITIVE to prevent bypass attacks
  * @security Admin/Owner always bypass permission checks (they have full access)
@@ -212,7 +218,11 @@ export interface PermissionAccessCheckResult {
  * @example
  * // User without HR access
  * checkPermissionAccess('/admin/employees', { hasOperationsAccess: true });
- * // { allowed: false, requiredPermission: 'hasHRAccess', reason: 'Access denied: requires hasHRAccess' }
+ * // { allowed: false, requiredPermissions: ['hasHRAccess'], reason: 'Access denied: requires hasHRAccess' }
+ *
+ * // Payroll accessible by HR OR Finance
+ * checkPermissionAccess('/admin/payroll', { hasHRAccess: true });
+ * // { allowed: true }
  *
  * // Admin always allowed
  * checkPermissionAccess('/admin/employees', { isAdmin: true });
@@ -232,15 +242,17 @@ export function checkPermissionAccess(
   const normalizedPath = pathOnly.toLowerCase();
 
   // Find matching route prefix
-  for (const { prefix, permission } of PERMISSION_ROUTE_MAP) {
+  for (const { prefix, permissions: requiredPerms } of PERMISSION_ROUTE_MAP) {
     const normalizedPrefix = prefix.toLowerCase();
     if (normalizedPath === normalizedPrefix || normalizedPath.startsWith(normalizedPrefix + '/')) {
-      // Check if user has the required permission
-      if (!permissions[permission]) {
+      // Check if user has ANY of the required permissions (OR logic)
+      const hasAnyPermission = requiredPerms.some(perm => permissions[perm]);
+      if (!hasAnyPermission) {
+        const permList = requiredPerms.join(' or ');
         return {
           allowed: false,
-          requiredPermission: permission,
-          reason: `Access denied: requires ${permission}`,
+          requiredPermissions: requiredPerms,
+          reason: `Access denied: requires ${permList}`,
         };
       }
       break;
@@ -266,7 +278,7 @@ export function _getModuleRouteMap(): ReadonlyArray<{ prefix: string; moduleId: 
  * Get all permission route mappings (for testing/validation only)
  * @internal
  */
-export function _getPermissionRouteMap(): ReadonlyArray<{ prefix: string; permission: PermissionFlag }> {
+export function _getPermissionRouteMap(): ReadonlyArray<{ prefix: string; permissions: PermissionFlag[] }> {
   return PERMISSION_ROUTE_MAP;
 }
 
