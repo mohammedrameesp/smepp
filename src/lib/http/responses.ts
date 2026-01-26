@@ -68,24 +68,14 @@ export function noContentResponse(): NextResponse {
 }
 
 /**
- * Create an error response for validation failures.
- * Use this when Zod validation fails on request body or query params.
- *
- * @example
- * ```ts
- * const validation = mySchema.safeParse(body);
- * if (!validation.success) {
- *   return validationErrorResponse(validation.error);
- * }
- * ```
+ * Create an error response for invalid request body.
  */
-export function validationErrorResponse(
-  error: { issues: Array<{ path: PropertyKey[]; message: string }> },
-  message: string = 'Validation failed'
+export function invalidBodyResponse(
+  error: { issues: Array<{ path: PropertyKey[]; message: string }> }
 ): NextResponse {
   return NextResponse.json(
     {
-      error: message,
+      error: 'Invalid request body',
       details: error.issues,
     },
     { status: 400 }
@@ -93,21 +83,16 @@ export function validationErrorResponse(
 }
 
 /**
- * Create an error response for invalid request body.
- * Convenience wrapper for body validation errors.
- */
-export function invalidBodyResponse(
-  error: { issues: Array<{ path: PropertyKey[]; message: string }> }
-): NextResponse {
-  return validationErrorResponse(error, 'Invalid request body');
-}
-
-/**
  * Create an error response for invalid query parameters.
- * Convenience wrapper for query param validation errors.
  */
 export function invalidQueryResponse(
   error: { issues: Array<{ path: PropertyKey[]; message: string }> }
 ): NextResponse {
-  return validationErrorResponse(error, 'Invalid query parameters');
+  return NextResponse.json(
+    {
+      error: 'Invalid query parameters',
+      details: error.issues,
+    },
+    { status: 400 }
+  );
 }
