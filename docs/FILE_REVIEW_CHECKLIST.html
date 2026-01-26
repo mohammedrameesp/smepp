@@ -88,6 +88,14 @@
 
     <div class="controls">
       <input type="text" id="searchInput" placeholder="Search files..." onkeyup="filterFiles()">
+      <select id="filterSelect" onchange="filterFiles()" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px;">
+        <option value="all">All Files</option>
+        <option value="reviewed">Reviewed Only</option>
+        <option value="unreviewed">Unreviewed Only</option>
+        <option value="keep">Keep Only</option>
+        <option value="delete">Delete Only</option>
+        <option value="review">Needs Review Only</option>
+      </select>
       <button class="btn-secondary" onclick="expandAll()">Expand All</button>
       <button class="btn-secondary" onclick="collapseAll()">Collapse All</button>
       <button class="btn-success" onclick="saveProgress()">Save Progress</button>
@@ -1204,6 +1212,7 @@
         item.classList.remove('checked');
       }
       updateStats();
+      autoSave();
     }
 
     function setStatus(file, status) {
@@ -1213,6 +1222,21 @@
         item.classList.add(`status-${status}`);
       }
       updateStats();
+      autoSave();
+    }
+
+    // Auto-save to localStorage (silent, no alert)
+    function autoSave() {
+      const data = { ...reviewedFiles };
+      document.querySelectorAll('.file-item').forEach(item => {
+        const file = item.dataset.file;
+        const checked = item.querySelector('input').checked;
+        const status = item.querySelector('select').value;
+        if (checked || status) {
+          data[file] = { checked, status };
+        }
+      });
+      localStorage.setItem('fileReviewProgress', JSON.stringify(data));
     }
 
     function updateStats() {
@@ -1237,10 +1261,71 @@
 
     function filterFiles() {
       const query = document.getElementById('searchInput').value.toLowerCase();
+      const filter = document.getElementById('filterSelect').value;
+
       document.querySelectorAll('.file-item').forEach(item => {
         const file = item.dataset.file.toLowerCase();
-        item.style.display = file.includes(query) ? 'flex' : 'none';
+        const isChecked = item.querySelector('input').checked;
+        const status = item.querySelector('select').value;
+
+        // Text search filter
+        const matchesSearch = file.includes(query);
+
+        // Status filter
+        let matchesFilter = true;
+        switch (filter) {
+          case 'reviewed':
+            matchesFilter = isChecked;
+            break;
+          case 'unreviewed':
+            matchesFilter = !isChecked;
+            break;
+          case 'keep':
+            matchesFilter = status === 'keep';
+            break;
+          case 'delete':
+            matchesFilter = status === 'delete';
+            break;
+          case 'review':
+            matchesFilter = status === 'review';
+            break;
+          default:
+            matchesFilter = true;
+        }
+
+        item.style.display = (matchesSearch && matchesFilter) ? 'flex' : 'none';
       });
+
+      // Hide empty sections and update visible count
+      document.querySelectorAll('.section').forEach(section => {
+        const items = section.querySelectorAll('.file-item');
+        let visibleCount = 0;
+        items.forEach(item => {
+          if (item.style.display !== 'none') visibleCount++;
+        });
+        section.style.display = visibleCount > 0 ? 'block' : 'none';
+
+        // Update section header to show filtered count
+        const progressSpan = section.querySelector('.section-progress');
+        if (filter !== 'all' || query) {
+          const totalVisible = visibleCount;
+          const checkedVisible = Array.from(items).filter(i =>
+            i.style.display !== 'none' && i.querySelector('input').checked
+          ).length;
+          progressSpan.textContent = `${checkedVisible}/${totalVisible} (filtered)`;
+        } else {
+          const total = items.length;
+          const checked = section.querySelectorAll('.file-item input:checked').length;
+          progressSpan.textContent = `${checked}/${total}`;
+        }
+      });
+
+      // Auto-expand sections when filtering
+      if (filter !== 'all') {
+        document.querySelectorAll('.section').forEach(s => {
+          if (s.style.display !== 'none') s.classList.remove('collapsed');
+        });
+      }
     }
 
     function expandAll() {
@@ -1316,8 +1401,70 @@
       a.click();
     }
 
+    // Pre-defined reviewed files (security review completed 2026-01-26)
+    const reviewedFiles = {
+      "src/lib/security/account-lockout.ts": { checked: true, status: "keep" },
+      "src/lib/security/backup-encryption.ts": { checked: true, status: "keep" },
+      "src/lib/security/cron-auth.ts": { checked: true, status: "keep" },
+      "src/lib/security/csrf.ts": { checked: true, status: "keep" },
+      "src/lib/security/headers.ts": { checked: true, status: "keep" },
+      "src/lib/security/impersonation.ts": { checked: true, status: "keep" },
+      "src/lib/security/password-validation.ts": { checked: true, status: "keep" },
+      "src/lib/security/rateLimit.ts": { checked: true, status: "keep" }
+    };
+
+    // Apply progress data to the UI
+    function applyProgressData(data) {
+      Object.entries(data).forEach(([file, { checked, status }]) => {
+        const item = document.querySelector(`[data-file="${file}"]`);
+        if (item) {
+          if (checked) {
+            item.querySelector('input').checked = true;
+            item.classList.add('checked');
+          }
+          if (status) {
+            item.querySelector('select').value = status;
+            item.classList.add(`status-${status}`);
+          }
+        }
+      });
+      updateStats();
+    }
+
+    // Load and merge all progress (pre-defined + localStorage)
+    function loadAllProgress() {
+      // Start with pre-defined reviewed files
+      const mergedData = { ...reviewedFiles };
+
+      // Merge with localStorage data (localStorage takes priority for conflicts)
+      const savedData = JSON.parse(localStorage.getItem('fileReviewProgress') || '{}');
+      Object.assign(mergedData, savedData);
+
+      // Apply to UI
+      applyProgressData(mergedData);
+
+      // Save merged data back to localStorage
+      localStorage.setItem('fileReviewProgress', JSON.stringify(mergedData));
+    }
+
+    // Override save to always include pre-defined files
+    saveProgress = function() {
+      const data = { ...reviewedFiles };
+      document.querySelectorAll('.file-item').forEach(item => {
+        const file = item.dataset.file;
+        const checked = item.querySelector('input').checked;
+        const status = item.querySelector('select').value;
+        if (checked || status) {
+          data[file] = { checked, status };
+        }
+      });
+      localStorage.setItem('fileReviewProgress', JSON.stringify(data));
+      alert('Progress saved!');
+    };
+
     // Initialize
     renderFileList();
+    loadAllProgress();
     collapseAll();
   </script>
 </body>
