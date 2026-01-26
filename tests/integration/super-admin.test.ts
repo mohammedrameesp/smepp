@@ -290,45 +290,6 @@ describe('Super Admin API Tests', () => {
     });
   });
 
-  describe('GET /api/super-admin/stats', () => {
-    it('should return platform statistics', async () => {
-      const mockOrg = getMockedModel(prisma.organization);
-      const mockTeamMember = getMockedModel(prisma.teamMember);
-      const mockAsset = getMockedModel(prisma.asset);
-
-      mockOrg.count.mockResolvedValue(50);
-      mockTeamMember.count.mockResolvedValue(500);
-      mockAsset.count.mockResolvedValue(2000);
-
-      const [orgCount, userCount, assetCount] = await Promise.all([
-        mockOrg.count(),
-        mockTeamMember.count(),
-        mockAsset.count(),
-      ]);
-
-      expect(orgCount).toBe(50);
-      expect(userCount).toBe(500);
-      expect(assetCount).toBe(2000);
-    });
-
-    it('should return tier distribution', async () => {
-      const mockOrg = getMockedModel(prisma.organization);
-      mockOrg.groupBy.mockResolvedValue([
-        { subscriptionTier: 'FREE', _count: 30 },
-        { subscriptionTier: 'STARTER', _count: 15 },
-        { subscriptionTier: 'PROFESSIONAL', _count: 4 },
-        { subscriptionTier: 'ENTERPRISE', _count: 1 },
-      ]);
-
-      const distribution = await mockOrg.groupBy({
-        by: ['subscriptionTier'],
-        _count: true,
-      });
-
-      expect(distribution).toHaveLength(4);
-    });
-  });
-
   describe('GET /api/super-admin/ai-usage', () => {
     it('should return AI usage across platform', async () => {
       const mockUsage = getMockedModel(prisma.aIChatUsage);

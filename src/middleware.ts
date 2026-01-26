@@ -215,7 +215,6 @@ const PUBLIC_ROUTES: readonly string[] = [
 
   // API: Super admin auth (login page needs these before auth)
   '/api/super-admin/auth',        // Login, 2FA verification
-  '/api/super-admin/stats',       // Platform stats shown on login page
 
   // Static assets (also excluded by matcher, but included for completeness)
   '/_next',
@@ -1450,7 +1449,6 @@ export const config = {
  * 5. [VERIFIED] Impersonation tokens are JWT-signed with short TTL - SECURE
  * 6. [VERIFIED] Callback URLs validated as relative paths - SECURE
  * 7. [NOTE] Rate limiting is instance-local (needs Redis for production scale)
- * 8. [NOTE] /api/super-admin/stats is public (shows on login page) - INTENTIONAL
  *
  * CHANGES MADE:
  * ──────────────────────────────────────────────────────────────────────────────
