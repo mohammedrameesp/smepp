@@ -255,6 +255,37 @@ describe('Module Routes Tests', () => {
         expect(result.allowed).toBe(true);
       });
     });
+
+    describe('Invalid/Unknown Routes', () => {
+      it('should allow access to routes that do not map to any module', () => {
+        // Routes that don't match any MODULE_ROUTE_MAP entry are not module-protected
+        const result = checkModuleAccess('/admin/fake-module', []);
+        expect(result.allowed).toBe(true);
+        expect(result.moduleId).toBeUndefined();
+      });
+
+      it('should allow access when path looks like a module but is not registered', () => {
+        // A path that might look like a module route but isn't in the mapping
+        const result = checkModuleAccess('/admin/inventory', ['assets']);
+        expect(result.allowed).toBe(true);
+        expect(result.moduleId).toBeUndefined();
+      });
+
+      it('should not grant access when enabledModules contains invalid module IDs', () => {
+        // Even if enabledModules contains garbage, a valid protected route should check correctly
+        const result = checkModuleAccess('/admin/assets', ['invalid-module', 'fake', 'not-real']);
+        expect(result.allowed).toBe(false);
+        expect(result.moduleId).toBe('assets');
+        expect(result.reason).toBe('not_installed');
+      });
+
+      it('should not be affected by similar but different module names in enabledModules', () => {
+        // 'asset' (singular) should not grant access to 'assets' route
+        const result = checkModuleAccess('/admin/assets', ['asset', 'Assets', 'ASSETS']);
+        expect(result.allowed).toBe(false);
+        expect(result.moduleId).toBe('assets');
+      });
+    });
   });
 
   // ═══════════════════════════════════════════════════════════════════════════════
