@@ -12,6 +12,7 @@
 
 import { prisma } from './prisma';
 import Decimal from 'decimal.js';
+import logger from '@/lib/core/log';
 
 // FIN-003: Configure Decimal.js for financial precision
 Decimal.set({ precision: 20, rounding: Decimal.ROUND_HALF_UP });
@@ -119,12 +120,35 @@ export const CURRENCY_MAP: Record<string, CurrencyInfo> = Object.fromEntries(
 export const SUGGESTED_CURRENCIES = ['USD', 'EUR', 'SAR', 'AED', 'KWD', 'BHD', 'OMR'];
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/** Base currency for all conversions */
+const BASE_CURRENCY = 'QAR';
+
+/** Cache duration in milliseconds (5 minutes) */
+const CACHE_DURATION_MS = 5 * 60 * 1000;
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // CACHE
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// Cache: Map<tenantId_currency, { rate, timestamp }>
-const rateCache = new Map<string, { rate: number; time: number }>();
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+/** Cached exchange rate entry */
+interface CachedRate {
+  rate: number;
+  time: number;
+}
+
+/** Cache: Map<tenantId_currency, CachedRate> */
+const rateCache = new Map<string, CachedRate>();
+
+/**
+ * Check if a cached rate is still valid.
+ * @internal
+ */
+function isCacheValid(cached: CachedRate | undefined): cached is CachedRate {
+  return cached !== undefined && Date.now() - cached.time < CACHE_DURATION_MS;
+}
 
 function getCacheKey(tenantId: string, currency: string): string {
   return `${tenantId}_${currency}`;
@@ -162,24 +186,25 @@ export async function getExchangeRateToQAR(
   tenantId: string,
   currency: string
 ): Promise<number> {
-  // QAR to QAR is always 1
-  if (currency === 'QAR') return 1;
+  // Base currency to itself is always 1
+  if (currency === BASE_CURRENCY) return 1;
 
   const cacheKey = getCacheKey(tenantId, currency);
 
   // Check cache
   const cached = rateCache.get(cacheKey);
-  if (cached && Date.now() - cached.time < CACHE_DURATION) {
+  if (isCacheValid(cached)) {
     return cached.rate;
   }
 
   // Look up from database
   try {
-    const settingKey = `${currency}_TO_QAR_RATE`;
+    const settingKey = `${currency}_TO_${BASE_CURRENCY}_RATE`;
     const setting = await prisma.systemSettings.findUnique({
       where: {
         tenantId_key: { tenantId, key: settingKey },
       },
+      select: { value: true },
     });
 
     if (setting?.value) {
@@ -190,15 +215,26 @@ export async function getExchangeRateToQAR(
       }
     }
   } catch (error) {
-    console.error(`Failed to fetch exchange rate for ${currency}:`, error);
+    logger.error(
+      {
+        tenantId,
+        currency,
+        error: error instanceof Error ? error.message : String(error),
+      },
+      'Failed to fetch exchange rate from database'
+    );
   }
 
   // Fallback to default
   const defaultRate = DEFAULT_RATES_TO_QAR[currency];
   if (defaultRate === undefined) {
-    console.warn(
-      `[Currency] No exchange rate configured for ${currency} (tenant: ${tenantId}). ` +
-      `Using rate of 1. Configure ${currency}_TO_QAR_RATE in SystemSettings.`
+    logger.warn(
+      {
+        tenantId,
+        currency,
+        settingKey: `${currency}_TO_${BASE_CURRENCY}_RATE`,
+      },
+      `No exchange rate configured for ${currency}, using rate of 1`
     );
     return 1;
   }
@@ -227,7 +263,7 @@ export async function convertToQAR(
     return null;
   }
 
-  if (fromCurrency === 'QAR') {
+  if (fromCurrency === BASE_CURRENCY) {
     return amount;
   }
 
@@ -268,7 +304,7 @@ export async function calculatePriceInQAR(
     return null;
   }
 
-  const currency = priceCurrency || 'QAR';
+  const currency = priceCurrency || BASE_CURRENCY;
   return convertToQAR(price, currency, tenantId);
 }
 
@@ -288,7 +324,7 @@ export function convertToQARSync(
   amount: number,
   fromCurrency: string
 ): number {
-  if (fromCurrency === 'QAR') return amount;
+  if (fromCurrency === BASE_CURRENCY) return amount;
   const rate = DEFAULT_RATES_TO_QAR[fromCurrency] ?? 1;
   return multiplyPrecise(amount, rate);
 }
@@ -303,6 +339,18 @@ export function clearRateCache(): void {
 // ═══════════════════════════════════════════════════════════════════════════════
 // FORMATTING FUNCTIONS
 // ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Options for formatting currency amounts.
+ */
+export interface FormatCurrencyOptions {
+  /** Minimum number of decimal places (default: 2) */
+  minimumFractionDigits?: number;
+  /** Maximum number of decimal places (default: 2) */
+  maximumFractionDigits?: number;
+  /** Use compact notation for large numbers (e.g., "$1.5M") */
+  compact?: boolean;
+}
 
 /**
  * Format a currency amount with the correct symbol/code.
@@ -321,17 +369,13 @@ export function clearRateCache(): void {
 export function formatCurrency(
   amount: number | null | undefined,
   currency?: string | null,
-  options?: {
-    minimumFractionDigits?: number;
-    maximumFractionDigits?: number;
-    compact?: boolean;
-  }
+  options?: FormatCurrencyOptions
 ): string {
   if (amount === null || amount === undefined || isNaN(amount)) {
     return '—';
   }
 
-  const currencyCode = currency || 'QAR';
+  const currencyCode = currency || BASE_CURRENCY;
   const minDigits = options?.minimumFractionDigits ?? 2;
   const maxDigits = options?.maximumFractionDigits ?? 2;
 
