@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import logger from '@/lib/core/log';
 import { z } from 'zod';
-import { sendEmail } from '@/lib/core/email';
+import { sendEmail } from '@/lib/email';
 
 // Rate limit: simple in-memory store (in production, use Redis)
 const resendAttempts = new Map<string, { count: number; lastAttempt: number }>();

@@ -1,11 +1,11 @@
 /**
- * @file email-failure-templates.ts
+ * @file failure-templates.ts
  * @description Email templates for super admin notifications about email delivery failures.
- * @module lib/core
+ * @module lib/email
  */
 
-import type { EmailFailureContext } from './email-failure-handler';
-import { escapeHtml, DEFAULT_BRAND_COLOR, APP_DOMAIN } from './email-utils';
+import type { EmailFailureContext } from './failure-handler';
+import { escapeHtml, DEFAULT_BRAND_COLOR, APP_DOMAIN } from './utils';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CONSTANTS
@@ -240,4 +240,4 @@ The tenant admins have also been notified via in-app notification.
   return { subject, html, text };
 }
 
-// Note: escapeHtml is imported from ./email-utils
+// Note: escapeHtml is imported from ./utils

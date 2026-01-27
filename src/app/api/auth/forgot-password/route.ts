@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { randomBytes, createHash } from 'crypto';
 import { z } from 'zod';
-import { sendEmail } from '@/lib/core/email';
+import { sendEmail } from '@/lib/email';
 import logger from '@/lib/core/log';
 import { handleSystemError } from '@/lib/core/error-logger';
 

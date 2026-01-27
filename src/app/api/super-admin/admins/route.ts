@@ -11,7 +11,7 @@ import { prisma } from '@/lib/core/prisma';
 import { z } from 'zod';
 import crypto from 'crypto';
 import { requireRecent2FA } from '@/lib/two-factor';
-import { sendEmail } from '@/lib/core/email';
+import { sendEmail } from '@/lib/email';
 import logger from '@/lib/core/log';
 
 export async function GET() {

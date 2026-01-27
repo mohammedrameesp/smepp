@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
-import { sendEmail } from '@/lib/core/email';
-import {
-  welcomeUserWithPasswordSetupEmail,
-  organizationInvitationEmail,
-} from '@/lib/core/email-templates';
+import { sendEmail, welcomeUserWithPasswordSetupEmail, organizationInvitationEmail } from '@/lib/email';
 import { randomBytes } from 'crypto';
 import { withErrorHandler } from '@/lib/http/handler';
 import { notFoundResponse, badRequestResponse } from '@/lib/http/errors';

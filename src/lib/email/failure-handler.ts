@@ -1,15 +1,15 @@
 /**
- * @file email-failure-handler.ts
+ * @file failure-handler.ts
  * @description Centralized email failure notification service.
  *              Notifies tenant admins (in-app) and super admin (email) when emails fail.
- * @module lib/core
+ * @module lib/email
  */
 
-import { prisma } from './prisma';
-import { sendEmail } from './email';
+import { prisma } from '@/lib/core/prisma';
+import { sendEmail } from './client';
 import { createBulkNotifications } from '@/features/notifications/lib/notification-service';
 import { NotificationType, Prisma } from '@prisma/client';
-import logger from './log';
+import logger from '@/lib/core/log';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -143,7 +143,7 @@ async function notifySuperAdmin(context: EmailFailureContext): Promise<void> {
   }
 
   try {
-    const { emailFailureAlertEmail } = await import('./email-failure-templates');
+    const { emailFailureAlertEmail } = await import('./failure-templates');
     const emailData = emailFailureAlertEmail(context);
 
     const result = await sendEmail({

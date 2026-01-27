@@ -16,8 +16,7 @@ import {
   canMemberApprove,
 } from './approval-engine';
 import { createBulkNotifications } from '@/features/notifications/lib';
-import { sendEmail } from '@/lib/core/email';
-import { emailWrapper } from '@/lib/core/email-utils';
+import { sendEmail, emailWrapper } from '@/lib/email';
 import { notifyApproversViaWhatsApp } from '@/lib/whatsapp';
 import logger from '@/lib/core/log';
 

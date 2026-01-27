@@ -11,8 +11,7 @@ import { logAction, ActivityActions } from '@/lib/core/activity';
 import { approvePayrollSchema } from '@/features/payroll/validations/payroll';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { createBulkNotifications, NotificationTemplates } from '@/features/notifications/lib';
-import { sendEmail } from '@/lib/core/email';
-import { payrollApprovedEmail } from '@/lib/core/email-templates';
+import { sendEmail, payrollApprovedEmail } from '@/lib/email';
 import logger from '@/lib/core/log';
 
 async function approvePayrollHandler(request: NextRequest, context: APIContext) {

@@ -14,9 +14,7 @@ import { hrProfileSchema, hrProfileEmployeeSchema } from '@/features/employees/v
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { invalidBodyResponse } from '@/lib/http/responses';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
-import { sendEmail } from '@/lib/core/email';
-import { handleEmailFailure } from '@/lib/core/email-failure-handler';
-import { emailWrapper, getTenantPortalUrl, escapeHtml } from '@/lib/core/email-utils';
+import { sendEmail, handleEmailFailure, emailWrapper, getTenantPortalUrl, escapeHtml } from '@/lib/email';
 import { initializeMemberLeaveBalances } from '@/features/leave/lib/leave-balance-init';
 import logger from '@/lib/core/log';
 

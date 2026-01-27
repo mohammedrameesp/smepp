@@ -11,8 +11,7 @@ import { encode } from 'next-auth/jwt';
 import { isAccountLocked, clearFailedLogins } from '@/lib/security/account-lockout';
 import logger from '@/lib/core/log';
 import { createBulkNotifications } from '@/features/notifications/lib/notification-service';
-import { sendEmail } from '@/lib/core/email';
-import { emailWrapper, getTenantPortalUrl, escapeHtml } from '@/lib/core/email-utils';
+import { sendEmail, emailWrapper, getTenantPortalUrl, escapeHtml } from '@/lib/email';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ENCRYPTION CONFIGURATION

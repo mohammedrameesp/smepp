@@ -6,13 +6,13 @@
 import { getServerSession } from 'next-auth/next';
 import { prisma } from '@/lib/core/prisma';
 import { validateSlug, isSlugAvailable } from '@/lib/multi-tenant/subdomain';
-import { sendEmail } from '@/lib/core/email';
+import { sendEmail } from '@/lib/email';
 import { seedDefaultPermissions } from '@/lib/access-control';
 
 jest.mock('next-auth/next');
 jest.mock('@/lib/core/prisma');
 jest.mock('@/lib/multi-tenant/subdomain');
-jest.mock('@/lib/core/email');
+jest.mock('@/lib/email');
 jest.mock('@/lib/access-control');
 jest.mock('crypto', () => ({
   randomBytes: jest.fn(() => ({

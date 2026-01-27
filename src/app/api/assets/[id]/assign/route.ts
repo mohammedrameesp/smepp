@@ -58,10 +58,7 @@ import {
 } from '@prisma/client';
 import { z } from 'zod';
 import { logAction, ActivityActions } from '@/lib/core/activity';
-import { sendEmail } from '@/lib/core/email';
-import { handleEmailFailure, getOrganizationContext } from '@/lib/core/email-failure-handler';
-import { assetAssignmentEmail } from '@/lib/core/email-templates';
-import { assetAssignmentPendingEmail } from '@/lib/core/asset-request-emails';
+import { sendEmail, handleEmailFailure, getOrganizationContext, assetAssignmentEmail, assetAssignmentPendingEmail } from '@/lib/email';
 import { createNotification, NotificationTemplates } from '@/features/notifications/lib';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { generateRequestNumber } from '@/features/asset-requests';
@@ -364,7 +361,7 @@ async function sendReassignmentUnassignNotification(
     const admin = await getAdminDetails(adminId, tenantId);
 
     // Send email notification
-    const { assetUnassignedEmail } = await import('@/lib/core/asset-request-emails');
+    const { assetUnassignedEmail } = await import('@/lib/email');
     const emailData = assetUnassignedEmail({
       assetTag: asset.assetTag || null,
       assetModel: asset.model,
@@ -812,7 +809,7 @@ async function directUnassign(
     const admin = await getAdminDetails(adminId, tenantId);
 
     // Send email notification
-    const { assetUnassignedEmail } = await import('@/lib/core/asset-request-emails');
+    const { assetUnassignedEmail } = await import('@/lib/email');
     const emailData = assetUnassignedEmail({
       assetTag: updatedAsset.assetTag || null,
       assetModel: updatedAsset.model,

@@ -1,12 +1,12 @@
 /**
- * @file email-sender.ts
+ * @file sender.ts
  * @description Unified email sending utility with built-in failure handling.
  *              Eliminates duplicate try/catch patterns across the codebase.
- * @module lib/core
+ * @module lib/email
  */
 
-import { sendEmail } from '@/lib/core/email';
-import { handleEmailFailure, EmailFailureContext } from '@/lib/core/email-failure-handler';
+import { sendEmail } from './client';
+import { handleEmailFailure, EmailFailureContext } from './failure-handler';
 import logger from '@/lib/core/log';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -241,4 +241,4 @@ async function safeHandleEmailFailure(
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // Re-export the original sendEmail for cases where failure handling isn't needed
-export { sendEmail } from '@/lib/core/email';
+export { sendEmail } from './client';

@@ -5,7 +5,7 @@
  */
 
 import type { ErrorContext } from './error-logger';
-import { escapeHtml, DEFAULT_BRAND_COLOR, APP_DOMAIN } from './email-utils';
+import { escapeHtml, DEFAULT_BRAND_COLOR, APP_DOMAIN } from '@/lib/email';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CONSTANTS

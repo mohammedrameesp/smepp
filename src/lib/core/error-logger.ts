@@ -9,7 +9,7 @@
 import { prisma } from './prisma';
 import { Prisma } from '@prisma/client';
 import logger from './log';
-import { sendEmail } from './email';
+import { sendEmail } from '@/lib/email';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES

@@ -1,7 +1,7 @@
 /**
- * @file email.ts
+ * @file client.ts
  * @description Email sending service using Resend or custom SMTP - handles single and batch email sending
- * @module lib/core
+ * @module lib/email
  */
 
 import { Resend } from 'resend';

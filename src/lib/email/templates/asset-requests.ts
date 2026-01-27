@@ -1,13 +1,13 @@
 /**
- * @file asset-request-emails.ts
+ * @file asset-requests.ts
  * @description Email templates for the asset request workflow.
  *              Covers the complete lifecycle: request, assignment, acceptance,
  *              rejection, return request, and unassignment notifications.
- * @module lib/core
+ * @module lib/email/templates
  *
  * @example
  * ```ts
- * import { assetRequestSubmittedEmail } from '@/lib/core/asset-request-emails';
+ * import { assetRequestSubmittedEmail } from '@/lib/email';
  *
  * const email = assetRequestSubmittedEmail({
  *   requestNumber: 'AR-001',
@@ -25,7 +25,7 @@
  * ```
  */
 
-import { escapeHtml, getTenantPortalUrl, emailWrapper } from './email-utils';
+import { escapeHtml, getTenantPortalUrl, emailWrapper } from '../utils';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CONSTANTS

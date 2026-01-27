@@ -1,10 +1,10 @@
 /**
- * @file email-utils.ts
+ * @file utils.ts
  * @description Shared email utility functions used across email template files.
- * @module lib/core
+ * @module lib/email
  */
 
-import { QATAR_TIMEZONE } from './datetime';
+import { QATAR_TIMEZONE } from '@/lib/core/datetime';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CONSTANTS

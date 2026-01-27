@@ -9,7 +9,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { randomBytes } from 'crypto';
-import { sendEmail } from '@/lib/core/email';
+import { sendEmail } from '@/lib/email';
 import logger from '@/lib/core/log';
 
 export async function POST(

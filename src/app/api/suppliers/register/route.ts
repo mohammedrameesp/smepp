@@ -9,8 +9,7 @@ import { createSupplierSchema } from '@/features/suppliers';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { withErrorHandler } from '@/lib/http/handler';
 import { getAdminMembers } from '@/features/notifications/lib/notification-service';
-import { sendBulkEmailsWithFailureHandling } from '@/lib/core/email-sender';
-import { newSupplierRegistrationEmail } from '@/lib/core/email-templates';
+import { sendBulkEmailsWithFailureHandling, newSupplierRegistrationEmail } from '@/lib/email';
 
 async function registerSupplierHandler(request: NextRequest) {
     // Get tenant from subdomain (set by middleware)

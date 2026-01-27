@@ -12,9 +12,7 @@ import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { invalidBodyResponse } from '@/lib/http/responses';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { z } from 'zod';
-import { sendBatchEmails } from '@/lib/core/email';
-import { handleEmailFailure } from '@/lib/core/email-failure-handler';
-import { changeRequestEmail } from '@/lib/core/email-templates';
+import { sendBatchEmails, handleEmailFailure, changeRequestEmail } from '@/lib/email';
 import logger from '@/lib/core/log';
 
 const createRequestSchema = z.object({

@@ -16,8 +16,7 @@
 
 import { prisma } from '@/lib/core/prisma';
 import { getExchangeRateToQAR } from '@/lib/core/currency';
-import { sendEmail } from '@/lib/core/email';
-import { spendRequestSubmittedEmail } from '@/lib/core/email-templates';
+import { sendEmail, spendRequestSubmittedEmail } from '@/lib/email';
 import { createBulkNotifications, createNotification, NotificationTemplates } from '@/features/notifications/lib';
 import { findApplicablePolicy, initializeApprovalChain } from '@/features/approvals/lib';
 import { notifyApproversViaWhatsApp } from '@/lib/whatsapp';

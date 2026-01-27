@@ -28,9 +28,7 @@ import { prisma } from '@/lib/core/prisma';
 import { updateAssetSchema } from '@/features/assets';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { recordAssetUpdate } from '@/features/assets';
-import { sendEmail } from '@/lib/core/email';
-import { assetAssignmentEmail } from '@/lib/core/email-templates';
-import { assetAssignmentPendingEmail } from '@/lib/core/asset-request-emails';
+import { sendEmail, assetAssignmentEmail, assetAssignmentPendingEmail } from '@/lib/email';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import {
   calculateAssetPriceQAR,
@@ -722,7 +720,7 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
           ]);
 
           // Send email notification
-          const { assetUnassignedEmail } = await import('@/lib/core/asset-request-emails');
+          const { assetUnassignedEmail } = await import('@/lib/email');
           const emailData = assetUnassignedEmail({
             userName: unassignedMember.name || unassignedMember.email,
             assetBrand: asset.brand || null,

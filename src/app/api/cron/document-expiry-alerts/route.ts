@@ -14,12 +14,12 @@ import { prisma } from '@/lib/core/prisma';
 import logger from '@/lib/core/log';
 import { verifyCronAuth } from '@/lib/security/cron-auth';
 import { getAdminMembers } from '@/features/notifications/lib/notification-service';
-import { sendBulkEmailsWithFailureHandling } from '@/lib/core/email-sender';
 import {
+  sendBulkEmailsWithFailureHandling,
   documentExpiryAlertEmail,
   adminDocumentExpiryAlertEmail,
   companyDocumentExpiryAlertEmail,
-} from '@/lib/core/email-templates';
+} from '@/lib/email';
 
 // Document expiry window: 30 days ahead, 7 days behind (recently expired)
 const DAYS_AHEAD = 30;

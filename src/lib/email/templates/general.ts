@@ -1,4 +1,9 @@
-// Email Templates for Durj
+/**
+ * @file general.ts
+ * @description General email templates for Durj platform.
+ * @module lib/email/templates
+ */
+
 // Default brand color: #0f172a (slate-900)
 // Organization's primaryColor can override this via the primaryColor parameter
 
@@ -7,7 +12,7 @@ import {
   escapeHtml,
   getTenantPortalUrl,
   emailWrapper,
-} from './email-utils';
+} from '../utils';
 
 // Re-export for backwards compatibility if needed
 export { DEFAULT_BRAND_COLOR };
