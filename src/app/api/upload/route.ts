@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateUploadedFile } from '@/lib/files/sanity';
 import { storageUpload, storagePublicUrl } from '@/lib/storage';
-import { logAction } from '@/lib/core/activity';
+import { logAction, ActivityActions } from '@/lib/core/activity';
 import logger from '@/lib/core/log';
 import { withErrorHandler } from '@/lib/http/handler';
 import { badRequestResponse } from '@/lib/http/errors';
@@ -116,7 +116,7 @@ export const POST = withErrorHandler(async (request: NextRequest, { tenant }) =>
     await logAction(
       tenantId,
       userId,
-      'UPLOAD_FILE',
+      ActivityActions.FILE_UPLOADED,
       'file',
       filePath,
       {

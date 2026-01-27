@@ -5,7 +5,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { createEngagementSchema } from '@/features/suppliers';
-import { logAction } from '@/lib/core/activity';
+import { logAction, ActivityActions } from '@/lib/core/activity';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 
@@ -134,7 +134,7 @@ async function createEngagementHandler(request: NextRequest, context: APIContext
     await logAction(
       tenantId,
       userId,
-      'SUPPLIER_ENGAGEMENT_ADDED',
+      ActivityActions.SUPPLIER_ENGAGEMENT_ADDED,
       'supplier',
       supplier.id,
       {

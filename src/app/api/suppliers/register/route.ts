@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { createSupplierSchema } from '@/features/suppliers';
-import { logAction } from '@/lib/core/activity';
+import { logAction, ActivityActions } from '@/lib/core/activity';
 import { withErrorHandler } from '@/lib/http/handler';
 import { getAdminMembers } from '@/features/notifications/lib/notification-service';
 import { sendBulkEmailsWithFailureHandling } from '@/lib/core/email-sender';
@@ -91,7 +91,7 @@ async function registerSupplierHandler(request: NextRequest) {
     await logAction(
       organization.id,
       null, // No user - public registration
-      'SUPPLIER_REGISTERED',
+      ActivityActions.SUPPLIER_REGISTERED,
       'supplier',
       supplier.id,
       {

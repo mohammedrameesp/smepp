@@ -36,7 +36,7 @@ import { invalidBodyResponse } from '@/lib/http/responses';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { assignDepreciationCategorySchema } from '@/features/assets';
 import { assignDepreciationCategory } from '@/features/assets/lib/depreciation';
-import { logAction } from '@/lib/core/activity';
+import { logAction, ActivityActions } from '@/lib/core/activity';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -261,7 +261,7 @@ async function assignDepreciationHandler(request: NextRequest, context: APIConte
   // ─────────────────────────────────────────────────────────────────────────────
   // STEP 5: Log action for audit trail
   // ─────────────────────────────────────────────────────────────────────────────
-  await logAction(tenantId, tenant.userId, 'DEPRECIATION_CATEGORY_ASSIGNED', 'Asset', assetId, {
+  await logAction(tenantId, tenant.userId, ActivityActions.ASSET_DEPRECIATION_CATEGORY_ASSIGNED, 'Asset', assetId, {
     assetTag: asset.assetTag,
     model: asset.model,
     categoryId: validation.data.depreciationCategoryId,
