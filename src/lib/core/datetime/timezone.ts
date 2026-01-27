@@ -1,46 +1,91 @@
 /**
  * @file timezone.ts
- * @description Qatar timezone utilities - Gulf Standard Time (GST): UTC+3, no daylight saving
+ * @description Qatar timezone utilities for the Durj platform.
+ *
+ * Qatar uses Gulf Standard Time (GST): UTC+3 with no daylight saving time.
+ * This module provides timezone-aware date operations for consistent behavior
+ * across the application.
+ *
  * @module lib/core/datetime
+ *
+ * @example
+ * ```ts
+ * import {
+ *   getQatarNow,
+ *   getQatarStartOfDay,
+ *   isInPastQatar,
+ *   getDaysUntilQatar
+ * } from '@/lib/core/datetime';
+ *
+ * const now = getQatarNow();
+ * const today = getQatarStartOfDay();
+ * const isExpired = isInPastQatar(document.expiryDate);
+ * const daysLeft = getDaysUntilQatar(subscription.renewalDate);
+ * ```
  */
 
 import { QATAR_TIMEZONE } from './constants';
 
 /**
  * Get current date/time in Qatar timezone.
- * Note: This function is called frequently; results are not cached as time is always changing.
+ *
  * @returns Date object representing the current time in Qatar
+ *
+ * @remarks
+ * This function is called frequently; results are not cached as time is always changing.
+ *
+ * @example
+ * ```ts
+ * const qatarNow = getQatarNow();
+ * console.log(qatarNow.toISOString()); // Current Qatar time
+ * ```
  */
 export function getQatarNow(): Date {
   return new Date(new Date().toLocaleString('en-US', { timeZone: QATAR_TIMEZONE }));
 }
 
 /**
- * Convert a date to Qatar timezone
- * @param date - Date object, string, or null
- * @returns Date object in Qatar timezone or null
+ * Convert a date to Qatar timezone.
+ *
+ * @param date - Date object, ISO string, or null/undefined
+ * @returns Date object in Qatar timezone, or null if invalid
+ *
+ * @example
+ * ```ts
+ * const utcDate = new Date('2025-01-15T12:00:00Z');
+ * const qatarDate = toQatarTime(utcDate); // 15:00 in Qatar (UTC+3)
+ * ```
  */
 export function toQatarTime(date: Date | string | null | undefined): Date | null {
   if (!date) return null;
 
   const dateObj = typeof date === 'string' ? new Date(date) : date;
-
   if (isNaN(dateObj.getTime())) return null;
 
-  // Convert to Qatar timezone
   const qatarDateString = dateObj.toLocaleString('en-US', { timeZone: QATAR_TIMEZONE });
   return new Date(qatarDateString);
 }
 
 /**
  * Parse a date string as Qatar timezone date at midnight.
- * When user enters "2025-01-01", treat it as January 1st in Qatar time, not UTC.
+ *
+ * When a user enters "2025-01-15", this treats it as January 15th in Qatar time,
+ * not as a UTC date that might shift to a different day.
+ *
  * @param dateString - Date string in YYYY-MM-DD format
  * @returns Date object representing midnight on that date in local time
- * @throws Error if date string is empty or invalid
+ * @throws {Error} If date string is empty or invalid format
+ *
+ * @example
+ * ```ts
+ * const date = parseQatarDate('2025-01-15');
+ * // Returns Date for Jan 15, 2025 at 00:00:00 local time
+ * ```
  */
 export function parseQatarDate(dateString: string): Date {
-  if (!dateString) throw new Error('Date string is required');
+  if (!dateString) {
+    throw new Error('Date string is required');
+  }
 
   const [year, month, day] = dateString.split('-').map(Number);
 
@@ -54,9 +99,17 @@ export function parseQatarDate(dateString: string): Date {
 }
 
 /**
- * Check if a date is in the past (Qatar timezone)
- * @param date - Date object, string, or null
- * @returns true if date is in the past
+ * Check if a date is in the past (Qatar timezone).
+ *
+ * @param date - Date object, ISO string, or null/undefined
+ * @returns true if date is before current Qatar time, false otherwise
+ *
+ * @example
+ * ```ts
+ * isInPastQatar('2020-01-01'); // true
+ * isInPastQatar('2099-12-31'); // false
+ * isInPastQatar(null);          // false
+ * ```
  */
 export function isInPastQatar(date: Date | string | null | undefined): boolean {
   if (!date) return false;
@@ -68,9 +121,17 @@ export function isInPastQatar(date: Date | string | null | undefined): boolean {
 }
 
 /**
- * Check if a date is in the future (Qatar timezone)
- * @param date - Date object, string, or null
- * @returns true if date is in the future
+ * Check if a date is in the future (Qatar timezone).
+ *
+ * @param date - Date object, ISO string, or null/undefined
+ * @returns true if date is after current Qatar time, false otherwise
+ *
+ * @example
+ * ```ts
+ * isInFutureQatar('2099-12-31'); // true
+ * isInFutureQatar('2020-01-01'); // false
+ * isInFutureQatar(null);          // false
+ * ```
  */
 export function isInFutureQatar(date: Date | string | null | undefined): boolean {
   if (!date) return false;
@@ -82,9 +143,17 @@ export function isInFutureQatar(date: Date | string | null | undefined): boolean
 }
 
 /**
- * Check if a date is today (Qatar timezone)
- * @param date - Date object, string, or null
- * @returns true if date is today in Qatar timezone
+ * Check if a date is today (Qatar timezone).
+ *
+ * @param date - Date object, ISO string, or null/undefined
+ * @returns true if date is the same calendar day as today in Qatar
+ *
+ * @example
+ * ```ts
+ * isTodayQatar(new Date());      // true
+ * isTodayQatar('2020-01-01');    // false (unless it's Jan 1, 2020)
+ * isTodayQatar(null);             // false
+ * ```
  */
 export function isTodayQatar(date: Date | string | null | undefined): boolean {
   if (!date) return false;
@@ -100,9 +169,16 @@ export function isTodayQatar(date: Date | string | null | undefined): boolean {
 }
 
 /**
- * Get start of day in Qatar timezone (00:00:00.000)
- * @param date - Optional date, defaults to current Qatar time
- * @returns Date object representing start of day
+ * Get start of day in Qatar timezone (00:00:00.000).
+ *
+ * @param date - Optional date to get start of day for; defaults to current Qatar time
+ * @returns Date object representing midnight (start) of the specified day
+ *
+ * @example
+ * ```ts
+ * const todayStart = getQatarStartOfDay();
+ * const specificDayStart = getQatarStartOfDay(someDate);
+ * ```
  */
 export function getQatarStartOfDay(date?: Date): Date {
   const d = date || getQatarNow();
@@ -110,9 +186,16 @@ export function getQatarStartOfDay(date?: Date): Date {
 }
 
 /**
- * Get end of day in Qatar timezone (23:59:59.999)
- * @param date - Optional date, defaults to current Qatar time
- * @returns Date object representing end of day
+ * Get end of day in Qatar timezone (23:59:59.999).
+ *
+ * @param date - Optional date to get end of day for; defaults to current Qatar time
+ * @returns Date object representing the last millisecond of the specified day
+ *
+ * @example
+ * ```ts
+ * const todayEnd = getQatarEndOfDay();
+ * const specificDayEnd = getQatarEndOfDay(someDate);
+ * ```
  */
 export function getQatarEndOfDay(date?: Date): Date {
   const d = date || getQatarNow();
@@ -120,20 +203,30 @@ export function getQatarEndOfDay(date?: Date): Date {
 }
 
 /**
- * Get days until a date from now (Qatar timezone)
- * @param date - Date object, string, or null
- * @returns Number of days until date, or null if invalid
+ * Get number of days until a target date from today (Qatar timezone).
+ *
+ * @param date - Target date object, ISO string, or null/undefined
+ * @returns Number of days until date (negative if in past), or null if invalid
+ *
+ * @remarks
+ * Uses start-of-day comparison for consistent day counting regardless of time.
+ *
+ * @example
+ * ```ts
+ * getDaysUntilQatar('2025-12-31'); // Days until Dec 31, 2025
+ * getDaysUntilQatar('2020-01-01'); // Negative number (past date)
+ * getDaysUntilQatar(null);          // null
+ * ```
  */
 export function getDaysUntilQatar(date: Date | string | null | undefined): number | null {
   if (!date) return null;
 
   const dateObj = typeof date === 'string' ? new Date(date) : date;
-
   if (isNaN(dateObj.getTime())) return null;
 
   const now = getQatarStartOfDay();
   const target = getQatarStartOfDay(dateObj);
 
-  const diff = target.getTime() - now.getTime();
-  return Math.ceil(diff / (1000 * 60 * 60 * 24));
+  const diffMs = target.getTime() - now.getTime();
+  return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 }
