@@ -25,6 +25,7 @@
  */
 
 import ExcelJS from 'exceljs';
+import { MAX_FILE_SIZE_BYTES } from '@/lib/constants';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CONSTANTS
@@ -41,9 +42,6 @@ const HEADER_BG_COLOR = 'FFE0E0E0';
 
 /** Template header background color (blue) */
 const TEMPLATE_HEADER_BG_COLOR = 'FF4472C4';
-
-/** Maximum file size for import (10MB) */
-const MAX_IMPORT_FILE_SIZE = 10 * 1024 * 1024;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -352,8 +350,8 @@ export async function csvToArray<T>(
   headerMap?: Record<string, keyof T>
 ): Promise<T[]> {
   // Validate buffer size to prevent DoS
-  if (buffer.length > MAX_IMPORT_FILE_SIZE) {
-    throw new Error(`File size exceeds maximum limit of ${MAX_IMPORT_FILE_SIZE / 1024 / 1024}MB`);
+  if (buffer.length > MAX_FILE_SIZE_BYTES) {
+    throw new Error(`File size exceeds maximum limit of ${MAX_FILE_SIZE_BYTES / 1024 / 1024}MB`);
   }
 
   if (buffer.length === 0) {

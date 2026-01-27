@@ -7,3 +7,4 @@
  */
 
 export * from './limits';
+export * from './procurement-categories';

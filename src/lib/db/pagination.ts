@@ -5,6 +5,19 @@
  * @module db
  */
 
+import {
+  DEFAULT_PAGE_SIZE as _DEFAULT_PAGE_SIZE,
+  MAX_PAGE_SIZE as _MAX_PAGE_SIZE,
+} from '@/lib/constants';
+
+/**
+ * Pagination constants - imported from centralized constants module.
+ * Re-exported here for backwards compatibility.
+ */
+export const DEFAULT_PAGE_SIZE = _DEFAULT_PAGE_SIZE;
+export const MAX_PAGE_SIZE = _MAX_PAGE_SIZE;
+export const MIN_PAGE_SIZE = 1;
+
 /**
  * Calculate skip and take for Prisma queries
  */
@@ -53,13 +66,6 @@ export function buildPaginationMeta(
     hasLess: page > 1,
   };
 }
-
-/**
- * Default pagination options
- */
-export const DEFAULT_PAGE_SIZE = 20;
-export const MAX_PAGE_SIZE = 100;
-export const MIN_PAGE_SIZE = 1;
 
 /**
  * Normalize pagination parameters

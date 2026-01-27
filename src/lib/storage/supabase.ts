@@ -1,4 +1,5 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { MAX_FILE_SIZE_BYTES } from '@/lib/constants';
 
 const bucketName = process.env.SUPABASE_BUCKET || 'durj-storage';
 
@@ -105,8 +106,6 @@ const ALLOWED_MIME_TYPES = new Set([
   'application/zip',
 ]);
 
-// SECURITY: Maximum file size (10MB)
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 export async function sbUpload({ path, bytes, contentType, tenantId }: UploadParams) {
   // SECURITY: Validate path
@@ -118,8 +117,8 @@ export async function sbUpload({ path, bytes, contentType, tenantId }: UploadPar
   }
 
   // SECURITY: Validate file size
-  if (bytes.length > MAX_FILE_SIZE) {
-    throw new Error(`SECURITY: File size exceeds maximum allowed (${MAX_FILE_SIZE / 1024 / 1024}MB)`);
+  if (bytes.length > MAX_FILE_SIZE_BYTES) {
+    throw new Error(`SECURITY: File size exceeds maximum allowed (${MAX_FILE_SIZE_BYTES / 1024 / 1024}MB)`);
   }
 
   const client = getSupabaseClient();

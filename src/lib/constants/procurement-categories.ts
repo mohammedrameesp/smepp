@@ -101,15 +101,3 @@ export function getMatchingCategories(
     .slice(0, limit) as string[];
 }
 
-/**
- * Category groups for organized display in select/autocomplete
- */
-export const CATEGORY_GROUPS = {
-  'IT & Technology': ['IT Equipment', 'Software & Licenses', 'IT Services', 'Telecommunications'],
-  'Office & Facilities': ['Office Supplies', 'Furniture', 'Cleaning & Janitorial', 'Security Services', 'Facilities Management'],
-  'Professional Services': ['Consulting', 'Legal Services', 'Accounting & Audit', 'Marketing & Advertising', 'HR & Recruitment', 'Training & Development'],
-  'Operations': ['Logistics & Shipping', 'Printing & Stationery', 'Travel & Transportation', 'Catering & Food Services'],
-  'Construction & Maintenance': ['Construction', 'Electrical', 'Plumbing', 'HVAC', 'General Maintenance'],
-  'Manufacturing & Industrial': ['Raw Materials', 'Machinery & Equipment', 'Packaging', 'Industrial Supplies'],
-  'Other': ['Insurance', 'Financial Services', 'Healthcare', 'Other'],
-} as const;

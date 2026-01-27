@@ -11,6 +11,7 @@ import { logAction, ActivityActions } from '@/lib/core/activity';
 import logger from '@/lib/core/log';
 import { withErrorHandler } from '@/lib/http/handler';
 import { badRequestResponse } from '@/lib/http/errors';
+import { MAX_FILE_SIZE_BYTES } from '@/lib/constants';
 
 // Force Node.js runtime for file upload handling
 export const runtime = 'nodejs';
@@ -23,7 +24,6 @@ const ALLOWED_MIME_TYPES = [
   'image/jpeg',
   'image/jpg'
 ];
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 /**
  * POST /api/upload
@@ -61,7 +61,7 @@ export const POST = withErrorHandler(async (request: NextRequest, { tenant }) =>
   }
 
   // Validate file size
-  if (file.size > MAX_FILE_SIZE) {
+  if (file.size > MAX_FILE_SIZE_BYTES) {
     return badRequestResponse('File size exceeds 10MB limit');
   }
 

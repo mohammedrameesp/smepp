@@ -1,4 +1,5 @@
 import mime from 'mime';
+import { MAX_FILE_SIZE_BYTES } from '@/lib/constants';
 
 // Magic number signatures for file types
 const FILE_SIGNATURES = {
@@ -58,7 +59,7 @@ export async function scanFileBuffer(
       errors.push('File is empty');
     }
 
-    if (buffer.length > 10 * 1024 * 1024) { // 10MB
+    if (buffer.length > MAX_FILE_SIZE_BYTES) {
       errors.push('File exceeds maximum size limit');
     }
 

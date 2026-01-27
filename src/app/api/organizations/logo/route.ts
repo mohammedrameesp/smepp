@@ -10,12 +10,10 @@ import {
 } from '@/lib/images';
 import { withErrorHandler } from '@/lib/http/handler';
 import { badRequestResponse } from '@/lib/http/errors';
+import { MAX_LOGO_SIZE_BYTES } from '@/lib/constants';
 
 // Force Node.js runtime (required for Buffer operations)
 export const runtime = 'nodejs';
-
-// Maximum file size: 1MB
-const MAX_FILE_SIZE = 1 * 1024 * 1024;
 
 // Allowed image types (no JPEG - doesn't support transparency well)
 const ALLOWED_TYPES = ['image/png', 'image/webp', 'image/svg+xml'];
@@ -63,8 +61,8 @@ export const POST = withErrorHandler(async (request: NextRequest, { tenant }) =>
   }
 
   // Validate file size
-  if (file.size > MAX_FILE_SIZE) {
-    return badRequestResponse('File too large. Maximum size is 1MB');
+  if (file.size > MAX_LOGO_SIZE_BYTES) {
+    return badRequestResponse('File too large. Maximum size is 2MB');
   }
 
   // Get file extension from MIME type for consistency

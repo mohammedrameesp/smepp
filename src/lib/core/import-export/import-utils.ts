@@ -15,6 +15,7 @@
 import { NextResponse } from 'next/server';
 import { csvToArray } from './csv-utils';
 import { formatNumber } from '@/lib/utils/math-utils';
+import { MAX_FILE_SIZE_BYTES } from '@/lib/constants';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
@@ -72,8 +73,11 @@ export interface ImportFileConfig {
 // CONSTANTS
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Default maximum file size: 10MB */
-export const DEFAULT_MAX_FILE_SIZE = 10 * 1024 * 1024;
+/**
+ * Default maximum file size - re-exported from centralized constants.
+ * @deprecated Import MAX_FILE_SIZE_BYTES from '@/lib/constants' instead.
+ */
+export const DEFAULT_MAX_FILE_SIZE = MAX_FILE_SIZE_BYTES;
 
 /**
  * Magic byte signatures for file type validation.
