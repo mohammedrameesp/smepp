@@ -98,7 +98,7 @@ export function ModuleStep({ selected, onChange }: ModuleStepProps) {
     <div className="max-w-3xl mx-auto">
       <div className="text-center mb-4">
         <div className="w-12 h-12 mx-auto mb-4 bg-slate-100 rounded-2xl flex items-center justify-center">
-          <Blocks className="w-6 h-6 text-slate-600" />
+          <Blocks className={`${ICON_SIZES.lg} text-slate-600`} />
         </div>
         <h1 className="text-2xl font-bold text-slate-900 mb-2">
           Choose your modules
@@ -122,7 +122,7 @@ export function ModuleStep({ selected, onChange }: ModuleStepProps) {
                 />
                 {section.title}
                 {section.isCore && (
-                  <Lock className="w-3 h-3 text-slate-400" />
+                  <Lock className={`${ICON_SIZES.xs} text-slate-400`} />
                 )}
               </h3>
               <p className="text-xs text-slate-400 mt-0.5">{section.subtitle}</p>
@@ -156,11 +156,11 @@ export function ModuleStep({ selected, onChange }: ModuleStepProps) {
                           color: isSelected ? section.color : '#94a3b8',
                         }}
                       >
-                        <Icon className="w-4 h-4" />
+                        <Icon className={ICON_SIZES.sm} />
                       </div>
                       {isCore ? (
                         <div className="flex items-center gap-1 text-xs text-indigo-600 font-medium">
-                          <Lock className="w-3 h-3" />
+                          <Lock className={ICON_SIZES.xs} />
                           Always on
                         </div>
                       ) : (
@@ -169,7 +169,7 @@ export function ModuleStep({ selected, onChange }: ModuleStepProps) {
                             isSelected ? 'bg-slate-900' : 'border-2 border-slate-300'
                           }`}
                         >
-                          {isSelected && <Check className="w-3 h-3 text-white" />}
+                          {isSelected && <Check className={`${ICON_SIZES.xs} text-white`} />}
                         </div>
                       )}
                     </div>
@@ -179,7 +179,7 @@ export function ModuleStep({ selected, onChange }: ModuleStepProps) {
                     <p className="text-xs text-slate-500">{module.description}</p>
                     {module.warning && (
                       <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
-                        <AlertCircle className="w-3 h-3" />
+                        <AlertCircle className={ICON_SIZES.xs} />
                         {module.warning}
                       </p>
                     )}

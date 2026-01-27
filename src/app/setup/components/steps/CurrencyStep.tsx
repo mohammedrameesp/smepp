@@ -26,7 +26,7 @@ export function CurrencyStep({
     <div className="max-w-lg mx-auto">
       <div className="text-center mb-4">
         <div className="w-12 h-12 mx-auto mb-4 bg-slate-100 rounded-2xl flex items-center justify-center">
-          <Coins className="w-6 h-6 text-slate-600" />
+          <Coins className={`${ICON_SIZES.lg} text-slate-600`} />
         </div>
         <h1 className="text-2xl font-bold text-slate-900 mb-2">
           Currencies

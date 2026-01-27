@@ -72,7 +72,7 @@ export function LogoStep({
     <div className="max-w-md mx-auto">
       <div className="text-center mb-4">
         <div className="w-12 h-12 mx-auto mb-4 bg-slate-100 rounded-2xl flex items-center justify-center">
-          <Image className="w-6 h-6 text-slate-600" />
+          <Image className={`${ICON_SIZES.lg} text-slate-600`} />
         </div>
         <h1 className="text-2xl font-bold text-slate-900 mb-2">
           Add your company logo
@@ -126,7 +126,7 @@ export function LogoStep({
             className="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:border-slate-400 transition-colors cursor-pointer"
           >
             <div className="w-12 h-12 mx-auto mb-3 bg-slate-100 rounded-xl flex items-center justify-center">
-              <Upload className="w-6 h-6 text-slate-400" />
+              <Upload className={`${ICON_SIZES.lg} text-slate-400`} />
             </div>
             <p className="text-sm text-slate-600 mb-1">
               Drag and drop your logo here

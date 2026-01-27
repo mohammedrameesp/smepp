@@ -58,7 +58,7 @@ export function WelcomeStep({
         className="relative"
       >
         <div className="w-24 h-24 mx-auto mb-6 bg-green-100 rounded-full flex items-center justify-center">
-          <CheckCircle className="w-12 h-12 text-green-600" />
+          <CheckCircle className={`${ICON_SIZES['3xl']} text-green-600`} />
         </div>
         <motion.div
           initial={{ scale: 0, opacity: 0 }}
@@ -66,7 +66,7 @@ export function WelcomeStep({
           transition={{ delay: 0.4 }}
           className="absolute -top-2 -right-4"
         >
-          <PartyPopper className="w-8 h-8 text-amber-500" />
+          <PartyPopper className={`${ICON_SIZES.xl} text-amber-500`} />
         </motion.div>
       </motion.div>
 
@@ -97,7 +97,7 @@ export function WelcomeStep({
           {/* Modules */}
           <div className="flex items-start gap-3">
             <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-              <Check className="w-4 h-4 text-slate-600" />
+              <Check className={`${ICON_SIZES.sm} text-slate-600`} />
             </div>
             <div>
               <p className="text-sm font-medium text-slate-900">
@@ -114,7 +114,7 @@ export function WelcomeStep({
           {inviteCount > 0 && (
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-                <Check className="w-4 h-4 text-slate-600" />
+                <Check className={`${ICON_SIZES.sm} text-slate-600`} />
               </div>
               <div>
                 <p className="text-sm font-medium text-slate-900">
@@ -130,7 +130,7 @@ export function WelcomeStep({
           {/* Currencies */}
           <div className="flex items-start gap-3">
             <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-              <Check className="w-4 h-4 text-slate-600" />
+              <Check className={`${ICON_SIZES.sm} text-slate-600`} />
             </div>
             <div>
               <p className="text-sm font-medium text-slate-900">
@@ -153,7 +153,7 @@ export function WelcomeStep({
           transition={{ delay: 0.7 }}
           className="flex items-center justify-center gap-2 text-slate-600"
         >
-          <Loader2 className="w-5 h-5 animate-spin" />
+          <Loader2 className={`${ICON_SIZES.md} animate-spin`} />
           <span>Redirecting to your dashboard...</span>
         </motion.div>
       )}

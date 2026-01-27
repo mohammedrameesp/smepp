@@ -105,7 +105,7 @@ export function OrgNameStep({
     <div className="max-w-md mx-auto">
       <div className="text-center mb-4">
         <div className="w-12 h-12 mx-auto mb-4 bg-slate-100 rounded-2xl flex items-center justify-center">
-          <Building2 className="w-6 h-6 text-slate-600" />
+          <Building2 className={`${ICON_SIZES.lg} text-slate-600`} />
         </div>
         <h1 className="text-2xl font-bold text-slate-900 mb-2">
           Organization details
@@ -150,9 +150,9 @@ export function OrgNameStep({
             {websiteTouched && website && (
               <div className="absolute right-3 top-1/2 -translate-y-1/2">
                 {websiteValidation.isValid ? (
-                  <Check className="w-5 h-5 text-green-500" />
+                  <Check className={`${ICON_SIZES.md} text-green-500`} />
                 ) : (
-                  <AlertCircle className="w-5 h-5 text-red-500" />
+                  <AlertCircle className={`${ICON_SIZES.md} text-red-500`} />
                 )}
               </div>
             )}
@@ -188,9 +188,9 @@ export function OrgNameStep({
             {/* Status indicator */}
             <div className="absolute right-3 top-1/2 -translate-y-1/2">
               {isValidPrefix ? (
-                <Check className="w-5 h-5 text-green-500" />
+                <Check className={`${ICON_SIZES.md} text-green-500`} />
               ) : isPartialPrefix ? (
-                <X className="w-5 h-5 text-amber-500" />
+                <X className={`${ICON_SIZES.md} text-amber-500`} />
               ) : null}
             </div>
           </div>

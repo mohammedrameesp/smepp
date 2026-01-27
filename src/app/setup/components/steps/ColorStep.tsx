@@ -73,7 +73,7 @@ export function ColorStep({
       {/* Header - Compact */}
       <div className="text-center mb-4">
         <div className="w-10 h-10 mx-auto mb-3 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
-          <Palette className="w-5 h-5 text-white" />
+          <Palette className={`${ICON_SIZES.md} text-white`} />
         </div>
         <h1 className="text-xl font-bold text-slate-900 mb-1">
           Brand Colors
@@ -189,7 +189,7 @@ export function ColorStep({
                 title={color.name}
               >
                 {activeColor === color.value && (
-                  <Check className="w-4 h-4 text-white absolute inset-0 m-auto drop-shadow" />
+                  <Check className={`${ICON_SIZES.sm} text-white absolute inset-0 m-auto drop-shadow`} />
                 )}
               </button>
             ))}
@@ -221,9 +221,9 @@ export function ColorStep({
               {activeColor && (
                 <div className="absolute right-2 top-1/2 -translate-y-1/2">
                   {colorValidation.isValid ? (
-                    <Check className="w-4 h-4 text-green-500" />
+                    <Check className={`${ICON_SIZES.sm} text-green-500`} />
                   ) : (
-                    <AlertCircle className="w-4 h-4 text-red-500" />
+                    <AlertCircle className={`${ICON_SIZES.sm} text-red-500`} />
                   )}
                 </div>
               )}
@@ -234,7 +234,7 @@ export function ColorStep({
                 className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-md transition-colors"
                 title="Reset to platform default"
               >
-                <X className="w-4 h-4" />
+                <X className={ICON_SIZES.sm} />
               </button>
             )}
           </div>
