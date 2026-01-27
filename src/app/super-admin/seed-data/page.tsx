@@ -84,7 +84,7 @@ export default function SeedDataPage() {
         <CardHeader>
           <CardTitle>Select Organization</CardTitle>
           <CardDescription>
-            Choose an organization to seed with comprehensive test data including employees, assets, subscriptions, projects, and more.
+            Choose an organization to seed with comprehensive test data including employees, assets, subscriptions, spend requests, and more.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -206,7 +206,7 @@ export default function SeedDataPage() {
             <li>15+ assets (MacBooks, monitors, tablets, cameras, phones)</li>
             <li>12+ subscriptions (Adobe, Figma, Slack, Microsoft 365, etc.)</li>
             <li>10+ suppliers with engagement history</li>
-            <li>10+ projects (active, planning, completed)</li>
+            <li>10+ spend requests (pending, approved, completed)</li>
             <li>12+ purchase requests with line items</li>
             <li>Salary structures for all employees</li>
             <li>Company document types and documents</li>

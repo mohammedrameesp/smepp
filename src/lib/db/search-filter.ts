@@ -49,7 +49,7 @@ export function buildSearchFilter(options: SearchFilterOptions): Record<string, 
  * const where = mergeWhereAnd(
  *   buildSearchFilter({ searchTerm: 'laptop', searchFields: ['model'] }),
  *   { status: 'IN_USE' },
- *   { projectId: '123' }
+ *   { categoryId: '123' }
  * );
  */
 export function mergeWhereAnd(...conditions: Record<string, unknown>[]): Record<string, unknown> {

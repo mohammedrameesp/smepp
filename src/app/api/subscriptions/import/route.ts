@@ -109,7 +109,6 @@ async function importSubscriptionsHandler(request: NextRequest, context: APICont
       const subscriptionData = {
         ...buildSubscriptionDbData(parsedData),
         assignedMemberId,
-        projectId: null as string | null,
       };
 
       // ─────────────────────────────────────────────────────────────────────
