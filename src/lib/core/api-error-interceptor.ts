@@ -21,6 +21,25 @@
  */
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// TYPES
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Common API error response body structure.
+ * APIs may use different field names for the error message.
+ */
+interface ApiErrorResponseBody {
+  error?: string;
+  message?: string;
+  errorMessage?: string;
+  msg?: string;
+  detail?: string;
+  Error?: string;
+  Message?: string;
+  [key: string]: unknown;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // CONFIGURATION
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -28,7 +47,7 @@
  * Generic error messages that indicate the user didn't get helpful feedback.
  * These errors will be reported to super admin for investigation.
  */
-const UNHELPFUL_ERROR_PATTERNS = [
+const UNHELPFUL_ERROR_PATTERNS: readonly RegExp[] = [
   /^bad request$/i,
   /^invalid request$/i,
   /^request failed$/i,
@@ -47,12 +66,12 @@ const UNHELPFUL_ERROR_PATTERNS = [
  * Only intercept requests to our own API.
  * External APIs are excluded.
  */
-const API_PATH_PREFIX = '/api/';
+const API_PATH_PREFIX = '/api/' as const;
 
 /**
  * Endpoints to exclude from error reporting (e.g., the error report endpoint itself).
  */
-const EXCLUDED_ENDPOINTS = [
+const EXCLUDED_ENDPOINTS: readonly string[] = [
   '/api/errors/report',
   '/api/health',
   '/api/auth/', // Auth errors are handled separately
@@ -61,7 +80,7 @@ const EXCLUDED_ENDPOINTS = [
 /**
  * Status codes that indicate client/server errors worth investigating.
  */
-const REPORTABLE_STATUS_CODES = [400, 401, 403, 404, 405, 422, 429, 500, 502, 503, 504];
+const REPORTABLE_STATUS_CODES: readonly number[] = [400, 401, 403, 404, 405, 422, 429, 500, 502, 503, 504];
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // HELPER FUNCTIONS
@@ -69,6 +88,8 @@ const REPORTABLE_STATUS_CODES = [400, 401, 403, 404, 405, 422, 429, 500, 502, 50
 
 /**
  * Check if an error message is too generic to be helpful.
+ * @param message - The error message to check
+ * @returns True if the message matches known unhelpful patterns
  */
 function isUnhelpfulMessage(message: string): boolean {
   if (!message) return true;
@@ -79,6 +100,8 @@ function isUnhelpfulMessage(message: string): boolean {
 
 /**
  * Check if the URL should be intercepted.
+ * @param url - The request URL to check
+ * @returns True if the URL is an API endpoint we should monitor
  */
 function shouldIntercept(url: string): boolean {
   try {
@@ -102,8 +125,10 @@ function shouldIntercept(url: string): boolean {
 }
 
 /**
- * Extract action name from API path.
- * e.g., /api/organizations/logo -> organizations/logo
+ * Extract action name from API path for error categorization.
+ * @param url - The API URL
+ * @returns The path segment after /api/ (e.g., "organizations/logo")
+ * @example getActionFromPath('/api/organizations/logo') // returns 'organizations/logo'
  */
 function getActionFromPath(url: string): string {
   try {
@@ -115,14 +140,19 @@ function getActionFromPath(url: string): string {
 }
 
 /**
- * Report a confusing error to the dashboard.
+ * Report a confusing error to the super admin dashboard.
+ * @param url - The API endpoint URL
+ * @param method - HTTP method (GET, POST, etc.)
+ * @param status - HTTP status code
+ * @param errorMessage - The unhelpful error message received
+ * @param responseBody - Optional response body for context
  */
 async function reportError(
   url: string,
   method: string,
   status: number,
   errorMessage: string,
-  responseBody?: unknown
+  responseBody: ApiErrorResponseBody | null
 ): Promise<void> {
   try {
     const action = getActionFromPath(url);
@@ -232,6 +262,9 @@ export function initApiErrorInterceptor(): void {
 
 /**
  * Analyze an error response and report if the message is unhelpful.
+ * @param url - The API endpoint URL
+ * @param method - HTTP method used
+ * @param response - The cloned Response object to analyze
  */
 async function analyzeErrorResponse(
   url: string,
@@ -240,16 +273,16 @@ async function analyzeErrorResponse(
 ): Promise<void> {
   try {
     // Try to parse JSON response
-    const body = await response.json().catch(() => null);
+    const body: ApiErrorResponseBody | null = await response.json().catch(() => null);
 
     if (!body || typeof body !== 'object') {
       // No JSON body or not an object - report as unhelpful
-      reportError(url, method, response.status, response.statusText || 'No error message', null);
+      await reportError(url, method, response.status, response.statusText || 'No error message', null);
       return;
     }
 
-    // Extract error message from common patterns
-    const errorMessage =
+    // Extract error message from common field names
+    const errorMessage: string =
       body.error ||
       body.message ||
       body.errorMessage ||
@@ -269,7 +302,8 @@ async function analyzeErrorResponse(
 }
 
 /**
- * Disable the interceptor (useful for testing).
+ * Disable the interceptor and restore original fetch.
+ * Useful for testing or when you need to temporarily disable error reporting.
  */
 export function disableApiErrorInterceptor(): void {
   if (typeof window === 'undefined' || !isInitialized || !originalFetch) {
@@ -282,6 +316,7 @@ export function disableApiErrorInterceptor(): void {
 
 /**
  * Check if the interceptor is currently active.
+ * @returns True if the interceptor has been initialized and is actively monitoring
  */
 export function isInterceptorActive(): boolean {
   return isInitialized;
