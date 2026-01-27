@@ -43,3 +43,7 @@ export {
 // Error alert templates (super admin notifications)
 export { systemErrorAlertEmail } from './error-alerts';
 export type { EmailTemplate } from './error-alerts';
+
+// Email failure alert templates (super admin notifications)
+export { emailFailureAlertEmail } from './email-failures';
+export type { EmailFailureTemplate } from './email-failures';

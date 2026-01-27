@@ -143,7 +143,7 @@ async function notifySuperAdmin(context: EmailFailureContext): Promise<void> {
   }
 
   try {
-    const { emailFailureAlertEmail } = await import('./failure-templates');
+    const { emailFailureAlertEmail } = await import('./templates/email-failures');
     const emailData = emailFailureAlertEmail(context);
 
     const result = await sendEmail({

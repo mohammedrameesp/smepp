@@ -1,24 +1,47 @@
 /**
- * @file failure-templates.ts
+ * @file email-failures.ts
  * @description Email templates for super admin notifications about email delivery failures.
- * @module lib/email
+ * @module lib/email/templates
  */
 
-import type { EmailFailureContext } from './failure-handler';
-import { escapeHtml, DEFAULT_BRAND_COLOR, APP_DOMAIN } from './utils';
+import type { EmailFailureContext } from '../failure-handler';
+import { escapeHtml, DEFAULT_BRAND_COLOR, APP_DOMAIN } from '../utils';
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TYPES
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/** Email template output with subject, HTML body, and plain text fallback */
+export interface EmailFailureTemplate {
+  subject: string;
+  html: string;
+  text: string;
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CONSTANTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// Use the shared brand color
+/** Brand color for email header and CTA buttons */
 const BRAND_COLOR = DEFAULT_BRAND_COLOR;
+
+/** Default organization name for system alerts */
+const DEFAULT_ORG_NAME = 'Durj Platform';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // EMAIL WRAPPER
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function emailWrapper(content: string, orgName: string = 'Durj Platform'): string {
+/**
+ * Wrap email content in a consistent HTML template for failure alerts.
+ * This is a simplified wrapper for system alerts.
+ *
+ * @param content - The main HTML content of the email body
+ * @param orgName - Organization name for footer (defaults to 'Durj Platform')
+ * @returns Complete HTML email document
+ * @internal
+ */
+function emailWrapper(content: string, orgName: string = DEFAULT_ORG_NAME): string {
   return `
 <!DOCTYPE html>
 <html>
@@ -56,18 +79,21 @@ function emailWrapper(content: string, orgName: string = 'Durj Platform'): strin
 // EMAIL FAILURE ALERT TEMPLATE
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export function emailFailureAlertEmail(context: EmailFailureContext): {
-  subject: string;
-  html: string;
-  text: string;
-} {
+/**
+ * Generate email template for email delivery failure alerts.
+ * Sent to super admin when email notifications fail to send.
+ *
+ * @param context - Email failure context with organization and error details
+ * @returns Email template with subject, HTML, and plain text versions
+ */
+export function emailFailureAlertEmail(context: EmailFailureContext): EmailFailureTemplate {
   const subject = `Email Delivery Failure: ${context.organizationName} - ${context.module}`;
 
   const isLocalhost = APP_DOMAIN.includes('localhost');
   const protocol = isLocalhost ? 'http' : 'https';
 
   const tenantPortalUrl = `${protocol}://${context.organizationSlug}.${APP_DOMAIN}`;
-  const superAdminUrl = `${protocol}://${APP_DOMAIN}/super-admin/organizations`;
+  const superAdminUrl = `${protocol}://${APP_DOMAIN}/super-admin/email-failures`;
 
   const html = emailWrapper(`
     <!-- Alert Banner -->
@@ -190,7 +216,7 @@ export function emailFailureAlertEmail(context: EmailFailureContext): {
         <td align="center">
           <a href="${superAdminUrl}"
              style="display: inline-block; padding: 14px 30px; background-color: ${BRAND_COLOR}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
-            View Organization in Super Admin
+            View Email Failures
           </a>
         </td>
       </tr>
@@ -199,7 +225,7 @@ export function emailFailureAlertEmail(context: EmailFailureContext): {
     <p style="color: #888888; font-size: 12px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
       This is an automated alert from the Durj Platform monitoring system. The tenant admins have also been notified via in-app notification.
     </p>
-  `, 'Durj Platform');
+  `, DEFAULT_ORG_NAME);
 
   const text = `
 EMAIL DELIVERY FAILURE
@@ -230,7 +256,7 @@ Recommended Actions:
 - Confirm RESEND_API_KEY is configured correctly
 - Check if domain is verified in Resend
 
-View organization: ${superAdminUrl}
+View email failures: ${superAdminUrl}
 
 ---
 This is an automated alert from the Durj Platform monitoring system.
@@ -239,5 +265,3 @@ The tenant admins have also been notified via in-app notification.
 
   return { subject, html, text };
 }
-
-// Note: escapeHtml is imported from ./utils

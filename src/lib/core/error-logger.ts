@@ -51,9 +51,25 @@ export interface ErrorContext {
   severity?: ErrorSeverity;
 }
 
-// Rate limiting to prevent spam during cascading failures
+// ═══════════════════════════════════════════════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/** Cooldown period between identical errors in milliseconds (5 minutes) */
+const ERROR_COOLDOWN_MS = 5 * 60 * 1000;
+
+/** Maximum cache size before cleanup is triggered */
+const MAX_CACHE_SIZE = 200;
+
+/** Default severity level when not specified in error context */
+const DEFAULT_SEVERITY: ErrorSeverity = 'error';
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// RATE LIMITING CACHE
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/** Rate limiting cache to prevent spam during cascading failures */
 const recentErrors = new Map<string, number>();
-const ERROR_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes between identical errors
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MAIN HANDLER
@@ -82,7 +98,7 @@ export async function handleSystemError(context: ErrorContext): Promise<void> {
     recentErrors.set(errorKey, now);
 
     // Clean up old entries periodically
-    if (recentErrors.size > 200) {
+    if (recentErrors.size > MAX_CACHE_SIZE) {
       const cutoff = now - ERROR_COOLDOWN_MS;
       for (const [key, time] of recentErrors) {
         if (time < cutoff) {
@@ -111,6 +127,10 @@ export async function handleSystemError(context: ErrorContext): Promise<void> {
 
 /**
  * Persist error to database for super admin dashboard.
+ * Non-blocking - failures are logged but don't throw.
+ *
+ * @param context - Error context to persist
+ * @internal
  */
 async function persistErrorLog(context: ErrorContext): Promise<void> {
   try {
@@ -132,7 +152,7 @@ async function persistErrorLog(context: ErrorContext): Promise<void> {
         errorCode: context.errorCode,
         metadata: context.metadata ? (context.metadata as Prisma.InputJsonValue) : undefined,
         userAgent: context.userAgent,
-        severity: context.severity || 'error',
+        severity: context.severity || DEFAULT_SEVERITY,
       },
     });
     logger.debug(
@@ -152,7 +172,12 @@ async function persistErrorLog(context: ErrorContext): Promise<void> {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Send email to super admin about the system error.
+ * Send email notification to super admin about the system error.
+ * Requires SUPER_ADMIN_EMAIL environment variable to be configured.
+ * Non-blocking - failures are logged but don't throw.
+ *
+ * @param context - Error context to include in the notification
+ * @internal
  */
 async function notifySuperAdmin(context: ErrorContext): Promise<void> {
   const superAdminEmail = process.env.SUPER_ADMIN_EMAIL;
