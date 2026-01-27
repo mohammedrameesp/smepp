@@ -16,6 +16,7 @@
 
 import { BillingCycle, SubscriptionStatus } from '@prisma/client';
 import { convertToQARSync } from '@/lib/core/currency';
+import { parseDDMMYYYY } from '@/lib/core/import-export';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -93,42 +94,6 @@ export interface ParsedSubscriptionData {
 export type SubscriptionParseResult =
   | { success: true; data: ParsedSubscriptionData }
   | { success: false; error: string };
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// DATE PARSING
-// ═══════════════════════════════════════════════════════════════════════════════
-
-/**
- * Parse DD/MM/YYYY date format (Qatar standard)
- *
- * @param dateStr - Date string in DD/MM/YYYY format
- * @returns Parsed Date object or null if invalid
- *
- * @example
- * parseDDMMYYYY('25/12/2024'); // Date: 2024-12-25
- * parseDDMMYYYY('invalid');    // null
- */
-export function parseDDMMYYYY(dateStr: string | undefined): Date | null {
-  if (!dateStr) return null;
-
-  const parts = dateStr.split('/');
-  if (parts.length === 3) {
-    const day = parseInt(parts[0]);
-    const month = parseInt(parts[1]) - 1; // JS months are 0-indexed
-    const year = parseInt(parts[2]);
-
-    // Basic validation
-    if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
-      const date = new Date(year, month, day);
-      // Verify the date is valid (e.g., not Feb 30)
-      if (date.getDate() === day && date.getMonth() === month) {
-        return date;
-      }
-    }
-  }
-
-  return null;
-}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // PARSING FUNCTIONS

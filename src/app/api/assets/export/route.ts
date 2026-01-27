@@ -34,7 +34,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
-import { arrayToCSV } from '@/lib/core/csv-utils';
+import { arrayToCSV } from '@/lib/core/import-export';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import {
   ASSET_EXPORT_COLUMNS,

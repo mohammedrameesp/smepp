@@ -1,7 +1,7 @@
 /**
  * @file export-utils.ts
  * @description Shared utilities for CSV/Excel export operations
- * @module core
+ * @module lib/core/import-export
  *
  * This module consolidates common export patterns used across:
  * - Asset exports
@@ -15,21 +15,14 @@
  */
 
 import { NextResponse } from 'next/server';
-import { arrayToCSV, formatDateForCSV, formatCurrencyForCSV } from '@/lib/core/csv-utils';
+import { arrayToCSV, formatDateForCSV, formatCurrencyForCSV, ExportHeader } from './csv-utils';
+
+// Re-export ExportHeader from csv-utils for convenience
+export type { ExportHeader };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
 // ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Column header definition for CSV/Excel exports
- */
-export interface ExportHeader<T> {
-  /** Key in the data object */
-  key: keyof T;
-  /** Display header text in the exported file */
-  header: string;
-}
 
 /**
  * Configuration for multi-sheet Excel exports

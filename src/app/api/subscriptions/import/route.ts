@@ -24,7 +24,7 @@ import {
   recordImportError,
   formatImportMessage,
   getExcelRowNumber,
-} from '@/lib/core/import-utils';
+} from '@/lib/core/import-export';
 import {
   type SubscriptionImportRow,
   parseSubscriptionRow,

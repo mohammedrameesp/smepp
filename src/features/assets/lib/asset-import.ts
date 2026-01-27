@@ -20,7 +20,7 @@ import {
   parseEnumValue,
   convertPriceWithQAR,
   type ImportRow,
-} from '@/lib/core/import-utils';
+} from '@/lib/core/import-export';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES

@@ -15,7 +15,7 @@
  */
 
 import { Asset, AssetCategory, Location, TeamMember } from '@prisma/client';
-import { formatDateForCSV, formatCurrencyForCSV } from '@/lib/core/csv-utils';
+import { formatDateForCSV, formatCurrencyForCSV } from '@/lib/core/import-export';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { withErrorHandler } from '@/lib/http/handler';
-import { arrayToCSV, formatDateForCSV } from '@/lib/core/csv-utils';
+import { arrayToCSV, formatDateForCSV } from '@/lib/core/import-export';
 
 export const maxDuration = 60; // Set max duration to 60 seconds for large exports
 

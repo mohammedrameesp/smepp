@@ -67,7 +67,7 @@ import {
   ImportRow,
   ImportResults,
   DuplicateStrategy,
-} from '@/lib/core/import-utils';
+} from '@/lib/core/import-export';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import logger from '@/lib/core/log';
 
@@ -588,4 +588,4 @@ export {
   parseNumericValue,
   parseFlexibleDate,
   parseDDMMYYYY,
-} from '@/lib/core/import-utils';
+} from '@/lib/core/import-export';

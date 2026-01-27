@@ -4,7 +4,7 @@
  * @module operations/suppliers
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { csvToArray } from '@/lib/core/csv-utils';
+import { csvToArray } from '@/lib/core/import-export';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { SupplierStatus, Prisma } from '@prisma/client';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';

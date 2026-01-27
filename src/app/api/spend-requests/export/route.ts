@@ -7,7 +7,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
-import ExcelJS from 'exceljs';
 import {
   getStatusLabel,
   getPriorityLabel,
@@ -17,6 +16,7 @@ import {
   getBillingCycleLabel,
 } from '@/features/spend-requests/lib/spend-request-utils';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { generateMultiSheetExport, safeFormatDate, safeString } from '@/lib/core/import-export';
 
 async function exportSpendRequestsHandler(request: NextRequest, context: APIContext) {
     const { tenant, prisma: tenantPrisma } = context;
@@ -65,161 +65,127 @@ async function exportSpendRequestsHandler(request: NextRequest, context: APICont
       return NextResponse.json(requests);
     }
 
-    // Fetch organization name for workbook metadata (use raw prisma for non-tenant model)
-    const org = await prisma.organization.findUnique({
-      where: { id: tenantId },
-      select: { name: true },
-    });
-
-    // Create Excel workbook
-    const workbook = new ExcelJS.Workbook();
-    workbook.creator = org?.name || 'Durj';
-    workbook.created = new Date();
-
-    // Sheet 1: Spend Requests
-    const requestsSheet = workbook.addWorksheet('Spend Requests');
-    requestsSheet.columns = [
-      { header: 'Reference Number', key: 'referenceNumber', width: 20 },
-      { header: 'Title', key: 'title', width: 40 },
-      { header: 'Request Date', key: 'requestDate', width: 15 },
-      { header: 'Status', key: 'status', width: 15 },
-      { header: 'Priority', key: 'priority', width: 12 },
-      { header: 'Purchase Type', key: 'purchaseType', width: 20 },
-      { header: 'Cost Type', key: 'costType', width: 15 },
-      { header: 'Project Name', key: 'projectName', width: 25 },
-      { header: 'Payment Mode', key: 'paymentMode', width: 18 },
-      { header: 'Requester Name', key: 'requesterName', width: 25 },
-      { header: 'Requester Email', key: 'requesterEmail', width: 30 },
-      { header: 'Description', key: 'description', width: 50 },
-      { header: 'Justification', key: 'justification', width: 50 },
-      { header: 'Needed By Date', key: 'neededByDate', width: 15 },
-      { header: 'Vendor Name', key: 'vendorName', width: 25 },
-      { header: 'Vendor Contact', key: 'vendorContact', width: 20 },
-      { header: 'Vendor Email', key: 'vendorEmail', width: 25 },
-      { header: 'Total Amount', key: 'totalAmount', width: 15 },
-      { header: 'Currency', key: 'currency', width: 10 },
-      { header: 'Total Amount (QAR)', key: 'totalAmountQAR', width: 18 },
-      { header: 'Total One-Time', key: 'totalOneTime', width: 15 },
-      { header: 'Total Monthly', key: 'totalMonthly', width: 15 },
-      { header: 'Total Contract Value', key: 'totalContractValue', width: 18 },
-      { header: 'Item Count', key: 'itemCount', width: 12 },
-      { header: 'Additional Notes', key: 'additionalNotes', width: 40 },
-      { header: 'Reviewed By', key: 'reviewedBy', width: 25 },
-      { header: 'Reviewed At', key: 'reviewedAt', width: 20 },
-      { header: 'Review Notes', key: 'reviewNotes', width: 40 },
-      { header: 'Completed At', key: 'completedAt', width: 20 },
-      { header: 'Created At', key: 'createdAt', width: 20 },
+    // Define headers for Spend Requests sheet
+    const requestHeaders = [
+      { key: 'referenceNumber', header: 'Reference Number' },
+      { key: 'title', header: 'Title' },
+      { key: 'requestDate', header: 'Request Date' },
+      { key: 'status', header: 'Status' },
+      { key: 'priority', header: 'Priority' },
+      { key: 'purchaseType', header: 'Purchase Type' },
+      { key: 'costType', header: 'Cost Type' },
+      { key: 'projectName', header: 'Project Name' },
+      { key: 'paymentMode', header: 'Payment Mode' },
+      { key: 'requesterName', header: 'Requester Name' },
+      { key: 'requesterEmail', header: 'Requester Email' },
+      { key: 'description', header: 'Description' },
+      { key: 'justification', header: 'Justification' },
+      { key: 'neededByDate', header: 'Needed By Date' },
+      { key: 'vendorName', header: 'Vendor Name' },
+      { key: 'vendorContact', header: 'Vendor Contact' },
+      { key: 'vendorEmail', header: 'Vendor Email' },
+      { key: 'totalAmount', header: 'Total Amount' },
+      { key: 'currency', header: 'Currency' },
+      { key: 'totalAmountQAR', header: 'Total Amount (QAR)' },
+      { key: 'totalOneTime', header: 'Total One-Time' },
+      { key: 'totalMonthly', header: 'Total Monthly' },
+      { key: 'totalContractValue', header: 'Total Contract Value' },
+      { key: 'itemCount', header: 'Item Count' },
+      { key: 'additionalNotes', header: 'Additional Notes' },
+      { key: 'reviewedBy', header: 'Reviewed By' },
+      { key: 'reviewedAt', header: 'Reviewed At' },
+      { key: 'reviewNotes', header: 'Review Notes' },
+      { key: 'completedAt', header: 'Completed At' },
+      { key: 'createdAt', header: 'Created At' },
     ];
 
-    // Style header row
-    requestsSheet.getRow(1).font = { bold: true };
-    requestsSheet.getRow(1).fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: 'FF73C5D1' },
-    };
+    // Transform requests data for export
+    const requestsData = requests.map((req) => ({
+      referenceNumber: safeString(req.referenceNumber),
+      title: safeString(req.title),
+      requestDate: safeFormatDate(req.requestDate),
+      status: getStatusLabel(req.status),
+      priority: getPriorityLabel(req.priority),
+      purchaseType: getPurchaseTypeLabel(req.purchaseType),
+      costType: getCostTypeLabel(req.costType),
+      projectName: safeString(req.projectName),
+      paymentMode: getPaymentModeLabel(req.paymentMode),
+      requesterName: safeString(req.requester.name),
+      requesterEmail: safeString(req.requester.email),
+      description: safeString(req.description),
+      justification: safeString(req.justification),
+      neededByDate: safeFormatDate(req.neededByDate),
+      vendorName: safeString(req.vendorName),
+      vendorContact: safeString(req.vendorContact),
+      vendorEmail: safeString(req.vendorEmail),
+      totalAmount: Number(req.totalAmount),
+      currency: safeString(req.currency),
+      totalAmountQAR: req.totalAmountQAR ? Number(req.totalAmountQAR) : '',
+      totalOneTime: req.totalOneTime ? Number(req.totalOneTime) : '',
+      totalMonthly: req.totalMonthly ? Number(req.totalMonthly) : '',
+      totalContractValue: req.totalContractValue ? Number(req.totalContractValue) : '',
+      itemCount: req.items.length,
+      additionalNotes: safeString(req.additionalNotes),
+      reviewedBy: safeString(req.reviewedBy?.name || req.reviewedBy?.email),
+      reviewedAt: safeFormatDate(req.reviewedAt),
+      reviewNotes: safeString(req.reviewNotes),
+      completedAt: safeFormatDate(req.completedAt),
+      createdAt: safeFormatDate(req.createdAt),
+    }));
 
-    // Add data
-    requests.forEach((req) => {
-      requestsSheet.addRow({
-        referenceNumber: req.referenceNumber,
-        title: req.title,
-        requestDate: req.requestDate ? new Date(req.requestDate).toLocaleDateString('en-GB') : '',
-        status: getStatusLabel(req.status),
-        priority: getPriorityLabel(req.priority),
-        purchaseType: getPurchaseTypeLabel(req.purchaseType),
-        costType: getCostTypeLabel(req.costType),
-        projectName: req.projectName || '',
-        paymentMode: getPaymentModeLabel(req.paymentMode),
-        requesterName: req.requester.name || '',
-        requesterEmail: req.requester.email,
-        description: req.description || '',
-        justification: req.justification || '',
-        neededByDate: req.neededByDate ? new Date(req.neededByDate).toLocaleDateString('en-GB') : '',
-        vendorName: req.vendorName || '',
-        vendorContact: req.vendorContact || '',
-        vendorEmail: req.vendorEmail || '',
-        totalAmount: Number(req.totalAmount),
-        currency: req.currency,
-        totalAmountQAR: req.totalAmountQAR ? Number(req.totalAmountQAR) : null,
-        totalOneTime: req.totalOneTime ? Number(req.totalOneTime) : null,
-        totalMonthly: req.totalMonthly ? Number(req.totalMonthly) : null,
-        totalContractValue: req.totalContractValue ? Number(req.totalContractValue) : null,
-        itemCount: req.items.length,
-        additionalNotes: req.additionalNotes || '',
-        reviewedBy: req.reviewedBy?.name || req.reviewedBy?.email || '',
-        reviewedAt: req.reviewedAt ? new Date(req.reviewedAt).toLocaleString('en-GB') : '',
-        reviewNotes: req.reviewNotes || '',
-        completedAt: req.completedAt ? new Date(req.completedAt).toLocaleString('en-GB') : '',
-        createdAt: req.createdAt ? new Date(req.createdAt).toLocaleString('en-GB') : '',
-      });
-    });
-
-    // Sheet 2: Line Items
-    const itemsSheet = workbook.addWorksheet('Line Items');
-    itemsSheet.columns = [
-      { header: 'Reference Number', key: 'referenceNumber', width: 20 },
-      { header: 'Item Number', key: 'itemNumber', width: 12 },
-      { header: 'Description', key: 'description', width: 50 },
-      { header: 'Category', key: 'category', width: 20 },
-      { header: 'Quantity', key: 'quantity', width: 10 },
-      { header: 'Billing Cycle', key: 'billingCycle', width: 15 },
-      { header: 'Duration (Months)', key: 'durationMonths', width: 18 },
-      { header: 'Unit Price', key: 'unitPrice', width: 15 },
-      { header: 'Currency', key: 'currency', width: 10 },
-      { header: 'Total Price', key: 'totalPrice', width: 15 },
-      { header: 'Amount Per Cycle', key: 'amountPerCycle', width: 18 },
-      { header: 'Unit Price (QAR)', key: 'unitPriceQAR', width: 18 },
-      { header: 'Total Price (QAR)', key: 'totalPriceQAR', width: 18 },
-      { header: 'Product URL', key: 'productUrl', width: 40 },
-      { header: 'Supplier', key: 'supplier', width: 25 },
-      { header: 'Notes', key: 'notes', width: 40 },
+    // Define headers for Line Items sheet
+    const itemHeaders = [
+      { key: 'referenceNumber', header: 'Reference Number' },
+      { key: 'itemNumber', header: 'Item Number' },
+      { key: 'description', header: 'Description' },
+      { key: 'category', header: 'Category' },
+      { key: 'quantity', header: 'Quantity' },
+      { key: 'billingCycle', header: 'Billing Cycle' },
+      { key: 'durationMonths', header: 'Duration (Months)' },
+      { key: 'unitPrice', header: 'Unit Price' },
+      { key: 'currency', header: 'Currency' },
+      { key: 'totalPrice', header: 'Total Price' },
+      { key: 'amountPerCycle', header: 'Amount Per Cycle' },
+      { key: 'unitPriceQAR', header: 'Unit Price (QAR)' },
+      { key: 'totalPriceQAR', header: 'Total Price (QAR)' },
+      { key: 'productUrl', header: 'Product URL' },
+      { key: 'supplier', header: 'Supplier' },
+      { key: 'notes', header: 'Notes' },
     ];
 
-    // Style header row
-    itemsSheet.getRow(1).font = { bold: true };
-    itemsSheet.getRow(1).fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: 'FF73C5D1' },
-    };
-
-    // Add data
+    // Transform line items data for export
+    const itemsData: Record<string, unknown>[] = [];
     requests.forEach((req) => {
       req.items.forEach((item) => {
-        itemsSheet.addRow({
-          referenceNumber: req.referenceNumber,
+        itemsData.push({
+          referenceNumber: safeString(req.referenceNumber),
           itemNumber: item.itemNumber,
-          description: item.description,
-          category: item.category || '',
+          description: safeString(item.description),
+          category: safeString(item.category),
           quantity: item.quantity,
           billingCycle: getBillingCycleLabel(item.billingCycle || 'ONE_TIME'),
           durationMonths: item.durationMonths || '',
           unitPrice: Number(item.unitPrice),
-          currency: item.currency,
+          currency: safeString(item.currency),
           totalPrice: Number(item.totalPrice),
           amountPerCycle: item.amountPerCycle ? Number(item.amountPerCycle) : '',
-          unitPriceQAR: item.unitPriceQAR ? Number(item.unitPriceQAR) : null,
-          totalPriceQAR: item.totalPriceQAR ? Number(item.totalPriceQAR) : null,
-          productUrl: item.productUrl || '',
-          supplier: item.supplier || '',
-          notes: item.notes || '',
+          unitPriceQAR: item.unitPriceQAR ? Number(item.unitPriceQAR) : '',
+          totalPriceQAR: item.totalPriceQAR ? Number(item.totalPriceQAR) : '',
+          productUrl: safeString(item.productUrl),
+          supplier: safeString(item.supplier),
+          notes: safeString(item.notes),
         });
       });
     });
 
-    // Generate buffer
-    const buffer = await workbook.xlsx.writeBuffer();
-
-    // Return file
-    const filename = `spend-requests-${new Date().toISOString().split('T')[0]}.xlsx`;
-
-    return new NextResponse(new Uint8Array(buffer as ArrayBuffer), {
-      headers: {
-        'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'Content-Disposition': `attachment; filename="${filename}"`,
-      },
-    });
+    // Generate multi-sheet Excel export
+    return await generateMultiSheetExport(
+      [
+        { name: 'Spend Requests', data: requestsData, headers: requestHeaders },
+        { name: 'Line Items', data: itemsData, headers: itemHeaders },
+      ],
+      'spend-requests'
+    );
 }
 
 export const GET = withErrorHandler(exportSpendRequestsHandler, { requireAdmin: true, requireModule: 'spend-requests' });

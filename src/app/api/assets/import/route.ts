@@ -21,7 +21,7 @@ import {
   recordImportError,
   formatImportMessage,
   type ImportRow,
-} from '@/lib/core/import-utils';
+} from '@/lib/core/import-export';
 import { parseAssetRow, buildAssetDbData } from '@/features/assets';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';

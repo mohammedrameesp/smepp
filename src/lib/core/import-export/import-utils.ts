@@ -1,7 +1,7 @@
 /**
  * @file import-utils.ts
  * @description Shared utilities for CSV/Excel import operations
- * @module core
+ * @module lib/core/import-export
  *
  * This module consolidates common import patterns used across:
  * - Asset imports
@@ -13,7 +13,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { csvToArray } from '@/lib/core/csv-utils';
+import { csvToArray } from './csv-utils';
 import { formatNumber } from '@/lib/utils/math-utils';
 
 // ─────────────────────────────────────────────────────────────────────────────
