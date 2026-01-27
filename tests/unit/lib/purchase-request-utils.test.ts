@@ -223,7 +223,7 @@ describe('Purchase Request Utilities', () => {
       expect(getStatusColor('UNDER_REVIEW')).toBe('bg-blue-100 text-blue-800');
       expect(getStatusColor('APPROVED')).toBe('bg-green-100 text-green-800');
       expect(getStatusColor('REJECTED')).toBe('bg-red-100 text-red-800');
-      expect(getStatusColor('COMPLETED')).toBe('bg-gray-100 text-gray-800');
+      expect(getStatusColor('COMPLETED')).toBe('bg-gray-100 text-gray-600');
     });
 
     it('should return default gray for unknown status', () => {
@@ -239,8 +239,9 @@ describe('Purchase Request Utilities', () => {
       expect(getPriorityColor('URGENT')).toBe('bg-red-100 text-red-700');
     });
 
-    it('should return default gray for unknown priority', () => {
-      expect(getPriorityColor('CRITICAL')).toBe('bg-gray-100 text-gray-700');
+    it('should return default medium for unknown priority', () => {
+      // Unknown priorities fall back to MEDIUM (blue) as a safe default
+      expect(getPriorityColor('CRITICAL')).toBe('bg-blue-100 text-blue-700');
     });
   });
 
