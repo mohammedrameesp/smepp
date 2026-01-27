@@ -1,11 +1,11 @@
 /**
- * @file error-alert-templates.ts
+ * @file error-alerts.ts
  * @description Email templates for super admin notifications about system errors.
- * @module lib/core
+ * @module lib/email/templates
  */
 
-import type { ErrorContext, ErrorSeverity } from './error-logger';
-import { escapeHtml, DEFAULT_BRAND_COLOR, APP_DOMAIN } from '@/lib/email';
+import type { ErrorContext, ErrorSeverity } from '@/lib/core/error-logger';
+import { escapeHtml, DEFAULT_BRAND_COLOR, APP_DOMAIN } from '../utils';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES

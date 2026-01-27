@@ -39,3 +39,7 @@ export {
   assetReturnRejectedEmail,
   assetUnassignedEmail,
 } from './asset-requests';
+
+// Error alert templates (super admin notifications)
+export { systemErrorAlertEmail } from './error-alerts';
+export type { EmailTemplate } from './error-alerts';

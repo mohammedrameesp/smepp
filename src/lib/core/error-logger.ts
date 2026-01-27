@@ -162,7 +162,7 @@ async function notifySuperAdmin(context: ErrorContext): Promise<void> {
   }
 
   try {
-    const { systemErrorAlertEmail } = await import('./error-alert-templates');
+    const { systemErrorAlertEmail } = await import('@/lib/email/templates/error-alerts');
     const emailData = systemErrorAlertEmail(context);
 
     const result = await sendEmail({
