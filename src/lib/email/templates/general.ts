@@ -13,19 +13,10 @@ import {
   getTenantPortalUrl,
   emailWrapper,
 } from '../utils';
+import { formatDate } from '@/lib/core/datetime';
 
 // Re-export for backwards compatibility if needed
 export { DEFAULT_BRAND_COLOR };
-
-function formatDate(date: Date | string | null): string {
-  if (!date) return 'N/A';
-  const d = typeof date === 'string' ? new Date(date) : date;
-  return d.toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  });
-}
 
 // ============================================================================
 // HELPER FUNCTIONS (local)

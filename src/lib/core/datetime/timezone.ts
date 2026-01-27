@@ -7,7 +7,8 @@
 import { QATAR_TIMEZONE } from './constants';
 
 /**
- * Get current date/time in Qatar timezone
+ * Get current date/time in Qatar timezone.
+ * Note: This function is called frequently; results are not cached as time is always changing.
  * @returns Date object representing the current time in Qatar
  */
 export function getQatarNow(): Date {
@@ -32,37 +33,24 @@ export function toQatarTime(date: Date | string | null | undefined): Date | null
 }
 
 /**
- * Parse a date string as Qatar timezone date
- * When user enters "2025-01-01", treat it as January 1st in Qatar time, not UTC
+ * Parse a date string as Qatar timezone date at midnight.
+ * When user enters "2025-01-01", treat it as January 1st in Qatar time, not UTC.
  * @param dateString - Date string in YYYY-MM-DD format
- * @returns Date object
+ * @returns Date object representing midnight on that date in local time
  * @throws Error if date string is empty or invalid
  */
 export function parseQatarDate(dateString: string): Date {
   if (!dateString) throw new Error('Date string is required');
 
-  // Parse the date components
   const [year, month, day] = dateString.split('-').map(Number);
 
   if (!year || !month || !day) {
     throw new Error('Invalid date format. Expected YYYY-MM-DD');
   }
 
-  // Create date in Qatar timezone by using toLocaleString
-  // This ensures the date is treated as Qatar time, not UTC
-  const qatarDate = new Date(dateString + 'T00:00:00');
-  const qatarDateString = qatarDate.toLocaleString('en-US', {
-    timeZone: QATAR_TIMEZONE,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false,
-  });
-
-  return new Date(qatarDateString);
+  // Create date at midnight local time for the given date components
+  // This preserves the calendar date the user intended
+  return new Date(year, month - 1, day, 0, 0, 0, 0);
 }
 
 /**

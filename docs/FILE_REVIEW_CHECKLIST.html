@@ -62,11 +62,11 @@
 <body>
   <div class="container">
     <h1>Source Code Review Checklist</h1>
-    <p>Generated: 2026-01-27 | Total Files: <strong>956</strong></p>
+    <p>Generated: 2026-01-27 | Total Files: <strong>951</strong></p>
 
     <div class="stats">
       <div class="stat">
-        <div class="stat-value" id="totalFiles">956</div>
+        <div class="stat-value" id="totalFiles">951</div>
         <div class="stat-label">Total Files</div>
       </div>
       <div class="stat">
@@ -94,7 +94,7 @@
       </div>
       <div class="progress-bar">
         <div class="progress-fill" id="progressFill" style="width: 0%"></div>
-        <span class="progress-text" id="progressText">0 / 956 files reviewed</span>
+        <span class="progress-text" id="progressText">0 / 951 files reviewed</span>
       </div>
     </div>
 
@@ -1023,8 +1023,6 @@
       "src/lib/core/activity.ts",
       "src/lib/core/api-error-interceptor.ts",
       "src/lib/core/auth.ts",
-      "src/lib/core/caching/index.ts",
-      "src/lib/core/caching/memory-cache.ts",
       "src/lib/core/currency.ts",
       "src/lib/core/datetime/constants.ts",
       "src/lib/core/datetime/formatting.ts",
@@ -1032,16 +1030,13 @@
       "src/lib/core/datetime/parsing.ts",
       "src/lib/core/datetime/timezone.ts",
       "src/lib/core/error-logger.ts",
-      "src/lib/core/get-org-info.ts",
       "src/lib/core/import-export/csv-utils.ts",
       "src/lib/core/import-export/export-utils.ts",
       "src/lib/core/import-export/import-utils.ts",
       "src/lib/core/import-export/index.ts",
-      "src/lib/core/index.ts",
       "src/lib/core/log.ts",
       "src/lib/core/prisma.ts",
       "src/lib/core/prisma-tenant.ts",
-      "src/lib/core/theme.ts",
       "src/lib/core/utils.ts",
       // lib - data
       "src/lib/data/constants.ts",
@@ -1487,7 +1482,10 @@
       "src/lib/security/headers.ts": { checked: true, status: "keep" },
       "src/lib/security/impersonation.ts": { checked: true, status: "keep" },
       "src/lib/security/password-validation.ts": { checked: true, status: "keep" },
-      "src/lib/security/rateLimit.ts": { checked: true, status: "keep" }
+      "src/lib/security/rateLimit.ts": { checked: true, status: "keep" },
+      // Core utilities
+      "src/lib/core/utils.ts": { checked: true, status: "keep" },
+      "src/lib/core/log.ts": { checked: true, status: "keep" }
     };
 
     // Apply progress data to the UI

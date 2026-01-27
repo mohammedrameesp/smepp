@@ -6,14 +6,9 @@
 
 /**
  * Qatar timezone identifier - Gulf Standard Time (GST)
- * UTC+3, no daylight saving time
+ * UTC+3, no daylight saving time observed
  */
 export const QATAR_TIMEZONE = 'Asia/Qatar';
-
-/**
- * Qatar UTC offset in hours
- */
-export const QATAR_UTC_OFFSET = 3;
 
 /**
  * Short month names for date formatting

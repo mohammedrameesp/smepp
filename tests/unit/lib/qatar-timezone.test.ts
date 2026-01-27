@@ -5,7 +5,6 @@
 
 import {
   QATAR_TIMEZONE,
-  QATAR_UTC_OFFSET,
   getQatarNow,
   toQatarTime,
   parseQatarDate,
@@ -15,7 +14,8 @@ import {
   isTodayQatar,
   getQatarStartOfDay,
   getQatarEndOfDay,
-  formatQatarDate,
+  formatDate,
+  formatDateTime,
   getDaysUntilQatar,
 } from '@/lib/core/datetime';
 
@@ -24,10 +24,6 @@ describe('Qatar Timezone Utilities', () => {
   describe('Constants', () => {
     it('should export correct timezone', () => {
       expect(QATAR_TIMEZONE).toBe('Asia/Qatar');
-    });
-
-    it('should export correct UTC offset', () => {
-      expect(QATAR_UTC_OFFSET).toBe(3);
     });
   });
 
@@ -254,39 +250,46 @@ describe('Qatar Timezone Utilities', () => {
     });
   });
 
-  // ===== formatQatarDate =====
-  describe('formatQatarDate', () => {
+  // ===== formatDate/formatDateTime =====
+  describe('formatDate', () => {
     it('should format date without time', () => {
       const date = new Date('2025-06-15T12:00:00Z');
-      const formatted = formatQatarDate(date);
-      // Should contain day, month, year
+      const formatted = formatDate(date);
+      // Should contain day, month, year in "15 Jun 2025" format
       expect(formatted).toMatch(/\d{1,2}/); // Day
-      expect(formatted).toMatch(/[A-Za-z]{3,}/); // Month name
+      expect(formatted).toMatch(/[A-Za-z]{3}/); // Month name
       expect(formatted).toMatch(/2025/); // Year
     });
 
-    it('should format date with time', () => {
-      const date = new Date('2025-06-15T12:30:00Z');
-      const formatted = formatQatarDate(date, true);
-      // Should contain time
-      expect(formatted).toMatch(/\d{1,2}:\d{2}/); // HH:MM
-    });
-
     it('should format date string', () => {
-      const formatted = formatQatarDate('2025-06-15');
+      const formatted = formatDate('2025-06-15');
       expect(formatted).not.toBe('N/A');
     });
 
     it('should return N/A for null', () => {
-      expect(formatQatarDate(null)).toBe('N/A');
+      expect(formatDate(null)).toBe('N/A');
     });
 
     it('should return N/A for undefined', () => {
-      expect(formatQatarDate(undefined)).toBe('N/A');
+      expect(formatDate(undefined)).toBe('N/A');
     });
 
     it('should return N/A for invalid date', () => {
-      expect(formatQatarDate('invalid-date')).toBe('N/A');
+      expect(formatDate('invalid-date')).toBe('N/A');
+    });
+  });
+
+  describe('formatDateTime', () => {
+    it('should format date with time', () => {
+      const date = new Date('2025-06-15T12:30:00Z');
+      const formatted = formatDateTime(date);
+      // Should contain time in "15 Jun 2025 HH:MM" format
+      expect(formatted).toMatch(/\d{1,2}:\d{2}/); // HH:MM
+      expect(formatted).toMatch(/2025/); // Year
+    });
+
+    it('should return N/A for null', () => {
+      expect(formatDateTime(null)).toBe('N/A');
     });
   });
 

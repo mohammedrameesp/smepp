@@ -11,19 +11,9 @@ import type {
   ApprovalDetails,
   ApprovalEntityType,
 } from './types';
+import { formatDate } from '@/lib/core/datetime';
 
 const DEFAULT_LANGUAGE = 'en';
-
-/**
- * Format a date for display
- */
-function formatDate(date: Date): string {
-  return date.toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  });
-}
 
 /**
  * Format currency amount

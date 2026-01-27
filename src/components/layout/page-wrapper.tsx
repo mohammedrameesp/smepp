@@ -5,15 +5,18 @@
  */
 
 import { ReactNode } from 'react';
-import { theme } from '@/lib/core/theme';
+
+/** Login page gradient - dark slate theme */
+const LOGIN_GRADIENT = 'from-slate-900 via-slate-950 to-slate-950';
 
 interface PageWrapperProps {
   children: ReactNode;
   className?: string;
 }
+
 export function PageWrapper({ children, className = '' }: PageWrapperProps) {
   return (
-    <div className={`min-h-screen bg-gradient-to-br ${theme.loginGradient} ${className}`}>
+    <div className={`min-h-screen bg-gradient-to-br ${LOGIN_GRADIENT} ${className}`}>
       <div className="absolute inset-0 bg-black/5" />
       <div className="relative z-10">
         {children}
