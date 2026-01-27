@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/table';
 import { Download, Eye, Clock, AlertCircle, CreditCard, CalendarOff } from 'lucide-react';
 import { formatCurrency } from '@/lib/core/currency';
+import { ICON_SIZES } from '@/lib/constants';
 import { getMonthName, getPayrollStatusText } from '@/features/payroll/lib/utils';
 import { PayrollWorkflowActions } from '@/features/payroll/components';
 import { calculatePayrollPreview } from '@/features/payroll/lib/preview';
@@ -104,7 +105,7 @@ export default async function PayrollRunDetailPage({ params }: PageProps) {
           payrollRun.wpsFileGenerated && payrollRun.wpsFileUrl ? (
             <a href={payrollRun.wpsFileUrl} download>
               <PageHeaderButton variant="secondary">
-                <Download className="h-4 w-4" />
+                <Download className={ICON_SIZES.sm} />
                 Download WPS
               </PageHeaderButton>
             </a>
@@ -161,7 +162,7 @@ export default async function PayrollRunDetailPage({ params }: PageProps) {
             <Card className="border-amber-200 bg-amber-50">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-amber-800">
-                  <AlertCircle className="h-5 w-5" />
+                  <AlertCircle className={ICON_SIZES.md} />
                   Expected Deductions Summary
                 </CardTitle>
                 <CardDescription className="text-amber-700">
@@ -172,7 +173,7 @@ export default async function PayrollRunDetailPage({ params }: PageProps) {
                 <div className="grid gap-4 md:grid-cols-2">
                   {preview.totalLoanDeductions > 0 && (
                     <div className="flex items-center gap-3 p-3 bg-white rounded-lg border">
-                      <CreditCard className="h-8 w-8 text-blue-500" />
+                      <CreditCard className={`${ICON_SIZES.xl} text-blue-500`} />
                       <div>
                         <div className="text-sm text-muted-foreground">Loan Deductions</div>
                         <div className="text-xl font-bold text-red-600">
@@ -186,7 +187,7 @@ export default async function PayrollRunDetailPage({ params }: PageProps) {
                   )}
                   {preview.totalLeaveDeductions > 0 && (
                     <div className="flex items-center gap-3 p-3 bg-white rounded-lg border">
-                      <CalendarOff className="h-8 w-8 text-orange-500" />
+                      <CalendarOff className={`${ICON_SIZES.xl} text-orange-500`} />
                       <div>
                         <div className="text-sm text-muted-foreground">Unpaid Leave Deductions</div>
                         <div className="text-xl font-bold text-red-600">
@@ -207,7 +208,7 @@ export default async function PayrollRunDetailPage({ params }: PageProps) {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Eye className="h-5 w-5" />
+                <Eye className={ICON_SIZES.md} />
                 Payroll Preview ({preview.totalEmployees} employees)
               </CardTitle>
               <CardDescription>
@@ -253,7 +254,7 @@ export default async function PayrollRunDetailPage({ params }: PageProps) {
                             {emp.loanDeductions.map((loan) => (
                               <div key={loan.loanId} className="text-xs">
                                 <Badge variant="outline" className="text-blue-600 border-blue-200">
-                                  <CreditCard className="h-3 w-3 mr-1" />
+                                  <CreditCard className={`${ICON_SIZES.xs} mr-1`} />
                                   {loan.type}: {formatCurrency(loan.deductionAmount)}
                                 </Badge>
                               </div>
@@ -261,7 +262,7 @@ export default async function PayrollRunDetailPage({ params }: PageProps) {
                             {emp.leaveDeductions.map((leave) => (
                               <div key={leave.leaveRequestId} className="text-xs">
                                 <Badge variant="outline" className="text-orange-600 border-orange-200">
-                                  <CalendarOff className="h-3 w-3 mr-1" />
+                                  <CalendarOff className={`${ICON_SIZES.xs} mr-1`} />
                                   {leave.leaveTypeName} ({leave.totalDays}d): {formatCurrency(leave.deductionAmount)}
                                 </Badge>
                               </div>
@@ -338,7 +339,7 @@ export default async function PayrollRunDetailPage({ params }: PageProps) {
                       <TableCell>
                         <Button asChild variant="ghost" size="icon">
                           <Link href={`/admin/payroll/payslips/${payslip.id}`}>
-                            <Eye className="h-4 w-4" />
+                            <Eye className={ICON_SIZES.sm} />
                           </Link>
                         </Button>
                       </TableCell>
@@ -362,7 +363,7 @@ export default async function PayrollRunDetailPage({ params }: PageProps) {
             {payrollRun.history.map((entry) => (
               <div key={entry.id} className="flex items-start gap-4 pb-4 border-b last:border-0">
                 <div className="p-2 bg-muted rounded-full">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <Clock className={`${ICON_SIZES.sm} text-muted-foreground`} />
                 </div>
                 <div className="flex-1">
                   <div className="font-medium">{entry.action.replace(/_/g, ' ')}</div>
@@ -379,7 +380,7 @@ export default async function PayrollRunDetailPage({ params }: PageProps) {
 
             <div className="flex items-start gap-4">
               <div className="p-2 bg-muted rounded-full">
-                <Clock className="h-4 w-4 text-muted-foreground" />
+                <Clock className={`${ICON_SIZES.sm} text-muted-foreground`} />
               </div>
               <div className="flex-1">
                 <div className="font-medium">Created</div>

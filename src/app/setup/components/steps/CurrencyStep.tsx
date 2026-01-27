@@ -8,6 +8,8 @@
 
 import { Coins } from 'lucide-react';
 import { CurrencySelector } from '@/components/currency-selector';
+import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface CurrencyStepProps {
   primaryCurrency: string;

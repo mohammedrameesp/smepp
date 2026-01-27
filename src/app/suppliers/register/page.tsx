@@ -15,6 +15,7 @@ import { CheckCircle2, Loader2, Building2 } from 'lucide-react';
 import { createSupplierSchema, type CreateSupplierRequest } from '@/features/suppliers';
 import { useSubdomain } from '@/hooks/use-subdomain';
 import { useTenantBranding } from '@/hooks/use-tenant-branding';
+import { ICON_SIZES } from '@/lib/constants';
 
 // Country codes
 const COUNTRY_CODES = [
@@ -186,7 +187,7 @@ export default function SupplierRegistrationPage() {
           />
         ) : (
           <div className="flex items-center gap-2">
-            <Building2 className="h-8 w-8 text-white" />
+            <Building2 className={`${ICON_SIZES.xl} text-white`} />
             <span className="text-xl font-bold text-white">{orgName}</span>
           </div>
         )}
@@ -199,7 +200,7 @@ export default function SupplierRegistrationPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-gray-400" />
+          <Loader2 className={`${ICON_SIZES.xl} animate-spin mx-auto mb-4 text-gray-400`} />
           <p className="text-gray-500">Loading...</p>
         </div>
       </div>
@@ -217,7 +218,7 @@ export default function SupplierRegistrationPage() {
             <Card className="border-green-200 bg-green-50">
               <CardContent className="pt-6">
                 <div className="flex flex-col items-center text-center space-y-4">
-                  <CheckCircle2 className="h-16 w-16 text-green-600" />
+                  <CheckCircle2 className={`${ICON_SIZES['4xl']} text-green-600`} />
                   <h2 className="text-2xl font-bold text-green-900">
                     Registration Submitted!
                   </h2>
@@ -643,7 +644,7 @@ export default function SupplierRegistrationPage() {
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className={`mr-2 ${ICON_SIZES.sm} animate-spin`} />
                     Submitting...
                   </>
                 ) : (

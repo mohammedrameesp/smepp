@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/dialog';
 import { Loader2, Undo2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface CancelOffboardingButtonProps {
   employeeId: string;
@@ -63,7 +64,7 @@ export function CancelOffboardingButton({ employeeId, employeeName }: CancelOffb
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button size="sm" variant="outline">
-          <Undo2 className="h-4 w-4 mr-2" />
+          <Undo2 className={`${ICON_SIZES.sm} mr-2`} />
           Cancel Offboarding
         </Button>
       </DialogTrigger>
@@ -87,7 +88,7 @@ export function CancelOffboardingButton({ employeeId, employeeName }: CancelOffb
           <Button type="button" onClick={handleCancel} disabled={isSubmitting}>
             {isSubmitting ? (
               <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className={`${ICON_SIZES.sm} mr-2 animate-spin`} />
                 Restoring...
               </>
             ) : (

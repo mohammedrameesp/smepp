@@ -3,6 +3,7 @@ import { ShoppingCart, Palmtree, Laptop } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/core/utils';
 import { formatDate } from '@/lib/core/datetime';
+import { getStatusClasses, ICON_SIZES } from '@/lib/constants';
 
 type RequestType = 'leave' | 'purchase' | 'asset';
 type RequestStatus = string; // Various statuses from different request types
@@ -41,20 +42,6 @@ const typeConfig: Record<RequestType, { icon: typeof ShoppingCart; bgColor: stri
   },
 };
 
-const statusConfig: Record<string, { className: string }> = {
-  PENDING: { className: 'bg-yellow-100 text-yellow-700' },
-  PENDING_ADMIN_APPROVAL: { className: 'bg-yellow-100 text-yellow-700' },
-  PENDING_USER_ACCEPTANCE: { className: 'bg-amber-100 text-amber-700' },
-  PENDING_RETURN_APPROVAL: { className: 'bg-yellow-100 text-yellow-700' },
-  APPROVED: { className: 'bg-green-100 text-green-700' },
-  ACCEPTED: { className: 'bg-green-100 text-green-700' },
-  REJECTED: { className: 'bg-red-100 text-red-700' },
-  REJECTED_BY_USER: { className: 'bg-red-100 text-red-700' },
-  CANCELLED: { className: 'bg-gray-100 text-gray-600' },
-  EXPIRED: { className: 'bg-gray-100 text-gray-600' },
-};
-
-const defaultStatusStyle = { className: 'bg-gray-100 text-gray-600' };
 
 function getRelativeTime(date: Date): string {
   const now = new Date();
@@ -85,7 +72,7 @@ export function RequestsCard({ requests, className }: RequestsCardProps) {
 
       {!hasRequests ? (
         <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-xl">
-          <ShoppingCart className="h-10 w-10 mx-auto mb-2 text-gray-300" />
+          <ShoppingCart className={cn(ICON_SIZES['2xl'], 'mx-auto mb-2 text-gray-300')} />
           <p className="text-sm font-medium">No requests yet</p>
           <p className="text-xs">Your requests will appear here</p>
         </div>
@@ -94,7 +81,6 @@ export function RequestsCard({ requests, className }: RequestsCardProps) {
           {requests.slice(0, 4).map((request) => {
             const config = typeConfig[request.type];
             const Icon = config.icon;
-            const statusStyle = statusConfig[request.status] || defaultStatusStyle;
 
             const href =
               request.type === 'leave'
@@ -116,13 +102,13 @@ export function RequestsCard({ requests, className }: RequestsCardProps) {
                       )}
                     >
                       <Icon
-                        className={cn('h-4 w-4', config.iconColor)}
+                        className={cn(ICON_SIZES.sm, config.iconColor)}
                       />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-medium text-gray-900 truncate">{request.title}</p>
-                        <Badge className={cn('text-xs', statusStyle.className)}>
+                        <Badge className={cn('text-xs', getStatusClasses(request.status))}>
                           {request.status}
                         </Badge>
                       </div>

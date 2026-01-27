@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/core/utils';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 
 export interface ServerPaginationProps {
   /** Current page number (1-indexed) */
@@ -114,11 +115,11 @@ export function ServerPagination({
         >
           {isFirstPage ? (
             <span>
-              <ChevronsLeft className="h-4 w-4" />
+              <ChevronsLeft className={ICON_SIZES.sm} />
             </span>
           ) : (
             <Link href={buildPageUrl(baseUrl, 1, pageParam, preserveParams)}>
-              <ChevronsLeft className="h-4 w-4" />
+              <ChevronsLeft className={ICON_SIZES.sm} />
             </Link>
           )}
         </Button>
@@ -133,7 +134,7 @@ export function ServerPagination({
       >
         {isFirstPage ? (
           <span className="flex items-center gap-1">
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft className={ICON_SIZES.sm} />
             Previous
           </span>
         ) : (
@@ -141,7 +142,7 @@ export function ServerPagination({
             href={buildPageUrl(baseUrl, page - 1, pageParam, preserveParams)}
             className="flex items-center gap-1"
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft className={ICON_SIZES.sm} />
             Previous
           </Link>
         )}
@@ -164,7 +165,7 @@ export function ServerPagination({
         {isLastPage ? (
           <span className="flex items-center gap-1">
             Next
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className={ICON_SIZES.sm} />
           </span>
         ) : (
           <Link
@@ -172,7 +173,7 @@ export function ServerPagination({
             className="flex items-center gap-1"
           >
             Next
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className={ICON_SIZES.sm} />
           </Link>
         )}
       </Button>
@@ -189,11 +190,11 @@ export function ServerPagination({
         >
           {isLastPage ? (
             <span>
-              <ChevronsRight className="h-4 w-4" />
+              <ChevronsRight className={ICON_SIZES.sm} />
             </span>
           ) : (
             <Link href={buildPageUrl(baseUrl, totalPages, pageParam, preserveParams)}>
-              <ChevronsRight className="h-4 w-4" />
+              <ChevronsRight className={ICON_SIZES.sm} />
             </Link>
           )}
         </Button>

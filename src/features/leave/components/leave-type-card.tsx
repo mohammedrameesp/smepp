@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Pencil, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface LeaveType {
   id: string;
@@ -54,9 +55,9 @@ export function LeaveTypeCard({ leaveType, onEdit, onDelete, onToggleActive }: L
                 title={leaveType.isActive ? 'Deactivate' : 'Activate'}
               >
                 {leaveType.isActive ? (
-                  <ToggleRight className="h-4 w-4 text-green-600" />
+                  <ToggleRight className={`${ICON_SIZES.sm} text-green-600`} />
                 ) : (
-                  <ToggleLeft className="h-4 w-4 text-gray-400" />
+                  <ToggleLeft className={`${ICON_SIZES.sm} text-gray-400`} />
                 )}
               </Button>
             )}
@@ -66,7 +67,7 @@ export function LeaveTypeCard({ leaveType, onEdit, onDelete, onToggleActive }: L
                 size="icon"
                 onClick={() => onEdit(leaveType)}
               >
-                <Pencil className="h-4 w-4" />
+                <Pencil className={ICON_SIZES.sm} />
               </Button>
             )}
             {onDelete && (
@@ -75,7 +76,7 @@ export function LeaveTypeCard({ leaveType, onEdit, onDelete, onToggleActive }: L
                 size="icon"
                 onClick={() => onDelete(leaveType.id)}
               >
-                <Trash2 className="h-4 w-4 text-red-500" />
+                <Trash2 className={`${ICON_SIZES.sm} text-red-500`} />
               </Button>
             )}
           </div>

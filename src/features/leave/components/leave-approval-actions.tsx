@@ -20,6 +20,7 @@ import {
 import { CheckCircle, XCircle, AlertTriangle, Info } from 'lucide-react';
 import { approveLeaveRequest, rejectLeaveRequest } from '@/lib/api/leave';
 import { useSubmitAction } from '@/lib/hooks';
+import { ICON_SIZES } from '@/lib/constants';
 import type { LeaveApprovalActionsProps, ApprovalStep } from '@/lib/types/leave';
 
 // Role display names mapping
@@ -118,7 +119,7 @@ export function LeaveApprovalActions({
           aria-label="Approve this leave request"
           aria-describedby={hasMultiLevelApproval && remainingSteps > 1 ? 'approval-chain-info' : undefined}
         >
-          <CheckCircle className="h-4 w-4" aria-hidden="true" />
+          <CheckCircle className={ICON_SIZES.sm} aria-hidden="true" />
           Approve
         </button>
         <button
@@ -126,7 +127,7 @@ export function LeaveApprovalActions({
           className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg transition-all bg-red-600 text-white hover:bg-red-700 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-800 focus-visible:ring-red-500"
           aria-label="Reject this leave request"
         >
-          <XCircle className="h-4 w-4" aria-hidden="true" />
+          <XCircle className={ICON_SIZES.sm} aria-hidden="true" />
           Reject
         </button>
         {hasMultiLevelApproval && remainingSteps > 1 && (
@@ -154,7 +155,7 @@ export function LeaveApprovalActions({
               {/* Already approved steps */}
               {completedStepsInfo && (
                 <div className="flex items-start gap-2 p-3 bg-emerald-50 dark:bg-emerald-950 border border-emerald-200 dark:border-emerald-800 rounded-lg text-sm" role="status">
-                  <CheckCircle className="h-4 w-4 text-emerald-700 dark:text-emerald-400 mt-0.5 flex-shrink-0" aria-hidden="true" />
+                  <CheckCircle className={`${ICON_SIZES.sm} text-emerald-700 dark:text-emerald-400 mt-0.5 flex-shrink-0`} aria-hidden="true" />
                   <div>
                     <p className="font-medium text-emerald-900 dark:text-emerald-100">Already approved by:</p>
                     <p className="text-emerald-800 dark:text-emerald-200">{completedStepsInfo}</p>
@@ -165,7 +166,7 @@ export function LeaveApprovalActions({
               {/* Current pending step info - show when there are more steps after this one */}
               {currentPendingStep && remainingSteps > 1 && (
                 <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg text-sm" role="status">
-                  <Info className="h-4 w-4 text-blue-700 dark:text-blue-400 mt-0.5 flex-shrink-0" aria-hidden="true" />
+                  <Info className={`${ICON_SIZES.sm} text-blue-700 dark:text-blue-400 mt-0.5 flex-shrink-0`} aria-hidden="true" />
                   <div>
                     <p className="text-blue-900 dark:text-blue-100">
                       <span className="font-medium">Current level:</span>{' '}
@@ -181,7 +182,7 @@ export function LeaveApprovalActions({
               {/* Override warning - only shown when user is at a higher level than current pending */}
               {isUserOverride && (
                 <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg text-sm" role="alert">
-                  <AlertTriangle className="h-4 w-4 text-amber-700 dark:text-amber-400 mt-0.5 flex-shrink-0" aria-hidden="true" />
+                  <AlertTriangle className={`${ICON_SIZES.sm} text-amber-700 dark:text-amber-400 mt-0.5 flex-shrink-0`} aria-hidden="true" />
                   <div className="text-amber-900 dark:text-amber-100">
                     <p className="font-medium">Upper-level override</p>
                     <p className="text-xs mt-0.5 text-amber-800 dark:text-amber-200">
@@ -251,7 +252,7 @@ export function LeaveApprovalActions({
           {/* Rejection warning for multi-level chains */}
           {hasMultiLevelApproval && completedStepsInfo && (
             <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg text-sm" role="alert">
-              <AlertTriangle className="h-4 w-4 text-amber-700 dark:text-amber-400 mt-0.5 flex-shrink-0" aria-hidden="true" />
+              <AlertTriangle className={`${ICON_SIZES.sm} text-amber-700 dark:text-amber-400 mt-0.5 flex-shrink-0`} aria-hidden="true" />
               <div className="text-amber-900 dark:text-amber-100">
                 <p className="font-medium">Previous approvals will be overridden</p>
                 <p className="text-xs mt-0.5 text-amber-800 dark:text-amber-200">

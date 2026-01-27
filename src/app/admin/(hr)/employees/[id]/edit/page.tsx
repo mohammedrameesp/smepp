@@ -10,6 +10,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { User, Users, Loader2, Shield, ArrowLeft, Banknote } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
+import { ICON_SIZES } from '@/lib/constants';
+import { cn } from '@/lib/core/utils';
 import { HRProfileForm } from '@/components/domains/hr/profile';
 import { toast } from 'sonner';
 
@@ -311,7 +313,7 @@ export default function AdminEmployeeEditPage() {
           <Card>
             <CardContent className="py-12">
               <div className="flex flex-col items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-gray-400 mb-4" />
+                <Loader2 className={cn(ICON_SIZES.xl, "animate-spin text-gray-400 mb-4")} />
                 <p className="text-gray-600">Loading profile...</p>
               </div>
             </CardContent>
@@ -330,7 +332,7 @@ export default function AdminEmployeeEditPage() {
             <AlertDescription>{error}</AlertDescription>
           </Alert>
           <Button variant="outline" onClick={() => router.back()}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
+            <ArrowLeft className={`${ICON_SIZES.sm} mr-2`} />
             Go Back
           </Button>
         </PageContent>
@@ -358,7 +360,7 @@ export default function AdminEmployeeEditPage() {
             <Card className="mb-6">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Shield className="h-5 w-5" />
+                  <Shield className={ICON_SIZES.md} />
                   Permissions
                 </CardTitle>
                 <CardDescription>
@@ -375,7 +377,7 @@ export default function AdminEmployeeEditPage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    {isUpdatingPermission && <Loader2 className="h-4 w-4 animate-spin text-gray-400" />}
+                    {isUpdatingPermission && <Loader2 className={cn(ICON_SIZES.sm, "animate-spin text-gray-400")} />}
                     <Switch
                       id="is-admin"
                       checked={isAdmin}
@@ -508,7 +510,7 @@ export default function AdminEmployeeEditPage() {
             <Card className="mb-6">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
+                  <Users className={ICON_SIZES.md} />
                   Employee Status
                 </CardTitle>
                 <CardDescription>
@@ -525,7 +527,7 @@ export default function AdminEmployeeEditPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     {isUpdatingEmployee && (
-                      <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                      <Loader2 className={cn(ICON_SIZES.sm, "animate-spin text-gray-400")} />
                     )}
                     <Switch
                       id="is-employee"
@@ -547,7 +549,7 @@ export default function AdminEmployeeEditPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       {isUpdatingWps && (
-                        <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                        <Loader2 className={cn(ICON_SIZES.sm, "animate-spin text-gray-400")} />
                       )}
                       <Switch
                         id="is-on-wps"

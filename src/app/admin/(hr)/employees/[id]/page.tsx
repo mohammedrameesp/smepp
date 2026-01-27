@@ -8,6 +8,8 @@ import Link from 'next/link';
 import { formatDate, formatDateTime } from '@/lib/core/datetime';
 import { Edit, AlertTriangle, Package, CreditCard, FileText, Calendar, Clock, Trash2 } from 'lucide-react';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
+import { ICON_SIZES } from '@/lib/constants';
+import { cn } from '@/lib/core/utils';
 import { DetailCard } from '@/components/ui/detail-card';
 import { InfoField, InfoFieldGrid } from '@/components/ui/info-field';
 import { EmployeeHRViewSection } from '@/features/employees/components';
@@ -114,7 +116,7 @@ export default async function AdminEmployeeDetailPage({ params }: Props) {
               userEmail={displayEmail || ''}
             />
             <PageHeaderButton href={`/admin/employees/${id}/edit`} variant="primary">
-              <Edit className="h-4 w-4" />
+              <Edit className={ICON_SIZES.sm} />
               Edit
             </PageHeaderButton>
             <EmployeeActionsDropdown
@@ -140,7 +142,7 @@ export default async function AdminEmployeeDetailPage({ params }: Props) {
         {isDeleted && (
           <div className="mb-6 bg-red-50 border border-red-200 rounded-2xl p-4 flex items-start gap-3">
             <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
-              <Trash2 className="h-5 w-5 text-red-600" />
+              <Trash2 className={cn(ICON_SIZES.md, "text-red-600")} />
             </div>
             <div className="flex-1">
               <h3 className="font-semibold text-red-800">Scheduled for Deletion</h3>
@@ -172,7 +174,7 @@ export default async function AdminEmployeeDetailPage({ params }: Props) {
         {completionPercentage < 80 && !isDeleted && !isOffboarded && (
           <div className="mb-6 bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
           <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
-            <AlertTriangle className="h-5 w-5 text-amber-600" />
+            <AlertTriangle className={cn(ICON_SIZES.md, "text-amber-600")} />
           </div>
           <div className="flex-1">
             <h3 className="font-semibold text-amber-800">Profile Incomplete ({completionPercentage}%)</h3>
@@ -191,7 +193,7 @@ export default async function AdminEmployeeDetailPage({ params }: Props) {
         <div className="bg-white border border-slate-200 rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
             <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Package className="h-5 w-5 text-blue-600" />
+              <Package className={cn(ICON_SIZES.md, "text-blue-600")} />
             </div>
             <span className="text-2xl font-bold text-slate-900">{employee._count.assets}</span>
           </div>
@@ -202,7 +204,7 @@ export default async function AdminEmployeeDetailPage({ params }: Props) {
         <div className="bg-white border border-slate-200 rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
             <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
-              <CreditCard className="h-5 w-5 text-emerald-600" />
+              <CreditCard className={cn(ICON_SIZES.md, "text-emerald-600")} />
             </div>
             <span className="text-2xl font-bold text-slate-900">{employee._count.subscriptions}</span>
           </div>
@@ -213,7 +215,7 @@ export default async function AdminEmployeeDetailPage({ params }: Props) {
         <div className="bg-white border border-slate-200 rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
             <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${completionPercentage >= 80 ? 'bg-green-100' : 'bg-amber-100'}`}>
-              <FileText className={`h-5 w-5 ${completionPercentage >= 80 ? 'text-green-600' : 'text-amber-600'}`} />
+              <FileText className={cn(ICON_SIZES.md, completionPercentage >= 80 ? 'text-green-600' : 'text-amber-600')} />
             </div>
             <span className="text-2xl font-bold text-slate-900">{completionPercentage}%</span>
           </div>
@@ -229,7 +231,7 @@ export default async function AdminEmployeeDetailPage({ params }: Props) {
         <div className="bg-white border border-slate-200 rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
             <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-              <Calendar className="h-5 w-5 text-purple-600" />
+              <Calendar className={cn(ICON_SIZES.md, "text-purple-600")} />
             </div>
           </div>
           <p className="text-sm font-medium text-slate-900">Joined</p>
@@ -249,28 +251,28 @@ export default async function AdminEmployeeDetailPage({ params }: Props) {
                   value="hr"
                   className="relative bg-transparent px-0 py-4 text-sm font-medium text-slate-500 hover:text-slate-900 data-[state=active]:bg-transparent data-[state=active]:text-slate-900 data-[state=active]:shadow-none rounded-none border-none after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-transparent data-[state=active]:after:bg-blue-600"
                 >
-                  <FileText className="h-4 w-4 mr-2" />
+                  <FileText className={`${ICON_SIZES.sm} mr-2`} />
                   Profile
                 </TabsTrigger>
                 <TabsTrigger
                   value="assets"
                   className="relative bg-transparent px-0 py-4 text-sm font-medium text-slate-500 hover:text-slate-900 data-[state=active]:bg-transparent data-[state=active]:text-slate-900 data-[state=active]:shadow-none rounded-none border-none after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-transparent data-[state=active]:after:bg-blue-600"
                 >
-                  <Package className="h-4 w-4 mr-2" />
+                  <Package className={`${ICON_SIZES.sm} mr-2`} />
                   Assets ({employee._count.assets})
                 </TabsTrigger>
                 <TabsTrigger
                   value="subscriptions"
                   className="relative bg-transparent px-0 py-4 text-sm font-medium text-slate-500 hover:text-slate-900 data-[state=active]:bg-transparent data-[state=active]:text-slate-900 data-[state=active]:shadow-none rounded-none border-none after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-transparent data-[state=active]:after:bg-blue-600"
                 >
-                  <CreditCard className="h-4 w-4 mr-2" />
+                  <CreditCard className={`${ICON_SIZES.sm} mr-2`} />
                   Subscriptions ({employee._count.subscriptions})
                 </TabsTrigger>
                 <TabsTrigger
                   value="leave"
                   className="relative bg-transparent px-0 py-4 text-sm font-medium text-slate-500 hover:text-slate-900 data-[state=active]:bg-transparent data-[state=active]:text-slate-900 data-[state=active]:shadow-none rounded-none border-none after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-transparent data-[state=active]:after:bg-blue-600"
                 >
-                  <Calendar className="h-4 w-4 mr-2" />
+                  <Calendar className={`${ICON_SIZES.sm} mr-2`} />
                   Leave
                 </TabsTrigger>
               </TabsList>

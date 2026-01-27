@@ -19,6 +19,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { AlertCircle, CheckCircle, XCircle, Ban } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface AdminRequestActionsProps {
   requestId: string;
@@ -140,14 +141,14 @@ export function AdminRequestActions({ requestId, type, status }: AdminRequestAct
             onClick={() => setAction('reject')}
             className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg transition-all bg-transparent text-slate-300 hover:text-white border border-slate-500 hover:border-slate-400 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-800 focus-visible:ring-slate-400"
           >
-            <XCircle className="h-4 w-4" />
+            <XCircle className={ICON_SIZES.sm} />
             Reject
           </button>
           <button
             onClick={() => setAction('approve')}
             className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg transition-all bg-emerald-600 text-white hover:bg-emerald-700 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-800 focus-visible:ring-emerald-500"
           >
-            <CheckCircle className="h-4 w-4" />
+            <CheckCircle className={ICON_SIZES.sm} />
             Approve {actionLabel}
           </button>
         </>
@@ -157,7 +158,7 @@ export function AdminRequestActions({ requestId, type, status }: AdminRequestAct
           onClick={() => setAction('revoke')}
           className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg transition-all bg-transparent text-slate-300 hover:text-white border border-slate-500 hover:border-slate-400 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-800 focus-visible:ring-slate-400"
         >
-          <Ban className="h-4 w-4" />
+          <Ban className={ICON_SIZES.sm} />
           Revoke Assignment
         </button>
       )}
@@ -186,7 +187,7 @@ export function AdminRequestActions({ requestId, type, status }: AdminRequestAct
 
             {error && (
               <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 p-3 rounded-lg">
-                <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                <AlertCircle className={`${ICON_SIZES.sm} flex-shrink-0`} />
                 {error}
               </div>
             )}

@@ -15,6 +15,8 @@ import {
 } from 'lucide-react';
 import { PageHeader, PageContent, PageHeaderButton } from '@/components/ui/page-header';
 import { formatCurrency } from '@/lib/core/currency';
+import { ICON_SIZES } from '@/lib/constants';
+import { cn } from '@/lib/core/utils';
 import { formatDate } from '@/lib/core/datetime';
 import { getMonthName } from '@/features/payroll/lib/utils';
 import { DetailCard } from '@/components/ui/detail-card';
@@ -91,7 +93,7 @@ export default async function AdminPayslipDetailPage({ params }: PageProps) {
         badge={{ text: payslip.isPaid ? 'Paid' : 'Pending', variant: statusBadgeVariant }}
         actions={
           <PageHeaderButton href={`/admin/employees/${payslip.memberId}`} variant="outline">
-            <User className="h-4 w-4" />
+            <User className={ICON_SIZES.sm} />
             View Employee
           </PageHeaderButton>
         }
@@ -112,7 +114,7 @@ export default async function AdminPayslipDetailPage({ params }: PageProps) {
                 </p>
               </div>
               <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center">
-                <Banknote className="h-8 w-8 text-emerald-600" />
+                <Banknote className={cn(ICON_SIZES.xl, "text-emerald-600")} />
               </div>
             </div>
           </div>
@@ -162,7 +164,7 @@ export default async function AdminPayslipDetailPage({ params }: PageProps) {
           >
             {payslip.deductions.length === 0 ? (
               <div className="text-center py-8 text-slate-400">
-                <TrendingDown className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                <TrendingDown className={`${ICON_SIZES['3xl']} mx-auto mb-2 opacity-50`} />
                 <p className="text-sm">No deductions</p>
               </div>
             ) : (

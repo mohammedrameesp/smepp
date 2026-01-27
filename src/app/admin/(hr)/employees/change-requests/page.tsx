@@ -7,6 +7,7 @@ import { Users, AlertTriangle, FileText } from 'lucide-react';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 import { ChangeRequestsClient } from './client';
+import { ICON_SIZES } from '@/lib/constants';
 
 export default async function ChangeRequestsPage() {
   const session = await getServerSession(authOptions);
@@ -58,11 +59,11 @@ export default async function ChangeRequestsPage() {
         actions={
           <>
             <PageHeaderButton href="/admin/employees" variant="secondary">
-              <Users className="h-4 w-4" />
+              <Users className={ICON_SIZES.sm} />
               All Employees
             </PageHeaderButton>
             <PageHeaderButton href="/admin/employees/document-expiry" variant="secondary">
-              <FileText className="h-4 w-4" />
+              <FileText className={ICON_SIZES.sm} />
               Document Expiry
               {expiringDocumentsCount > 0 && (
                 <span className="bg-rose-500 text-white text-xs px-1.5 py-0.5 rounded-full">

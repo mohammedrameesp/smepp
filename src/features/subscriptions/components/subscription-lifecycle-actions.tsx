@@ -53,6 +53,7 @@ import { ReactivateDialog } from './forms/reactivate-dialog';
 import { CancelDialog } from './forms/cancel-dialog';
 import { SubscriptionStatus, BillingCycle } from '@prisma/client';
 import { Play, Ban } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface SubscriptionLifecycleActionsProps {
   subscriptionId: string;
@@ -128,7 +129,7 @@ export function SubscriptionLifecycleActions({
           variant="warning"
           onClick={() => setCancelDialogOpen(true)}
         >
-          <Ban className="h-4 w-4" />
+          <Ban className={ICON_SIZES.sm} />
           Mark as Cancelled
         </PageHeaderButton>
       )}
@@ -138,7 +139,7 @@ export function SubscriptionLifecycleActions({
           variant="success"
           onClick={() => setReactivateDialogOpen(true)}
         >
-          <Play className="h-4 w-4" />
+          <Play className={ICON_SIZES.sm} />
           Reactivate
         </PageHeaderButton>
       )}

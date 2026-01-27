@@ -4,6 +4,7 @@ import { signOut, useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ShieldX, LogOut, Mail } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 
 /**
  * No Access Page
@@ -19,7 +20,7 @@ export default function NoAccessPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-            <ShieldX className="h-6 w-6 text-red-600" />
+            <ShieldX className={`${ICON_SIZES.lg} text-red-600`} />
           </div>
           <CardTitle>Access Not Configured</CardTitle>
           <CardDescription>
@@ -41,7 +42,7 @@ export default function NoAccessPage() {
             className="w-full"
             onClick={() => window.location.href = `mailto:support@durj.com?subject=Access%20Issue&body=User%20email:%20${session?.user?.email}`}
           >
-            <Mail className="mr-2 h-4 w-4" />
+            <Mail className={`mr-2 ${ICON_SIZES.sm}`} />
             Contact Support
           </Button>
           <Button
@@ -49,7 +50,7 @@ export default function NoAccessPage() {
             className="w-full"
             onClick={() => signOut({ callbackUrl: '/login' })}
           >
-            <LogOut className="mr-2 h-4 w-4" />
+            <LogOut className={`mr-2 ${ICON_SIZES.sm}`} />
             Sign Out
           </Button>
         </CardFooter>

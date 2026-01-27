@@ -11,6 +11,7 @@ import {
   Search,
   HelpCircle,
 } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import * as Icons from 'lucide-react';
 import { cn } from '@/lib/core/utils';
 import { Button } from '@/components/ui/button';
@@ -75,13 +76,13 @@ function NavItem({
         )}
       >
         <span className="flex items-center gap-2">
-          <DynamicIcon name={category.icon} className="h-4 w-4" />
+          <DynamicIcon name={category.icon} className={ICON_SIZES.sm} />
           {category.name}
         </span>
         {isOpen ? (
-          <ChevronDown className="h-4 w-4" />
+          <ChevronDown className={ICON_SIZES.sm} />
         ) : (
-          <ChevronRight className="h-4 w-4" />
+          <ChevronRight className={ICON_SIZES.sm} />
         )}
       </button>
 
@@ -100,7 +101,7 @@ function NavItem({
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                 )}
               >
-                <DynamicIcon name={module.icon} className="h-4 w-4" />
+                <DynamicIcon name={module.icon} className={ICON_SIZES.sm} />
                 {module.name}
                 {module.adminOnly && (
                   <span className="ml-auto text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">
@@ -140,7 +141,7 @@ function HelpSidebar({
       <div className="p-4 border-b">
         <form onSubmit={(e) => { e.preventDefault(); onSearchSubmit(); }}>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${ICON_SIZES.sm} text-gray-400`} />
             <Input
               type="search"
               placeholder="Search help..."
@@ -164,7 +165,7 @@ function HelpSidebar({
               : 'text-gray-700 hover:bg-gray-100'
           )}
         >
-          <Home className="h-4 w-4" />
+          <Home className={ICON_SIZES.sm} />
           Help Home
         </Link>
 
@@ -280,7 +281,7 @@ export function HelpLayoutClient({
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetContent side="left" className="w-72 p-0">
               <div className="flex items-center gap-2 px-6 h-14 border-b">
-                <HelpCircle className="h-5 w-5 text-blue-600" />
+                <HelpCircle className={`${ICON_SIZES.md} text-blue-600`} />
                 <span className="font-semibold">Help & Support</span>
               </div>
               <HelpSidebar
@@ -305,7 +306,7 @@ export function HelpLayoutClient({
               size="icon"
               className="h-12 w-12 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700"
             >
-              <HelpCircle className="h-5 w-5 text-white" />
+              <HelpCircle className={`${ICON_SIZES.md} text-white`} />
             </Button>
           </div>
 

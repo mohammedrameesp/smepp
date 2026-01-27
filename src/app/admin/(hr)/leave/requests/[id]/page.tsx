@@ -8,6 +8,8 @@ import { FileText, User, Calendar, Clock, Phone, Mail, ExternalLink, AlertCircle
 import { DetailCard } from '@/components/ui/detail-card';
 import { InfoField, InfoFieldGrid } from '@/components/ui/info-field';
 import Link from 'next/link';
+import { ICON_SIZES } from '@/lib/constants';
+import { cn } from '@/lib/core/utils';
 import {
   getDateRangeText,
   formatLeaveDays,
@@ -207,7 +209,7 @@ export default function AdminLeaveRequestDetailPage() {
         <PageContent>
           <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
             <div className="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <AlertCircle className="h-8 w-8 text-rose-500" />
+              <AlertCircle className={cn(ICON_SIZES.xl, "text-rose-500")} />
             </div>
             <h3 className="font-semibold text-slate-900 text-lg mb-1">{error || 'Leave request not found'}</h3>
             <p className="text-slate-500 mb-4">We couldn&apos;t find the leave request you&apos;re looking for.</p>
@@ -302,9 +304,9 @@ export default function AdminLeaveRequestDetailPage() {
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
                   >
-                    <FileText className="h-4 w-4" />
+                    <FileText className={ICON_SIZES.sm} />
                     View Document
-                    <ExternalLink className="h-3.5 w-3.5" />
+                    <ExternalLink className={ICON_SIZES.xs} />
                   </a>
                 </div>
               )}
@@ -375,7 +377,7 @@ export default function AdminLeaveRequestDetailPage() {
               <div>
                 <p className="font-semibold text-slate-900">{request.member.name}</p>
                 <p className="text-sm text-slate-500 flex items-center gap-1">
-                  <Mail className="h-3 w-3" />
+                  <Mail className={ICON_SIZES.xs} />
                   {request.member.email}
                 </p>
               </div>
@@ -456,7 +458,7 @@ export default function AdminLeaveRequestDetailPage() {
               )}
               {request.emergencyPhone && (
                 <p className="text-sm text-slate-500 flex items-center gap-2 mt-1">
-                  <Phone className="h-3.5 w-3.5" />
+                  <Phone className={ICON_SIZES.xs} />
                   {request.emergencyPhone}
                 </p>
               )}

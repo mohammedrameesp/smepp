@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/core/utils';
 import { CalendarIcon, X } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 
 export interface DatePickerProps {
   id?: string;
@@ -233,7 +234,7 @@ export function DatePicker({
             type="button"
             aria-label="Open calendar"
           >
-            <CalendarIcon className="h-4 w-4" />
+            <CalendarIcon className={ICON_SIZES.sm} />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0 z-50" align="end">
@@ -268,7 +269,7 @@ export function DatePicker({
           className="absolute right-12 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
           aria-label="Clear date"
         >
-          <X className="h-4 w-4" />
+          <X className={ICON_SIZES.sm} />
         </button>
       )}
     </div>

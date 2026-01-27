@@ -12,6 +12,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ArrowRight, ArrowLeft, AlertCircle, Loader2, AlertTriangle } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 
 const LOCALSTORAGE_KEY = 'employee-onboarding-draft';
 
@@ -576,7 +577,7 @@ export function EmployeeOnboardingClient() {
   if (status === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <Loader2 className="h-8 w-8 animate-spin text-slate-600" />
+        <Loader2 className={`${ICON_SIZES.xl} animate-spin text-slate-600`} />
       </div>
     );
   }
@@ -703,7 +704,7 @@ export function EmployeeOnboardingClient() {
           >
             {isSkipping ? (
               <>
-                <Loader2 className="h-3 w-3 animate-spin" />
+                <Loader2 className={`${ICON_SIZES.xs} animate-spin`} />
                 Redirecting...
               </>
             ) : (
@@ -725,7 +726,7 @@ export function EmployeeOnboardingClient() {
         <div className="bg-amber-50 border-b border-amber-200 px-4 py-3">
           <div className="max-w-4xl mx-auto">
             <div className="flex items-start gap-3">
-              <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+              <AlertTriangle className={`${ICON_SIZES.md} text-amber-600 flex-shrink-0 mt-0.5`} />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-amber-800">
                   {missingFields.length} required {missingFields.length === 1 ? 'field' : 'fields'} incomplete
@@ -760,7 +761,7 @@ export function EmployeeOnboardingClient() {
         <div className="max-w-4xl mx-auto">
           {error && (
             <Alert variant="error" className="mb-6 max-w-lg mx-auto">
-              <AlertCircle className="h-4 w-4" />
+              <AlertCircle className={ICON_SIZES.sm} />
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
@@ -778,7 +779,7 @@ export function EmployeeOnboardingClient() {
                 className="text-slate-600 hover:text-slate-900"
                 disabled={isSaving || isLoading}
               >
-                <ArrowLeft className="w-5 h-5 mr-2" />
+                <ArrowLeft className={`${ICON_SIZES.md} mr-2`} />
                 Back
               </Button>
             ) : (
@@ -792,23 +793,23 @@ export function EmployeeOnboardingClient() {
             >
               {isSaving ? (
                 <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  <Loader2 className={`${ICON_SIZES.md} mr-2 animate-spin`} />
                   Saving...
                 </>
               ) : isLoading ? (
                 <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  <Loader2 className={`${ICON_SIZES.md} mr-2 animate-spin`} />
                   Completing...
                 </>
               ) : currentStep === TOTAL_STEPS ? (
                 <>
                   Complete Onboarding
-                  <ArrowRight className="w-5 h-5 ml-2" />
+                  <ArrowRight className={`${ICON_SIZES.md} ml-2`} />
                 </>
               ) : (
                 <>
                   Continue
-                  <ArrowRight className="w-5 h-5 ml-2" />
+                  <ArrowRight className={`${ICON_SIZES.md} ml-2`} />
                 </>
               )}
             </Button>

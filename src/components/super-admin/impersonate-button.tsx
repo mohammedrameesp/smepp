@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface ImpersonateButtonProps {
   organizationId: string;
@@ -99,9 +100,9 @@ export function ImpersonateButton({ organizationId, organizationName }: Imperson
         title="Impersonate"
       >
         {isLoading ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
+          <Loader2 className={`${ICON_SIZES.sm} animate-spin`} />
         ) : (
-          <UserCog className="h-4 w-4" />
+          <UserCog className={ICON_SIZES.sm} />
         )}
       </button>
 
@@ -110,7 +111,7 @@ export function ImpersonateButton({ organizationId, organizationName }: Imperson
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-amber-500" />
+              <Shield className={`${ICON_SIZES.md} text-amber-500`} />
               2FA Verification Required
             </DialogTitle>
             <DialogDescription>
@@ -157,7 +158,7 @@ export function ImpersonateButton({ organizationId, organizationName }: Imperson
               disabled={reauthCode.length < 6 || isReauthing}
             >
               {isReauthing ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <Loader2 className={`${ICON_SIZES.sm} animate-spin`} />
               ) : (
                 'Verify & Continue'
               )}

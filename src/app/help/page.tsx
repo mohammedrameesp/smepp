@@ -18,6 +18,7 @@ import {
   HelpContactSupport,
 } from '@/components/help';
 import { HelpCircle, Sparkles, BookOpen, Lightbulb } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 
 // Get enabled modules from database
 async function getEnabledModules(tenantId: string): Promise<string[]> {
@@ -52,7 +53,7 @@ export default async function HelpPage() {
       {/* Hero Section */}
       <section className="text-center py-8">
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 mb-4">
-          <HelpCircle className="h-8 w-8 text-blue-600" />
+          <HelpCircle className={`${ICON_SIZES.xl} text-blue-600`} />
         </div>
         <h1 className="text-3xl font-bold text-gray-900 mb-3">
           How can we help you?
@@ -66,7 +67,7 @@ export default async function HelpPage() {
       {/* Quick Links */}
       <section id="quick-links">
         <div className="flex items-center gap-2 mb-4">
-          <Sparkles className="h-5 w-5 text-blue-600" />
+          <Sparkles className={`${ICON_SIZES.md} text-blue-600`} />
           <h2 className="text-xl font-semibold text-gray-900">Quick Links</h2>
         </div>
         <HelpQuickLinks links={quickLinks} userRole={userRole} />
@@ -75,7 +76,7 @@ export default async function HelpPage() {
       {/* Getting Started */}
       <section id="getting-started">
         <div className="flex items-center gap-2 mb-4">
-          <BookOpen className="h-5 w-5 text-blue-600" />
+          <BookOpen className={`${ICON_SIZES.md} text-blue-600`} />
           <h2 className="text-xl font-semibold text-gray-900">Getting Started</h2>
         </div>
         <p className="text-gray-600 mb-4">
@@ -100,7 +101,7 @@ export default async function HelpPage() {
       <section id="popular-topics" className="grid gap-6 lg:grid-cols-2">
         <div>
           <div className="flex items-center gap-2 mb-4">
-            <Lightbulb className="h-5 w-5 text-amber-500" />
+            <Lightbulb className={`${ICON_SIZES.md} text-amber-500`} />
             <h2 className="text-xl font-semibold text-gray-900">Popular Questions</h2>
           </div>
           <div className="rounded-lg border bg-white">

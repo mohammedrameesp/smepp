@@ -7,6 +7,7 @@
 import * as React from 'react';
 import { cn } from '@/lib/core/utils';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface TrendIndicatorProps {
   value: number;
@@ -41,8 +42,8 @@ export function TrendIndicator({
     : `${isPositive ? '+' : ''}${change}`;
 
   const sizeClasses = size === 'sm'
-    ? 'text-xs gap-0.5 [&_svg]:h-3 [&_svg]:w-3'
-    : 'text-sm gap-1 [&_svg]:h-4 [&_svg]:w-4';
+    ? `text-xs gap-0.5 [&_svg]:${ICON_SIZES.xs.split(' ')[0]} [&_svg]:${ICON_SIZES.xs.split(' ')[1]}`
+    : `text-sm gap-1 [&_svg]:${ICON_SIZES.sm.split(' ')[0]} [&_svg]:${ICON_SIZES.sm.split(' ')[1]}`;
 
   return (
     <span
@@ -94,9 +95,9 @@ export function StatTrend({
         )}
       >
         {isPositive ? (
-          <TrendingUp className="h-3 w-3" aria-hidden="true" />
+          <TrendingUp className={ICON_SIZES.xs} aria-hidden="true" />
         ) : (
-          <TrendingDown className="h-3 w-3" aria-hidden="true" />
+          <TrendingDown className={ICON_SIZES.xs} aria-hidden="true" />
         )}
         <span>{isPositive ? '+' : ''}{percentChange}%</span>
       </span>

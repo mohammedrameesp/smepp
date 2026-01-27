@@ -4,6 +4,7 @@ import Link from 'next/link';
 import * as Icons from 'lucide-react';
 import { HelpCircle, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 import type { QuickLink, GettingStartedStep, PopularTopic, UserRole } from '@/lib/help/help-types';
 import { filterByRole } from '@/lib/help/help-types';
 
@@ -37,7 +38,7 @@ export function HelpQuickLinks({ links, userRole, className }: HelpQuickLinksPro
           className="flex items-center gap-3 p-4 rounded-lg border bg-white hover:border-blue-200 hover:shadow-sm transition-all group"
         >
           <div className="p-2 rounded-lg bg-blue-50 group-hover:bg-blue-100 transition-colors">
-            <DynamicIcon name={link.icon} className="h-5 w-5 text-blue-600" />
+            <DynamicIcon name={link.icon} className={`${ICON_SIZES.md} text-blue-600`} />
           </div>
           <div className="flex-1 min-w-0">
             <h4 className="font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
@@ -45,7 +46,7 @@ export function HelpQuickLinks({ links, userRole, className }: HelpQuickLinksPro
             </h4>
             <p className="text-xs text-gray-500 truncate">{link.description}</p>
           </div>
-          <ArrowRight className="h-4 w-4 text-gray-300 group-hover:text-blue-600 transition-colors" />
+          <ArrowRight className={`${ICON_SIZES.sm} text-gray-300 group-hover:text-blue-600 transition-colors`} />
         </Link>
       ))}
     </div>
@@ -87,7 +88,7 @@ export function HelpGettingStarted({ steps, userRole, className }: HelpGettingSt
               <p className="text-sm text-gray-500 mt-1">{step.description}</p>
             </div>
 
-            <ArrowRight className="h-4 w-4 text-gray-300 group-hover:text-blue-600 transition-colors flex-shrink-0 mt-1" />
+            <ArrowRight className={`${ICON_SIZES.sm} text-gray-300 group-hover:text-blue-600 transition-colors flex-shrink-0 mt-1`} />
           </Link>
         ))}
       </div>
@@ -129,7 +130,7 @@ export function HelpPopularTopics({
               </span>
               <span className="text-xs text-gray-400 ml-2">{topic.category}</span>
             </div>
-            <ArrowRight className="h-4 w-4 text-gray-300 group-hover:text-blue-600 transition-colors flex-shrink-0" />
+            <ArrowRight className={`${ICON_SIZES.sm} text-gray-300 group-hover:text-blue-600 transition-colors flex-shrink-0`} />
           </Link>
         </li>
       ))}
@@ -147,7 +148,7 @@ export function HelpContactSupport({ className }: HelpContactSupportProps) {
     <div className={cn('rounded-lg border bg-gradient-to-br from-blue-50 to-indigo-50 p-6', className)}>
       <div className="flex items-start gap-4">
         <div className="p-3 rounded-lg bg-white shadow-sm">
-          <DynamicIcon name="MessageCircle" className="h-6 w-6 text-blue-600" />
+          <DynamicIcon name="MessageCircle" className={`${ICON_SIZES.lg} text-blue-600`} />
         </div>
         <div className="flex-1">
           <h3 className="font-semibold text-gray-900">Need More Help?</h3>

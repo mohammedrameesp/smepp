@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ShieldAlert, X, ExternalLink, Loader2 } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface ImpersonationInfo {
   isImpersonating: boolean;
@@ -78,7 +79,7 @@ export function ImpersonationBanner() {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between py-2">
           <div className="flex items-center gap-3">
-            <ShieldAlert className="h-5 w-5" />
+            <ShieldAlert className={ICON_SIZES.md} />
             <div className="text-sm">
               <span className="font-semibold">Impersonation Mode:</span>
               {' '}Viewing{' '}
@@ -95,7 +96,7 @@ export function ImpersonationBanner() {
               onClick={handleBackToOrg}
               className="text-white hover:bg-white/20 text-xs"
             >
-              <ExternalLink className="h-3 w-3 mr-1" />
+              <ExternalLink className={`${ICON_SIZES.xs} mr-1`} />
               Org Details
             </Button>
             <Button
@@ -107,12 +108,12 @@ export function ImpersonationBanner() {
             >
               {exiting ? (
                 <>
-                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                  <Loader2 className={`${ICON_SIZES.xs} mr-1 animate-spin`} />
                   Exiting...
                 </>
               ) : (
                 <>
-                  <X className="h-3 w-3 mr-1" />
+                  <X className={`${ICON_SIZES.xs} mr-1`} />
                   Exit Impersonation
                 </>
               )}

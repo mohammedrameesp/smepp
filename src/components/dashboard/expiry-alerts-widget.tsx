@@ -6,6 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Loader2, AlertTriangle, XCircle, User } from 'lucide-react';
+import { cn } from '@/lib/core/utils';
+import { getDocumentTypeClasses, ICON_SIZES } from '@/lib/constants';
 
 interface ExpiringDocument {
   employeeId: string;
@@ -52,13 +54,7 @@ export function ExpiryAlertsWidget({ isAdmin = false }: ExpiryAlertsWidgetProps)
   }, [fetchExpiryAlerts]);
 
   const getDocumentBadge = (type: string) => {
-    const colors: Record<string, string> = {
-      QID: 'bg-blue-100 text-blue-800',
-      Passport: 'bg-purple-100 text-purple-800',
-      'Health Card': 'bg-green-100 text-green-800',
-      'Driving License': 'bg-orange-100 text-orange-800',
-    };
-    return colors[type] || 'bg-gray-100 text-gray-800';
+    return getDocumentTypeClasses(type);
   };
 
   const expiredCount = alerts.filter((a) => a.status === 'expired').length;
@@ -69,13 +65,13 @@ export function ExpiryAlertsWidget({ isAdmin = false }: ExpiryAlertsWidgetProps)
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-yellow-500" />
+            <AlertTriangle className={`${ICON_SIZES.md} text-yellow-500`} />
             Document Expiry Alerts
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+            <Loader2 className={`${ICON_SIZES.lg} animate-spin text-gray-400`} />
           </div>
         </CardContent>
       </Card>
@@ -87,7 +83,7 @@ export function ExpiryAlertsWidget({ isAdmin = false }: ExpiryAlertsWidgetProps)
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-green-500" />
+            <AlertTriangle className={`${ICON_SIZES.md} text-green-500`} />
             Document Expiry Alerts
           </CardTitle>
           <CardDescription>Track expiring and expired documents</CardDescription>
@@ -110,7 +106,7 @@ export function ExpiryAlertsWidget({ isAdmin = false }: ExpiryAlertsWidgetProps)
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="flex items-center gap-2 text-base">
-              <AlertTriangle className="h-4 w-4 text-yellow-500" />
+              <AlertTriangle className={`${ICON_SIZES.sm} text-yellow-500`} />
               Document Expiry Alerts
               {!showAll && remainingCount > 0 && (
                 <Badge variant="secondary" className="text-xs ml-1">
@@ -153,7 +149,7 @@ export function ExpiryAlertsWidget({ isAdmin = false }: ExpiryAlertsWidgetProps)
             >
               <div className="flex items-center gap-3">
                 <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
-                  <User className="h-4 w-4 text-gray-500" />
+                  <User className={`${ICON_SIZES.sm} text-gray-500`} />
                 </div>
                 <div className="flex-1 min-w-0">
                   {isAdmin ? (
@@ -176,7 +172,7 @@ export function ExpiryAlertsWidget({ isAdmin = false }: ExpiryAlertsWidgetProps)
                     )}
                     {alert.status === 'expired' ? (
                       <Badge variant="destructive" className="flex items-center gap-1 text-xs">
-                        <XCircle className="h-3 w-3" />
+                        <XCircle className={ICON_SIZES.xs} />
                         Expired {Math.abs(alert.daysRemaining)}d ago
                       </Badge>
                     ) : (

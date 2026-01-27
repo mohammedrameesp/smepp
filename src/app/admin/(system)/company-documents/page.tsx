@@ -12,6 +12,7 @@ import { format } from 'date-fns';
 import { getQatarStartOfDay } from '@/lib/core/datetime';
 import { getDocumentExpiryInfo, DOCUMENT_EXPIRY_WARNING_DAYS } from '@/features/company-documents';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
+import { ICON_SIZES } from '@/lib/constants';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 
 async function getCompanyDocuments(tenantId: string) {
@@ -62,7 +63,7 @@ function ExpiryBadge({ status, daysRemaining }: { status: string; daysRemaining:
   if (status === 'expired') {
     return (
       <Badge variant="destructive" className="gap-1">
-        <AlertTriangle className="h-3 w-3" />
+        <AlertTriangle className={ICON_SIZES.xs} />
         Expired {Math.abs(daysRemaining)}d ago
       </Badge>
     );
@@ -70,14 +71,14 @@ function ExpiryBadge({ status, daysRemaining }: { status: string; daysRemaining:
   if (status === 'expiring') {
     return (
       <Badge variant="outline" className="gap-1 bg-yellow-100 text-yellow-800 border-yellow-300">
-        <Clock className="h-3 w-3" />
+        <Clock className={ICON_SIZES.xs} />
         {daysRemaining}d left
       </Badge>
     );
   }
   return (
     <Badge variant="outline" className="gap-1 text-green-700 border-green-300">
-      <CheckCircle className="h-3 w-3" />
+      <CheckCircle className={ICON_SIZES.xs} />
       Valid
     </Badge>
   );
@@ -101,13 +102,13 @@ async function DocumentList({ tenantId }: { tenantId: string }) {
           {documents.length === 0 ? (
             <div className="text-center py-12">
               <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <FileCheck className="h-8 w-8 text-slate-400" />
+                <FileCheck className={`${ICON_SIZES.xl} text-slate-400`} />
               </div>
               <h3 className="font-semibold text-slate-900 mb-1">No documents yet</h3>
               <p className="text-slate-500 text-sm mb-4">Add your first company document to get started</p>
               <Link href="/admin/company-documents/new">
                 <Button>
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className={`${ICON_SIZES.sm} mr-2`} />
                   Add Document
                 </Button>
               </Link>
@@ -226,7 +227,7 @@ export default async function CompanyDocumentsPage() {
         subtitle="Track licenses, registrations, and vehicle documents"
         actions={
           <PageHeaderButton href="/admin/company-documents/new" variant="primary">
-            <Plus className="h-4 w-4" />
+            <Plus className={ICON_SIZES.sm} />
             Add Document
           </PageHeaderButton>
         }
@@ -239,7 +240,7 @@ export default async function CompanyDocumentsPage() {
       <PageContent>
         <Suspense fallback={
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+            <Loader2 className={`${ICON_SIZES.xl} animate-spin text-slate-400`} />
           </div>
         }>
           <DocumentList tenantId={tenantId} />

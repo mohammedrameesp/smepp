@@ -11,6 +11,8 @@ import { CurrencyInput } from '@/components/ui/currency-input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Calculator } from 'lucide-react';
 import { toast } from 'sonner';
+import { ICON_SIZES } from '@/lib/constants';
+import { cn } from '@/lib/core/utils';
 import { formatCurrency } from '@/lib/core/currency';
 
 interface SalaryStructure {
@@ -129,7 +131,7 @@ export default function EditSalaryStructurePage() {
         <PageHeader title="Edit Salary Structure" subtitle="Loading..." />
         <PageContent>
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin" />
+            <Loader2 className={cn(ICON_SIZES.xl, "animate-spin")} />
           </div>
         </PageContent>
       </>
@@ -282,7 +284,7 @@ export default function EditSalaryStructurePage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Calculator className="h-5 w-5" />
+                  <Calculator className={ICON_SIZES.md} />
                   Salary Summary
                 </CardTitle>
                 <CardDescription>
@@ -344,7 +346,7 @@ export default function EditSalaryStructurePage() {
 
                 <div className="pt-4 space-y-2">
                   <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {isLoading && <Loader2 className={`mr-2 ${ICON_SIZES.sm} animate-spin`} />}
                     Update Salary Structure
                   </Button>
                   <Button asChild variant="outline" className="w-full">

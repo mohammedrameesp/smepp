@@ -8,6 +8,7 @@
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 import {
   CheckCircle,
   XCircle,
@@ -92,7 +93,7 @@ export function NotificationItem({
       onClick={handleClick}
     >
       <div className="flex-shrink-0 mt-0.5">
-        <Icon className={cn('h-5 w-5', getIconColor(notification.type))} />
+        <Icon className={cn(ICON_SIZES.md, getIconColor(notification.type))} />
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-foreground truncate">

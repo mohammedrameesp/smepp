@@ -10,6 +10,7 @@ import {
   Clock,
   AlertTriangle,
 } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import { getMemberSubscriptionHistory, getNextRenewalDate, getDaysUntilRenewal } from '@/features/subscriptions';
 import { getMemberAssetHistory } from '@/features/assets';
 import { getAnnualLeaveDetails } from '@/features/leave/lib/leave-utils';
@@ -385,25 +386,25 @@ export default async function EmployeeDashboard() {
               value={totalAvailableLeaveDays.toFixed(1)}
               label="leave days"
               color="blue"
-              icon={<Palmtree className="h-4 w-4" />}
+              icon={<Palmtree className={ICON_SIZES.sm} />}
             />
             <StatChip
               value={activeAssets.length}
               label="assets"
               color="emerald"
-              icon={<Laptop className="h-4 w-4" />}
+              icon={<Laptop className={ICON_SIZES.sm} />}
             />
             <StatChip
               value={totalPendingRequests}
               label="pending"
               color="purple"
-              icon={<Clock className="h-4 w-4" />}
+              icon={<Clock className={ICON_SIZES.sm} />}
             />
             <StatChip
               value={documentAlerts.length}
               label={documentAlerts.length === 1 ? 'alert' : 'alerts'}
               color="amber"
-              icon={<AlertTriangle className="h-4 w-4" />}
+              icon={<AlertTriangle className={ICON_SIZES.sm} />}
               hideWhenZero
             />
           </StatChipGroup>
@@ -445,7 +446,7 @@ export default async function EmployeeDashboard() {
         <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg z-50">
           <div className="grid grid-cols-4 gap-1 p-2">
             <Link href="/employee/leave/new" className="flex flex-col items-center py-2 px-1 rounded-lg hover:bg-blue-50 text-blue-600">
-              <Palmtree className="h-5 w-5 mb-1" />
+              <Palmtree className={`${ICON_SIZES.md} mb-1`} />
               <span className="text-xs font-medium">Leave</span>
             </Link>
             <Link href="/employee/spend-requests/new" className="flex flex-col items-center py-2 px-1 rounded-lg hover:bg-violet-50 text-gray-500 hover:text-violet-600">
@@ -455,7 +456,7 @@ export default async function EmployeeDashboard() {
               <span className="text-xs font-medium">Purchase</span>
             </Link>
             <Link href="/employee/my-assets" className="flex flex-col items-center py-2 px-1 rounded-lg hover:bg-emerald-50 text-gray-500 hover:text-emerald-600">
-              <Laptop className="h-5 w-5 mb-1" />
+              <Laptop className={`${ICON_SIZES.md} mb-1`} />
               <span className="text-xs font-medium">Assets</span>
             </Link>
             <Link href="/profile" className="flex flex-col items-center py-2 px-1 rounded-lg hover:bg-gray-100 text-gray-500">

@@ -27,6 +27,7 @@ import {
   Loader2,
   Save,
 } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import Link from 'next/link';
@@ -119,7 +120,7 @@ export default function FeedbackDetailPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <Loader2 className={`${ICON_SIZES.xl} animate-spin text-muted-foreground`} />
       </div>
     );
   }
@@ -128,7 +129,7 @@ export default function FeedbackDetailPage() {
     return (
       <div className="space-y-6">
         <Button variant="ghost" onClick={() => router.back()}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
+          <ArrowLeft className={`${ICON_SIZES.sm} mr-2`} />
           Back
         </Button>
         <Card>
@@ -145,15 +146,15 @@ export default function FeedbackDetailPage() {
       <div className="flex items-center gap-4">
         <Link href="/super-admin/feedback">
           <Button variant="ghost" size="sm">
-            <ArrowLeft className="h-4 w-4 mr-2" />
+            <ArrowLeft className={`${ICON_SIZES.sm} mr-2`} />
             Back
           </Button>
         </Link>
         <div className="flex items-center gap-2">
           {feedback.type === 'BUG' ? (
-            <Bug className="h-5 w-5 text-red-500" />
+            <Bug className={`${ICON_SIZES.md} text-red-500`} />
           ) : (
-            <Lightbulb className="h-5 w-5 text-amber-500" />
+            <Lightbulb className={`${ICON_SIZES.md} text-amber-500`} />
           )}
           <h2 className="text-xl font-bold">
             {feedback.type === 'BUG' ? 'Bug Report' : 'Feature Request'}
@@ -237,12 +238,12 @@ export default function FeedbackDetailPage() {
               <Button onClick={handleSave} disabled={isSaving}>
                 {isSaving ? (
                   <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    <Loader2 className={`${ICON_SIZES.sm} mr-2 animate-spin`} />
                     Saving...
                   </>
                 ) : (
                   <>
-                    <Save className="h-4 w-4 mr-2" />
+                    <Save className={`${ICON_SIZES.sm} mr-2`} />
                     Save Changes
                   </>
                 )}
@@ -259,7 +260,7 @@ export default function FeedbackDetailPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-center gap-2">
-                <Mail className="h-4 w-4 text-muted-foreground" />
+                <Mail className={`${ICON_SIZES.sm} text-muted-foreground`} />
                 <span className="text-sm">{feedback.submittedByEmail}</span>
               </div>
               {feedback.submittedByName && (
@@ -269,7 +270,7 @@ export default function FeedbackDetailPage() {
               )}
               {feedback.organizationName && (
                 <div className="flex items-center gap-2">
-                  <Building2 className="h-4 w-4 text-muted-foreground" />
+                  <Building2 className={`${ICON_SIZES.sm} text-muted-foreground`} />
                   <span className="text-sm">{feedback.organizationName}</span>
                 </div>
               )}
@@ -284,7 +285,7 @@ export default function FeedbackDetailPage() {
               {feedback.pageUrl && (
                 <div>
                   <div className="flex items-center gap-2 text-sm font-medium mb-1">
-                    <Globe className="h-4 w-4 text-muted-foreground" />
+                    <Globe className={`${ICON_SIZES.sm} text-muted-foreground`} />
                     Page URL
                   </div>
                   <a
@@ -294,14 +295,14 @@ export default function FeedbackDetailPage() {
                     className="text-sm text-blue-600 hover:underline flex items-center gap-1 break-all"
                   >
                     {feedback.pageUrl}
-                    <ExternalLink className="h-3 w-3 flex-shrink-0" />
+                    <ExternalLink className={`${ICON_SIZES.xs} flex-shrink-0`} />
                   </a>
                 </div>
               )}
               {feedback.userAgent && (
                 <div>
                   <div className="flex items-center gap-2 text-sm font-medium mb-1">
-                    <Monitor className="h-4 w-4 text-muted-foreground" />
+                    <Monitor className={`${ICON_SIZES.sm} text-muted-foreground`} />
                     Browser
                   </div>
                   <p className="text-sm text-muted-foreground break-all">{feedback.userAgent}</p>
@@ -316,7 +317,7 @@ export default function FeedbackDetailPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <Calendar className={`${ICON_SIZES.sm} text-muted-foreground`} />
                 <div>
                   <p className="text-sm font-medium">Submitted</p>
                   <p className="text-sm text-muted-foreground">
@@ -325,7 +326,7 @@ export default function FeedbackDetailPage() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <Calendar className={`${ICON_SIZES.sm} text-muted-foreground`} />
                 <div>
                   <p className="text-sm font-medium">Last Updated</p>
                   <p className="text-sm text-muted-foreground">

@@ -1,6 +1,7 @@
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Building, TrendingUp, TrendingDown, DollarSign, CreditCard } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 
 export default function PayslipDetailLoading() {
   return (
@@ -25,7 +26,7 @@ export default function PayslipDetailLoading() {
         <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
           <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
             <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
-              <Building className="h-5 w-5 text-indigo-600" />
+              <Building className={`${ICON_SIZES.md} text-indigo-600`} />
             </div>
             <div>
               <h2 className="font-semibold text-slate-900">Employee Information</h2>
@@ -49,7 +50,7 @@ export default function PayslipDetailLoading() {
           <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
               <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
-                <TrendingUp className="h-5 w-5 text-emerald-600" />
+                <TrendingUp className={`${ICON_SIZES.md} text-emerald-600`} />
               </div>
               <div>
                 <h2 className="font-semibold text-slate-900">Earnings</h2>
@@ -76,7 +77,7 @@ export default function PayslipDetailLoading() {
           <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
               <div className="w-10 h-10 bg-rose-100 rounded-xl flex items-center justify-center">
-                <TrendingDown className="h-5 w-5 text-rose-600" />
+                <TrendingDown className={`${ICON_SIZES.md} text-rose-600`} />
               </div>
               <div>
                 <h2 className="font-semibold text-slate-900">Deductions</h2>
@@ -106,7 +107,7 @@ export default function PayslipDetailLoading() {
             <div className="flex justify-between items-center">
               <div>
                 <div className="flex items-center gap-2 mb-2">
-                  <DollarSign className="h-6 w-6 text-emerald-700" />
+                  <DollarSign className={`${ICON_SIZES.lg} text-emerald-700`} />
                   <h3 className="text-xl font-semibold text-emerald-900">Net Pay</h3>
                 </div>
                 <Skeleton className="h-4 w-64" />
@@ -120,7 +121,7 @@ export default function PayslipDetailLoading() {
         <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
           <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
             <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-              <CreditCard className="h-5 w-5 text-blue-600" />
+              <CreditCard className={`${ICON_SIZES.md} text-blue-600`} />
             </div>
             <div>
               <h2 className="font-semibold text-slate-900">Payment Information</h2>

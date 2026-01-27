@@ -22,6 +22,8 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { Bug, Lightbulb, Upload, X, Loader2, Info } from 'lucide-react';
+import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface FeedbackDialogProps {
   open: boolean;
@@ -156,9 +158,9 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {type === 'BUG' ? (
-              <Bug className="h-5 w-5 text-red-500" />
+              <Bug className={cn(ICON_SIZES.md, 'text-red-500')} />
             ) : (
-              <Lightbulb className="h-5 w-5 text-amber-500" />
+              <Lightbulb className={cn(ICON_SIZES.md, 'text-amber-500')} />
             )}
             {type === 'BUG' ? 'Report a Bug' : 'Request a Feature'}
           </DialogTitle>
@@ -180,13 +182,13 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
               <SelectContent>
                 <SelectItem value="BUG">
                   <div className="flex items-center gap-2">
-                    <Bug className="h-4 w-4 text-red-500" />
+                    <Bug className={cn(ICON_SIZES.sm, 'text-red-500')} />
                     Bug Report
                   </div>
                 </SelectItem>
                 <SelectItem value="FEATURE_REQUEST">
                   <div className="flex items-center gap-2">
-                    <Lightbulb className="h-4 w-4 text-amber-500" />
+                    <Lightbulb className={cn(ICON_SIZES.sm, 'text-amber-500')} />
                     Feature Request
                   </div>
                 </SelectItem>
@@ -239,7 +241,7 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
                   onClick={handleRemoveScreenshot}
                   className="h-8 w-8"
                 >
-                  <X className="h-4 w-4" />
+                  <X className={ICON_SIZES.sm} />
                 </Button>
               </div>
             ) : (
@@ -252,12 +254,12 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
               >
                 {isUploading ? (
                   <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    <Loader2 className={cn(ICON_SIZES.sm, 'mr-2 animate-spin')} />
                     Uploading...
                   </>
                 ) : (
                   <>
-                    <Upload className="h-4 w-4 mr-2" />
+                    <Upload className={cn(ICON_SIZES.sm, 'mr-2')} />
                     Attach Screenshot
                   </>
                 )}
@@ -267,7 +269,7 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
 
           {/* Auto-captured info notice */}
           <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg text-sm">
-            <Info className="h-4 w-4 text-blue-500 mt-0.5 shrink-0" />
+            <Info className={cn(ICON_SIZES.sm, 'text-blue-500 mt-0.5 shrink-0')} />
             <div className="text-blue-700 dark:text-blue-300">
               <p className="font-medium">We&apos;ll automatically include:</p>
               <ul className="text-xs mt-1 space-y-0.5 text-blue-600 dark:text-blue-400">
@@ -286,7 +288,7 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
           <Button onClick={handleSubmit} disabled={isSubmitting || !message.trim()}>
             {isSubmitting ? (
               <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className={cn(ICON_SIZES.sm, 'mr-2 animate-spin')} />
                 Submitting...
               </>
             ) : (

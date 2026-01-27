@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Building2 } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface Supplier {
   id: string;
@@ -252,7 +253,7 @@ export function SupplierListTable({ suppliers }: SupplierListTableProps) {
         </Table>
       ) : (
         <div className="text-center py-8">
-          <Building2 className="h-10 w-10 mx-auto text-gray-300 mb-2" />
+          <Building2 className={`${ICON_SIZES['2xl']} mx-auto text-gray-300 mb-2`} />
           <p className="text-gray-500">No suppliers found matching your filters</p>
         </div>
       )}

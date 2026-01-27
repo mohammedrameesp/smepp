@@ -1,6 +1,7 @@
 import { Calendar, Palmtree, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
 import { format } from 'date-fns';
+import { ICON_SIZES } from '@/lib/constants';
 
 type EventType = 'leave' | 'renewal';
 
@@ -38,13 +39,13 @@ export function UpcomingCard({ events, className }: UpcomingCardProps) {
   return (
     <div className={cn('bg-white border border-gray-200 rounded-xl p-4', className)}>
       <h3 className="font-semibold text-gray-900 flex items-center gap-2 mb-3">
-        <Calendar className="h-5 w-5 text-gray-500" />
+        <Calendar className={cn(ICON_SIZES.md, 'text-gray-500')} />
         Upcoming
       </h3>
 
       {events.length === 0 ? (
         <div className="text-center py-6 text-gray-500">
-          <Calendar className="h-10 w-10 mx-auto mb-2 text-gray-300" />
+          <Calendar className={cn(ICON_SIZES['2xl'], 'mx-auto mb-2 text-gray-300')} />
           <p className="text-sm font-medium">Nothing upcoming</p>
           <p className="text-xs">Your approved leave and renewals will appear here</p>
         </div>
@@ -83,9 +84,9 @@ export function UpcomingCard({ events, className }: UpcomingCardProps) {
                   </p>
                 </div>
                 {event.type === 'leave' ? (
-                  <Palmtree className={cn('h-4 w-4 flex-shrink-0', config.iconColor)} />
+                  <Palmtree className={cn(ICON_SIZES.sm, 'flex-shrink-0', config.iconColor)} />
                 ) : (
-                  <RefreshCw className={cn('h-4 w-4 flex-shrink-0', config.iconColor)} />
+                  <RefreshCw className={cn(ICON_SIZES.sm, 'flex-shrink-0', config.iconColor)} />
                 )}
               </div>
             );

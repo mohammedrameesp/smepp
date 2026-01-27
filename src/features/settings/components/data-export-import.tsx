@@ -9,6 +9,8 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Download, Upload, Database, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 import { toast } from 'sonner';
 import { formatNumber } from '@/lib/utils/math-utils';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -178,13 +180,13 @@ export function DataExportImport() {
   const getButtonIcon = (status: string) => {
     switch (status) {
       case 'loading':
-        return <Loader2 className="h-4 w-4 animate-spin" />;
+        return <Loader2 className={`${ICON_SIZES.sm} animate-spin`} />;
       case 'success':
-        return <CheckCircle2 className="h-4 w-4" />;
+        return <CheckCircle2 className={ICON_SIZES.sm} />;
       case 'error':
-        return <AlertCircle className="h-4 w-4" />;
+        return <AlertCircle className={ICON_SIZES.sm} />;
       default:
-        return <Download className="h-4 w-4" />;
+        return <Download className={ICON_SIZES.sm} />;
     }
   };
 
@@ -256,7 +258,7 @@ export function DataExportImport() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Database className="h-5 w-5" />
+                <Database className={ICON_SIZES.md} />
                 Export Full Backup
               </CardTitle>
               <CardDescription>
@@ -285,7 +287,7 @@ export function DataExportImport() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Upload className="h-5 w-5" />
+                <Upload className={ICON_SIZES.md} />
                 Import Full Backup
               </CardTitle>
               <CardDescription>
@@ -294,7 +296,7 @@ export function DataExportImport() {
             </CardHeader>
             <CardContent>
               <Alert className="mb-4 border-yellow-500 bg-yellow-50">
-                <AlertCircle className="h-4 w-4 text-yellow-600" />
+                <AlertCircle className={`${ICON_SIZES.sm} text-yellow-600`} />
                 <AlertDescription className="text-yellow-800">
                   <strong>Warning:</strong> This will update existing records. Make a backup first!
                 </AlertDescription>
@@ -326,10 +328,10 @@ export function DataExportImport() {
                   variant={importStatus.fullBackup === 'error' ? 'destructive' : 'default'}
                   className="w-full gap-2"
                 >
-                  {importStatus.fullBackup === 'loading' && <Loader2 className="h-4 w-4 animate-spin" />}
-                  {importStatus.fullBackup === 'success' && <CheckCircle2 className="h-4 w-4" />}
-                  {importStatus.fullBackup === 'error' && <AlertCircle className="h-4 w-4" />}
-                  {importStatus.fullBackup === 'idle' && <Upload className="h-4 w-4" />}
+                  {importStatus.fullBackup === 'loading' && <Loader2 className={`${ICON_SIZES.sm} animate-spin`} />}
+                  {importStatus.fullBackup === 'success' && <CheckCircle2 className={ICON_SIZES.sm} />}
+                  {importStatus.fullBackup === 'error' && <AlertCircle className={ICON_SIZES.sm} />}
+                  {importStatus.fullBackup === 'idle' && <Upload className={ICON_SIZES.sm} />}
                   {importStatus.fullBackup === 'loading' ? 'Importing...' : importStatus.fullBackup === 'success' ? 'Import Complete!' : 'Import Full Backup'}
                 </Button>
               </div>
@@ -416,10 +418,10 @@ export function DataExportImport() {
                       size="sm"
                       className="w-full gap-2"
                     >
-                      {importStatus[module.key] === 'loading' && <Loader2 className="h-4 w-4 animate-spin" />}
-                      {importStatus[module.key] === 'success' && <CheckCircle2 className="h-4 w-4" />}
-                      {importStatus[module.key] === 'error' && <AlertCircle className="h-4 w-4" />}
-                      {importStatus[module.key] === 'idle' && <Upload className="h-4 w-4" />}
+                      {importStatus[module.key] === 'loading' && <Loader2 className={`${ICON_SIZES.sm} animate-spin`} />}
+                      {importStatus[module.key] === 'success' && <CheckCircle2 className={ICON_SIZES.sm} />}
+                      {importStatus[module.key] === 'error' && <AlertCircle className={ICON_SIZES.sm} />}
+                      {importStatus[module.key] === 'idle' && <Upload className={ICON_SIZES.sm} />}
                       {importStatus[module.key] === 'loading' ? 'Importing...' : 'Import'}
                     </Button>
 

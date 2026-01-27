@@ -7,6 +7,8 @@
 
 import { CheckCircle, Package, Wrench, XCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { ICON_SIZES } from '@/lib/constants';
+import { cn } from '@/lib/core/utils';
 
 interface AssetStatusCardProps {
   status: 'IN_USE' | 'SPARE' | 'REPAIR' | 'DISPOSED';
@@ -51,13 +53,13 @@ export function AssetStatusCard({ status }: AssetStatusCardProps) {
     <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
       <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
         <div className={`w-10 h-10 ${config.bg} rounded-xl flex items-center justify-center`}>
-          <Icon className={`h-5 w-5 ${config.iconColor}`} />
+          <Icon className={cn(ICON_SIZES.md, config.iconColor)} />
         </div>
         <h2 className="font-semibold text-slate-900">Status</h2>
       </div>
       <div className="p-5 flex items-center justify-center">
         <Badge variant={config.badgeVariant} className="text-base font-medium px-4 py-1.5">
-          <Icon className="h-4 w-4 mr-1.5" />
+          <Icon className={cn(ICON_SIZES.sm, 'mr-1.5')} />
           {config.label}
         </Badge>
       </div>

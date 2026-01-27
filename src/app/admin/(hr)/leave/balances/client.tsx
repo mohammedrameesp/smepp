@@ -12,6 +12,7 @@ import { getAnnualLeaveDetails } from '@/features/leave/lib/leave-utils';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface LeaveBalance {
   id: string;
@@ -394,7 +395,7 @@ export function LeaveBalancesClient() {
               : 'hover:bg-background/50'
           )}
         >
-          <Calendar className="h-4 w-4" />
+          <Calendar className={ICON_SIZES.sm} />
           Balances
         </button>
         <button
@@ -406,7 +407,7 @@ export function LeaveBalancesClient() {
               : 'hover:bg-background/50'
           )}
         >
-          <AlertTriangle className="h-4 w-4" />
+          <AlertTriangle className={ICON_SIZES.sm} />
           Exceptions
           {exceptions.length > 0 && (
             <Badge variant="secondary" className="ml-1 bg-amber-100 text-amber-700">
@@ -429,7 +430,7 @@ export function LeaveBalancesClient() {
               </div>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={() => setInitDialogOpen(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className={`${ICON_SIZES.sm} mr-2`} />
                   Initialize Balance
                 </Button>
                 <Button variant="outline" size="sm" onClick={expandAll}>
@@ -445,7 +446,7 @@ export function LeaveBalancesClient() {
           {/* Filters */}
           <div className="flex flex-wrap gap-4 mb-6">
             <div className="relative flex-1 min-w-[200px] max-w-xs">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className={`absolute left-3 top-1/2 -translate-y-1/2 ${ICON_SIZES.sm} text-gray-400`} />
               <Input
                 placeholder="Search employees..."
                 className="pl-9"
@@ -507,7 +508,7 @@ export function LeaveBalancesClient() {
                     >
                       <div className="flex items-center gap-4">
                         <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                          <User className="h-5 w-5 text-gray-500" />
+                          <User className={cn(ICON_SIZES.md, "text-gray-500")} />
                         </div>
                         <div>
                           <div className="font-medium text-gray-900">
@@ -544,13 +545,13 @@ export function LeaveBalancesClient() {
                             onClick={(e) => e.stopPropagation()}
                           >
                             <Button variant="ghost" size="sm" title="View Employee Profile">
-                              <ExternalLink className="h-4 w-4" />
+                              <ExternalLink className={ICON_SIZES.sm} />
                             </Button>
                           </Link>
                           {isExpanded ? (
-                            <ChevronUp className="h-5 w-5 text-gray-400" />
+                            <ChevronUp className={cn(ICON_SIZES.md, "text-gray-400")} />
                           ) : (
-                            <ChevronDown className="h-5 w-5 text-gray-400" />
+                            <ChevronDown className={cn(ICON_SIZES.md, "text-gray-400")} />
                           )}
                         </div>
                       </div>
@@ -667,7 +668,7 @@ export function LeaveBalancesClient() {
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
                 <CardTitle className="flex items-center gap-2">
-                  <AlertTriangle className="h-5 w-5 text-amber-500" />
+                  <AlertTriangle className={cn(ICON_SIZES.md, "text-amber-500")} />
                   Leave Exceptions ({exceptions.length})
                 </CardTitle>
                 <CardDescription>
@@ -675,7 +676,7 @@ export function LeaveBalancesClient() {
                 </CardDescription>
               </div>
               <Button onClick={() => setAddExceptionDialogOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className={`${ICON_SIZES.sm} mr-2`} />
                 Add Exception
               </Button>
             </div>
@@ -683,11 +684,11 @@ export function LeaveBalancesClient() {
           <CardContent>
             {exceptionsLoading ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+                <Loader2 className={cn(ICON_SIZES.xl, "animate-spin text-gray-400")} />
               </div>
             ) : exceptions.length === 0 ? (
               <div className="text-center py-12">
-                <AlertTriangle className="h-12 w-12 mx-auto text-gray-300 mb-4" />
+                <AlertTriangle className={`${ICON_SIZES['3xl']} mx-auto text-gray-300 mb-4`} />
                 <p className="text-gray-500 mb-2">No active exceptions</p>
                 <p className="text-sm text-gray-400">
                   Exceptions allow employees to bypass leave rules like advance notice requirements.
@@ -709,7 +710,7 @@ export function LeaveBalancesClient() {
                             className="h-10 w-10 rounded-full"
                           />
                         ) : (
-                          <User className="h-5 w-5 text-amber-600" />
+                          <User className={cn(ICON_SIZES.md, "text-amber-600")} />
                         )}
                       </div>
                       <div>
@@ -732,10 +733,10 @@ export function LeaveBalancesClient() {
                         className="text-red-600 hover:text-red-700 hover:bg-red-50"
                       >
                         {updatingExceptionId === exception.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <Loader2 className={cn(ICON_SIZES.sm, "animate-spin")} />
                         ) : (
                           <>
-                            <X className="h-4 w-4 mr-1" />
+                            <X className={`${ICON_SIZES.sm} mr-1`} />
                             Disable
                           </>
                         )}
@@ -794,7 +795,7 @@ export function LeaveBalancesClient() {
                 <label className="text-sm font-medium">Exception Type</label>
                 <div className="p-3 bg-gray-50 rounded-lg">
                   <div className="flex items-center gap-2">
-                    <AlertTriangle className="h-4 w-4 text-amber-500" />
+                    <AlertTriangle className={cn(ICON_SIZES.sm, "text-amber-500")} />
                     <span className="font-medium">Bypass Advance Notice</span>
                   </div>
                   <p className="text-xs text-gray-500 mt-1">

@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { Trash2, Loader2, AlertTriangle } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import { useRouter } from 'next/navigation';
 
 export function ResetPlatformButton() {
@@ -62,14 +63,14 @@ export function ResetPlatformButton() {
     <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
       <AlertDialogTrigger asChild>
         <Button variant="destructive" size="sm">
-          <Trash2 className="h-4 w-4 mr-2" />
+          <Trash2 className={`${ICON_SIZES.sm} mr-2`} />
           Reset Platform (Testing)
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2 text-red-600">
-            <AlertTriangle className="h-5 w-5" />
+            <AlertTriangle className={ICON_SIZES.md} />
             Reset Entire Platform
           </AlertDialogTitle>
           <AlertDialogDescription asChild>
@@ -111,12 +112,12 @@ export function ResetPlatformButton() {
           >
             {isLoading ? (
               <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className={`${ICON_SIZES.sm} mr-2 animate-spin`} />
                 Deleting...
               </>
             ) : (
               <>
-                <Trash2 className="h-4 w-4 mr-2" />
+                <Trash2 className={`${ICON_SIZES.sm} mr-2`} />
                 Delete Everything
               </>
             )}

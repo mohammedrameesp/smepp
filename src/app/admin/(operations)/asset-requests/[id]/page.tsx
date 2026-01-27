@@ -41,6 +41,7 @@ import {
   Clock,
   FileText,
 } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { DetailCard } from '@/components/ui/detail-card';
 import { InfoField, InfoFieldGrid } from '@/components/ui/info-field';
@@ -225,7 +226,7 @@ export default async function AdminAssetRequestDetailPage({ params }: Props) {
           <DetailCard icon={User} iconColor="blue" title="Requestor" subtitle="Who submitted this request">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center">
-                <User className="h-6 w-6 text-slate-500" />
+                <User className={`${ICON_SIZES.lg} text-slate-500`} />
               </div>
               <div>
                 <p className="font-semibold text-slate-900">{request.member.name || 'Unknown'}</p>
@@ -255,7 +256,7 @@ export default async function AdminAssetRequestDetailPage({ params }: Props) {
             <div className="mt-4">
               <Button asChild variant="outline" size="sm">
                 <Link href={`/admin/assets/${request.asset.id}`}>
-                  <Package className="mr-2 h-4 w-4" />
+                  <Package className={`mr-2 ${ICON_SIZES.sm}`} />
                   View Asset
                 </Link>
               </Button>
@@ -301,7 +302,7 @@ export default async function AdminAssetRequestDetailPage({ params }: Props) {
               )}
               {!request.reason && !request.notes && !request.processorNotes && (
                 <div className="text-center py-8 text-slate-400">
-                  <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                  <FileText className={`${ICON_SIZES['3xl']} mx-auto mb-2 opacity-50`} />
                   <p className="text-sm">No additional details provided</p>
                 </div>
               )}
@@ -363,13 +364,13 @@ export default async function AdminAssetRequestDetailPage({ params }: Props) {
             <div className="space-y-2">
               <Button asChild variant="outline" className="w-full justify-start">
                 <Link href={`/admin/assets/${request.asset.id}`}>
-                  <Package className="mr-2 h-4 w-4" />
+                  <Package className={`mr-2 ${ICON_SIZES.sm}`} />
                   View Asset Details
                 </Link>
               </Button>
               <Button asChild variant="outline" className="w-full justify-start">
                 <Link href={`/admin/employees/${request.member.id}`}>
-                  <User className="mr-2 h-4 w-4" />
+                  <User className={`mr-2 ${ICON_SIZES.sm}`} />
                   View Requestor Profile
                 </Link>
               </Button>

@@ -27,6 +27,8 @@ import {
 } from 'lucide-react';
 import { PageHeader, PageContent, PageHeaderButton } from '@/components/ui/page-header';
 import { formatCurrency } from '@/lib/core/currency';
+import { ICON_SIZES } from '@/lib/constants';
+import { cn } from '@/lib/core/utils';
 import { formatDate } from '@/lib/core/datetime';
 import { LoanActions } from '@/features/payroll/components';
 import { DetailCard } from '@/components/ui/detail-card';
@@ -134,7 +136,7 @@ export default async function LoanDetailPage({ params }: PageProps) {
         actions={
           <div className="flex gap-2">
             <PageHeaderButton href={`/admin/employees/${loan.memberId}`} variant="outline">
-              <User className="h-4 w-4" />
+              <User className={ICON_SIZES.sm} />
               View Employee
             </PageHeaderButton>
             <LoanActions
@@ -192,7 +194,7 @@ export default async function LoanDetailPage({ params }: PageProps) {
 
               {loan.status === 'COMPLETED' && (
                 <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 text-center">
-                  <CheckCircle className="h-8 w-8 text-emerald-500 mx-auto mb-2" />
+                  <CheckCircle className={cn(ICON_SIZES.xl, "text-emerald-500 mx-auto mb-2")} />
                   <p className="font-semibold text-emerald-700">Loan Fully Repaid</p>
                 </div>
               )}
@@ -208,7 +210,7 @@ export default async function LoanDetailPage({ params }: PageProps) {
           >
             {loan.repayments.length === 0 ? (
               <div className="text-center py-8 text-slate-400">
-                <Receipt className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                <Receipt className={`${ICON_SIZES['3xl']} mx-auto mb-2 opacity-50`} />
                 <p className="text-sm">No repayments recorded yet</p>
               </div>
             ) : (

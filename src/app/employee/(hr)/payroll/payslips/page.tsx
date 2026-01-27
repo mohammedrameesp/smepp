@@ -14,6 +14,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { ArrowLeft, Eye, FileText } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import { formatCurrency } from '@/lib/core/currency';
 import { getMonthName, getPayrollStatusColor } from '@/features/payroll/lib/utils';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
@@ -91,7 +92,7 @@ export default async function EmployeePayslipsPage({ searchParams }: PageProps) 
         actions={
           <Link href="/employee/payroll">
             <Button variant="outline">
-              <ArrowLeft className="h-4 w-4 mr-2" />
+              <ArrowLeft className={`${ICON_SIZES.sm} mr-2`} />
               Back to Payroll
             </Button>
           </Link>
@@ -171,7 +172,7 @@ export default async function EmployeePayslipsPage({ searchParams }: PageProps) 
                     <TableCell>
                       <Button asChild variant="ghost" size="icon">
                         <Link href={`/employee/payroll/payslips/${payslip.id}`}>
-                          <Eye className="h-4 w-4" />
+                          <Eye className={ICON_SIZES.sm} />
                         </Link>
                       </Button>
                     </TableCell>

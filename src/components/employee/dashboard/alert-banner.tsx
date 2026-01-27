@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { AlertTriangle, IdCard, FileText, HeartPulse, X } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface DocumentAlert {
   type: string;
@@ -51,7 +52,7 @@ export function DocumentExpiryAlert({ alerts, className }: DocumentExpiryAlertPr
       )}
     >
       <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
-        <Icon className="h-4 w-4 text-amber-600" />
+        <Icon className={`${ICON_SIZES.sm} text-amber-600`} />
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-amber-800">
@@ -73,7 +74,7 @@ export function DocumentExpiryAlert({ alerts, className }: DocumentExpiryAlertPr
         onClick={() => setDismissed(true)}
         className="p-1 text-amber-400 hover:text-amber-600 rounded"
       >
-        <X className="h-4 w-4" />
+        <X className={ICON_SIZES.sm} />
       </button>
     </div>
   );

@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { formatDate } from '@/lib/core/datetime';
 import { formatCurrency } from '@/lib/core/currency';
+import { ICON_SIZES } from '@/lib/constants';
 import type { UserAssetHistoryItem } from '@/features/users/components/user-asset-history';
 import type { UserSubscriptionHistoryItem } from '@/features/users/components/user-subscription-history';
 
@@ -80,7 +81,7 @@ export function MyHoldingsContent({
             }`}
           >
             <div className="flex items-center justify-center gap-2">
-              <Laptop className="h-4 w-4" />
+              <Laptop className={ICON_SIZES.sm} />
               <span>Assets</span>
               <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
                 activeTab === 'assets'
@@ -103,7 +104,7 @@ export function MyHoldingsContent({
             }`}
           >
             <div className="flex items-center justify-center gap-2">
-              <CreditCard className="h-4 w-4" />
+              <CreditCard className={ICON_SIZES.sm} />
               <span>Subscriptions</span>
               <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
                 activeTab === 'subscriptions'
@@ -147,7 +148,7 @@ function AssetsTab({
       <div>
         <div className="flex items-center gap-2 mb-4">
           <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
-            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+            <CheckCircle2 className={`${ICON_SIZES.sm} text-emerald-600`} />
           </div>
           <div>
             <h3 className="font-semibold text-slate-900">Currently Assigned</h3>
@@ -158,7 +159,7 @@ function AssetsTab({
         {activeAssets.length === 0 ? (
           <div className="text-center py-12 bg-slate-50 rounded-xl border-2 border-dashed border-slate-200">
             <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Package className="h-8 w-8 text-slate-400" />
+              <Package className={`${ICON_SIZES.xl} text-slate-400`} />
             </div>
             <p className="text-slate-600 font-medium mb-1">No assets assigned</p>
             <p className="text-slate-400 text-sm">Assets assigned to you will appear here</p>
@@ -167,7 +168,7 @@ function AssetsTab({
               className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
             >
               Browse Available Assets
-              <ArrowRight className="h-4 w-4" />
+              <ArrowRight className={ICON_SIZES.sm} />
             </Link>
           </div>
         ) : (
@@ -182,7 +183,7 @@ function AssetsTab({
                 >
                   <div className="flex items-start gap-4">
                     <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/30 group-hover:scale-105 transition-transform">
-                      <Icon className="h-6 w-6" />
+                      <Icon className={ICON_SIZES.lg} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
@@ -192,7 +193,7 @@ function AssetsTab({
                           </h4>
                           <p className="text-sm text-slate-500">{asset.type}</p>
                         </div>
-                        <ArrowRight className="h-4 w-4 text-slate-300 group-hover:text-blue-500 group-hover:translate-x-1 transition-all flex-shrink-0 mt-1" />
+                        <ArrowRight className={`${ICON_SIZES.sm} text-slate-300 group-hover:text-blue-500 group-hover:translate-x-1 transition-all flex-shrink-0 mt-1`} />
                       </div>
                       {asset.assetTag && (
                         <span className="inline-block mt-2 px-2 py-0.5 bg-slate-100 text-slate-600 text-xs font-mono rounded">
@@ -226,7 +227,7 @@ function AssetsTab({
         <div>
           <div className="flex items-center gap-2 mb-4">
             <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center">
-              <History className="h-4 w-4 text-slate-500" />
+              <History className={`${ICON_SIZES.sm} text-slate-500`} />
             </div>
             <div>
               <h3 className="font-semibold text-slate-900">Previously Assigned</h3>
@@ -245,7 +246,7 @@ function AssetsTab({
                   className="group flex items-center gap-4 p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors"
                 >
                   <div className="w-10 h-10 bg-slate-200 rounded-lg flex items-center justify-center text-slate-500 group-hover:bg-slate-300 transition-colors">
-                    <Icon className="h-5 w-5" />
+                    <Icon className={ICON_SIZES.md} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="font-medium text-slate-700 truncate">{asset.model}</h4>
@@ -260,7 +261,7 @@ function AssetsTab({
                       <div className="text-slate-400">Returned {formatDate(lastPeriod.endDate)}</div>
                     )}
                   </div>
-                  <ArrowRight className="h-4 w-4 text-slate-300 group-hover:text-slate-500 transition-colors flex-shrink-0" />
+                  <ArrowRight className={`${ICON_SIZES.sm} text-slate-300 group-hover:text-slate-500 transition-colors flex-shrink-0`} />
                 </Link>
               );
             })}
@@ -284,7 +285,7 @@ function SubscriptionsTab({
       <div>
         <div className="flex items-center gap-2 mb-4">
           <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
-            <Sparkles className="h-4 w-4 text-emerald-600" />
+            <Sparkles className={`${ICON_SIZES.sm} text-emerald-600`} />
           </div>
           <div>
             <h3 className="font-semibold text-slate-900">Active Subscriptions</h3>
@@ -295,7 +296,7 @@ function SubscriptionsTab({
         {activeSubscriptions.length === 0 ? (
           <div className="text-center py-12 bg-slate-50 rounded-xl border-2 border-dashed border-slate-200">
             <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CreditCard className="h-8 w-8 text-slate-400" />
+              <CreditCard className={`${ICON_SIZES.xl} text-slate-400`} />
             </div>
             <p className="text-slate-600 font-medium mb-1">No active subscriptions</p>
             <p className="text-slate-400 text-sm">Subscriptions assigned to you will appear here</p>
@@ -304,7 +305,7 @@ function SubscriptionsTab({
               className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors"
             >
               Browse Subscriptions
-              <ArrowRight className="h-4 w-4" />
+              <ArrowRight className={ICON_SIZES.sm} />
             </Link>
           </div>
         ) : (
@@ -317,7 +318,7 @@ function SubscriptionsTab({
               >
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-emerald-500/30 group-hover:scale-105 transition-transform">
-                    <CreditCard className="h-6 w-6" />
+                    <CreditCard className={ICON_SIZES.lg} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
@@ -330,7 +331,7 @@ function SubscriptionsTab({
                           {sub.category}
                         </p>
                       </div>
-                      <ArrowRight className="h-4 w-4 text-slate-300 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all flex-shrink-0 mt-1" />
+                      <ArrowRight className={`${ICON_SIZES.sm} text-slate-300 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all flex-shrink-0 mt-1`} />
                     </div>
                   </div>
                 </div>
@@ -362,7 +363,7 @@ function SubscriptionsTab({
         <div>
           <div className="flex items-center gap-2 mb-4">
             <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center">
-              <History className="h-4 w-4 text-slate-500" />
+              <History className={`${ICON_SIZES.sm} text-slate-500`} />
             </div>
             <div>
               <h3 className="font-semibold text-slate-900">Previous Subscriptions</h3>
@@ -378,7 +379,7 @@ function SubscriptionsTab({
                 className="group flex items-center gap-4 p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors"
               >
                 <div className="w-10 h-10 bg-slate-200 rounded-lg flex items-center justify-center text-slate-500 group-hover:bg-slate-300 transition-colors">
-                  <CreditCard className="h-5 w-5" />
+                  <CreditCard className={ICON_SIZES.md} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <h4 className="font-medium text-slate-700 truncate">{sub.serviceName}</h4>
@@ -393,7 +394,7 @@ function SubscriptionsTab({
                     {formatCurrency(sub.totalCost, sub.costCurrency || 'QAR')} total
                   </div>
                 </div>
-                <ArrowRight className="h-4 w-4 text-slate-300 group-hover:text-slate-500 transition-colors flex-shrink-0" />
+                <ArrowRight className={`${ICON_SIZES.sm} text-slate-300 group-hover:text-slate-500 transition-colors flex-shrink-0`} />
               </Link>
             ))}
           </div>

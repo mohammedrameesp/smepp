@@ -21,6 +21,8 @@ import {
   Lock,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface ModuleStepProps {
   selected: string[];

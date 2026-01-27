@@ -12,6 +12,8 @@ import { Button } from '@/components/ui/button';
 import { NotificationItem } from './notification-item';
 import { useNotifications } from './notification-provider';
 import { Loader2, CheckCheck, Bell, RefreshCw } from 'lucide-react';
+import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface Notification {
   id: string;
@@ -119,7 +121,7 @@ export function NotificationDropdown() {
             className="h-6 w-6"
             title="Refresh notifications"
           >
-            <RefreshCw className={`h-3 w-3 ${refreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={cn(ICON_SIZES.xs, refreshing && 'animate-spin')} />
           </Button>
         </div>
         <div className="flex items-center gap-2">
@@ -137,9 +139,9 @@ export function NotificationDropdown() {
               className="text-xs h-7 px-2"
             >
               {markingAllRead ? (
-                <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                <Loader2 className={cn(ICON_SIZES.xs, 'animate-spin mr-1')} />
               ) : (
-                <CheckCheck className="h-3 w-3 mr-1" />
+                <CheckCheck className={cn(ICON_SIZES.xs, 'mr-1')} />
               )}
               Mark all read
             </Button>
@@ -149,11 +151,11 @@ export function NotificationDropdown() {
       <ScrollArea className="h-80">
         {loading ? (
           <div className="flex items-center justify-center h-20">
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            <Loader2 className={cn(ICON_SIZES.md, 'animate-spin text-muted-foreground')} />
           </div>
         ) : notifications.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-32 text-muted-foreground">
-            <Bell className="h-8 w-8 mb-2 opacity-50" />
+            <Bell className={cn(ICON_SIZES.xl, 'mb-2 opacity-50')} />
             <p className="text-sm">No notifications</p>
           </div>
         ) : (

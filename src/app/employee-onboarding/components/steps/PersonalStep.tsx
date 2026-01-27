@@ -7,6 +7,7 @@
  */
 
 import { User } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DatePicker } from '@/components/ui/date-picker';
@@ -38,7 +39,7 @@ export function PersonalStep({ formData, updateField, errors }: PersonalStepProp
     <div className="max-w-2xl mx-auto">
       <div className="text-center mb-8">
         <div className="h-16 w-16 rounded-2xl bg-blue-100 flex items-center justify-center mx-auto mb-4">
-          <User className="h-8 w-8 text-blue-600" />
+          <User className={`${ICON_SIZES.xl} text-blue-600`} />
         </div>
         <h2 className="text-2xl font-bold text-slate-900 mb-2">Personal Information</h2>
         <p className="text-slate-600">

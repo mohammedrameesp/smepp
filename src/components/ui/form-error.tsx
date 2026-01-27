@@ -9,6 +9,7 @@
 import * as React from 'react';
 import { AlertCircle, XCircle } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 
 export interface FormErrorProps {
   message: string | null | undefined;
@@ -46,7 +47,7 @@ export function FormError({
         )}
         role="alert"
       >
-        {IconComponent && <IconComponent className="h-4 w-4 flex-shrink-0" />}
+        {IconComponent && <IconComponent className={`${ICON_SIZES.sm} flex-shrink-0`} />}
         <span>{message}</span>
       </div>
     );
@@ -60,7 +61,7 @@ export function FormError({
       )}
       role="alert"
     >
-      {IconComponent && <IconComponent className="h-4 w-4 flex-shrink-0" />}
+      {IconComponent && <IconComponent className={`${ICON_SIZES.sm} flex-shrink-0`} />}
       <span>{message}</span>
     </div>
   );

@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, MessageCircle, Loader2, Phone, UserCheck, RefreshCw, Building2, ShieldCheck, ShieldOff } from 'lucide-react';
+import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -101,7 +103,7 @@ export default function WhatsAppSettingsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <Loader2 className={`${ICON_SIZES.xl} animate-spin text-muted-foreground`} />
       </div>
     );
   }
@@ -114,11 +116,11 @@ export default function WhatsAppSettingsPage() {
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => router.back()}>
-          <ArrowLeft className="h-5 w-5" />
+          <ArrowLeft className={ICON_SIZES.md} />
         </Button>
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-lg bg-green-100 flex items-center justify-center">
-            <MessageCircle className="h-5 w-5 text-green-600" />
+            <MessageCircle className={`${ICON_SIZES.md} text-green-600`} />
           </div>
           <div>
             <h1 className="text-2xl font-bold">WhatsApp Integration</h1>
@@ -134,9 +136,9 @@ export default function WhatsAppSettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             {isEnabled ? (
-              <ShieldCheck className="h-5 w-5 text-green-600" />
+              <ShieldCheck className={`${ICON_SIZES.md} text-green-600`} />
             ) : (
-              <ShieldOff className="h-5 w-5 text-muted-foreground" />
+              <ShieldOff className={`${ICON_SIZES.md} text-muted-foreground`} />
             )}
             WhatsApp Status
           </CardTitle>
@@ -149,11 +151,11 @@ export default function WhatsAppSettingsPage() {
             <div className="flex items-center gap-3">
               {isEnabled ? (
                 <div className="h-10 w-10 rounded-lg bg-green-100 flex items-center justify-center">
-                  <MessageCircle className="h-5 w-5 text-green-600" />
+                  <MessageCircle className={`${ICON_SIZES.md} text-green-600`} />
                 </div>
               ) : (
                 <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center">
-                  <MessageCircle className="h-5 w-5 text-muted-foreground" />
+                  <MessageCircle className={`${ICON_SIZES.md} text-muted-foreground`} />
                 </div>
               )}
               <div>
@@ -177,7 +179,7 @@ export default function WhatsAppSettingsPage() {
           {source === 'PLATFORM' && platformAvailable && (
             <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
               <div className="flex items-center gap-3">
-                <Building2 className="h-5 w-5 text-green-600" />
+                <Building2 className={`${ICON_SIZES.md} text-green-600`} />
                 <div>
                   <p className="font-medium text-green-800">
                     Using Platform WhatsApp
@@ -195,7 +197,7 @@ export default function WhatsAppSettingsPage() {
           {source === 'CUSTOM' && customConfigured && (
             <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <div className="flex items-center gap-3">
-                <MessageCircle className="h-5 w-5 text-blue-600" />
+                <MessageCircle className={`${ICON_SIZES.md} text-blue-600`} />
                 <div>
                   <p className="font-medium text-blue-800">
                     Using Custom WhatsApp API
@@ -222,7 +224,7 @@ export default function WhatsAppSettingsPage() {
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2">
-                <Phone className="h-5 w-5" />
+                <Phone className={ICON_SIZES.md} />
                 User Phone Numbers
               </CardTitle>
               <CardDescription>
@@ -230,7 +232,7 @@ export default function WhatsAppSettingsPage() {
               </CardDescription>
             </div>
             <Button variant="outline" size="sm" onClick={loadUserPhones}>
-              <RefreshCw className="h-4 w-4 mr-2" />
+              <RefreshCw className={`${ICON_SIZES.sm} mr-2`} />
               Refresh
             </Button>
           </CardHeader>
@@ -248,7 +250,7 @@ export default function WhatsAppSettingsPage() {
                   >
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
-                        <Phone className="h-4 w-4 text-muted-foreground" />
+                        <Phone className={`${ICON_SIZES.sm} text-muted-foreground`} />
                       </div>
                       <div>
                         <p className="font-medium">{phone.user.name}</p>
@@ -258,7 +260,7 @@ export default function WhatsAppSettingsPage() {
                     <div className="flex items-center gap-2">
                       {phone.isVerified ? (
                         <Badge variant="secondary" className="bg-green-100 text-green-700">
-                          <UserCheck className="h-3 w-3 mr-1" />
+                          <UserCheck className={`${ICON_SIZES.xs} mr-1`} />
                           Verified
                         </Badge>
                       ) : (

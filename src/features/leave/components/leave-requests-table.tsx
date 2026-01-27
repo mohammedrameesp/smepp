@@ -21,6 +21,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, ChevronLeft, ChevronRight, Loader2, CalendarDays } from 'lucide-react';
 import Link from 'next/link';
+import { ICON_SIZES } from '@/lib/constants';
 import { getLeaveStatusVariant, getDateRangeText, formatLeaveDays, getRequestTypeText } from '@/features/leave/lib/leave-utils';
 import { formatDate } from '@/lib/core/datetime';
 import { LeaveStatus } from '@prisma/client';
@@ -175,7 +176,7 @@ export function LeaveRequestsTable({ showUser = true, memberId, basePath = '/adm
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap gap-3 sm:gap-4 items-stretch lg:items-center">
         <form onSubmit={handleSearch} className="flex gap-2 flex-1 min-w-[200px]">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Search className={`absolute left-3 top-1/2 -translate-y-1/2 ${ICON_SIZES.sm} text-gray-400`} />
             <Input
               placeholder="Search by request # or employee..."
               value={search}
@@ -231,14 +232,14 @@ export function LeaveRequestsTable({ showUser = true, memberId, basePath = '/adm
             {loading ? (
               <TableRow>
                 <TableCell colSpan={showUser ? 8 : 7} className="text-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400" />
+                  <Loader2 className={`${ICON_SIZES.xl} animate-spin mx-auto text-gray-400`} />
                   <p className="text-gray-500 mt-2">Loading leave requests...</p>
                 </TableCell>
               </TableRow>
             ) : requests.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={showUser ? 8 : 7} className="text-center py-8">
-                  <CalendarDays className="h-10 w-10 mx-auto text-gray-300 mb-2" />
+                  <CalendarDays className={`${ICON_SIZES['2xl']} mx-auto text-gray-300 mb-2`} />
                   <p className="text-gray-500">No leave requests found</p>
                 </TableCell>
               </TableRow>
@@ -321,7 +322,7 @@ export function LeaveRequestsTable({ showUser = true, memberId, basePath = '/adm
               onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
               disabled={pagination.page === 1}
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className={ICON_SIZES.sm} />
               Previous
             </Button>
             <Button
@@ -331,7 +332,7 @@ export function LeaveRequestsTable({ showUser = true, memberId, basePath = '/adm
               disabled={pagination.page >= pagination.totalPages}
             >
               Next
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className={ICON_SIZES.sm} />
             </Button>
           </div>
         </div>

@@ -2,6 +2,8 @@
 
 import { LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface ErrorPageAction {
   label: string;
@@ -66,7 +68,7 @@ export function ErrorPageLayout({
             onClick={primaryAction.onClick}
             className="w-full h-14 bg-[#2F2F2F] hover:bg-[#1a1a1a] text-white font-semibold text-base rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
           >
-            <primaryAction.icon className="h-5 w-5 mr-2" aria-hidden="true" />
+            <primaryAction.icon className={`${ICON_SIZES.md} mr-2`} aria-hidden="true" />
             {primaryAction.label}
           </Button>
 
@@ -76,7 +78,7 @@ export function ErrorPageLayout({
               variant="outline"
               className="w-full h-14 font-semibold text-base rounded-lg border-2 hover:bg-gray-50 transition-all duration-200"
             >
-              <secondaryAction.icon className="h-5 w-5 mr-2" aria-hidden="true" />
+              <secondaryAction.icon className={`${ICON_SIZES.md} mr-2`} aria-hidden="true" />
               {secondaryAction.label}
             </Button>
           )}

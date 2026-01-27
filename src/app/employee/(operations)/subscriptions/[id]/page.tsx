@@ -69,6 +69,7 @@ import { formatDate, formatDateTime } from '@/lib/core/datetime';
 import { PageHeader, PageContent, PageHeaderButton } from '@/components/ui/page-header';
 import { Package, Calendar, DollarSign, User as UserIcon, FileText, Clock, ArrowLeft } from 'lucide-react';
 import { DetailCard } from '@/components/ui/detail-card';
+import { ICON_SIZES } from '@/lib/constants';
 import { InfoField, InfoFieldGrid } from '@/components/ui/info-field';
 
 interface Props {
@@ -174,7 +175,7 @@ export default async function EmployeeSubscriptionDetailPage({ params }: Props) 
         ]}
         actions={
           <PageHeaderButton href="/employee/subscriptions" variant="outline">
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className={ICON_SIZES.sm} />
             Back to Subscriptions
           </PageHeaderButton>
         }
@@ -220,7 +221,7 @@ export default async function EmployeeSubscriptionDetailPage({ params }: Props) 
               <CostBreakdown subscriptionId={subscription.id} />
             ) : (
               <div className="bg-slate-50 rounded-2xl border border-slate-200 p-6 text-center">
-                <DollarSign className="h-8 w-8 text-slate-400 mx-auto mb-2" />
+                <DollarSign className={`${ICON_SIZES.xl} text-slate-400 mx-auto mb-2`} />
                 <p className="text-sm text-slate-500">Cost details are only visible for subscriptions assigned to you</p>
               </div>
             )}
@@ -274,7 +275,7 @@ export default async function EmployeeSubscriptionDetailPage({ params }: Props) 
                       ? 'bg-amber-200'
                       : 'bg-emerald-100'
                   }`}>
-                    <Calendar className={`h-5 w-5 ${
+                    <Calendar className={`${ICON_SIZES.md} ${
                       isRenewalSoon(subscription.renewalDate)
                         ? 'text-amber-700'
                         : 'text-emerald-600'

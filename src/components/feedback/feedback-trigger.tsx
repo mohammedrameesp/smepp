@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { MessageSquarePlus } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -21,7 +22,7 @@ function FeedbackButtonFallback({ onClick }: { onClick?: () => void }) {
       onClick={onClick}
       className="h-9 w-9 text-muted-foreground hover:text-foreground"
     >
-      <MessageSquarePlus className="h-5 w-5" />
+      <MessageSquarePlus className={ICON_SIZES.md} />
       <span className="sr-only">Send feedback</span>
     </Button>
   );
@@ -42,7 +43,7 @@ export function FeedbackTrigger() {
                 onClick={() => setOpen(true)}
                 className="h-9 w-9 text-muted-foreground hover:text-foreground"
               >
-                <MessageSquarePlus className="h-5 w-5" />
+                <MessageSquarePlus className={ICON_SIZES.md} />
                 <span className="sr-only">Send feedback</span>
               </Button>
             </TooltipTrigger>

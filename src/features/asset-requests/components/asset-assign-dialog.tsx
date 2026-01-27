@@ -23,6 +23,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertCircle, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
+import { ICON_SIZES } from '@/lib/constants';
 import { getDisplayEmail } from '@/lib/utils/user-display';
 
 interface Asset {
@@ -137,7 +138,7 @@ export function AssetAssignDialog({ asset, trigger }: AssetAssignDialogProps) {
       <DialogTrigger asChild>
         {trigger || (
           <Button variant="default" size="sm">
-            <UserPlus className="h-4 w-4 mr-2" />
+            <UserPlus className={`${ICON_SIZES.sm} mr-2`} />
             Assign to User
           </Button>
         )}
@@ -212,7 +213,7 @@ export function AssetAssignDialog({ asset, trigger }: AssetAssignDialogProps) {
 
           {error && (
             <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 p-3 rounded-lg">
-              <AlertCircle className="h-4 w-4 flex-shrink-0" />
+              <AlertCircle className={`${ICON_SIZES.sm} flex-shrink-0`} />
               {error}
             </div>
           )}

@@ -6,6 +6,7 @@ import { EmployeeSupplierListTable } from '@/features/suppliers';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Building2, Users, FolderOpen } from 'lucide-react';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
+import { ICON_SIZES } from '@/lib/constants';
 import { DetailCard } from '@/components/ui/detail-card';
 
 export default async function EmployeeSuppliersPage() {
@@ -49,19 +50,19 @@ export default async function EmployeeSuppliersPage() {
             value={suppliers.length}
             label="approved suppliers"
             color="blue"
-            icon={<Building2 className="h-4 w-4" />}
+            icon={<Building2 className={ICON_SIZES.sm} />}
           />
           <StatChip
             value={totalEngagements}
             label="engagements"
             color="emerald"
-            icon={<Users className="h-4 w-4" />}
+            icon={<Users className={ICON_SIZES.sm} />}
           />
           <StatChip
             value={uniqueCategories}
             label="categories"
             color="purple"
-            icon={<FolderOpen className="h-4 w-4" />}
+            icon={<FolderOpen className={ICON_SIZES.sm} />}
           />
         </StatChipGroup>
       </PageHeader>

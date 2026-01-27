@@ -4,6 +4,7 @@ import { useState } from 'react';
 import * as Icons from 'lucide-react';
 import { ChevronDown, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface HelpContentSectionProps {
   id?: string;
@@ -49,7 +50,7 @@ export function HelpContentSection({
     <div className="flex items-center gap-3">
       {icon && (
         <div className="p-2 rounded-lg bg-gray-100">
-          <DynamicIcon name={icon} className="h-5 w-5 text-gray-600" />
+          <DynamicIcon name={icon} className={`${ICON_SIZES.md} text-gray-600`} />
         </div>
       )}
       <div className="flex items-center gap-2">
@@ -82,7 +83,7 @@ export function HelpContentSection({
         {header}
         <ChevronDown
           className={cn(
-            'h-5 w-5 text-gray-400 transition-transform duration-200',
+            `${ICON_SIZES.md} text-gray-400 transition-transform duration-200`,
             isOpen && 'rotate-180'
           )}
         />

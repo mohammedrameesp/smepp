@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ShieldCheck, Users, Search, Loader2, Crown, UserCheck } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import { toast } from 'sonner';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -207,7 +208,7 @@ export function AccessControlClient() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+        <Loader2 className={`${ICON_SIZES.xl} animate-spin text-gray-400`} />
       </div>
     );
   }
@@ -219,7 +220,7 @@ export function AccessControlClient() {
         <Card>
           <CardContent className="pt-4 pb-3">
             <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-gray-500" />
+              <Users className={`${ICON_SIZES.sm} text-gray-500`} />
               <span className="text-sm text-gray-600">Total</span>
             </div>
             <p className="text-2xl font-bold mt-1">{stats.total}</p>
@@ -229,7 +230,7 @@ export function AccessControlClient() {
         <Card>
           <CardContent className="pt-4 pb-3">
             <div className="flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4 text-red-500" />
+              <ShieldCheck className={`${ICON_SIZES.sm} text-red-500`} />
               <span className="text-sm text-gray-600">Admins</span>
             </div>
             <p className="text-2xl font-bold mt-1">{stats.admins}</p>
@@ -239,7 +240,7 @@ export function AccessControlClient() {
         <Card>
           <CardContent className="pt-4 pb-3">
             <div className="flex items-center gap-2">
-              <UserCheck className="h-4 w-4 text-purple-500" />
+              <UserCheck className={`${ICON_SIZES.sm} text-purple-500`} />
               <span className="text-sm text-gray-600">Managers</span>
             </div>
             <p className="text-2xl font-bold mt-1">{stats.managers}</p>
@@ -249,7 +250,7 @@ export function AccessControlClient() {
         <Card>
           <CardContent className="pt-4 pb-3">
             <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-gray-400" />
+              <Users className={`${ICON_SIZES.sm} text-gray-400`} />
               <span className="text-sm text-gray-600">Employees</span>
             </div>
             <p className="text-2xl font-bold mt-1">{stats.employees}</p>
@@ -268,7 +269,7 @@ export function AccessControlClient() {
               </CardDescription>
             </div>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className={`absolute left-3 top-1/2 -translate-y-1/2 ${ICON_SIZES.sm} text-gray-400`} />
               <Input
                 placeholder="Search by name or email..."
                 value={search}
@@ -321,7 +322,7 @@ export function AccessControlClient() {
                               <div className="flex items-center gap-2">
                                 <p className="font-medium truncate">{member.name || 'Unnamed'}</p>
                                 {isOwner && (
-                                  <Crown className="h-4 w-4 text-amber-500 flex-shrink-0" />
+                                  <Crown className={`${ICON_SIZES.sm} text-amber-500 flex-shrink-0`} />
                                 )}
                               </div>
                               {member.name && (

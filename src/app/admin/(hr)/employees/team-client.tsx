@@ -42,6 +42,7 @@ import {
 import { formatDistanceToNow, format, differenceInDays, differenceInHours } from 'date-fns';
 import { EmployeeListTableClient } from '@/features/employees/components';
 import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface PendingStatus {
   isPending: boolean;
@@ -101,14 +102,14 @@ interface TeamClientProps {
 type FilterType = 'employees' | 'service-accounts';
 
 const roleIcons: Record<string, React.ReactNode> = {
-  OWNER: <Crown className="h-4 w-4 text-amber-500" />,
-  ADMIN: <Shield className="h-4 w-4 text-red-500" />,
-  MANAGER: <Shield className="h-4 w-4 text-purple-500" />,
-  HR: <Shield className="h-4 w-4 text-green-500" />,
-  FINANCE: <Shield className="h-4 w-4 text-yellow-500" />,
-  OPERATIONS: <Shield className="h-4 w-4 text-blue-500" />,
-  EMPLOYEE: <User className="h-4 w-4 text-gray-500" />,
-  MEMBER: <User className="h-4 w-4 text-gray-500" />,
+  OWNER: <Crown className={cn(ICON_SIZES.sm, 'text-amber-500')} />,
+  ADMIN: <Shield className={cn(ICON_SIZES.sm, 'text-red-500')} />,
+  MANAGER: <Shield className={cn(ICON_SIZES.sm, 'text-purple-500')} />,
+  HR: <Shield className={cn(ICON_SIZES.sm, 'text-green-500')} />,
+  FINANCE: <Shield className={cn(ICON_SIZES.sm, 'text-yellow-500')} />,
+  OPERATIONS: <Shield className={cn(ICON_SIZES.sm, 'text-blue-500')} />,
+  EMPLOYEE: <User className={cn(ICON_SIZES.sm, 'text-gray-500')} />,
+  MEMBER: <User className={cn(ICON_SIZES.sm, 'text-gray-500')} />,
 };
 
 const roleLabels: Record<string, string> = {
@@ -342,7 +343,7 @@ export function TeamClient({ initialStats }: TeamClientProps) {
       {/* Error Alert */}
       {error && (
         <Alert variant="error">
-          <AlertCircle className="h-4 w-4" />
+          <AlertCircle className={ICON_SIZES.sm} />
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
@@ -359,7 +360,7 @@ export function TeamClient({ initialStats }: TeamClientProps) {
                 : 'hover:bg-background/50'
             )}
           >
-            <Briefcase className="h-4 w-4" />
+            <Briefcase className={ICON_SIZES.sm} />
             Employees
             <Badge variant="secondary" className="ml-1">
               {stats.employees || initialStats.totalEmployees}
@@ -374,7 +375,7 @@ export function TeamClient({ initialStats }: TeamClientProps) {
                 : 'hover:bg-background/50'
             )}
           >
-            <AtSign className="h-4 w-4" />
+            <AtSign className={ICON_SIZES.sm} />
             Service Accounts
             <Badge variant="secondary" className="ml-1">
               {stats.serviceAccounts || initialStats.totalNonEmployees}
@@ -386,7 +387,7 @@ export function TeamClient({ initialStats }: TeamClientProps) {
         {isAdmin && (
           <Button asChild>
             <Link href="/admin/employees/new">
-              <UserPlus className="h-4 w-4 mr-2" />
+              <UserPlus className={cn(ICON_SIZES.sm, 'mr-2')} />
               Add Member
             </Link>
           </Button>
@@ -411,7 +412,7 @@ export function TeamClient({ initialStats }: TeamClientProps) {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <AtSign className="h-5 w-5" />
+              <AtSign className={ICON_SIZES.md} />
               Service Accounts
             </CardTitle>
             <CardDescription>
@@ -421,11 +422,11 @@ export function TeamClient({ initialStats }: TeamClientProps) {
           <CardContent>
             {loading ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                <Loader2 className={cn(ICON_SIZES.xl, 'animate-spin text-muted-foreground')} />
               </div>
             ) : nonEmployees.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                <AtSign className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <AtSign className={cn(ICON_SIZES['3xl'], 'mx-auto mb-4 opacity-50')} />
                 <p>No service accounts found</p>
               </div>
             ) : (
@@ -477,7 +478,7 @@ export function TeamClient({ initialStats }: TeamClientProps) {
                           >
                             <SelectTrigger className="w-[140px]">
                               {updatingRoleId === member.id ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <Loader2 className={cn(ICON_SIZES.sm, 'animate-spin')} />
                               ) : (
                                 <SelectValue />
                               )}
@@ -513,9 +514,9 @@ export function TeamClient({ initialStats }: TeamClientProps) {
                           disabled={removingId === member.id}
                         >
                           {removingId === member.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <Loader2 className={cn(ICON_SIZES.sm, 'animate-spin')} />
                           ) : (
-                            <Trash2 className="h-4 w-4 text-red-500" />
+                            <Trash2 className={cn(ICON_SIZES.sm, 'text-red-500')} />
                           )}
                         </Button>
                       )}
@@ -533,7 +534,7 @@ export function TeamClient({ initialStats }: TeamClientProps) {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Mail className="h-5 w-5" />
+              <Mail className={ICON_SIZES.md} />
               Pending Invitations
             </CardTitle>
             <CardDescription>
@@ -550,12 +551,12 @@ export function TeamClient({ initialStats }: TeamClientProps) {
                       <Badge variant="secondary">{roleLabels[inv.role] || inv.role}</Badge>
                       {inv.isExpired ? (
                         <span className="text-xs text-red-600 flex items-center gap-1">
-                          <AlertCircle className="h-3 w-3" />
+                          <AlertCircle className={ICON_SIZES.xs} />
                           Expired
                         </span>
                       ) : (
                         <span className="text-xs text-amber-600 flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
+                          <Clock className={ICON_SIZES.xs} />
                           {(() => {
                             const expiryDate = new Date(inv.expiresAt);
                             const daysLeft = differenceInDays(expiryDate, new Date());
@@ -578,21 +579,21 @@ export function TeamClient({ initialStats }: TeamClientProps) {
                       disabled={resendingId === inv.id}
                     >
                       {resendingId === inv.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <Loader2 className={cn(ICON_SIZES.sm, 'animate-spin')} />
                       ) : copiedInviteId === inv.id ? (
                         <>
-                          <Check className="h-4 w-4 mr-1 text-green-600" />
+                          <Check className={cn(ICON_SIZES.sm, 'mr-1 text-green-600')} />
                           Copied!
                         </>
                       ) : (
                         <>
-                          <RefreshCw className="h-4 w-4 mr-1" />
+                          <RefreshCw className={cn(ICON_SIZES.sm, 'mr-1')} />
                           {inv.isExpired ? 'Regenerate' : 'Resend'}
                         </>
                       )}
                     </Button>
                     <Button variant="ghost" size="icon" onClick={() => handleCancelInvite(inv.id)}>
-                      <Trash2 className="h-4 w-4 text-red-500" />
+                      <Trash2 className={cn(ICON_SIZES.sm, 'text-red-500')} />
                     </Button>
                   </div>
                 </div>
@@ -607,7 +608,7 @@ export function TeamClient({ initialStats }: TeamClientProps) {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5" />
+              <Clock className={ICON_SIZES.md} />
               Pending Members
             </CardTitle>
             <CardDescription>
@@ -645,12 +646,12 @@ export function TeamClient({ initialStats }: TeamClientProps) {
                         )}
                         {member.pendingStatus?.isExpired ? (
                           <span className="text-xs text-red-600 flex items-center gap-1">
-                            <AlertCircle className="h-3 w-3" />
+                            <AlertCircle className={ICON_SIZES.xs} />
                             Expired
                           </span>
                         ) : member.pendingStatus?.expiresAt ? (
                           <span className="text-xs text-amber-600 flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
+                            <Clock className={ICON_SIZES.xs} />
                             {(() => {
                               const expiryDate = new Date(member.pendingStatus.expiresAt);
                               const daysLeft = differenceInDays(expiryDate, new Date());
@@ -663,7 +664,7 @@ export function TeamClient({ initialStats }: TeamClientProps) {
                           </span>
                         ) : (
                           <span className="text-xs text-amber-600 flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
+                            <Clock className={ICON_SIZES.xs} />
                             {member.pendingStatus?.message}
                           </span>
                         )}
@@ -679,15 +680,15 @@ export function TeamClient({ initialStats }: TeamClientProps) {
                       disabled={resendingMemberId === member.id}
                     >
                       {resendingMemberId === member.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <Loader2 className={cn(ICON_SIZES.sm, "animate-spin")} />
                       ) : resendMemberSuccess === member.id ? (
                         <>
-                          <Check className="h-4 w-4 mr-1 text-green-600" />
+                          <Check className={cn(ICON_SIZES.sm, "mr-1 text-green-600")} />
                           Sent!
                         </>
                       ) : (
                         <>
-                          <RefreshCw className="h-4 w-4 mr-1" />
+                          <RefreshCw className={`${ICON_SIZES.sm} mr-1`} />
                           {member.pendingStatus?.isExpired ? 'Regenerate' : 'Resend'}
                         </>
                       )}
@@ -701,9 +702,9 @@ export function TeamClient({ initialStats }: TeamClientProps) {
                         title="Remove pending member"
                       >
                         {removingId === member.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <Loader2 className={cn(ICON_SIZES.sm, "animate-spin")} />
                         ) : (
-                          <Trash2 className="h-4 w-4 text-red-500" />
+                          <Trash2 className={cn(ICON_SIZES.sm, "text-red-500")} />
                         )}
                       </Button>
                     )}

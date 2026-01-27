@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Lock, AlertCircle, Check, XCircle, Clock, Eye, EyeOff } from 'lucide-react';
 import { getPasswordStrength } from '@/lib/security/password-validation';
+import { ICON_SIZES } from '@/lib/constants';
 import { useSubdomain } from '@/hooks/use-subdomain';
 import { useTenantBranding } from '@/hooks/use-tenant-branding';
 import { TenantBrandedPanel } from '@/components/auth/TenantBrandedPanel';
@@ -114,7 +115,7 @@ export default function SetPasswordPage() {
       return (
         <div className="text-center">
           <div className="mx-auto w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-4">
-            <Check className="h-6 w-6 text-blue-600" />
+            <Check className={`${ICON_SIZES.lg} text-blue-600`} />
           </div>
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
             Password already set
@@ -138,7 +139,7 @@ export default function SetPasswordPage() {
       return (
         <div className="text-center">
           <div className="mx-auto w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center mb-4">
-            <Clock className="h-6 w-6 text-amber-600" />
+            <Clock className={`${ICON_SIZES.lg} text-amber-600`} />
           </div>
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
             Link expired
@@ -159,7 +160,7 @@ export default function SetPasswordPage() {
     return (
       <div className="text-center">
         <div className="mx-auto w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-4">
-          <XCircle className="h-6 w-6 text-red-600" />
+          <XCircle className={`${ICON_SIZES.lg} text-red-600`} />
         </div>
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
           Invalid link
@@ -181,7 +182,7 @@ export default function SetPasswordPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+          <Loader2 className={`${ICON_SIZES.xl} animate-spin mx-auto mb-4 text-primary`} />
           <p className="text-muted-foreground">{isValidating ? 'Validating your link...' : 'Loading...'}</p>
         </div>
       </div>
@@ -230,7 +231,7 @@ export default function SetPasswordPage() {
               // Success State
               <div className="text-center">
                 <div className="mx-auto w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mb-4">
-                  <Check className="h-6 w-6 text-green-600" />
+                  <Check className={`${ICON_SIZES.lg} text-green-600`} />
                 </div>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                   Password created!
@@ -270,7 +271,7 @@ export default function SetPasswordPage() {
 
                 {error && (
                   <Alert variant="error" className="mb-4">
-                    <AlertCircle className="h-4 w-4" />
+                    <AlertCircle className={ICON_SIZES.sm} />
                     <AlertDescription>{error}</AlertDescription>
                   </Alert>
                 )}
@@ -279,7 +280,7 @@ export default function SetPasswordPage() {
                   <div className="space-y-2">
                     <Label htmlFor="password">Password</Label>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Lock className={`absolute left-3 top-3 ${ICON_SIZES.sm} text-muted-foreground`} />
                       <Input
                         id="password"
                         type={showPassword ? 'text' : 'password'}
@@ -297,7 +298,7 @@ export default function SetPasswordPage() {
                         className="absolute right-3 top-3 text-muted-foreground hover:text-foreground transition-colors"
                         tabIndex={-1}
                       >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        {showPassword ? <EyeOff className={ICON_SIZES.sm} /> : <Eye className={ICON_SIZES.sm} />}
                       </button>
                     </div>
                     {/* Password Strength Indicator */}
@@ -337,7 +338,7 @@ export default function SetPasswordPage() {
                   <div className="space-y-2">
                     <Label htmlFor="confirmPassword">Confirm Password</Label>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Lock className={`absolute left-3 top-3 ${ICON_SIZES.sm} text-muted-foreground`} />
                       <Input
                         id="confirmPassword"
                         type={showConfirmPassword ? 'text' : 'password'}
@@ -355,7 +356,7 @@ export default function SetPasswordPage() {
                         className="absolute right-3 top-3 text-muted-foreground hover:text-foreground transition-colors"
                         tabIndex={-1}
                       >
-                        {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        {showConfirmPassword ? <EyeOff className={ICON_SIZES.sm} /> : <Eye className={ICON_SIZES.sm} />}
                       </button>
                     </div>
                   </div>
@@ -368,7 +369,7 @@ export default function SetPasswordPage() {
                   >
                     {isLoading ? (
                       <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        <Loader2 className={`mr-2 ${ICON_SIZES.sm} animate-spin`} />
                         Creating password...
                       </>
                     ) : (

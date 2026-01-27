@@ -2,6 +2,7 @@
 
 import * as Icons from 'lucide-react';
 import { HelpCircle, Check, FileText } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import { cn } from '@/lib/core/utils';
 import type { HelpModule, UserRole } from '@/lib/help/help-types';
 import type { CategoryInfo, ModuleInfo } from '@/lib/help/help-categories';
@@ -53,7 +54,7 @@ export function ModuleHelpContent({
       <header className="pb-6 border-b">
         <div className="flex items-start gap-4">
           <div className={cn('p-3 rounded-xl', category.bgColor)}>
-            <DynamicIcon name={module.icon} className={cn('h-8 w-8', category.color)} />
+            <DynamicIcon name={module.icon} className={cn(ICON_SIZES.xl, category.color)} />
           </div>
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
@@ -85,7 +86,7 @@ export function ModuleHelpContent({
               <ul className="space-y-2">
                 {content.overview.benefits.map((benefit, index) => (
                   <li key={index} className="flex items-start gap-2 text-sm text-gray-600">
-                    <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <Check className={`${ICON_SIZES.sm} text-green-500 mt-0.5 flex-shrink-0`} />
                     {benefit}
                   </li>
                 ))}
@@ -172,7 +173,7 @@ export function ModuleHelpContent({
                 href={`/help/${content.categoryId}/${relatedId}`}
                 className="flex items-center gap-2 p-3 rounded-lg border hover:border-blue-200 hover:bg-blue-50 transition-colors"
               >
-                <FileText className="h-4 w-4 text-gray-400" />
+                <FileText className={`${ICON_SIZES.sm} text-gray-400`} />
                 <span className="text-sm text-gray-700 capitalize">
                   {relatedId.replace(/-/g, ' ')}
                 </span>

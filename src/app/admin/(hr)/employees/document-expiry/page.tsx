@@ -7,6 +7,7 @@ import { Users, ClipboardList } from 'lucide-react';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 import { DocumentExpiryClient } from './client';
+import { ICON_SIZES } from '@/lib/constants';
 
 export default async function DocumentExpiryPage() {
   const session = await getServerSession(authOptions);
@@ -75,11 +76,11 @@ export default async function DocumentExpiryPage() {
         actions={
           <>
             <PageHeaderButton href="/admin/employees" variant="secondary">
-              <Users className="h-4 w-4" />
+              <Users className={ICON_SIZES.sm} />
               All Employees
             </PageHeaderButton>
             <PageHeaderButton href="/admin/employees/change-requests" variant="secondary">
-              <ClipboardList className="h-4 w-4" />
+              <ClipboardList className={ICON_SIZES.sm} />
               Change Requests
               {pendingChangeRequests > 0 && (
                 <span className="bg-rose-500 text-white text-xs px-1.5 py-0.5 rounded-full">

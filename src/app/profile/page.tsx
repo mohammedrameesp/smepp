@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { User, Mail, Shield, Calendar, FileText, Loader2, AlertTriangle, Building2 } from 'lucide-react';
 import { formatDate } from '@/lib/core/datetime';
+import { ICON_SIZES } from '@/lib/constants';
 import { HRProfileForm } from '@/components/domains/hr/profile';
 import { EmployeeProfileViewOnly } from '@/features/employees/components';
 import { ExpiryAlertsWidget } from '@/components/dashboard';
@@ -395,11 +396,11 @@ export default function ProfilePage() {
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsList className="grid w-full grid-cols-2 lg:w-[400px]">
               <TabsTrigger value="basic" className="flex items-center gap-2">
-                <User className="h-4 w-4" />
+                <User className={ICON_SIZES.sm} />
                 Basic Info
               </TabsTrigger>
               <TabsTrigger value="hr" className="flex items-center gap-2">
-                <FileText className="h-4 w-4" />
+                <FileText className={ICON_SIZES.sm} />
                 HR Details
               </TabsTrigger>
             </TabsList>
@@ -434,7 +435,7 @@ export default function ProfilePage() {
                             onError={() => setProfileImageError(true)}
                           />
                         ) : (
-                          <User className="h-10 w-10 text-gray-400" />
+                          <User className={`${ICON_SIZES['2xl']} text-gray-400`} />
                         )}
                       </div>
                       {isEditing && profile.isEmployee ? (
@@ -468,7 +469,7 @@ export default function ProfilePage() {
                   {/* Name */}
                   <div className="space-y-2">
                     <div className="flex items-center text-sm text-gray-500 mb-1">
-                      <User className="h-4 w-4 mr-2" />
+                      <User className={`${ICON_SIZES.sm} mr-2`} />
                       <span className="font-medium">Full Name</span>
                     </div>
                     {isEditing ? (
@@ -490,7 +491,7 @@ export default function ProfilePage() {
                   {/* Email */}
                   <div className="space-y-2">
                     <div className="flex items-center text-sm text-gray-500 mb-1">
-                      <Mail className="h-4 w-4 mr-2" />
+                      <Mail className={`${ICON_SIZES.sm} mr-2`} />
                       <span className="font-medium">Email Address</span>
                     </div>
                     <p className="text-lg font-medium text-gray-900">{profile.email}</p>
@@ -500,7 +501,7 @@ export default function ProfilePage() {
                   {/* Role */}
                   <div className="space-y-2">
                     <div className="flex items-center text-sm text-gray-500 mb-1">
-                      <Shield className="h-4 w-4 mr-2" />
+                      <Shield className={`${ICON_SIZES.sm} mr-2`} />
                       <span className="font-medium">Role</span>
                     </div>
                     <Badge variant={getRoleBadgeVariant(profile.role)}>
@@ -511,7 +512,7 @@ export default function ProfilePage() {
                   {/* Joined */}
                   <div className="space-y-2">
                     <div className="flex items-center text-sm text-gray-500 mb-1">
-                      <Calendar className="h-4 w-4 mr-2" />
+                      <Calendar className={`${ICON_SIZES.sm} mr-2`} />
                       <span className="font-medium">Joined</span>
                     </div>
                     <p className="text-lg font-medium text-gray-900">
@@ -577,9 +578,9 @@ export default function ProfilePage() {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       {profile.isEmployee ? (
-                        <User className="h-5 w-5 text-green-600" />
+                        <User className={`${ICON_SIZES.md} text-green-600`} />
                       ) : (
-                        <Building2 className="h-5 w-5 text-gray-600" />
+                        <Building2 className={`${ICON_SIZES.md} text-gray-600`} />
                       )}
                       Account Type
                     </CardTitle>
@@ -618,7 +619,7 @@ export default function ProfilePage() {
                         >
                           {isSwitchingAccountType ? (
                             <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              <Loader2 className={`mr-2 ${ICON_SIZES.sm} animate-spin`} />
                               Switching...
                             </>
                           ) : profile.isEmployee ? (
@@ -665,7 +666,7 @@ export default function ProfilePage() {
                 <Card>
                   <CardContent className="py-12">
                     <div className="flex flex-col items-center justify-center">
-                      <Loader2 className="h-8 w-8 animate-spin text-gray-400 mb-4" />
+                      <Loader2 className={`${ICON_SIZES.xl} animate-spin text-gray-400 mb-4`} />
                       <p className="text-gray-600">Loading HR profile...</p>
                     </div>
                   </CardContent>
@@ -675,7 +676,7 @@ export default function ProfilePage() {
                 <Card>
                   <CardContent className="py-12">
                     <div className="text-center">
-                      <Shield className="h-12 w-12 mx-auto mb-4 text-blue-400" />
+                      <Shield className={`${ICON_SIZES['3xl']} mx-auto mb-4 text-blue-400`} />
                       <h3 className="text-lg font-medium text-gray-900 mb-2">
                         Service Account
                       </h3>
@@ -714,7 +715,7 @@ export default function ProfilePage() {
                 <Card>
                   <CardContent className="py-12">
                     <div className="text-center">
-                      <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-orange-400" />
+                      <AlertTriangle className={`${ICON_SIZES['3xl']} mx-auto mb-4 text-orange-400`} />
                       <h3 className="text-lg font-medium text-gray-900 mb-2">
                         Complete Your Onboarding
                       </h3>

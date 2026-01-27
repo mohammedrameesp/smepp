@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Loader2, Building2 } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface Supplier {
   id: string;
@@ -170,7 +171,7 @@ export function SupplierListTableServerSearch() {
         <div>
           Showing {suppliers.length > 0 ? ((pagination.page - 1) * pagination.pageSize) + 1 : 0} - {Math.min(pagination.page * pagination.pageSize, pagination.total)} of {pagination.total} suppliers
         </div>
-        {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+        {loading && <Loader2 className={`${ICON_SIZES.sm} animate-spin`} />}
       </div>
 
       {/* Table */}
@@ -211,14 +212,14 @@ export function SupplierListTableServerSearch() {
             {loading && suppliers.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400" />
+                  <Loader2 className={`${ICON_SIZES.xl} animate-spin mx-auto text-gray-400`} />
                   <p className="text-gray-500 mt-2">Loading suppliers...</p>
                 </TableCell>
               </TableRow>
             ) : suppliers.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8">
-                  <Building2 className="h-10 w-10 mx-auto text-gray-300 mb-2" />
+                  <Building2 className={`${ICON_SIZES['2xl']} mx-auto text-gray-300 mb-2`} />
                   <p className="text-gray-500">
                     {debouncedSearch || categoryFilter !== 'all' || statusFilter !== 'all'
                       ? 'No suppliers match your filters'

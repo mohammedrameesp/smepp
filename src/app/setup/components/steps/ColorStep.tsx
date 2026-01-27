@@ -10,6 +10,7 @@ import { useState, useMemo } from 'react';
 import { Palette, Check, X, AlertCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 
 // Validate hex color format
 function validateHexColor(color: string): { isValid: boolean; error?: string } {

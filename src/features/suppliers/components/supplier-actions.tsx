@@ -28,6 +28,8 @@ import {
   Pencil,
 } from 'lucide-react';
 import Link from 'next/link';
+import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface SupplierActionsProps {
   supplierId: string;
@@ -191,27 +193,27 @@ export function SupplierActions({
               onClick={() => setApproveDialog({ open: true, isSubmitting: false })}
               className="bg-green-600 hover:bg-green-700"
             >
-              <CheckCircle2 className="h-4 w-4 mr-2" />
+              <CheckCircle2 className={cn(ICON_SIZES.sm, 'mr-2')} />
               Approve
             </Button>
             <Button
               onClick={() => setRejectDialog({ open: true, rejectionReason: '', isSubmitting: false })}
               variant="destructive"
             >
-              <XCircle className="h-4 w-4 mr-2" />
+              <XCircle className={cn(ICON_SIZES.sm, 'mr-2')} />
               Reject
             </Button>
           </>
         )}
         {status === 'APPROVED' && (
           <Button onClick={() => setEngagementDialog({ ...engagementDialog, open: true })}>
-            <MessageSquare className="h-4 w-4 mr-2" />
+            <MessageSquare className={cn(ICON_SIZES.sm, 'mr-2')} />
             Add Engagement
           </Button>
         )}
         <Link href={`/admin/suppliers/${supplierId}/edit`}>
           <Button variant="outline">
-            <Pencil className="h-4 w-4 mr-2" />
+            <Pencil className={cn(ICON_SIZES.sm, 'mr-2')} />
             Edit
           </Button>
         </Link>
@@ -220,7 +222,7 @@ export function SupplierActions({
           variant="outline"
           className="text-red-600 hover:text-red-700 hover:bg-red-50"
         >
-          <Trash2 className="h-4 w-4 mr-2" />
+          <Trash2 className={cn(ICON_SIZES.sm, 'mr-2')} />
           Delete
         </Button>
       </div>
@@ -257,7 +259,7 @@ export function SupplierActions({
               className="bg-green-600 hover:bg-green-700"
               disabled={approveDialog.isSubmitting}
             >
-              <CheckCircle2 className="h-4 w-4 mr-2" />
+              <CheckCircle2 className={cn(ICON_SIZES.sm, 'mr-2')} />
               {approveDialog.isSubmitting ? 'Approving...' : 'Approve Supplier'}
             </Button>
           </DialogFooter>
@@ -342,7 +344,7 @@ export function SupplierActions({
               onClick={handleDeleteConfirm}
               disabled={deleteDialog.isSubmitting}
             >
-              <Trash2 className="h-4 w-4 mr-2" />
+              <Trash2 className={cn(ICON_SIZES.sm, 'mr-2')} />
               {deleteDialog.isSubmitting ? 'Deleting...' : 'Delete Supplier'}
             </Button>
           </DialogFooter>
@@ -384,11 +386,12 @@ export function SupplierActions({
                     className="focus:outline-none transition-colors"
                   >
                     <Star
-                      className={`h-6 w-6 ${
+                      className={cn(
+                        ICON_SIZES.lg,
                         engagementDialog.rating && star <= engagementDialog.rating
                           ? 'fill-yellow-400 text-yellow-400'
                           : 'text-gray-300'
-                      }`}
+                      )}
                     />
                   </button>
                 ))}

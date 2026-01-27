@@ -26,6 +26,8 @@ import { formatDate } from '@/lib/core/datetime';
 import { formatBillingCycle, getNextRenewalDate, getDaysUntilRenewal } from '@/features/subscriptions';
 import { formatCurrency } from '@/lib/core/currency';
 import { Package } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
+import { cn } from '@/lib/core/utils';
 
 const PAGE_SIZE = 50;
 
@@ -259,7 +261,7 @@ export function SubscriptionListTable({ subscriptions }: SubscriptionListTablePr
             {paginatedData.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8">
-                  <Package className="h-10 w-10 mx-auto text-gray-300 mb-2" />
+                  <Package className={cn(ICON_SIZES['2xl'], 'mx-auto text-gray-300 mb-2')} />
                   <p className="text-gray-500">
                     {hasActiveFilters
                       ? 'No subscriptions match your filters'

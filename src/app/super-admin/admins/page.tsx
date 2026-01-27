@@ -16,6 +16,7 @@ import {
   AlertCircle,
   AlertTriangle
 } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
@@ -148,7 +149,7 @@ export default function SuperAdminsPage() {
           <p className="text-slate-500 text-sm">Manage platform administrators with elevated privileges</p>
         </div>
         <Button onClick={() => setShowInvite(true)} className="bg-slate-900 hover:bg-slate-800 w-full sm:w-auto">
-          <UserPlus className="h-4 w-4 mr-2" />
+          <UserPlus className={`${ICON_SIZES.sm} mr-2`} />
           Invite Admin
         </Button>
       </div>
@@ -156,10 +157,10 @@ export default function SuperAdminsPage() {
       {/* Error Alert */}
       {error && (
         <div className="bg-rose-50 border border-rose-200 rounded-lg p-4 flex items-center gap-3">
-          <AlertCircle className="h-5 w-5 text-rose-600" />
+          <AlertCircle className={`${ICON_SIZES.md} text-rose-600`} />
           <p className="text-rose-800 text-sm">{error}</p>
           <button onClick={() => setError(null)} className="ml-auto p-1 hover:bg-rose-100 rounded">
-            <X className="h-4 w-4 text-rose-600" />
+            <X className={`${ICON_SIZES.sm} text-rose-600`} />
           </button>
         </div>
       )}
@@ -169,7 +170,7 @@ export default function SuperAdminsPage() {
         <div className="bg-white rounded-xl border border-slate-200 p-5">
           <div className="flex items-center justify-between mb-3">
             <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center">
-              <Shield className="h-5 w-5 text-slate-600" />
+              <Shield className={`${ICON_SIZES.md} text-slate-600`} />
             </div>
           </div>
           <p className="text-slate-500 text-sm">Total Super Admins</p>
@@ -179,7 +180,7 @@ export default function SuperAdminsPage() {
         <div className="bg-white rounded-xl border border-slate-200 p-5">
           <div className="flex items-center justify-between mb-3">
             <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center">
-              <ShieldCheck className="h-5 w-5 text-slate-600" />
+              <ShieldCheck className={`${ICON_SIZES.md} text-slate-600`} />
             </div>
           </div>
           <p className="text-slate-500 text-sm">2FA Enabled</p>
@@ -189,7 +190,7 @@ export default function SuperAdminsPage() {
         <div className="bg-white rounded-xl border border-slate-200 p-5">
           <div className="flex items-center justify-between mb-3">
             <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center">
-              <Mail className="h-5 w-5 text-slate-600" />
+              <Mail className={`${ICON_SIZES.md} text-slate-600`} />
             </div>
           </div>
           <p className="text-slate-500 text-sm">Email Verified</p>
@@ -200,7 +201,7 @@ export default function SuperAdminsPage() {
       {/* Search */}
       <div className="bg-white rounded-xl border border-slate-200 p-4">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Search className={`absolute left-3 top-1/2 -translate-y-1/2 ${ICON_SIZES.sm} text-slate-400`} />
           <input
             type="text"
             placeholder="Search admins by name or email..."
@@ -215,12 +216,12 @@ export default function SuperAdminsPage() {
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
         {loading ? (
           <div className="p-12 text-center">
-            <Loader2 className="h-8 w-8 text-slate-400 mx-auto animate-spin" />
+            <Loader2 className={`${ICON_SIZES.xl} text-slate-400 mx-auto animate-spin`} />
             <p className="text-slate-500 mt-4">Loading super admins...</p>
           </div>
         ) : filteredAdmins.length === 0 ? (
           <div className="p-12 text-center">
-            <Shield className="h-12 w-12 text-slate-300 mx-auto mb-4" />
+            <Shield className={`${ICON_SIZES['3xl']} text-slate-300 mx-auto mb-4`} />
             <h3 className="text-lg font-semibold text-slate-900 mb-2">
               {searchQuery ? 'No admins found' : 'No super admins yet'}
             </h3>
@@ -258,12 +259,12 @@ export default function SuperAdminsPage() {
                       <td className="px-4 lg:px-5 py-4">
                         {admin.twoFactorEnabled ? (
                           <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">
-                            <ShieldCheck className="h-3.5 w-3.5" />
+                            <ShieldCheck className={ICON_SIZES.sm} />
                             <span className="hidden sm:inline">Enabled</span>
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full">
-                            <ShieldAlert className="h-3.5 w-3.5" />
+                            <ShieldAlert className={ICON_SIZES.sm} />
                             <span className="hidden sm:inline">Not Enabled</span>
                           </span>
                         )}
@@ -271,19 +272,19 @@ export default function SuperAdminsPage() {
                       <td className="px-4 lg:px-5 py-4 hidden sm:table-cell">
                         {admin.emailVerified ? (
                           <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700">
-                            <CheckCircle className="h-3.5 w-3.5" />
+                            <CheckCircle className={ICON_SIZES.sm} />
                             Verified
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500">
-                            <AlertCircle className="h-3.5 w-3.5" />
+                            <AlertCircle className={ICON_SIZES.sm} />
                             Pending
                           </span>
                         )}
                       </td>
                       <td className="px-4 lg:px-5 py-4 text-slate-400 text-xs hidden md:table-cell">
                         <div className="flex items-center gap-1.5">
-                          <Calendar className="h-3.5 w-3.5" />
+                          <Calendar className={ICON_SIZES.sm} />
                           {formatDistanceToNow(new Date(admin.createdAt), { addSuffix: true })}
                         </div>
                       </td>
@@ -294,7 +295,7 @@ export default function SuperAdminsPage() {
                             className="p-1.5 hover:bg-rose-100 rounded-lg transition-colors text-rose-600"
                             title="Remove super admin privileges"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className={ICON_SIZES.sm} />
                           </button>
                         </div>
                       </td>
@@ -322,7 +323,7 @@ export default function SuperAdminsPage() {
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-slate-900">Invite Super Admin</h2>
               <button onClick={() => setShowInvite(false)} className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
-                <X className="h-5 w-5 text-slate-400" />
+                <X className={`${ICON_SIZES.md} text-slate-400`} />
               </button>
             </div>
             <form onSubmit={handleInvite}>
@@ -359,12 +360,12 @@ export default function SuperAdminsPage() {
                 <Button type="submit" disabled={inviting} className="bg-slate-900 hover:bg-slate-800">
                   {inviting ? (
                     <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      <Loader2 className={`${ICON_SIZES.sm} mr-2 animate-spin`} />
                       Inviting...
                     </>
                   ) : (
                     <>
-                      <UserPlus className="h-4 w-4 mr-2" />
+                      <UserPlus className={`${ICON_SIZES.sm} mr-2`} />
                       Invite Admin
                     </>
                   )}
@@ -383,13 +384,13 @@ export default function SuperAdminsPage() {
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-slate-900">Remove Super Admin</h2>
               <button onClick={closeRemoveDialog} className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
-                <X className="h-5 w-5 text-slate-400" />
+                <X className={`${ICON_SIZES.md} text-slate-400`} />
               </button>
             </div>
             <div className="p-6">
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 bg-rose-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <AlertTriangle className="h-6 w-6 text-rose-600" />
+                  <AlertTriangle className={`${ICON_SIZES.lg} text-rose-600`} />
                 </div>
                 <div>
                   <p className="text-slate-900 font-medium mb-2">
@@ -417,12 +418,12 @@ export default function SuperAdminsPage() {
               >
                 {removing ? (
                   <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    <Loader2 className={`${ICON_SIZES.sm} mr-2 animate-spin`} />
                     Removing...
                   </>
                 ) : (
                   <>
-                    <Trash2 className="h-4 w-4 mr-2" />
+                    <Trash2 className={`${ICON_SIZES.sm} mr-2`} />
                     Remove Admin
                   </>
                 )}

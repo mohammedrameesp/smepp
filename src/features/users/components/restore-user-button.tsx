@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Undo2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -57,7 +59,7 @@ export function RestoreUserButton({ userId, userName }: RestoreUserButtonProps) 
     <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
       <AlertDialogTrigger asChild>
         <Button variant="default" className="bg-green-600 hover:bg-green-700">
-          <Undo2 className="h-4 w-4 mr-2" />
+          <Undo2 className={cn(ICON_SIZES.sm, 'mr-2')} />
           Restore Employee
         </Button>
       </AlertDialogTrigger>
@@ -88,12 +90,12 @@ export function RestoreUserButton({ userId, userName }: RestoreUserButtonProps) 
           >
             {isRestoring ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className={cn(ICON_SIZES.sm, 'mr-2 animate-spin')} />
                 Restoring...
               </>
             ) : (
               <>
-                <Undo2 className="mr-2 h-4 w-4" />
+                <Undo2 className={cn(ICON_SIZES.sm, 'mr-2')} />
                 Restore Employee
               </>
             )}

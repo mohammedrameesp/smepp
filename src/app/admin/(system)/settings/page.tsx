@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { DataExportImport } from '@/features/settings/components';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Package, ChevronRight, ShieldCheck } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 
 export default async function SettingsPage() {
   const session = await getServerSession(authOptions);
@@ -33,14 +34,14 @@ export default async function SettingsPage() {
           >
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-slate-100">
-                <Package className="h-5 w-5 text-slate-600" />
+                <Package className={`${ICON_SIZES.md} text-slate-600`} />
               </div>
               <div>
                 <p className="font-medium text-slate-900">Manage Modules</p>
                 <p className="text-sm text-slate-500">Install or remove features for your organization</p>
               </div>
             </div>
-            <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-slate-600 transition-colors" />
+            <ChevronRight className={`${ICON_SIZES.md} text-slate-400 group-hover:text-slate-600 transition-colors`} />
           </Link>
 
           <Link
@@ -49,14 +50,14 @@ export default async function SettingsPage() {
           >
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-red-100">
-                <ShieldCheck className="h-5 w-5 text-red-600" />
+                <ShieldCheck className={`${ICON_SIZES.md} text-red-600`} />
               </div>
               <div>
                 <p className="font-medium text-slate-900">Access Control</p>
                 <p className="text-sm text-slate-500">Manage team permissions and module access</p>
               </div>
             </div>
-            <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-slate-600 transition-colors" />
+            <ChevronRight className={`${ICON_SIZES.md} text-slate-400 group-hover:text-slate-600 transition-colors`} />
           </Link>
         </div>
 

@@ -34,6 +34,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DatePicker } from '@/components/ui/date-picker';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Package, ShoppingCart, MapPin, Info, RefreshCw } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import { toInputDateString } from '@/lib/core/datetime';
 import { createAssetSchema, type CreateAssetRequest } from '@/features/assets';
 import { AssetStatus } from '@prisma/client';
@@ -388,7 +389,7 @@ export default function NewAssetPage() {
               {/* Section 1: Asset Details */}
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
-                  <Package className="h-5 w-5 text-blue-600" />
+                  <Package className={`${ICON_SIZES.md} text-blue-600`} />
                   <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Asset Details</h3>
                 </div>
                 <p className="text-xs text-muted-foreground">What is this asset?</p>
@@ -475,7 +476,7 @@ export default function NewAssetPage() {
                           }}
                           title="Reset to auto-generated tag"
                         >
-                          <RefreshCw className="h-4 w-4" />
+                          <RefreshCw className={ICON_SIZES.sm} />
                         </Button>
                       )}
                     </div>
@@ -531,7 +532,7 @@ export default function NewAssetPage() {
               {/* Section 2: Acquisition Details */}
               <div className="space-y-4 pt-4 border-t">
                 <div className="flex items-center gap-2">
-                  <ShoppingCart className="h-5 w-5 text-green-600" />
+                  <ShoppingCart className={`${ICON_SIZES.md} text-green-600`} />
                   <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Acquisition Details</h3>
                 </div>
                 <p className="text-xs text-muted-foreground">Where did this asset come from?</p>
@@ -626,7 +627,7 @@ export default function NewAssetPage() {
               {/* Section 3: Status & Assignment */}
               <div className="space-y-4 pt-4 border-t">
                 <div className="flex items-center gap-2">
-                  <MapPin className="h-5 w-5 text-orange-600" />
+                  <MapPin className={`${ICON_SIZES.md} text-orange-600`} />
                   <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Status & Assignment</h3>
                 </div>
                 <p className="text-xs text-muted-foreground">Current state and who is using it</p>
@@ -740,7 +741,7 @@ export default function NewAssetPage() {
               {/* Section 4: Additional Information */}
               <div className="space-y-4 pt-4 border-t">
                 <div className="flex items-center gap-2">
-                  <Info className="h-5 w-5 text-gray-600" />
+                  <Info className={`${ICON_SIZES.md} text-gray-600`} />
                   <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Additional Information</h3>
                 </div>
 

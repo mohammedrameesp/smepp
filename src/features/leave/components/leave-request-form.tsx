@@ -20,6 +20,7 @@ import { LeaveRequestType } from '@prisma/client';
 import { getQatarStartOfDay } from '@/lib/core/datetime';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ICON_SIZES } from '@/lib/constants';
 
 // Define form data type that matches form structure
 interface FormData {
@@ -231,7 +232,7 @@ export function LeaveRequestForm({ leaveTypes, balances, onSuccess, isAdmin = fa
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
       {error && (
         <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm flex items-start gap-2">
-          <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+          <AlertCircle className={`${ICON_SIZES.sm} mt-0.5 flex-shrink-0`} />
           <span>{error}</span>
         </div>
       )}
@@ -430,9 +431,9 @@ export function LeaveRequestForm({ leaveTypes, balances, onSuccess, isAdmin = fa
         <div className={`p-3 rounded-md text-center ${exceedsBalance || exceedsMaxConsecutiveDays ? 'bg-red-50' : 'bg-blue-50'}`}>
           <div className="flex items-center justify-center gap-2">
             {exceedsBalance || exceedsMaxConsecutiveDays ? (
-              <AlertCircle className="h-4 w-4 text-red-600" />
+              <AlertCircle className={`${ICON_SIZES.sm} text-red-600`} />
             ) : (
-              <CheckCircle2 className="h-4 w-4 text-blue-600" />
+              <CheckCircle2 className={`${ICON_SIZES.sm} text-blue-600`} />
             )}
             <span className={`font-semibold ${exceedsBalance || exceedsMaxConsecutiveDays ? 'text-red-800' : 'text-blue-800'}`}>
               Duration: {formatLeaveDays(calculatedDays)}

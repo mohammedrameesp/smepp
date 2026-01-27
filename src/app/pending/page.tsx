@@ -26,6 +26,7 @@ import { useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Clock, Mail, LogOut, Loader2, RefreshCw } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import Link from 'next/link';
 
 export default function PendingPage() {
@@ -76,7 +77,7 @@ export default function PendingPage() {
   if (status === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <Loader2 className={`${ICON_SIZES.xl} animate-spin text-muted-foreground`} />
       </div>
     );
   }
@@ -96,7 +97,7 @@ export default function PendingPage() {
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
               <div className="h-16 w-16 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-                <Clock className="h-8 w-8 text-amber-600 dark:text-amber-400" />
+                <Clock className={`${ICON_SIZES.xl} text-amber-600 dark:text-amber-400`} />
               </div>
             </div>
             <CardTitle className="text-2xl">Waiting for Invitation</CardTitle>
@@ -108,7 +109,7 @@ export default function PendingPage() {
           <CardContent className="space-y-6">
             <div className="bg-muted/50 rounded-lg p-4 space-y-2">
               <div className="flex items-center gap-2 text-sm">
-                <Mail className="h-4 w-4 text-muted-foreground" />
+                <Mail className={`${ICON_SIZES.sm} text-muted-foreground`} />
                 <span className="text-muted-foreground">Signed in as:</span>
               </div>
               <p className="font-medium">{session?.user?.email}</p>
@@ -132,12 +133,12 @@ export default function PendingPage() {
               >
                 {checking ? (
                   <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    <Loader2 className={`${ICON_SIZES.sm} mr-2 animate-spin`} />
                     Checking...
                   </>
                 ) : (
                   <>
-                    <RefreshCw className="h-4 w-4 mr-2" />
+                    <RefreshCw className={`${ICON_SIZES.sm} mr-2`} />
                     Check Again
                   </>
                 )}
@@ -147,7 +148,7 @@ export default function PendingPage() {
                 onClick={() => signOut({ callbackUrl: '/login?signedOut=true' })}
                 className="w-full text-muted-foreground"
               >
-                <LogOut className="h-4 w-4 mr-2" />
+                <LogOut className={`${ICON_SIZES.sm} mr-2`} />
                 Sign Out
               </Button>
             </div>

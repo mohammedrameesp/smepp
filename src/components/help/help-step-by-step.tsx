@@ -2,6 +2,7 @@
 
 import { Check, Lightbulb, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 import type { WorkflowStep } from '@/lib/help/help-types';
 
 interface HelpStepByStepProps {
@@ -37,7 +38,7 @@ function StepItem({ step, isLast }: StepItemProps) {
         {/* Tip callout */}
         {step.tip && (
           <div className="mt-3 flex items-start gap-2 p-3 rounded-lg bg-amber-50 border border-amber-100">
-            <Lightbulb className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
+            <Lightbulb className={`${ICON_SIZES.sm} text-amber-500 mt-0.5 flex-shrink-0`} />
             <p className="text-sm text-amber-800">{step.tip}</p>
           </div>
         )}
@@ -114,7 +115,7 @@ export function HelpChecklist({ items, className }: HelpChecklistProps) {
     <ul className={cn('space-y-2', className)}>
       {items.map((item, index) => (
         <li key={index} className="flex items-start gap-2">
-          <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+          <Check className={`${ICON_SIZES.sm} text-green-500 mt-0.5 flex-shrink-0`} />
           <span className="text-sm text-gray-600">{item}</span>
         </li>
       ))}
@@ -159,7 +160,7 @@ export function HelpNote({ type = 'info', children, className }: HelpNoteProps) 
 
   return (
     <div className={cn('flex items-start gap-3 p-4 rounded-lg border', styles.bg, styles.border, className)}>
-      <IconComponent className={cn('h-5 w-5 mt-0.5 flex-shrink-0', styles.iconColor)} />
+      <IconComponent className={cn(`${ICON_SIZES.md} mt-0.5 flex-shrink-0`, styles.iconColor)} />
       <div className={cn('text-sm', styles.textColor)}>{children}</div>
     </div>
   );

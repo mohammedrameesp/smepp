@@ -19,6 +19,7 @@ import {
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 import { format } from 'date-fns';
 import { getDocumentExpiryInfo } from '@/features/company-documents';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -57,7 +58,7 @@ function ExpiryStatusBadge({ status, daysRemaining }: { status: string; daysRema
   if (status === 'expired') {
     return (
       <Badge className="bg-rose-50 text-rose-700 border-rose-200 border gap-1.5">
-        <AlertTriangle className="h-3.5 w-3.5 text-rose-500" />
+        <AlertTriangle className={`${ICON_SIZES.xs} text-rose-500`} />
         Expired {Math.abs(daysRemaining)} days ago
       </Badge>
     );
@@ -65,14 +66,14 @@ function ExpiryStatusBadge({ status, daysRemaining }: { status: string; daysRema
   if (status === 'expiring') {
     return (
       <Badge className="bg-amber-50 text-amber-700 border-amber-200 border gap-1.5">
-        <Clock className="h-3.5 w-3.5 text-amber-500" />
+        <Clock className={`${ICON_SIZES.xs} text-amber-500`} />
         {daysRemaining} days remaining
       </Badge>
     );
   }
   return (
     <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 border gap-1.5">
-      <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
+      <CheckCircle className={`${ICON_SIZES.xs} text-emerald-500`} />
       Valid ({daysRemaining} days)
     </Badge>
   );
@@ -107,7 +108,7 @@ export default async function CompanyDocumentDetailPage({ params }: Props) {
         }}
         actions={
           <PageHeaderButton href={`/admin/company-documents/${document.id}/edit`} variant="primary">
-            <Edit className="h-4 w-4" />
+            <Edit className={ICON_SIZES.sm} />
             Edit Document
           </PageHeaderButton>
         }
@@ -127,7 +128,7 @@ export default async function CompanyDocumentDetailPage({ params }: Props) {
           <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
               <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
-                <FileText className="h-5 w-5 text-blue-600" />
+                <FileText className={`${ICON_SIZES.md} text-blue-600`} />
               </div>
               <div>
                 <h2 className="font-semibold text-slate-900">Document Details</h2>
@@ -148,7 +149,7 @@ export default async function CompanyDocumentDetailPage({ params }: Props) {
                 )}
                 <div className="bg-slate-50 rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-1">
-                    <Calendar className="h-4 w-4 text-slate-400" />
+                    <Calendar className={`${ICON_SIZES.sm} text-slate-400`} />
                     <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Expiry Date</p>
                   </div>
                   <p className="text-sm font-semibold text-slate-900">
@@ -170,7 +171,7 @@ export default async function CompanyDocumentDetailPage({ params }: Props) {
           <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
               <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center">
-                <FileText className="h-5 w-5 text-purple-600" />
+                <FileText className={`${ICON_SIZES.md} text-purple-600`} />
               </div>
               <div>
                 <h2 className="font-semibold text-slate-900">Additional Information</h2>
@@ -181,7 +182,7 @@ export default async function CompanyDocumentDetailPage({ params }: Props) {
               {document.asset && (
                 <div className="bg-slate-50 rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <Car className="h-4 w-4 text-slate-400" />
+                    <Car className={`${ICON_SIZES.sm} text-slate-400`} />
                     <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Linked Vehicle</p>
                   </div>
                   <Link
@@ -189,7 +190,7 @@ export default async function CompanyDocumentDetailPage({ params }: Props) {
                     className="text-sm font-semibold text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1"
                   >
                     {document.asset.assetTag || `${document.asset.brand} ${document.asset.model}`}
-                    <ExternalLink className="h-3 w-3" />
+                    <ExternalLink className={ICON_SIZES.xs} />
                   </Link>
                 </div>
               )}
@@ -197,7 +198,7 @@ export default async function CompanyDocumentDetailPage({ params }: Props) {
               {document.renewalCost && (
                 <div className="bg-slate-50 rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-1">
-                    <DollarSign className="h-4 w-4 text-slate-400" />
+                    <DollarSign className={`${ICON_SIZES.sm} text-slate-400`} />
                     <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Renewal Cost</p>
                   </div>
                   <p className="text-lg font-bold text-slate-900">
@@ -209,7 +210,7 @@ export default async function CompanyDocumentDetailPage({ params }: Props) {
               {document.documentUrl && (
                 <div className="bg-slate-50 rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <LinkIcon className="h-4 w-4 text-slate-400" />
+                    <LinkIcon className={`${ICON_SIZES.sm} text-slate-400`} />
                     <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Document File</p>
                   </div>
                   <a
@@ -219,7 +220,7 @@ export default async function CompanyDocumentDetailPage({ params }: Props) {
                     className="text-sm font-semibold text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1"
                   >
                     View Document
-                    <ExternalLink className="h-3 w-3" />
+                    <ExternalLink className={ICON_SIZES.xs} />
                   </a>
                 </div>
               )}
@@ -233,7 +234,7 @@ export default async function CompanyDocumentDetailPage({ params }: Props) {
 
               {!document.asset && !document.renewalCost && !document.documentUrl && !document.notes && (
                 <div className="text-center py-8 text-slate-400">
-                  <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                  <FileText className={`${ICON_SIZES['3xl']} mx-auto mb-2 opacity-50`} />
                   <p className="text-sm">No additional information provided</p>
                 </div>
               )}
@@ -254,11 +255,11 @@ export default async function CompanyDocumentDetailPage({ params }: Props) {
                   : 'bg-emerald-50'
               }`}>
                 {document.expiryInfo.status === 'expired' ? (
-                  <AlertTriangle className="h-5 w-5 text-rose-600" />
+                  <AlertTriangle className={`${ICON_SIZES.md} text-rose-600`} />
                 ) : document.expiryInfo.status === 'expiring' ? (
-                  <Clock className="h-5 w-5 text-amber-600" />
+                  <Clock className={`${ICON_SIZES.md} text-amber-600`} />
                 ) : (
-                  <CheckCircle className="h-5 w-5 text-emerald-600" />
+                  <CheckCircle className={`${ICON_SIZES.md} text-emerald-600`} />
                 )}
               </div>
               <h2 className="font-semibold text-slate-900">Expiry Status</h2>
@@ -300,7 +301,7 @@ export default async function CompanyDocumentDetailPage({ params }: Props) {
           <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
               <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center">
-                <User className="h-5 w-5 text-slate-600" />
+                <User className={`${ICON_SIZES.md} text-slate-600`} />
               </div>
               <h2 className="font-semibold text-slate-900">Record Information</h2>
             </div>
@@ -329,14 +330,14 @@ export default async function CompanyDocumentDetailPage({ params }: Props) {
             <div className="space-y-2">
               <Button asChild variant="outline" className="w-full justify-start">
                 <Link href={`/admin/company-documents/${document.id}/edit`}>
-                  <Edit className="mr-2 h-4 w-4" />
+                  <Edit className={`mr-2 ${ICON_SIZES.sm}`} />
                   Edit Document
                 </Link>
               </Button>
               {document.asset && (
                 <Button asChild variant="outline" className="w-full justify-start">
                   <Link href={`/admin/assets/${document.asset.id}`}>
-                    <Car className="mr-2 h-4 w-4" />
+                    <Car className={`mr-2 ${ICON_SIZES.sm}`} />
                     View Linked Vehicle
                   </Link>
                 </Button>
@@ -344,7 +345,7 @@ export default async function CompanyDocumentDetailPage({ params }: Props) {
               {document.documentUrl && (
                 <Button asChild variant="outline" className="w-full justify-start">
                   <a href={document.documentUrl} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="mr-2 h-4 w-4" />
+                    <ExternalLink className={`mr-2 ${ICON_SIZES.sm}`} />
                     Open Document File
                   </a>
                 </Button>

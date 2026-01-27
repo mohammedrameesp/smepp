@@ -12,6 +12,7 @@ import {
   FolderOpen,
   TrendingUp,
 } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
 import { roundTo } from '@/lib/utils/math-utils';
@@ -71,7 +72,7 @@ export default function SuperAdminStoragePage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <Loader2 className={`${ICON_SIZES.xl} animate-spin text-muted-foreground`} />
       </div>
     );
   }
@@ -102,7 +103,7 @@ export default function SuperAdminStoragePage() {
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
               <div className="p-3 rounded-lg bg-blue-50">
-                <HardDrive className="h-6 w-6 text-blue-600" />
+                <HardDrive className={`${ICON_SIZES.lg} text-blue-600`} />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total Storage</p>
@@ -116,7 +117,7 @@ export default function SuperAdminStoragePage() {
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
               <div className="p-3 rounded-lg bg-green-50">
-                <Image className="h-6 w-6 text-green-600" />
+                <Image className={`${ICON_SIZES.lg} text-green-600`} />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total Files</p>
@@ -130,7 +131,7 @@ export default function SuperAdminStoragePage() {
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
               <div className="p-3 rounded-lg bg-purple-50">
-                <Building2 className="h-6 w-6 text-purple-600" />
+                <Building2 className={`${ICON_SIZES.lg} text-purple-600`} />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Organizations</p>
@@ -144,7 +145,7 @@ export default function SuperAdminStoragePage() {
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
               <div className="p-3 rounded-lg bg-amber-50">
-                <TrendingUp className="h-6 w-6 text-amber-600" />
+                <TrendingUp className={`${ICON_SIZES.lg} text-amber-600`} />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Active (with files)</p>
@@ -166,7 +167,7 @@ export default function SuperAdminStoragePage() {
         <CardContent>
           {stats.organizations.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12">
-              <FolderOpen className="h-12 w-12 text-muted-foreground mb-4" />
+              <FolderOpen className={`${ICON_SIZES['3xl']} text-muted-foreground mb-4`} />
               <h3 className="text-lg font-semibold mb-2">No organizations</h3>
               <p className="text-muted-foreground">
                 Organizations will appear here when created
@@ -197,7 +198,7 @@ export default function SuperAdminStoragePage() {
                             />
                           ) : (
                             <div className="h-8 w-8 rounded bg-slate-100 flex items-center justify-center">
-                              <Building2 className="h-4 w-4 text-slate-400" />
+                              <Building2 className={`${ICON_SIZES.sm} text-slate-400`} />
                             </div>
                           )}
                           <div>
@@ -230,7 +231,7 @@ export default function SuperAdminStoragePage() {
                       <td className="py-4">
                         {org.lastUpload ? (
                           <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                            <Calendar className="h-3 w-3" />
+                            <Calendar className={ICON_SIZES.xs} />
                             {formatDistanceToNow(new Date(org.lastUpload), { addSuffix: true })}
                           </div>
                         ) : (

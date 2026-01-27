@@ -6,6 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Loader2, Cake, Award, User, Trophy } from 'lucide-react';
+import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 
 type MilestoneTier = 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond';
 
@@ -92,13 +94,13 @@ export function CelebrationsWidget() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Cake className="h-5 w-5 text-pink-500" />
+            <Cake className={`${ICON_SIZES.md} text-pink-500`} />
             Celebrations
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+            <Loader2 className={`${ICON_SIZES.lg} animate-spin text-gray-400`} />
           </div>
         </CardContent>
       </Card>
@@ -110,7 +112,7 @@ export function CelebrationsWidget() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Cake className="h-5 w-5 text-pink-500" />
+            <Cake className={`${ICON_SIZES.md} text-pink-500`} />
             Celebrations
           </CardTitle>
           <CardDescription>Birthdays & Work Anniversaries</CardDescription>
@@ -135,7 +137,7 @@ export function CelebrationsWidget() {
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Cake className="h-4 w-4 text-pink-500" />
+              <Cake className={`${ICON_SIZES.sm} text-pink-500`} />
               Celebrations
               {!showAll && remainingCount > 0 && (
                 <Badge variant="secondary" className="text-xs ml-1">
@@ -185,7 +187,7 @@ export function CelebrationsWidget() {
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <User className="h-4 w-4 text-gray-500" />
+                    <User className={`${ICON_SIZES.sm} text-gray-500`} />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -198,12 +200,12 @@ export function CelebrationsWidget() {
                   <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                     {event.type === 'birthday' ? (
                       <Badge variant="outline" className="bg-pink-100 text-pink-800 border-pink-300 text-xs">
-                        <Cake className="h-3 w-3 mr-1" />
+                        <Cake className={`${ICON_SIZES.xs} mr-1`} />
                         Birthday
                       </Badge>
                     ) : event.type === 'work_anniversary' ? (
                       <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-300 text-xs">
-                        <Award className="h-3 w-3 mr-1" />
+                        <Award className={`${ICON_SIZES.xs} mr-1`} />
                         {event.yearsCompleting}yr
                       </Badge>
                     ) : event.type === 'work_milestone' && event.milestone ? (
@@ -212,7 +214,7 @@ export function CelebrationsWidget() {
                         className={`text-xs ${MILESTONE_TIER_COLORS[event.milestone.tier].bg} ${MILESTONE_TIER_COLORS[event.milestone.tier].text} ${MILESTONE_TIER_COLORS[event.milestone.tier].border}`}
                         title={event.milestone.description}
                       >
-                        <Trophy className="h-3 w-3 mr-1" />
+                        <Trophy className={`${ICON_SIZES.xs} mr-1`} />
                         {event.milestone.days}d
                       </Badge>
                     ) : null}

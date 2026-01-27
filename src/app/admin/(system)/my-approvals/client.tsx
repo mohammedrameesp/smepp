@@ -33,6 +33,7 @@ import {
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface ApprovalItem {
   id: string;
@@ -215,7 +216,7 @@ export function MyApprovalsClient({ approvals, grouped }: MyApprovalsClientProps
                 option.count === 0 && option.key !== 'all' && 'opacity-40 cursor-not-allowed'
               )}
             >
-              {Icon && <Icon className="h-4 w-4" />}
+              {Icon && <Icon className={ICON_SIZES.sm} />}
               {option.label}
               <span className={cn(
                 'text-xs px-2 py-0.5 rounded-full',
@@ -267,13 +268,13 @@ export function MyApprovalsClient({ approvals, grouped }: MyApprovalsClientProps
                         <div className="flex items-center gap-2 mb-0.5">
                           <h3 className="font-semibold text-slate-900">{requesterName}</h3>
                           <Badge variant="secondary" className={cn('text-xs', config.bgColor, config.textColor)}>
-                            <Icon className="h-3 w-3 mr-1" />
+                            <Icon className={`${ICON_SIZES.xs} mr-1`} />
                             {config.label}
                           </Badge>
                         </div>
                         <div className="flex items-center gap-3 text-sm text-slate-500">
                           <span className="flex items-center gap-1">
-                            <Clock className="h-3.5 w-3.5" />
+                            <Clock className={ICON_SIZES.xs} />
                             {waitingStatus.label}
                           </span>
                           {waitingStatus.urgent && (
@@ -291,10 +292,10 @@ export function MyApprovalsClient({ approvals, grouped }: MyApprovalsClientProps
                           className="bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm"
                         >
                           {isProcessing ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <Loader2 className={`${ICON_SIZES.sm} animate-spin`} />
                           ) : (
                             <>
-                              <Check className="h-4 w-4 mr-1" />
+                              <Check className={`${ICON_SIZES.sm} mr-1`} />
                               Approve
                             </>
                           )}
@@ -306,7 +307,7 @@ export function MyApprovalsClient({ approvals, grouped }: MyApprovalsClientProps
                           disabled={isProcessing}
                           className="text-slate-600 hover:text-red-600 hover:border-red-200 hover:bg-red-50"
                         >
-                          <X className="h-4 w-4" />
+                          <X className={ICON_SIZES.sm} />
                         </Button>
                       </div>
                     </div>
@@ -327,7 +328,7 @@ export function MyApprovalsClient({ approvals, grouped }: MyApprovalsClientProps
                             </span>
                           </div>
                           <div className="flex items-center gap-1.5 text-sm text-slate-600">
-                            <Calendar className="h-3.5 w-3.5" />
+                            <Calendar className={ICON_SIZES.xs} />
                             {format(new Date(details.startDate as string), 'MMM d')} → {format(new Date(details.endDate as string), 'MMM d, yyyy')}
                           </div>
                         </div>
@@ -352,7 +353,7 @@ export function MyApprovalsClient({ approvals, grouped }: MyApprovalsClientProps
                           </div>
                           {details.totalAmount != null && (
                             <div className="flex items-center gap-1.5 text-sm">
-                              <DollarSign className="h-3.5 w-3.5 text-slate-500" />
+                              <DollarSign className={`${ICON_SIZES.xs} text-slate-500`} />
                               <span className="font-semibold text-slate-900">
                                 {String(details.currency || 'QAR')} {Number(details.totalAmount).toLocaleString()}
                               </span>
@@ -401,7 +402,7 @@ export function MyApprovalsClient({ approvals, grouped }: MyApprovalsClientProps
                           disabled={isProcessing}
                           className="bg-emerald-500 hover:bg-emerald-600 text-white"
                         >
-                          <Check className="h-4 w-4 mr-1" />
+                          <Check className={`${ICON_SIZES.sm} mr-1`} />
                           Approve
                         </Button>
                         <Button
@@ -411,7 +412,7 @@ export function MyApprovalsClient({ approvals, grouped }: MyApprovalsClientProps
                           disabled={isProcessing}
                           className="text-red-600 border-red-200 hover:bg-red-50"
                         >
-                          <X className="h-4 w-4" />
+                          <X className={ICON_SIZES.sm} />
                         </Button>
                       </div>
 
@@ -420,7 +421,7 @@ export function MyApprovalsClient({ approvals, grouped }: MyApprovalsClientProps
                         className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-900 font-medium ml-auto"
                       >
                         View details
-                        <ArrowUpRight className="h-3.5 w-3.5" />
+                        <ArrowUpRight className={ICON_SIZES.xs} />
                       </Link>
                     </div>
                   </div>
@@ -440,7 +441,7 @@ export function MyApprovalsClient({ approvals, grouped }: MyApprovalsClientProps
           )}>
             {(() => {
               const Icon = TYPE_CONFIG[activeFilter].icon;
-              return <Icon className={cn('h-8 w-8', TYPE_CONFIG[activeFilter].iconColor)} />;
+              return <Icon className={cn(ICON_SIZES.xl, TYPE_CONFIG[activeFilter].iconColor)} />;
             })()}
           </div>
           <h3 className="font-semibold text-slate-900 mb-1">No {TYPE_CONFIG[activeFilter].label.toLowerCase()} requests</h3>
@@ -456,14 +457,14 @@ export function MyApprovalsClient({ approvals, grouped }: MyApprovalsClientProps
               {actionType === 'approve' ? (
                 <>
                   <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
-                    <Check className="h-4 w-4 text-emerald-600" />
+                    <Check className={`${ICON_SIZES.sm} text-emerald-600`} />
                   </div>
                   Approve Request
                 </>
               ) : (
                 <>
                   <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
-                    <X className="h-4 w-4 text-red-600" />
+                    <X className={`${ICON_SIZES.sm} text-red-600`} />
                   </div>
                   Reject Request
                 </>
@@ -482,7 +483,7 @@ export function MyApprovalsClient({ approvals, grouped }: MyApprovalsClientProps
               TYPE_CONFIG[selectedItem.entityType].bgColor
             )}>
               <div className="flex items-center gap-2 text-sm">
-                <User className="h-4 w-4 text-slate-500" />
+                <User className={`${ICON_SIZES.sm} text-slate-500`} />
                 <span className="font-medium">{String(selectedItem.entityDetails.requester)}</span>
                 <span className="text-slate-500">•</span>
                 <span className="text-slate-600">{TYPE_CONFIG[selectedItem.entityType].label}</span>
@@ -522,17 +523,17 @@ export function MyApprovalsClient({ approvals, grouped }: MyApprovalsClientProps
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className={`${ICON_SIZES.sm} animate-spin`} />
                   Processing...
                 </>
               ) : actionType === 'approve' ? (
                 <>
-                  <Check className="h-4 w-4" />
+                  <Check className={ICON_SIZES.sm} />
                   Approve
                 </>
               ) : (
                 <>
-                  <X className="h-4 w-4" />
+                  <X className={ICON_SIZES.sm} />
                   Reject
                 </>
               )}

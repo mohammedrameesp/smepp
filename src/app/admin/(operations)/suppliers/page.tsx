@@ -4,6 +4,7 @@ import { getAdminAuthContext, hasAccess } from '@/lib/auth/impersonation-check';
 
 import { SupplierListClient, ShareSupplierLinkButton } from '@/features/suppliers';
 import { Plus } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 
@@ -70,7 +71,7 @@ export default async function AdminSuppliersPage() {
               <ShareSupplierLinkButton organizationSlug={organizationSlug} />
             )}
             <PageHeaderButton href="/suppliers/register" variant="primary">
-              <Plus className="h-4 w-4" />
+              <Plus className={ICON_SIZES.sm} />
               Register Supplier
             </PageHeaderButton>
           </>

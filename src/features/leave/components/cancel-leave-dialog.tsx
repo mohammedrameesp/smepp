@@ -20,6 +20,7 @@ import {
 import { Ban } from 'lucide-react';
 import { cancelLeaveRequest } from '@/lib/api/leave';
 import { useSubmitAction } from '@/lib/hooks';
+import { ICON_SIZES } from '@/lib/constants';
 import type { CancelLeaveDialogProps } from '@/lib/types/leave';
 
 interface Props extends CancelLeaveDialogProps {
@@ -59,7 +60,7 @@ export function CancelLeaveDialog({ requestId, requestNumber, onCancelled, trigg
       <DialogTrigger asChild>
         {trigger || (
           <button className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg transition-all bg-transparent text-slate-300 hover:text-white border border-slate-500 hover:border-slate-400 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-800 focus-visible:ring-slate-400">
-            <Ban className="h-4 w-4" />
+            <Ban className={ICON_SIZES.sm} />
             Cancel Request
           </button>
         )}

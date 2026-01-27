@@ -37,6 +37,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
+import { ICON_SIZES } from '@/lib/constants';
 
 // Icon mapping
 const ICONS: Record<string, React.ElementType> = {
@@ -307,7 +308,7 @@ export default function ModulesPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <Loader2 className={`${ICON_SIZES.xl} animate-spin text-muted-foreground`} />
       </div>
     );
   }
@@ -332,7 +333,7 @@ export default function ModulesPage() {
                 {module.isCore && (
                   <div className="absolute top-3 right-3">
                     <Badge variant="secondary" className="text-xs">
-                      <Lock className="h-3 w-3 mr-1" />
+                      <Lock className={`${ICON_SIZES.xs} mr-1`} />
                       Core
                     </Badge>
                   </div>
@@ -340,7 +341,7 @@ export default function ModulesPage() {
                 <CardHeader className="pb-3">
                   <div className="flex items-center gap-3">
                     <div className="p-2 rounded-lg bg-primary/10">
-                      <Icon className="h-5 w-5 text-primary" />
+                      <Icon className={`${ICON_SIZES.md} text-primary`} />
                     </div>
                     <div>
                       <CardTitle className="text-base">{module.name}</CardTitle>
@@ -367,7 +368,7 @@ export default function ModulesPage() {
                       );
                       return (
                         <div className="flex items-start gap-2 text-xs text-amber-600 dark:text-amber-400 mb-3 p-2 bg-amber-50 dark:bg-amber-950/30 rounded border border-amber-200 dark:border-amber-800">
-                          <AlertTriangle className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
+                          <AlertTriangle className={`${ICON_SIZES.sm} mt-0.5 flex-shrink-0`} />
                           <span>Required by: {dependentNames.join(', ')}</span>
                         </div>
                       );
@@ -376,7 +377,7 @@ export default function ModulesPage() {
                   })()}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center text-sm text-green-600 dark:text-green-400">
-                      <Check className="h-4 w-4 mr-1" />
+                      <Check className={`${ICON_SIZES.sm} mr-1`} />
                       Installed
                     </div>
                     {!module.isCore && (
@@ -388,10 +389,10 @@ export default function ModulesPage() {
                         onClick={() => handleUninstallClick(module)}
                       >
                         {actionLoading === module.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <Loader2 className={`${ICON_SIZES.sm} animate-spin`} />
                         ) : (
                           <>
-                            <Trash2 className="h-4 w-4 mr-1" />
+                            <Trash2 className={`${ICON_SIZES.sm} mr-1`} />
                             Uninstall
                           </>
                         )}
@@ -431,7 +432,7 @@ export default function ModulesPage() {
                   <CardHeader className="pb-3">
                     <div className="flex items-center gap-3">
                       <div className="p-2 rounded-lg bg-muted">
-                        <Icon className="h-5 w-5 text-muted-foreground" />
+                        <Icon className={`${ICON_SIZES.md} text-muted-foreground`} />
                       </div>
                       <div>
                         <CardTitle className="text-base">{module.name}</CardTitle>
@@ -463,10 +464,10 @@ export default function ModulesPage() {
                         onClick={() => handleInstallClick(module)}
                       >
                         {actionLoading === module.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <Loader2 className={`${ICON_SIZES.sm} animate-spin`} />
                         ) : (
                           <>
-                            <Download className="h-4 w-4 mr-1" />
+                            <Download className={`${ICON_SIZES.sm} mr-1`} />
                             Install
                           </>
                         )}
@@ -475,7 +476,7 @@ export default function ModulesPage() {
 
                     {hasMissingDeps && (
                       <p className="text-xs text-amber-600 dark:text-amber-400 mt-2 flex items-center">
-                        <AlertTriangle className="h-3 w-3 mr-1" />
+                        <AlertTriangle className={`${ICON_SIZES.xs} mr-1`} />
                         {module.installError}
                       </p>
                     )}
@@ -500,7 +501,7 @@ export default function ModulesPage() {
             <>
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2 text-green-600">
-                  <Check className="h-5 w-5" />
+                  <Check className={ICON_SIZES.md} />
                   {installDialog.module?.name} Installed
                 </DialogTitle>
                 <DialogDescription>
@@ -509,7 +510,7 @@ export default function ModulesPage() {
               </DialogHeader>
               <div className="py-4">
                 <Alert>
-                  <Info className="h-4 w-4" />
+                  <Info className={ICON_SIZES.sm} />
                   <AlertDescription>
                     You can now access {installDialog.module?.name} from the navigation menu.
                   </AlertDescription>
@@ -537,16 +538,16 @@ export default function ModulesPage() {
                   <h4 className="font-medium mb-2">This will enable:</h4>
                   <ul className="text-sm text-muted-foreground space-y-1">
                     <li className="flex items-center gap-2">
-                      <Check className="h-3 w-3 text-green-600" />
+                      <Check className={`${ICON_SIZES.xs} text-green-600`} />
                       {installDialog.module?.name} features in admin panel
                     </li>
                     <li className="flex items-center gap-2">
-                      <Check className="h-3 w-3 text-green-600" />
+                      <Check className={`${ICON_SIZES.xs} text-green-600`} />
                       Related navigation menu items
                     </li>
                     {installDialog.module?.category === 'hr' && (
                       <li className="flex items-center gap-2">
-                        <Check className="h-3 w-3 text-green-600" />
+                        <Check className={`${ICON_SIZES.xs} text-green-600`} />
                         Employee self-service features
                       </li>
                     )}
@@ -554,7 +555,7 @@ export default function ModulesPage() {
                 </div>
                 {installDialog.module?.requires && installDialog.module.requires.length > 0 && (
                   <Alert>
-                    <Info className="h-4 w-4" />
+                    <Info className={ICON_SIZES.sm} />
                     <AlertDescription>
                       This module requires: {installDialog.module.requires.join(', ')}
                     </AlertDescription>
@@ -573,9 +574,9 @@ export default function ModulesPage() {
                   disabled={actionLoading === installDialog.module?.id}
                 >
                   {actionLoading === installDialog.module?.id ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    <Loader2 className={`${ICON_SIZES.sm} animate-spin mr-2`} />
                   ) : (
-                    <Download className="h-4 w-4 mr-2" />
+                    <Download className={`${ICON_SIZES.sm} mr-2`} />
                   )}
                   Install
                 </Button>
@@ -613,7 +614,7 @@ export default function ModulesPage() {
                 return (
                   <>
                     <Alert variant="warning">
-                      <AlertTriangle className="h-4 w-4" />
+                      <AlertTriangle className={ICON_SIZES.sm} />
                       <AlertDescription>
                         The following modules depend on {uninstallDialog.module.name}: <strong>{dependentNames.join(', ')}</strong>
                       </AlertDescription>
@@ -645,7 +646,7 @@ export default function ModulesPage() {
             {/* Data counts section */}
             {uninstallDialog.loadingCounts ? (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className={`${ICON_SIZES.sm} animate-spin`} />
                 Checking existing data...
               </div>
             ) : (() => {
@@ -660,7 +661,7 @@ export default function ModulesPage() {
               if (!hasAnyData) {
                 return (
                   <Alert>
-                    <Info className="h-4 w-4" />
+                    <Info className={ICON_SIZES.sm} />
                     <AlertDescription>
                       No data exists for {uninstallDialog.cascade ? 'these modules' : 'this module'}.
                     </AlertDescription>
@@ -672,7 +673,7 @@ export default function ModulesPage() {
                 <>
                   <div className="rounded-lg border p-4 bg-muted/50">
                     <div className="flex items-center gap-2 mb-3">
-                      <Database className="h-4 w-4 text-muted-foreground" />
+                      <Database className={`${ICON_SIZES.sm} text-muted-foreground`} />
                       <span className="font-medium">Existing Data</span>
                       <Badge variant="secondary" className="ml-auto">
                         {totalRecords.toLocaleString()} records{uninstallDialog.cascade && cascadeRecords > 0 ? ' total' : ''}
@@ -734,14 +735,14 @@ export default function ModulesPage() {
 
                   {uninstallDialog.deleteData ? (
                     <Alert variant="error">
-                      <AlertTriangle className="h-4 w-4" />
+                      <AlertTriangle className={ICON_SIZES.sm} />
                       <AlertDescription>
                         <strong>Warning:</strong> This will permanently delete {totalRecords.toLocaleString()} records. This action cannot be undone.
                       </AlertDescription>
                     </Alert>
                   ) : (
                     <Alert>
-                      <Info className="h-4 w-4" />
+                      <Info className={ICON_SIZES.sm} />
                       <AlertDescription>
                         <strong>Data will be preserved.</strong> Your {totalRecords.toLocaleString()} records will remain in the database and will be accessible if you reinstall the module{uninstallDialog.cascade ? 's' : ''}.
                       </AlertDescription>
@@ -765,9 +766,9 @@ export default function ModulesPage() {
               disabled={actionLoading === uninstallDialog.module?.id || (!uninstallDialog.module?.canUninstall && !uninstallDialog.cascade)}
             >
               {actionLoading === uninstallDialog.module?.id ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                <Loader2 className={`${ICON_SIZES.sm} animate-spin mr-2`} />
               ) : (
-                <Trash2 className="h-4 w-4 mr-2" />
+                <Trash2 className={`${ICON_SIZES.sm} mr-2`} />
               )}
               Uninstall{uninstallDialog.deleteData ? ' & Delete Data' : ''}
             </Button>

@@ -8,6 +8,7 @@ import { MyApprovalsClient } from './client';
 import Link from 'next/link';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
+import { ICON_SIZES } from '@/lib/constants';
 
 // Admins and Managers can approve requests
 // - isAdmin: Full access to all approvals
@@ -186,10 +187,10 @@ export default async function MyApprovalsPage() {
           <div className="bg-gradient-to-b from-white to-emerald-50/30 rounded-2xl border border-slate-200 p-12 text-center">
             <div className="relative inline-block mb-6">
               <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto">
-                <CheckCircle className="h-10 w-10 text-emerald-500" />
+                <CheckCircle className={`${ICON_SIZES['2xl']} text-emerald-500`} />
               </div>
               <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-white rounded-full border-2 border-emerald-200 flex items-center justify-center">
-                <Inbox className="h-4 w-4 text-emerald-500" />
+                <Inbox className={`${ICON_SIZES.sm} text-emerald-500`} />
               </div>
             </div>
             <h3 className="font-semibold text-slate-900 text-xl mb-2">All caught up!</h3>

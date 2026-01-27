@@ -5,6 +5,7 @@ import { prisma } from '@/lib/core/prisma';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Info, Calculator, TrendingUp, Calendar, DollarSign } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import { calculateGratuity, projectGratuity, getServiceDurationText } from '@/features/payroll/lib/gratuity';
 import { formatCurrency } from '@/lib/core/currency';
 import { formatDate } from '@/lib/core/datetime';
@@ -51,7 +52,7 @@ export default async function EmployeeGratuityPage() {
           actions={
             <Link href="/employee/payroll">
               <Button variant="outline">
-                <ArrowLeft className="h-4 w-4 mr-2" />
+                <ArrowLeft className={`${ICON_SIZES.sm} mr-2`} />
                 Back to Payroll
               </Button>
             </Link>
@@ -60,7 +61,7 @@ export default async function EmployeeGratuityPage() {
 
         <PageContent>
           <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
-            <Info className="h-12 w-12 mx-auto text-slate-400 mb-4" />
+            <Info className={`${ICON_SIZES['3xl']} mx-auto text-slate-400 mb-4`} />
             <p className="text-slate-600">
               {!salaryStructure
                 ? 'Salary structure not set up. Please contact HR.'
@@ -90,7 +91,7 @@ export default async function EmployeeGratuityPage() {
         actions={
           <Link href="/employee/payroll">
             <Button variant="outline">
-              <ArrowLeft className="h-4 w-4 mr-2" />
+              <ArrowLeft className={`${ICON_SIZES.sm} mr-2`} />
               Back to Payroll
             </Button>
           </Link>
@@ -101,13 +102,13 @@ export default async function EmployeeGratuityPage() {
             value={formatCurrency(gratuityCalculation.gratuityAmount)}
             label="current gratuity"
             color="emerald"
-            icon={<DollarSign className="h-4 w-4" />}
+            icon={<DollarSign className={ICON_SIZES.sm} />}
           />
           <StatChip
             value={getServiceDurationText(gratuityCalculation.monthsOfService)}
             label="of service"
             color="blue"
-            icon={<Calendar className="h-4 w-4" />}
+            icon={<Calendar className={ICON_SIZES.sm} />}
           />
         </StatChipGroup>
       </PageHeader>

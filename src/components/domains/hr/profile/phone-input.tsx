@@ -13,6 +13,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { COUNTRY_CODES } from '@/lib/data/constants';
 import { ChevronDown, Search } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface PhoneInputProps {
   codeValue: string;
@@ -100,12 +101,12 @@ export function PhoneInput({
                 ) : (
                   <span className="text-gray-500">{codePlaceholder}</span>
                 )}
-                <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                <ChevronDown className={`ml-2 ${ICON_SIZES.sm} shrink-0 opacity-50`} />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[280px] p-0" align="start">
               <div className="flex items-center border-b px-3 py-2">
-                <Search className="h-4 w-4 mr-2 opacity-50" />
+                <Search className={`${ICON_SIZES.sm} mr-2 opacity-50`} />
                 <input
                   ref={searchInputRef}
                   type="text"

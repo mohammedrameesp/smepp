@@ -16,6 +16,7 @@ import {
   UserCheck,
 } from 'lucide-react';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
+import { ICON_SIZES } from '@/lib/constants';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 
 export default async function AdminReportsPage() {
@@ -229,7 +230,7 @@ export default async function AdminReportsPage() {
         {/* Assets Reports */}
         <div className="mb-8">
           <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <Package className="h-5 w-5 text-blue-500" />
+            <Package className={`${ICON_SIZES.md} text-blue-500`} />
             Assets Reports
           </h2>
 
@@ -273,7 +274,7 @@ export default async function AdminReportsPage() {
         {/* Subscriptions Reports */}
         <div className="mb-8">
           <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <CreditCard className="h-5 w-5 text-green-500" />
+            <CreditCard className={`${ICON_SIZES.md} text-green-500`} />
             Subscriptions Reports
           </h2>
 
@@ -331,7 +332,7 @@ export default async function AdminReportsPage() {
         {/* Suppliers Reports */}
         <div className="mb-8">
           <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <Building2 className="h-5 w-5 text-purple-500" />
+            <Building2 className={`${ICON_SIZES.md} text-purple-500`} />
             Suppliers Reports
           </h2>
 
@@ -375,7 +376,7 @@ export default async function AdminReportsPage() {
         {/* Spend Requests Reports */}
         <div className="mb-8">
           <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <ShoppingCart className="h-5 w-5 text-pink-500" />
+            <ShoppingCart className={`${ICON_SIZES.md} text-pink-500`} />
             Spend Requests Reports
           </h2>
 
@@ -436,7 +437,7 @@ export default async function AdminReportsPage() {
         {/* Employees/HR Reports */}
         <div className="mb-8">
           <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <UserCheck className="h-5 w-5 text-emerald-500" />
+            <UserCheck className={`${ICON_SIZES.md} text-emerald-500`} />
             Employees & HR Reports
           </h2>
 
@@ -489,7 +490,7 @@ export default async function AdminReportsPage() {
         {/* Users Reports */}
         <div className="mb-8">
           <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <Users className="h-5 w-5 text-orange-500" />
+            <Users className={`${ICON_SIZES.md} text-orange-500`} />
             Users Reports
           </h2>
 
@@ -514,7 +515,7 @@ export default async function AdminReportsPage() {
         {/* Activity Logs */}
         <div id="activity-logs" className="mb-8">
           <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <Activity className="h-5 w-5 text-blue-500" />
+            <Activity className={`${ICON_SIZES.md} text-blue-500`} />
             Activity Logs
           </h2>
 
@@ -578,7 +579,7 @@ export default async function AdminReportsPage() {
                 {recentActivity.map((activity) => (
                   <div key={activity.id} className="flex items-start gap-3 pb-3 border-b border-gray-100 last:border-0">
                     <div className="flex-shrink-0 mt-1">
-                      <Activity className="h-4 w-4 text-gray-400" />
+                      <Activity className={`${ICON_SIZES.sm} text-gray-400`} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-gray-900 font-medium">{activity.action}</p>

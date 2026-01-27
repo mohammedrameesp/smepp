@@ -28,6 +28,7 @@ import { EmployeeActions } from './employee-actions';
 import { SPONSORSHIP_TYPES } from '@/lib/data/constants';
 import { calculateTenure } from '@/features/employees/lib/hr-utils';
 import { getDisplayEmail } from '@/lib/utils/user-display';
+import { ICON_SIZES } from '@/lib/constants';
 
 const PAGE_SIZE = 50;
 
@@ -264,7 +265,7 @@ export function EmployeeListTableFiltered({ employees }: EmployeeListTableFilter
         </Select>
 
         <Button variant="outline" size="sm" onClick={handleExport}>
-          <Download className="h-4 w-4 mr-1" />
+          <Download className={`${ICON_SIZES.sm} mr-1`} />
           Export
         </Button>
       </TableFilterBar>
@@ -297,7 +298,7 @@ export function EmployeeListTableFiltered({ employees }: EmployeeListTableFilter
             {paginatedData.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-8">
-                  <Users className="h-10 w-10 mx-auto text-gray-300 mb-2" />
+                  <Users className={`${ICON_SIZES['2xl']} mx-auto text-gray-300 mb-2`} />
                   <p className="text-gray-500">
                     {hasActiveFilters
                       ? 'No employees match your filters'
@@ -328,7 +329,7 @@ export function EmployeeListTableFiltered({ employees }: EmployeeListTableFilter
                             className="h-full w-full object-cover"
                           />
                         ) : (
-                          <User className="h-5 w-5 text-gray-400" />
+                          <User className={`${ICON_SIZES.md} text-gray-400`} />
                         )}
                       </div>
                       <div>
@@ -357,7 +358,7 @@ export function EmployeeListTableFiltered({ employees }: EmployeeListTableFilter
                       const Icon = style.icon;
                       return (
                         <Badge variant="secondary" className={`gap-1 text-xs ${style.bg} ${style.text} hover:${style.bg}`}>
-                          <Icon className="h-3 w-3" />
+                          <Icon className={ICON_SIZES.xs} />
                           {role}
                         </Badge>
                       );

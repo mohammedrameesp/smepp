@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Building2, Users, Signal, CheckCircle, Eye, Edit, UserPlus, BarChart3, Settings } from 'lucide-react';
 import { ImpersonateButton } from '@/components/super-admin/impersonate-button';
 import { formatDistanceToNow, format } from 'date-fns';
+import { ICON_SIZES } from '@/lib/constants';
 
 export const dynamic = 'force-dynamic';
 
@@ -156,7 +157,7 @@ export default async function SuperAdminDashboard() {
 
         {organizations.length === 0 ? (
           <div className="p-12 text-center">
-            <Building2 className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+            <Building2 className={`${ICON_SIZES['3xl']} text-gray-300 mx-auto mb-4`} />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">No organizations yet</h3>
             <p className="text-gray-500 text-sm">Organizations are created through self-service signup</p>
           </div>
@@ -224,14 +225,14 @@ export default async function SuperAdminDashboard() {
                           className="text-gray-400 hover:text-gray-600 p-1.5 hover:bg-gray-100 rounded"
                           title="View"
                         >
-                          <Eye className="h-4 w-4" />
+                          <Eye className={ICON_SIZES.sm} />
                         </Link>
                         <Link
                           href={`/super-admin/organizations/${org.id}?edit=true`}
                           className="text-gray-400 hover:text-gray-600 p-1.5 hover:bg-gray-100 rounded"
                           title="Edit"
                         >
-                          <Edit className="h-4 w-4" />
+                          <Edit className={ICON_SIZES.sm} />
                         </Link>
                       </div>
                     </td>
@@ -267,7 +268,7 @@ export default async function SuperAdminDashboard() {
             {activity.recentUsers.slice(0, 2).map((item, i) => (
               <div key={i} className="px-6 py-4 flex items-start gap-4">
                 <div className="w-8 h-8 bg-green-50 rounded-full flex items-center justify-center flex-shrink-0">
-                  <UserPlus className="text-green-600 h-4 w-4" />
+                  <UserPlus className={`text-green-600 ${ICON_SIZES.sm}`} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-gray-900">
@@ -282,7 +283,7 @@ export default async function SuperAdminDashboard() {
             {activity.recentOrgs.map((org, i) => (
               <div key={i} className="px-6 py-4 flex items-start gap-4">
                 <div className="w-8 h-8 bg-blue-50 rounded-full flex items-center justify-center flex-shrink-0">
-                  <Building2 className="text-blue-600 h-4 w-4" />
+                  <Building2 className={`text-blue-600 ${ICON_SIZES.sm}`} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-gray-900">
@@ -308,7 +309,7 @@ export default async function SuperAdminDashboard() {
               className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-xl hover:border-emerald-300 hover:bg-emerald-50/50 transition-colors group"
             >
               <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center mb-3 group-hover:bg-emerald-200">
-                <UserPlus className="text-emerald-600 h-5 w-5" />
+                <UserPlus className={`text-emerald-600 ${ICON_SIZES.md}`} />
               </div>
               <span className="text-sm font-medium text-gray-700">Invite Admin</span>
             </Link>
@@ -317,7 +318,7 @@ export default async function SuperAdminDashboard() {
               className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-xl hover:border-cyan-300 hover:bg-cyan-50/50 transition-colors group"
             >
               <div className="w-10 h-10 bg-cyan-100 rounded-lg flex items-center justify-center mb-3 group-hover:bg-cyan-200">
-                <BarChart3 className="text-cyan-600 h-5 w-5" />
+                <BarChart3 className={`text-cyan-600 ${ICON_SIZES.md}`} />
               </div>
               <span className="text-sm font-medium text-gray-700">View Analytics</span>
             </Link>
@@ -326,7 +327,7 @@ export default async function SuperAdminDashboard() {
               className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-xl hover:border-amber-300 hover:bg-amber-50/50 transition-colors group"
             >
               <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center mb-3 group-hover:bg-amber-200">
-                <Settings className="text-amber-600 h-5 w-5" />
+                <Settings className={`text-amber-600 ${ICON_SIZES.md}`} />
               </div>
               <span className="text-sm font-medium text-gray-700">Settings</span>
             </Link>
@@ -358,7 +359,7 @@ function StatCard({
     <div className="bg-white rounded-xl p-5 border border-gray-100 hover:shadow-sm transition-shadow">
       <div className="flex items-center justify-between mb-3">
         <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${iconBg}`}>
-          <Icon className={`h-5 w-5 ${iconColor}`} />
+          <Icon className={`${ICON_SIZES.md} ${iconColor}`} />
         </div>
         {trend && (
           <span className="text-xs text-green-600 font-medium bg-green-50 px-2 py-1 rounded-full">

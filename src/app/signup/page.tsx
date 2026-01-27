@@ -19,6 +19,7 @@ import {
   Eye,
   EyeOff,
 } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import { TenantBrandedPanel } from '@/components/auth/TenantBrandedPanel';
 import { useTenantBranding } from '@/hooks/use-tenant-branding';
 import { useSubdomain } from '@/hooks/use-subdomain';
@@ -134,7 +135,7 @@ function SignupForm() {
 
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
             <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center mx-auto mb-6">
-              <Shield className="h-8 w-8 text-slate-600 dark:text-slate-300" />
+              <Shield className={`${ICON_SIZES.xl} text-slate-600 dark:text-slate-300`} />
             </div>
 
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">
@@ -335,7 +336,7 @@ function SignupForm() {
             {/* Loading state while fetching invitation */}
             {loadingInvite && (
               <div className="flex flex-col items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-gray-400 mb-4" />
+                <Loader2 className={`${ICON_SIZES.xl} animate-spin text-gray-400 mb-4`} />
                 <p className="text-sm text-muted-foreground">Loading...</p>
               </div>
             )}
@@ -343,7 +344,7 @@ function SignupForm() {
             {/* Error Alert */}
             {error && !loadingInvite && (
               <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl flex items-start gap-3">
-                <AlertCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
+                <AlertCircle className={`${ICON_SIZES.md} text-red-500 shrink-0 mt-0.5`} />
                 <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
               </div>
             )}
@@ -360,7 +361,7 @@ function SignupForm() {
                   >
                     {isLoading ? (
                       <span className="flex items-center justify-center gap-3">
-                        <Loader2 className="h-5 w-5 animate-spin" />
+                        <Loader2 className={`${ICON_SIZES.md} animate-spin`} />
                         Signing up...
                       </span>
                     ) : (
@@ -386,7 +387,7 @@ function SignupForm() {
                   >
                     {isLoading ? (
                       <span className="flex items-center justify-center gap-3">
-                        <Loader2 className="h-5 w-5 animate-spin" />
+                        <Loader2 className={`${ICON_SIZES.md} animate-spin`} />
                         Signing up...
                       </span>
                     ) : (
@@ -476,7 +477,7 @@ function SignupForm() {
               <div className="space-y-2">
                 <Label htmlFor="name">Full Name</Label>
                 <div className="relative">
-                  <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <User className={`absolute left-3 top-3 ${ICON_SIZES.sm} text-muted-foreground`} />
                   <Input
                     id="name"
                     name="name"
@@ -494,7 +495,7 @@ function SignupForm() {
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Mail className={`absolute left-3 top-3 ${ICON_SIZES.sm} text-muted-foreground`} />
                   <Input
                     id="email"
                     name="email"
@@ -518,7 +519,7 @@ function SignupForm() {
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Lock className={`absolute left-3 top-3 ${ICON_SIZES.sm} text-muted-foreground`} />
                   <Input
                     id="password"
                     name="password"
@@ -538,7 +539,7 @@ function SignupForm() {
                     className="absolute right-3 top-3 text-muted-foreground hover:text-foreground transition-colors"
                     tabIndex={-1}
                   >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {showPassword ? <EyeOff className={ICON_SIZES.sm} /> : <Eye className={ICON_SIZES.sm} />}
                   </button>
                 </div>
                 {formData.password && (
@@ -566,7 +567,7 @@ function SignupForm() {
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword">Confirm Password</Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Lock className={`absolute left-3 top-3 ${ICON_SIZES.sm} text-muted-foreground`} />
                   <Input
                     id="confirmPassword"
                     name="confirmPassword"
@@ -579,7 +580,7 @@ function SignupForm() {
                     disabled={isLoading}
                   />
                   {formData.confirmPassword && formData.password === formData.confirmPassword ? (
-                    <CheckCircle className="absolute right-3 top-3 h-4 w-4 text-emerald-500" />
+                    <CheckCircle className={`absolute right-3 top-3 ${ICON_SIZES.sm} text-emerald-500`} />
                   ) : (
                     <button
                       type="button"
@@ -587,7 +588,7 @@ function SignupForm() {
                       className="absolute right-3 top-3 text-muted-foreground hover:text-foreground transition-colors"
                       tabIndex={-1}
                     >
-                      {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      {showConfirmPassword ? <EyeOff className={ICON_SIZES.sm} /> : <Eye className={ICON_SIZES.sm} />}
                     </button>
                   )}
                 </div>
@@ -605,13 +606,13 @@ function SignupForm() {
               >
                 {isLoading ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className={`mr-2 ${ICON_SIZES.sm} animate-spin`} />
                     Creating account...
                   </>
                 ) : (
                   <>
                     Complete Signup
-                    <ArrowRight className="ml-2 h-4 w-4" />
+                    <ArrowRight className={`ml-2 ${ICON_SIZES.sm}`} />
                   </>
                 )}
               </Button>
@@ -642,7 +643,7 @@ export default function SignupPage() {
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+          <Loader2 className={`${ICON_SIZES.xl} animate-spin text-slate-400`} />
           <p className="text-sm text-muted-foreground">Loading...</p>
         </div>
       </div>

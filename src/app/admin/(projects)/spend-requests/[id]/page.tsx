@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ArrowLeft, Loader2, CheckCircle, XCircle, Clock, FileCheck, ShoppingCart, DollarSign, User, Building2, FileText, AlertCircle } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import { StatusBadge, PriorityBadge } from '@/features/spend-requests/components';
 import { getAllowedStatusTransitions, getStatusLabel, getPurchaseTypeLabel, getCostTypeLabel, getPaymentModeLabel } from '@/features/spend-requests/lib/spend-request-utils';
 import { ApprovalChainStatus } from '@/components/approvals';
@@ -188,7 +189,7 @@ export default function AdminSpendRequestDetailPage({ params }: { params: Promis
       <div className="max-w-5xl mx-auto px-4 py-6">
         <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
           <div className="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <AlertCircle className="h-8 w-8 text-rose-500" />
+            <AlertCircle className={`${ICON_SIZES.xl} text-rose-500`} />
           </div>
           <h3 className="font-semibold text-slate-900 text-lg mb-1">{error}</h3>
           <p className="text-slate-500 mb-4">We couldn&apos;t load this spend request.</p>
@@ -203,7 +204,7 @@ export default function AdminSpendRequestDetailPage({ params }: { params: Promis
       <div className="max-w-5xl mx-auto px-4 py-6">
         <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
           <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <ShoppingCart className="h-8 w-8 text-slate-400" />
+            <ShoppingCart className={`${ICON_SIZES.xl} text-slate-400`} />
           </div>
           <h3 className="font-semibold text-slate-900 text-lg mb-1">Spend request not found</h3>
           <Button onClick={() => router.back()} variant="outline" className="mt-4">Go Back</Button>
@@ -222,7 +223,7 @@ export default function AdminSpendRequestDetailPage({ params }: { params: Promis
           href="/admin/spend-requests"
           className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 mb-4"
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className={ICON_SIZES.sm} />
           Back to Spend Requests
         </Link>
 
@@ -261,7 +262,7 @@ export default function AdminSpendRequestDetailPage({ params }: { params: Promis
           <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
               <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                <ShoppingCart className="h-5 w-5 text-blue-600" />
+                <ShoppingCart className={`${ICON_SIZES.md} text-blue-600`} />
               </div>
               <div>
                 <h2 className="font-semibold text-slate-900">Request Details</h2>
@@ -312,7 +313,7 @@ export default function AdminSpendRequestDetailPage({ params }: { params: Promis
             <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
               <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
                 <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
-                  <DollarSign className="h-5 w-5 text-purple-600" />
+                  <DollarSign className={`${ICON_SIZES.md} text-purple-600`} />
                 </div>
                 <h2 className="font-semibold text-slate-900">Purchase & Cost Details</h2>
               </div>
@@ -350,7 +351,7 @@ export default function AdminSpendRequestDetailPage({ params }: { params: Promis
             <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
               <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
                 <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
-                  <Building2 className="h-5 w-5 text-amber-600" />
+                  <Building2 className={`${ICON_SIZES.md} text-amber-600`} />
                 </div>
                 <h2 className="font-semibold text-slate-900">Vendor Details</h2>
               </div>
@@ -381,7 +382,7 @@ export default function AdminSpendRequestDetailPage({ params }: { params: Promis
           <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
               <div className="w-10 h-10 bg-cyan-100 rounded-xl flex items-center justify-center">
-                <FileText className="h-5 w-5 text-cyan-600" />
+                <FileText className={`${ICON_SIZES.md} text-cyan-600`} />
               </div>
               <div>
                 <h2 className="font-semibold text-slate-900">Line Items</h2>
@@ -425,7 +426,7 @@ export default function AdminSpendRequestDetailPage({ params }: { params: Promis
           <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
               <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
-                <Clock className="h-5 w-5 text-indigo-600" />
+                <Clock className={`${ICON_SIZES.md} text-indigo-600`} />
               </div>
               <h2 className="font-semibold text-slate-900">History</h2>
             </div>
@@ -433,14 +434,14 @@ export default function AdminSpendRequestDetailPage({ params }: { params: Promis
               {request.history.map((entry) => (
                 <div key={entry.id} className="flex gap-4 pb-4 border-b border-slate-100 last:border-0 last:pb-0">
                   <div className="flex-shrink-0 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
-                    {entry.action === 'CREATED' && <Clock className="h-4 w-4 text-slate-500" />}
-                    {entry.newStatus === 'APPROVED' && <CheckCircle className="h-4 w-4 text-emerald-500" />}
-                    {entry.newStatus === 'REJECTED' && <XCircle className="h-4 w-4 text-rose-500" />}
-                    {entry.newStatus === 'COMPLETED' && <FileCheck className="h-4 w-4 text-purple-500" />}
+                    {entry.action === 'CREATED' && <Clock className={`${ICON_SIZES.sm} text-slate-500`} />}
+                    {entry.newStatus === 'APPROVED' && <CheckCircle className={`${ICON_SIZES.sm} text-emerald-500`} />}
+                    {entry.newStatus === 'REJECTED' && <XCircle className={`${ICON_SIZES.sm} text-rose-500`} />}
+                    {entry.newStatus === 'COMPLETED' && <FileCheck className={`${ICON_SIZES.sm} text-purple-500`} />}
                     {entry.action === 'STATUS_CHANGED' && !['APPROVED', 'REJECTED', 'COMPLETED'].includes(entry.newStatus || '') && (
-                      <Clock className="h-4 w-4 text-blue-500" />
+                      <Clock className={`${ICON_SIZES.sm} text-blue-500`} />
                     )}
-                    {entry.action === 'UPDATED' && <Clock className="h-4 w-4 text-slate-500" />}
+                    {entry.action === 'UPDATED' && <Clock className={`${ICON_SIZES.sm} text-slate-500`} />}
                   </div>
                   <div className="flex-1">
                     <div className="flex justify-between items-start">
@@ -494,35 +495,35 @@ export default function AdminSpendRequestDetailPage({ params }: { params: Promis
                       disabled={updating}
                       className="w-full bg-emerald-600 hover:bg-emerald-700"
                     >
-                      {updating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle className="h-4 w-4 mr-2" />}
+                      {updating ? <Loader2 className={`${ICON_SIZES.sm} animate-spin mr-2`} /> : <CheckCircle className={`${ICON_SIZES.sm} mr-2`} />}
                       Approve Request
                     </Button>
                   )}
 
                   {allowedTransitions.includes('UNDER_REVIEW') && (
                     <Button onClick={() => updateStatus('UNDER_REVIEW')} disabled={updating} variant="outline" className="w-full">
-                      {updating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Clock className="h-4 w-4 mr-2" />}
+                      {updating ? <Loader2 className={`${ICON_SIZES.sm} animate-spin mr-2`} /> : <Clock className={`${ICON_SIZES.sm} mr-2`} />}
                       Mark Under Review
                     </Button>
                   )}
 
                   {allowedTransitions.includes('COMPLETED') && (
                     <Button onClick={() => updateStatus('COMPLETED')} disabled={updating} variant="outline" className="w-full">
-                      {updating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <FileCheck className="h-4 w-4 mr-2" />}
+                      {updating ? <Loader2 className={`${ICON_SIZES.sm} animate-spin mr-2`} /> : <FileCheck className={`${ICON_SIZES.sm} mr-2`} />}
                       Mark as Completed
                     </Button>
                   )}
 
                   {allowedTransitions.includes('REJECTED') && (
                     <Button onClick={() => updateStatus('REJECTED')} disabled={updating} variant="destructive" className="w-full">
-                      {updating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <XCircle className="h-4 w-4 mr-2" />}
+                      {updating ? <Loader2 className={`${ICON_SIZES.sm} animate-spin mr-2`} /> : <XCircle className={`${ICON_SIZES.sm} mr-2`} />}
                       Reject Request
                     </Button>
                   )}
 
                   {allowedTransitions.includes('PENDING') && (
                     <Button onClick={() => updateStatus('PENDING')} disabled={updating} variant="outline" className="w-full">
-                      {updating && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                      {updating && <Loader2 className={`${ICON_SIZES.sm} animate-spin mr-2`} />}
                       Return to Pending
                     </Button>
                   )}
@@ -535,7 +536,7 @@ export default function AdminSpendRequestDetailPage({ params }: { params: Promis
           <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
               <div className="w-10 h-10 bg-rose-100 rounded-xl flex items-center justify-center">
-                <User className="h-5 w-5 text-rose-600" />
+                <User className={`${ICON_SIZES.md} text-rose-600`} />
               </div>
               <h2 className="font-semibold text-slate-900">Requester</h2>
             </div>

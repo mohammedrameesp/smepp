@@ -19,6 +19,8 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Loader2, RotateCcw, Save, Shield, ShieldCheck, Users } from 'lucide-react';
+import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface PermissionGroup {
   label: string;
@@ -230,7 +232,7 @@ export function PermissionsClient({
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-amber-500 rounded-lg">
-                <Shield className="h-5 w-5 text-white" />
+                <Shield className={`${ICON_SIZES.md} text-white`} />
               </div>
               <div>
                 <p className="font-medium text-amber-900">Owner & Admin</p>
@@ -244,7 +246,7 @@ export function PermissionsClient({
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-blue-500 rounded-lg">
-                <ShieldCheck className="h-5 w-5 text-white" />
+                <ShieldCheck className={`${ICON_SIZES.md} text-white`} />
               </div>
               <div>
                 <p className="font-medium text-blue-900">Manager</p>
@@ -260,7 +262,7 @@ export function PermissionsClient({
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-gray-500 rounded-lg">
-                <Users className="h-5 w-5 text-white" />
+                <Users className={`${ICON_SIZES.md} text-white`} />
               </div>
               <div>
                 <p className="font-medium text-gray-900">Member</p>
@@ -279,9 +281,9 @@ export function PermissionsClient({
           <AlertDialogTrigger asChild>
             <Button variant="outline" disabled={isResetting}>
               {isResetting ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className={`${ICON_SIZES.sm} mr-2 animate-spin`} />
               ) : (
-                <RotateCcw className="h-4 w-4 mr-2" />
+                <RotateCcw className={`${ICON_SIZES.sm} mr-2`} />
               )}
               Reset to Defaults
             </Button>
@@ -303,9 +305,9 @@ export function PermissionsClient({
 
         <Button onClick={savePermissions} disabled={!hasChanges || isSaving}>
           {isSaving ? (
-            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            <Loader2 className={`${ICON_SIZES.sm} mr-2 animate-spin`} />
           ) : (
-            <Save className="h-4 w-4 mr-2" />
+            <Save className={`${ICON_SIZES.sm} mr-2`} />
           )}
           Save Changes
         </Button>
@@ -315,11 +317,11 @@ export function PermissionsClient({
       <Tabs value={activeRole} onValueChange={(v) => setActiveRole(v as Role)}>
         <TabsList className="grid w-full grid-cols-2 max-w-md">
           <TabsTrigger value="MANAGER" className="flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4" />
+            <ShieldCheck className={ICON_SIZES.sm} />
             Manager
           </TabsTrigger>
           <TabsTrigger value="MEMBER" className="flex items-center gap-2">
-            <Users className="h-4 w-4" />
+            <Users className={ICON_SIZES.sm} />
             Member
           </TabsTrigger>
         </TabsList>
@@ -346,7 +348,7 @@ export function PermissionsClient({
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-amber-100 border border-amber-300 rounded-lg px-4 py-2 shadow-lg flex items-center gap-3">
           <span className="text-sm text-amber-800">You have unsaved changes</span>
           <Button size="sm" onClick={savePermissions} disabled={isSaving}>
-            {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
+            {isSaving ? <Loader2 className={`${ICON_SIZES.sm} animate-spin`} /> : 'Save'}
           </Button>
         </div>
       )}

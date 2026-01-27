@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/select';
 import { Loader2, Calculator, Settings2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ICON_SIZES } from '@/lib/constants';
 import { formatCurrency } from '@/lib/core/currency';
 import { formatNumber, calculatePercentage } from '@/lib/utils/math-utils';
 
@@ -311,7 +312,7 @@ export default function NewSalaryStructurePage() {
                     <div className="pt-4 border-t">
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2">
-                          <Settings2 className="h-4 w-4 text-muted-foreground" />
+                          <Settings2 className={`${ICON_SIZES.sm} text-muted-foreground`} />
                           <span className="text-sm font-medium">Customize Percentages</span>
                         </div>
                         <Switch
@@ -470,7 +471,7 @@ export default function NewSalaryStructurePage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Calculator className="h-5 w-5" />
+                  <Calculator className={ICON_SIZES.md} />
                   Salary Summary
                 </CardTitle>
                 <CardDescription>
@@ -518,7 +519,7 @@ export default function NewSalaryStructurePage() {
 
                 <div className="mt-6">
                   <Button type="submit" className="w-full" disabled={isLoading || !memberId || basic <= 0}>
-                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {isLoading && <Loader2 className={`mr-2 ${ICON_SIZES.sm} animate-spin`} />}
                     Create Salary Structure
                   </Button>
                 </div>

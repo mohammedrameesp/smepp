@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Upload, X, FileText, Image as ImageIcon, Eye, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface DocumentUploadProps {
   label: string;
@@ -108,7 +109,7 @@ export function DocumentUpload({
         <div className="flex items-center gap-3 p-3 bg-gray-50 border rounded-lg">
           <div className="flex-shrink-0">
             {isPdf ? (
-              <FileText className="h-10 w-10 text-red-500" />
+              <FileText className={`${ICON_SIZES['2xl']} text-red-500`} />
             ) : preview || isImage ? (
               <img
                 src={preview || value}
@@ -116,7 +117,7 @@ export function DocumentUpload({
                 className="h-12 w-12 object-cover rounded border"
               />
             ) : (
-              <ImageIcon className="h-10 w-10 text-blue-500" />
+              <ImageIcon className={`${ICON_SIZES['2xl']} text-blue-500`} />
             )}
           </div>
           <div className="flex-1 min-w-0">
@@ -132,7 +133,7 @@ export function DocumentUpload({
               size="sm"
               onClick={() => window.open(value, '_blank')}
             >
-              <Eye className="h-4 w-4" />
+              <Eye className={ICON_SIZES.sm} />
             </Button>
             {!disabled && (
               <Button
@@ -142,7 +143,7 @@ export function DocumentUpload({
                 onClick={handleRemove}
                 className="text-red-600 hover:text-red-700 hover:bg-red-50"
               >
-                <X className="h-4 w-4" />
+                <X className={ICON_SIZES.sm} />
               </Button>
             )}
           </div>
@@ -167,12 +168,12 @@ export function DocumentUpload({
           >
             {isUploading ? (
               <>
-                <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+                <Loader2 className={`${ICON_SIZES.md} animate-spin text-blue-600`} />
                 <span className="text-sm text-gray-600">Uploading...</span>
               </>
             ) : (
               <>
-                <Upload className="h-5 w-5 text-gray-400" />
+                <Upload className={`${ICON_SIZES.md} text-gray-400`} />
                 <span className="text-sm text-gray-600">
                   Click to upload or drag and drop
                 </span>
@@ -262,7 +263,7 @@ export function CompactDocumentUpload({
           size="sm"
           onClick={() => window.open(value, '_blank')}
         >
-          <Eye className="h-4 w-4 mr-1" />
+          <Eye className={`${ICON_SIZES.sm} mr-1`} />
           View
         </Button>
         {!disabled && (
@@ -273,7 +274,7 @@ export function CompactDocumentUpload({
             onClick={() => onChange(null)}
             className="text-red-600"
           >
-            <X className="h-4 w-4" />
+            <X className={ICON_SIZES.sm} />
           </Button>
         )}
       </div>
@@ -299,9 +300,9 @@ export function CompactDocumentUpload({
       >
         <label htmlFor={id} className="cursor-pointer">
           {isUploading ? (
-            <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+            <Loader2 className={`${ICON_SIZES.sm} mr-1 animate-spin`} />
           ) : (
-            <Upload className="h-4 w-4 mr-1" />
+            <Upload className={`${ICON_SIZES.sm} mr-1`} />
           )}
           {placeholder}
         </label>

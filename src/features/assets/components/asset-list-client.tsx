@@ -10,6 +10,7 @@ import { AssetListTable } from './asset-list-table';
 import { type AdminAsset } from './asset-shared';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ICON_SIZES } from '@/lib/constants';
 
 export function AssetListClient() {
   const [assets, setAssets] = useState<AdminAsset[]>([]);
@@ -40,7 +41,7 @@ export function AssetListClient() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-400 mb-3" />
+        <Loader2 className={`${ICON_SIZES.xl} animate-spin text-gray-400 mb-3`} />
         <p className="text-gray-500">Loading assets...</p>
       </div>
     );
@@ -49,7 +50,7 @@ export function AssetListClient() {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
-        <AlertCircle className="h-8 w-8 text-red-400 mb-3" />
+        <AlertCircle className={`${ICON_SIZES.xl} text-red-400 mb-3`} />
         <p className="text-red-600 mb-3">{error}</p>
         <Button variant="outline" onClick={fetchAssets}>
           Try Again

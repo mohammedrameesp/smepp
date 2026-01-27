@@ -12,6 +12,7 @@ import { usePathname } from 'next/navigation';
 import { Home, Users, Box, Inbox, User } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
 import { type BadgeCounts } from '@/components/layout/badge-types';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface MobileBottomNavProps {
   badgeCounts?: BadgeCounts;
@@ -113,7 +114,7 @@ export function MobileBottomNav({
             {item.isActive && (
               <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-8 h-1 bg-blue-600 rounded-full" />
             )}
-            <item.icon className="h-5 w-5" />
+            <item.icon className={ICON_SIZES.md} />
             {item.badge && item.badge > 0 && (
               <span className="absolute -top-1 right-1 w-4 h-4 bg-rose-500 text-white text-[10px] rounded-full flex items-center justify-center">
                 {item.badge > 99 ? '99+' : item.badge}

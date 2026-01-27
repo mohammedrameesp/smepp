@@ -5,6 +5,7 @@ import { EmployeeTopNav } from '@/components/layout/employee-top-nav';
 import { EmployeeViewBanner } from '@/components/layout/employee-view-banner';
 import { ChatWidget } from '@/components/chat/chat-widget';
 import { AlertCircle, ArrowRight } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface EmployeeLayoutClientProps {
   children: React.ReactNode;
@@ -40,7 +41,7 @@ export function EmployeeLayoutClient({
         <div className="bg-amber-50 border-b border-amber-200 px-4 py-2">
           <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
             <div className="flex items-center gap-2 text-amber-800">
-              <AlertCircle className="h-4 w-4 flex-shrink-0" />
+              <AlertCircle className={`${ICON_SIZES.sm} flex-shrink-0`} />
               <span className="text-sm">
                 Your profile is incomplete. Please complete your onboarding to access all features.
               </span>
@@ -50,7 +51,7 @@ export function EmployeeLayoutClient({
               className="inline-flex items-center gap-1 text-sm font-medium text-amber-900 hover:text-amber-700 whitespace-nowrap"
             >
               Complete now
-              <ArrowRight className="h-3 w-3" />
+              <ArrowRight className={ICON_SIZES.xs} />
             </Link>
           </div>
         </div>

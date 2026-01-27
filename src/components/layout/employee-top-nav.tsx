@@ -32,6 +32,7 @@ import { FeedbackTrigger } from '@/components/feedback/feedback-trigger';
 import { ClientOnly } from '@/components/ui/client-only';
 import { cn } from '@/lib/core/utils';
 import { Button } from '@/components/ui/button';
+import { ICON_SIZES } from '@/lib/constants';
 
 // Fallback avatar button shown during SSR to prevent layout shift
 function UserAvatarFallback({ initials }: { initials: string }) {
@@ -155,7 +156,7 @@ export function EmployeeTopNav({
                 disabled={isSwitching}
                 className="text-amber-400 hover:text-amber-300 hover:bg-slate-700"
               >
-                <Shield className="h-4 w-4 mr-1.5" />
+                <Shield className={cn(ICON_SIZES.sm, 'mr-1.5')} />
                 <span className="hidden sm:inline">{isSwitching ? 'Switching...' : 'Admin'}</span>
               </Button>
             )}
@@ -188,7 +189,7 @@ export function EmployeeTopNav({
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
                     <Link href="/profile" className="flex items-center gap-2 cursor-pointer">
-                      <User className="h-4 w-4 text-slate-400" />
+                      <User className={cn(ICON_SIZES.sm, 'text-slate-400')} />
                       My Profile
                     </Link>
                   </DropdownMenuItem>
@@ -196,7 +197,7 @@ export function EmployeeTopNav({
                   {isModuleEnabled('assets') && (
                     <DropdownMenuItem asChild>
                       <Link href="/employee/my-assets" className="flex items-center gap-2 cursor-pointer">
-                        <Package className="h-4 w-4 text-slate-400" />
+                        <Package className={cn(ICON_SIZES.sm, 'text-slate-400')} />
                         My Holdings
                       </Link>
                     </DropdownMenuItem>
@@ -204,7 +205,7 @@ export function EmployeeTopNav({
                   {isModuleEnabled('leave') && (
                     <DropdownMenuItem asChild>
                       <Link href="/employee/leave" className="flex items-center gap-2 cursor-pointer">
-                        <PalmtreeIcon className="h-4 w-4 text-slate-400" />
+                        <PalmtreeIcon className={cn(ICON_SIZES.sm, 'text-slate-400')} />
                         Leave Requests
                       </Link>
                     </DropdownMenuItem>
@@ -212,7 +213,7 @@ export function EmployeeTopNav({
                   {isModuleEnabled('spend-requests') && (
                     <DropdownMenuItem asChild>
                       <Link href="/employee/spend-requests" className="flex items-center gap-2 cursor-pointer">
-                        <ShoppingCart className="h-4 w-4 text-slate-400" />
+                        <ShoppingCart className={cn(ICON_SIZES.sm, 'text-slate-400')} />
                         Spend Requests
                       </Link>
                     </DropdownMenuItem>
@@ -220,7 +221,7 @@ export function EmployeeTopNav({
                   {isModuleEnabled('suppliers') && (
                     <DropdownMenuItem asChild>
                       <Link href="/employee/suppliers" className="flex items-center gap-2 cursor-pointer">
-                        <Truck className="h-4 w-4 text-slate-400" />
+                        <Truck className={cn(ICON_SIZES.sm, 'text-slate-400')} />
                         Suppliers
                       </Link>
                     </DropdownMenuItem>
@@ -228,7 +229,7 @@ export function EmployeeTopNav({
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
                     <Link href="/help" className="flex items-center gap-2 cursor-pointer">
-                      <HelpCircle className="h-4 w-4 text-slate-400" />
+                      <HelpCircle className={cn(ICON_SIZES.sm, 'text-slate-400')} />
                       Help & Support
                     </Link>
                   </DropdownMenuItem>
@@ -237,7 +238,7 @@ export function EmployeeTopNav({
                     onClick={() => signOut({ callbackUrl: '/login?signedOut=true' })}
                     className="flex items-center gap-2 cursor-pointer text-rose-600 focus:text-rose-600 focus:bg-rose-50"
                   >
-                    <LogOut className="h-4 w-4" />
+                    <LogOut className={ICON_SIZES.sm} />
                     Sign out
                   </DropdownMenuItem>
                 </DropdownMenuContent>

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Search, FileText, HelpCircle, ArrowRight } from 'lucide-react';
 import { HelpSearchInput } from '@/components/help';
 import { helpCategories } from '@/lib/help/help-categories';
+import { ICON_SIZES } from '@/lib/constants';
 
 // Simple client-side search (will be enhanced in Phase 5)
 function searchContent(query: string) {
@@ -53,7 +54,7 @@ function SearchResults() {
     return (
       <div className="text-center py-16">
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
-          <Search className="h-8 w-8 text-gray-400" />
+          <Search className={`${ICON_SIZES.xl} text-gray-400`} />
         </div>
         <h2 className="text-xl font-semibold text-gray-900 mb-2">Search Help</h2>
         <p className="text-gray-500 max-w-md mx-auto">
@@ -67,7 +68,7 @@ function SearchResults() {
     return (
       <div className="text-center py-16">
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
-          <HelpCircle className="h-8 w-8 text-gray-400" />
+          <HelpCircle className={`${ICON_SIZES.xl} text-gray-400`} />
         </div>
         <h2 className="text-xl font-semibold text-gray-900 mb-2">No results found</h2>
         <p className="text-gray-500 max-w-md mx-auto mb-6">
@@ -79,7 +80,7 @@ function SearchResults() {
           className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium"
         >
           Browse all topics
-          <ArrowRight className="h-4 w-4" />
+          <ArrowRight className={ICON_SIZES.sm} />
         </Link>
       </div>
     );
@@ -100,7 +101,7 @@ function SearchResults() {
           >
             <div className="flex items-start gap-3">
               <div className="p-2 rounded-lg bg-gray-50 group-hover:bg-blue-50 transition-colors">
-                <FileText className="h-5 w-5 text-gray-400 group-hover:text-blue-600 transition-colors" />
+                <FileText className={`${ICON_SIZES.md} text-gray-400 group-hover:text-blue-600 transition-colors`} />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
@@ -113,7 +114,7 @@ function SearchResults() {
                 </div>
                 <p className="text-sm text-gray-500 line-clamp-2">{result.description}</p>
               </div>
-              <ArrowRight className="h-4 w-4 text-gray-300 group-hover:text-blue-600 transition-colors flex-shrink-0 mt-1" />
+              <ArrowRight className={`${ICON_SIZES.sm} text-gray-300 group-hover:text-blue-600 transition-colors flex-shrink-0 mt-1`} />
             </div>
           </Link>
         ))}

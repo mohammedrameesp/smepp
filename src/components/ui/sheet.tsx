@@ -11,6 +11,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { X } from "lucide-react"
 
 import { cn } from "@/lib/core/utils"
+import { ICON_SIZES } from "@/lib/constants"
 
 const Sheet = DialogPrimitive.Root
 
@@ -64,7 +65,7 @@ const SheetContent = React.forwardRef<
     >
       {children}
       <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-white transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-gray-950 focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-gray-100">
-        <X className="h-4 w-4" />
+        <X className={ICON_SIZES.sm} />
         <span className="sr-only">Close</span>
       </DialogPrimitive.Close>
     </DialogPrimitive.Content>

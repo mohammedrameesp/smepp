@@ -23,6 +23,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { ICON_SIZES } from '@/lib/constants';
 
 const MODULES = [
   { value: 'LEAVE_REQUEST', label: 'Leave Requests' },
@@ -182,7 +183,7 @@ export default function EditApprovalPolicyPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <Loader2 className={`${ICON_SIZES.xl} animate-spin text-muted-foreground`} />
       </div>
     );
   }
@@ -201,7 +202,7 @@ export default function EditApprovalPolicyPage() {
           <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button variant="destructive" disabled={isDeleting}>
-              <Trash2 className="h-4 w-4 mr-2" />
+              <Trash2 className={`${ICON_SIZES.sm} mr-2`} />
               Delete
             </Button>
           </AlertDialogTrigger>
@@ -345,7 +346,7 @@ export default function EditApprovalPolicyPage() {
             {levels.map((level, index) => (
               <div key={index} className="flex items-center gap-4">
                 <div className="flex items-center gap-2 text-muted-foreground">
-                  <GripVertical className="h-4 w-4" />
+                  <GripVertical className={ICON_SIZES.sm} />
                   <span className="w-8">#{level.levelOrder}</span>
                 </div>
                 <Select
@@ -370,7 +371,7 @@ export default function EditApprovalPolicyPage() {
                   onClick={() => removeLevel(index)}
                   disabled={levels.length <= 1}
                 >
-                  <X className="h-4 w-4" />
+                  <X className={ICON_SIZES.sm} />
                 </Button>
               </div>
             ))}
@@ -381,7 +382,7 @@ export default function EditApprovalPolicyPage() {
               onClick={addLevel}
               disabled={levels.length >= 5}
             >
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className={`${ICON_SIZES.sm} mr-2`} />
               Add Level
             </Button>
           </CardContent>

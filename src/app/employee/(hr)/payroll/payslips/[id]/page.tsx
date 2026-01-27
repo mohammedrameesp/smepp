@@ -5,6 +5,7 @@ import { prisma } from '@/lib/core/prisma';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Building, TrendingUp, TrendingDown, DollarSign, CreditCard } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import { formatCurrency } from '@/lib/core/currency';
 import { formatDate } from '@/lib/core/datetime';
 import { getMonthName } from '@/features/payroll/lib/utils';
@@ -84,7 +85,7 @@ export default async function EmployeePayslipDetailPage({ params }: PageProps) {
         }}
         actions={
           <PageHeaderButton href="/employee/payroll/payslips" variant="outline">
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className={ICON_SIZES.sm} />
             Back to Payslips
           </PageHeaderButton>
         }
@@ -193,7 +194,7 @@ export default async function EmployeePayslipDetailPage({ params }: PageProps) {
             <div className="flex justify-between items-center">
               <div>
                 <div className="flex items-center gap-2 mb-2">
-                  <DollarSign className="h-6 w-6 text-emerald-700" />
+                  <DollarSign className={`${ICON_SIZES.lg} text-emerald-700`} />
                   <h3 className="text-xl font-semibold text-emerald-900">Net Pay</h3>
                 </div>
                 <p className="text-sm text-emerald-700">

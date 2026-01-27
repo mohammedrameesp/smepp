@@ -16,6 +16,7 @@ import {
   FolderArchive,
   Calendar
 } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -278,7 +279,7 @@ export default function BackupsPage() {
           <p className="text-slate-500 text-sm">Manage platform backups and disaster recovery</p>
         </div>
         <Button onClick={fetchBackups} variant="outline" className="gap-2" disabled={loading}>
-          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`${ICON_SIZES.sm} ${loading ? 'animate-spin' : ''}`} />
           Refresh
         </Button>
       </div>
@@ -286,7 +287,7 @@ export default function BackupsPage() {
       {/* Status Messages */}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
-          <AlertTriangle className="h-5 w-5 text-red-500" />
+          <AlertTriangle className={`${ICON_SIZES.md} text-red-500`} />
           <p className="text-red-700">{error}</p>
           <Button variant="ghost" size="sm" onClick={() => setError(null)} className="ml-auto">
             Dismiss
@@ -297,7 +298,7 @@ export default function BackupsPage() {
       {success && (
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
           <div className="flex items-center gap-3">
-            <CheckCircle className="h-5 w-5 text-green-500" />
+            <CheckCircle className={`${ICON_SIZES.md} text-green-500`} />
             <p className="text-green-700 flex-1">{success}</p>
             <Button variant="ghost" size="sm" onClick={() => { setSuccess(null); setCreatedBackups([]); }}>
               Dismiss
@@ -324,9 +325,9 @@ export default function BackupsPage() {
                     disabled={actionLoading === `download-${backup.path}`}
                   >
                     {actionLoading === `download-${backup.path}` ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <Loader2 className={`${ICON_SIZES.sm} animate-spin`} />
                     ) : (
-                      <Download className="h-4 w-4" />
+                      <Download className={ICON_SIZES.sm} />
                     )}
                     {backup.type === 'full' ? 'Full Platform' : backup.organization}
                   </Button>
@@ -341,7 +342,7 @@ export default function BackupsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Database className="h-5 w-5" />
+            <Database className={ICON_SIZES.md} />
             Create Backup
           </CardTitle>
           <CardDescription>
@@ -389,9 +390,9 @@ export default function BackupsPage() {
               className="gap-2"
             >
               {actionLoading === 'create' ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className={`${ICON_SIZES.sm} animate-spin`} />
               ) : (
-                <HardDrive className="h-4 w-4" />
+                <HardDrive className={ICON_SIZES.sm} />
               )}
               Create Backup
             </Button>
@@ -403,7 +404,7 @@ export default function BackupsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <FolderArchive className="h-5 w-5" />
+            <FolderArchive className={ICON_SIZES.md} />
             Full Platform Backups
           </CardTitle>
           <CardDescription>
@@ -413,7 +414,7 @@ export default function BackupsPage() {
         <CardContent>
           {loading ? (
             <div className="flex justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+              <Loader2 className={`${ICON_SIZES.xl} animate-spin text-slate-400`} />
             </div>
           ) : fullBackups.length === 0 ? (
             <p className="text-slate-500 text-center py-8">No full backups found</p>
@@ -433,7 +434,7 @@ export default function BackupsPage() {
                     <TableCell className="font-medium">{backup.filename}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-slate-400" />
+                        <Calendar className={`${ICON_SIZES.sm} text-slate-400`} />
                         {formatDate(backup.createdAt)}
                       </div>
                     </TableCell>
@@ -447,9 +448,9 @@ export default function BackupsPage() {
                           disabled={actionLoading === `download-${backup.path}`}
                         >
                           {actionLoading === `download-${backup.path}` ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <Loader2 className={`${ICON_SIZES.sm} animate-spin`} />
                           ) : (
-                            <Download className="h-4 w-4" />
+                            <Download className={ICON_SIZES.sm} />
                           )}
                         </Button>
                         <Button
@@ -458,7 +459,7 @@ export default function BackupsPage() {
                           onClick={() => { setDeleteBackup(backup); setDeleteDialog(true); }}
                           className="text-red-600 hover:text-red-700"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className={ICON_SIZES.sm} />
                         </Button>
                       </div>
                     </TableCell>
@@ -474,7 +475,7 @@ export default function BackupsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Building2 className="h-5 w-5" />
+            <Building2 className={ICON_SIZES.md} />
             Organization Backups
           </CardTitle>
           <CardDescription>
@@ -484,7 +485,7 @@ export default function BackupsPage() {
         <CardContent>
           {loading ? (
             <div className="flex justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+              <Loader2 className={`${ICON_SIZES.xl} animate-spin text-slate-400`} />
             </div>
           ) : Object.keys(orgGroups).length === 0 ? (
             <p className="text-slate-500 text-center py-8">No organization backups found</p>
@@ -493,7 +494,7 @@ export default function BackupsPage() {
               {Object.entries(orgGroups).map(([orgName, orgBackupList]) => (
                 <div key={orgName}>
                   <h3 className="font-medium text-slate-900 mb-3 flex items-center gap-2">
-                    <Building2 className="h-4 w-4" />
+                    <Building2 className={ICON_SIZES.sm} />
                     {orgName}
                     <Badge variant="secondary">{orgBackupList.length} backups</Badge>
                   </h3>
@@ -512,7 +513,7 @@ export default function BackupsPage() {
                           <TableCell className="font-medium">{backup.filename}</TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
-                              <Clock className="h-4 w-4 text-slate-400" />
+                              <Clock className={`${ICON_SIZES.sm} text-slate-400`} />
                               {formatDate(backup.createdAt)}
                             </div>
                           </TableCell>
@@ -526,9 +527,9 @@ export default function BackupsPage() {
                                 disabled={actionLoading === `download-${backup.path}`}
                               >
                                 {actionLoading === `download-${backup.path}` ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  <Loader2 className={`${ICON_SIZES.sm} animate-spin`} />
                                 ) : (
-                                  <Download className="h-4 w-4" />
+                                  <Download className={ICON_SIZES.sm} />
                                 )}
                               </Button>
                               <Button
@@ -537,7 +538,7 @@ export default function BackupsPage() {
                                 onClick={() => openRestoreDialog(backup)}
                                 className="gap-1"
                               >
-                                <Upload className="h-4 w-4" />
+                                <Upload className={ICON_SIZES.sm} />
                                 Restore
                               </Button>
                               <Button
@@ -546,7 +547,7 @@ export default function BackupsPage() {
                                 onClick={() => { setDeleteBackup(backup); setDeleteDialog(true); }}
                                 className="text-red-600 hover:text-red-700"
                               >
-                                <Trash2 className="h-4 w-4" />
+                                <Trash2 className={ICON_SIZES.sm} />
                               </Button>
                             </div>
                           </TableCell>
@@ -573,13 +574,13 @@ export default function BackupsPage() {
 
           {restoreLoading && !restorePreview ? (
             <div className="flex justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+              <Loader2 className={`${ICON_SIZES.xl} animate-spin text-slate-400`} />
             </div>
           ) : restorePreview ? (
             <div className="space-y-4">
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
                 <div className="flex gap-3">
-                  <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0" />
+                  <AlertTriangle className={`${ICON_SIZES.md} text-amber-500 flex-shrink-0`} />
                   <div>
                     <p className="font-medium text-amber-800">Warning</p>
                     <p className="text-sm text-amber-700">{restorePreview.warning}</p>
@@ -631,7 +632,7 @@ export default function BackupsPage() {
               className="bg-amber-600 hover:bg-amber-700"
             >
               {restoreLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                <Loader2 className={`${ICON_SIZES.sm} animate-spin mr-2`} />
               ) : null}
               Restore Now
             </Button>
@@ -666,7 +667,7 @@ export default function BackupsPage() {
               variant="destructive"
             >
               {actionLoading?.startsWith('delete-') ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                <Loader2 className={`${ICON_SIZES.sm} animate-spin mr-2`} />
               ) : null}
               Delete
             </Button>

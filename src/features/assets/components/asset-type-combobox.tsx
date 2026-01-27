@@ -35,6 +35,7 @@ import { useState, useEffect, useRef, useCallback, useId } from 'react';
 import { Input } from '@/components/ui/input';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface AssetTypeSuggestion {
   type: string;
@@ -226,7 +227,7 @@ export function AssetTypeCombobox({
         />
         {isLoading && (
           <div className="absolute right-2 top-1/2 -translate-y-1/2">
-            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            <Loader2 className={`${ICON_SIZES.sm} animate-spin text-muted-foreground`} />
           </div>
         )}
       </div>

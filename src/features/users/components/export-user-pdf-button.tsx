@@ -10,6 +10,7 @@ import { FileDown, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { formatDate, formatDateTime } from '@/lib/core/datetime';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface Asset {
   id: string;
@@ -281,12 +282,12 @@ export function ExportUserPDFButton({ userId, userName }: ExportUserPDFButtonPro
     >
       {isExporting ? (
         <>
-          <Loader2 className="h-4 w-4 animate-spin" />
+          <Loader2 className={`${ICON_SIZES.sm} animate-spin`} />
           Generating PDF...
         </>
       ) : (
         <>
-          <FileDown className="h-4 w-4" />
+          <FileDown className={ICON_SIZES.sm} />
           Export Exit Checklist
         </>
       )}

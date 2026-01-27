@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Mail, Lock, AlertCircle, Building2, Home, Eye, EyeOff } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import { useSubdomain } from '@/hooks/use-subdomain';
 import { useTenantBranding } from '@/hooks/use-tenant-branding';
 import { TenantBrandedPanel } from '@/components/auth/TenantBrandedPanel';
@@ -253,7 +254,7 @@ function LoginForm() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-gray-400 mx-auto mb-4" />
+          <Loader2 className={`${ICON_SIZES.xl} animate-spin text-gray-400 mx-auto mb-4`} />
           <p className="text-sm text-gray-500">Loading...</p>
         </div>
       </div>
@@ -315,7 +316,7 @@ function LoginForm() {
               onClick={() => { window.location.href = homeUrl; }}
               className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white"
             >
-              <Home className="w-4 h-4 mr-2" />
+              <Home className={`${ICON_SIZES.sm} mr-2`} />
               Go to Home Now
             </Button>
 
@@ -383,7 +384,7 @@ function LoginForm() {
             {/* Error Message */}
             {error && (
               <Alert variant="error" className="mb-4">
-                <AlertCircle className="h-4 w-4" />
+                <AlertCircle className={ICON_SIZES.sm} />
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
@@ -399,7 +400,7 @@ function LoginForm() {
                   >
                     {oauthLoading === 'google' ? (
                       <span className="flex items-center justify-center gap-3">
-                        <Loader2 className="h-5 w-5 animate-spin" />
+                        <Loader2 className={`${ICON_SIZES.md} animate-spin`} />
                         Signing in...
                       </span>
                     ) : (
@@ -424,7 +425,7 @@ function LoginForm() {
                   >
                     {oauthLoading === 'azure-ad' ? (
                       <span className="flex items-center justify-center gap-3">
-                        <Loader2 className="h-5 w-5 animate-spin" />
+                        <Loader2 className={`${ICON_SIZES.md} animate-spin`} />
                         Signing in...
                       </span>
                     ) : (
@@ -472,7 +473,7 @@ function LoginForm() {
                     disabled={!!oauthLoading}
                   >
                     {oauthLoading === 'google' ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className={`mr-2 ${ICON_SIZES.sm} animate-spin`} />
                     ) : (
                       <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
                         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -492,7 +493,7 @@ function LoginForm() {
                     disabled={!!oauthLoading}
                   >
                     {oauthLoading === 'azure-ad' ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className={`mr-2 ${ICON_SIZES.sm} animate-spin`} />
                     ) : (
                       <svg className="mr-2 h-5 w-5" viewBox="0 0 21 21" fill="none">
                         <rect width="10" height="10" fill="#F25022"/>
@@ -526,7 +527,7 @@ function LoginForm() {
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Mail className={`absolute left-3 top-3 ${ICON_SIZES.sm} text-muted-foreground`} />
                     <Input
                       id="email"
                       type="email"
@@ -552,7 +553,7 @@ function LoginForm() {
                     </Link>
                   </div>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Lock className={`absolute left-3 top-3 ${ICON_SIZES.sm} text-muted-foreground`} />
                     <Input
                       id="password"
                       type={showPassword ? 'text' : 'password'}
@@ -569,7 +570,7 @@ function LoginForm() {
                       className="absolute right-3 top-3 text-muted-foreground hover:text-foreground transition-colors"
                       tabIndex={-1}
                     >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      {showPassword ? <EyeOff className={ICON_SIZES.sm} /> : <Eye className={ICON_SIZES.sm} />}
                     </button>
                   </div>
                 </div>
@@ -586,7 +587,7 @@ function LoginForm() {
                 >
                   {isLoading ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className={`mr-2 ${ICON_SIZES.sm} animate-spin`} />
                       Signing in...
                     </>
                   ) : (
@@ -631,7 +632,7 @@ export default function LoginPage() {
     <Suspense
       fallback={
         <div className="min-h-screen flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin" />
+          <Loader2 className={`${ICON_SIZES.xl} animate-spin`} />
         </div>
       }
     >

@@ -13,6 +13,7 @@ import {
   FlaskConical
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ICON_SIZES } from '@/lib/constants';
 
 // Prevent static pre-rendering (requires database)
 export const dynamic = 'force-dynamic';
@@ -65,7 +66,7 @@ export default async function SystemHealthPage() {
           <p className="text-slate-500 text-sm">Monitor platform performance and system status</p>
         </div>
         <Button variant="outline" className="gap-2">
-          <RefreshCw className="h-4 w-4" />
+          <RefreshCw className={ICON_SIZES.sm} />
           Refresh
         </Button>
       </div>
@@ -77,13 +78,13 @@ export default async function SystemHealthPage() {
           backgroundSize: '20px 20px'
         }} />
         <span className="absolute top-3 right-3 inline-flex items-center gap-1 bg-white/20 backdrop-blur-sm text-white/90 text-[9px] font-medium px-1.5 py-0.5 rounded" title="Simulated data">
-          <FlaskConical className="h-2.5 w-2.5" />
+          <FlaskConical className={ICON_SIZES.xs} />
           DEMO
         </span>
         <div className="relative flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-              <CheckCircle className="h-8 w-8 text-white" />
+              <CheckCircle className={`${ICON_SIZES.xl} text-white`} />
             </div>
             <div>
               <h2 className="text-2xl font-bold">All Systems Operational</h2>
@@ -101,7 +102,7 @@ export default async function SystemHealthPage() {
       <div className="relative">
         <div className="absolute -top-2 right-0 z-10">
           <span className="inline-flex items-center gap-1 bg-violet-100 text-violet-700 text-[9px] font-medium px-1.5 py-0.5 rounded" title="Simulated data">
-            <FlaskConical className="h-2.5 w-2.5" />
+            <FlaskConical className={ICON_SIZES.xs} />
             DEMO DATA
           </span>
         </div>
@@ -112,7 +113,7 @@ export default async function SystemHealthPage() {
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center">
-                  <Server className="h-5 w-5 text-slate-500" />
+                  <Server className={`${ICON_SIZES.md} text-slate-500`} />
                 </div>
                 <div>
                   <h3 className="font-medium text-slate-900">{service.name}</h3>
@@ -141,7 +142,7 @@ export default async function SystemHealthPage() {
         {/* Resource Usage */}
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden relative">
           <span className="absolute top-3 right-3 inline-flex items-center gap-1 bg-violet-100 text-violet-700 text-[9px] font-medium px-1.5 py-0.5 rounded z-10" title="Simulated data">
-            <FlaskConical className="h-2.5 w-2.5" />
+            <FlaskConical className={ICON_SIZES.xs} />
             DEMO
           </span>
           <div className="px-5 py-4 border-b border-slate-100">
@@ -158,7 +159,7 @@ export default async function SystemHealthPage() {
         {/* Recent Events */}
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden relative">
           <span className="absolute top-3 right-3 inline-flex items-center gap-1 bg-violet-100 text-violet-700 text-[9px] font-medium px-1.5 py-0.5 rounded z-10" title="Simulated data">
-            <FlaskConical className="h-2.5 w-2.5" />
+            <FlaskConical className={ICON_SIZES.xs} />
             DEMO
           </span>
           <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
@@ -173,11 +174,11 @@ export default async function SystemHealthPage() {
                   event.type === 'warning' ? 'bg-amber-100' : 'bg-blue-100'
                 }`}>
                   {event.type === 'success' ? (
-                    <CheckCircle className="h-4 w-4 text-emerald-600" />
+                    <CheckCircle className={`${ICON_SIZES.sm} text-emerald-600`} />
                   ) : event.type === 'warning' ? (
-                    <AlertTriangle className="h-4 w-4 text-amber-600" />
+                    <AlertTriangle className={`${ICON_SIZES.sm} text-amber-600`} />
                   ) : (
-                    <Activity className="h-4 w-4 text-blue-600" />
+                    <Activity className={`${ICON_SIZES.sm} text-blue-600`} />
                   )}
                 </div>
                 <div className="flex-1">
@@ -219,7 +220,7 @@ export default async function SystemHealthPage() {
             </div>
             <div className="text-center p-4 bg-slate-50 rounded-xl relative">
               <span className="absolute top-1 right-1 inline-flex items-center gap-0.5 bg-violet-100 text-violet-700 text-[8px] font-medium px-1 py-0.5 rounded" title="Simulated">
-                <FlaskConical className="h-2 w-2" />
+                <FlaskConical className={ICON_SIZES.xs} />
               </span>
               <p className="text-2xl font-bold text-slate-900">{stats.dbSize}</p>
               <p className="text-xs text-slate-500 mt-1">DB Size</p>
@@ -231,7 +232,7 @@ export default async function SystemHealthPage() {
       {/* Quick Actions */}
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden relative">
         <span className="absolute top-3 right-3 inline-flex items-center gap-1 bg-violet-100 text-violet-700 text-[9px] font-medium px-1.5 py-0.5 rounded z-10" title="Not functional">
-          <FlaskConical className="h-2.5 w-2.5" />
+          <FlaskConical className={ICON_SIZES.xs} />
           DEMO
         </span>
         <div className="px-5 py-4 border-b border-slate-100">
@@ -240,7 +241,7 @@ export default async function SystemHealthPage() {
         <div className="p-4 grid grid-cols-2 md:grid-cols-4 gap-3">
           <button className="p-4 bg-slate-50 hover:bg-slate-100 rounded-xl text-left transition-colors flex items-center gap-3">
             <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <RefreshCw className="h-5 w-5 text-blue-600" />
+              <RefreshCw className={`${ICON_SIZES.md} text-blue-600`} />
             </div>
             <div>
               <p className="font-medium text-slate-900 text-sm">Clear Cache</p>
@@ -249,7 +250,7 @@ export default async function SystemHealthPage() {
           </button>
           <button className="p-4 bg-slate-50 hover:bg-slate-100 rounded-xl text-left transition-colors flex items-center gap-3">
             <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-              <Database className="h-5 w-5 text-purple-600" />
+              <Database className={`${ICON_SIZES.md} text-purple-600`} />
             </div>
             <div>
               <p className="font-medium text-slate-900 text-sm">Backup Now</p>
@@ -258,7 +259,7 @@ export default async function SystemHealthPage() {
           </button>
           <button className="p-4 bg-slate-50 hover:bg-slate-100 rounded-xl text-left transition-colors flex items-center gap-3">
             <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-              <Zap className="h-5 w-5 text-amber-600" />
+              <Zap className={`${ICON_SIZES.md} text-amber-600`} />
             </div>
             <div>
               <p className="font-medium text-slate-900 text-sm">Run Jobs</p>
@@ -267,7 +268,7 @@ export default async function SystemHealthPage() {
           </button>
           <button className="p-4 bg-slate-50 hover:bg-slate-100 rounded-xl text-left transition-colors flex items-center gap-3">
             <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
-              <Activity className="h-5 w-5 text-emerald-600" />
+              <Activity className={`${ICON_SIZES.md} text-emerald-600`} />
             </div>
             <div>
               <p className="font-medium text-slate-900 text-sm">View Logs</p>
@@ -303,7 +304,7 @@ function ResourceBar({
     <div>
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <Icon className={`h-4 w-4 ${c.text}`} />
+          <Icon className={`${ICON_SIZES.sm} ${c.text}`} />
           <span className="text-sm font-medium text-slate-700">{label}</span>
         </div>
         <span className="text-sm font-medium text-slate-900">{value}%</span>

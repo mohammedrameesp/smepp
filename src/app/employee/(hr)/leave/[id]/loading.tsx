@@ -1,6 +1,7 @@
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Calendar, Clock, Info } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 
 export default function LeaveRequestDetailLoading() {
   return (
@@ -21,7 +22,7 @@ export default function LeaveRequestDetailLoading() {
         <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden mb-6">
           <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
             <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
-              <Calendar className="h-5 w-5 text-purple-600" />
+              <Calendar className={`${ICON_SIZES.md} text-purple-600`} />
             </div>
             <div>
               <h2 className="font-semibold text-slate-900">Leave Details</h2>
@@ -54,7 +55,7 @@ export default function LeaveRequestDetailLoading() {
         <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden mb-6">
           <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
             <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
-              <Info className="h-5 w-5 text-emerald-600" />
+              <Info className={`${ICON_SIZES.md} text-emerald-600`} />
             </div>
             <div>
               <h2 className="font-semibold text-slate-900">Balance Summary</h2>
@@ -77,7 +78,7 @@ export default function LeaveRequestDetailLoading() {
         <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
           <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
             <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-              <Clock className="h-5 w-5 text-blue-600" />
+              <Clock className={`${ICON_SIZES.md} text-blue-600`} />
             </div>
             <div>
               <h2 className="font-semibold text-slate-900">History</h2>

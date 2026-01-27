@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { Link2, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageHeaderButton } from '@/components/ui/page-header';
+import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface ShareSupplierLinkButtonProps {
   organizationSlug: string;
@@ -31,9 +33,9 @@ export function ShareSupplierLinkButton({ organizationSlug }: ShareSupplierLinkB
   return (
     <PageHeaderButton onClick={handleCopyLink} variant="outline">
       {copied ? (
-        <Check className="h-4 w-4 text-green-500" />
+        <Check className={cn(ICON_SIZES.sm, 'text-green-500')} />
       ) : (
-        <Link2 className="h-4 w-4" />
+        <Link2 className={ICON_SIZES.sm} />
       )}
       Share Link
     </PageHeaderButton>

@@ -6,6 +6,7 @@
 
 import { Card } from '@/components/ui/card';
 import { CheckCircle2 } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface FunnelStep {
   step: string;
@@ -49,7 +50,7 @@ export function OnboardingFunnel({ data, totalOrgs }: OnboardingFunnelProps) {
                   }`}
                 >
                   {item.percentage >= 50 ? (
-                    <CheckCircle2 className="h-4 w-4" />
+                    <CheckCircle2 className={ICON_SIZES.sm} />
                   ) : (
                     index + 1
                   )}

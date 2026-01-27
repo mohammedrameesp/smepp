@@ -7,6 +7,7 @@
 
 import { useState } from 'react';
 import { FileText, ExternalLink, Download, Eye, Image as ImageIcon } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -81,10 +82,10 @@ export function DocumentLink({
 
   const linkContent = (
     <>
-      {isImage ? <ImageIcon className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
+      {isImage ? <ImageIcon className={ICON_SIZES.sm} /> : <FileText className={ICON_SIZES.sm} />}
       {asButton && <span className="ml-2">{label}</span>}
       {!asButton && label}
-      <IconRight className="h-3 w-3 ml-2" />
+      <IconRight className={`${ICON_SIZES.xs} ml-2`} />
     </>
   );
 
@@ -128,13 +129,13 @@ export function DocumentLink({
                 <div className="flex items-center gap-2">
                   <Button variant="outline" size="sm" asChild>
                     <a href={url} target="_blank" rel="noopener noreferrer">
-                      <ExternalLink className="h-4 w-4 mr-2" />
+                      <ExternalLink className={`${ICON_SIZES.sm} mr-2`} />
                       Open
                     </a>
                   </Button>
                   <Button variant="outline" size="sm" asChild>
                     <a href={url} download>
-                      <Download className="h-4 w-4 mr-2" />
+                      <Download className={`${ICON_SIZES.sm} mr-2`} />
                       Download
                     </a>
                   </Button>

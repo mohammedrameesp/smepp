@@ -56,6 +56,7 @@ import {
 } from '@/components/ui/dialog';
 import { TrendingDown, Settings, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
+import { ICON_SIZES } from '@/lib/constants';
 import { toast } from 'sonner';
 import { formatDate } from '@/lib/core/datetime';
 
@@ -174,13 +175,13 @@ export function DepreciationCard({ assetId, onUpdate }: DepreciationCardProps) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <TrendingDown className="h-5 w-5" />
+            <TrendingDown className={ICON_SIZES.md} />
             Depreciation
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-8 text-muted-foreground">
-            <Loader2 className="h-6 w-6 animate-spin mr-2" />
+            <Loader2 className={`${ICON_SIZES.lg} animate-spin mr-2`} />
             Loading depreciation data...
           </div>
         </CardContent>
@@ -193,13 +194,13 @@ export function DepreciationCard({ assetId, onUpdate }: DepreciationCardProps) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <TrendingDown className="h-5 w-5" />
+            <TrendingDown className={ICON_SIZES.md} />
             Depreciation
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-2 text-red-600">
-            <AlertCircle className="h-5 w-5" />
+            <AlertCircle className={ICON_SIZES.md} />
             {error}
           </div>
         </CardContent>
@@ -225,7 +226,7 @@ export function DepreciationCard({ assetId, onUpdate }: DepreciationCardProps) {
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="flex items-center gap-2">
-              <TrendingDown className="h-5 w-5" />
+              <TrendingDown className={ICON_SIZES.md} />
               Depreciation
             </CardTitle>
             <CardDescription>
@@ -239,7 +240,7 @@ export function DepreciationCard({ assetId, onUpdate }: DepreciationCardProps) {
               <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
                 <DialogTrigger asChild>
                   <Button variant="outline" size="sm">
-                    <Settings className="h-4 w-4 mr-1" />
+                    <Settings className={`${ICON_SIZES.sm} mr-1`} />
                     {hasCategory ? 'Change' : 'Configure'}
                   </Button>
                 </DialogTrigger>
@@ -292,7 +293,7 @@ export function DepreciationCard({ assetId, onUpdate }: DepreciationCardProps) {
                       Cancel
                     </Button>
                     <Button onClick={handleAssignCategory} disabled={isAssigning}>
-                      {isAssigning && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                      {isAssigning && <Loader2 className={`${ICON_SIZES.sm} mr-2 animate-spin`} />}
                       {hasCategory ? 'Update Category' : 'Assign Category'}
                     </Button>
                   </DialogFooter>
@@ -305,7 +306,7 @@ export function DepreciationCard({ assetId, onUpdate }: DepreciationCardProps) {
       <CardContent>
         {!hasCategory ? (
           <div className="text-center py-8 text-muted-foreground">
-            <TrendingDown className="h-12 w-12 mx-auto mb-3 opacity-30" />
+            <TrendingDown className={`${ICON_SIZES['3xl']} mx-auto mb-3 opacity-30`} />
             <p>No depreciation configured for this asset.</p>
             {isAdmin && (
               <p className="text-sm mt-1">
@@ -319,7 +320,7 @@ export function DepreciationCard({ assetId, onUpdate }: DepreciationCardProps) {
             <div className="flex items-center gap-2">
               {asset.isFullyDepreciated ? (
                 <>
-                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  <CheckCircle className={`${ICON_SIZES.md} text-green-600`} />
                   <span className="text-green-600 font-medium">Fully Depreciated</span>
                 </>
               ) : (

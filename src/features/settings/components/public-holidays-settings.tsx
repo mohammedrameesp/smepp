@@ -44,6 +44,8 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Pencil, Loader2, Plus } from 'lucide-react';
+import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface PublicHoliday {
   id: string;
@@ -412,7 +414,7 @@ export function PublicHolidaysSettings({ isAdmin = true }: PublicHolidaysSetting
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-red-100 rounded-lg">
-                <Calendar className="h-5 w-5 text-red-600" />
+                <Calendar className={`${ICON_SIZES.md} text-red-600`} />
               </div>
               <div>
                 <CardTitle>Public Holidays</CardTitle>
@@ -439,7 +441,7 @@ export function PublicHolidaysSettings({ isAdmin = true }: PublicHolidaysSetting
                   </SelectContent>
                 </Select>
                 <Button variant="outline" size="sm" onClick={() => setShowAddCustom(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className={`${ICON_SIZES.sm} mr-2`} />
                   Add Custom
                 </Button>
               </div>
@@ -449,7 +451,7 @@ export function PublicHolidaysSettings({ isAdmin = true }: PublicHolidaysSetting
         <CardContent>
           {loading ? (
             <div className="py-8 text-center text-muted-foreground">
-              <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
+              <Loader2 className={`${ICON_SIZES.lg} animate-spin mx-auto mb-2`} />
               Loading holidays...
             </div>
           ) : (
@@ -512,10 +514,10 @@ export function PublicHolidaysSettings({ isAdmin = true }: PublicHolidaysSetting
                             disabled={savingHoliday === holiday.name}
                           >
                             {savingHoliday === holiday.name ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
+                              <Loader2 className={`${ICON_SIZES.sm} animate-spin`} />
                             ) : (
                               <>
-                                <Pencil className="h-4 w-4 mr-1" />
+                                <Pencil className={`${ICON_SIZES.sm} mr-1`} />
                                 {holiday.isConfigured ? 'Edit' : 'Set'}
                               </>
                             )}

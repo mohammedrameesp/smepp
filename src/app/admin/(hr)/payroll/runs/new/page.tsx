@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import { toast } from 'sonner';
 import { getMonthName } from '@/features/payroll/lib/utils';
 
@@ -127,7 +128,7 @@ export default function NewPayrollRunPage() {
                 <Link href="/admin/payroll/runs">Cancel</Link>
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isLoading && <Loader2 className={`mr-2 ${ICON_SIZES.sm} animate-spin`} />}
                 Create Payroll Run
               </Button>
             </div>

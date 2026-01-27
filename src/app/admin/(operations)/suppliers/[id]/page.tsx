@@ -23,6 +23,7 @@ import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { SupplierActions } from '@/features/suppliers';
 import { DetailCard } from '@/components/ui/detail-card';
 import { InfoField, InfoFieldGrid } from '@/components/ui/info-field';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -154,7 +155,7 @@ export default async function SupplierDetailPage({ params }: Props) {
             </InfoFieldGrid>
             <div className="mt-4 p-4 bg-slate-50 rounded-xl">
               <div className="flex items-start gap-2">
-                <MapPin className="h-4 w-4 text-slate-400 mt-0.5 shrink-0" />
+                <MapPin className={`${ICON_SIZES.sm} text-slate-400 mt-0.5 shrink-0`} />
                 <div>
                   <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Address</p>
                   <p className="text-sm font-semibold text-slate-900">
@@ -171,7 +172,7 @@ export default async function SupplierDetailPage({ params }: Props) {
             {supplier.website && (
               <div className="mt-4 p-4 bg-slate-50 rounded-xl">
                 <div className="flex items-center gap-2">
-                  <Globe className="h-4 w-4 text-slate-400" />
+                  <Globe className={`${ICON_SIZES.sm} text-slate-400`} />
                   <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Website</p>
                 </div>
                 <a
@@ -194,7 +195,7 @@ export default async function SupplierDetailPage({ params }: Props) {
                 <div className="bg-slate-50 rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                      <User className="h-4 w-4 text-blue-600" />
+                      <User className={`${ICON_SIZES.sm} text-blue-600`} />
                     </div>
                     <div>
                       <p className="font-semibold text-slate-900">{supplier.primaryContactName}</p>
@@ -207,13 +208,13 @@ export default async function SupplierDetailPage({ params }: Props) {
                         href={`mailto:${supplier.primaryContactEmail}`}
                         className="flex items-center gap-2 text-slate-600 hover:text-blue-600 transition-colors"
                       >
-                        <Mail className="h-4 w-4 text-slate-400" />
+                        <Mail className={`${ICON_SIZES.sm} text-slate-400`} />
                         {supplier.primaryContactEmail}
                       </a>
                     )}
                     {supplier.primaryContactMobile && (
                       <div className="flex items-center gap-2 text-slate-600">
-                        <Phone className="h-4 w-4 text-slate-400" />
+                        <Phone className={`${ICON_SIZES.sm} text-slate-400`} />
                         {supplier.primaryContactMobile}
                       </div>
                     )}
@@ -226,7 +227,7 @@ export default async function SupplierDetailPage({ params }: Props) {
                 <div className="bg-slate-50 rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center">
-                      <User className="h-4 w-4 text-slate-600" />
+                      <User className={`${ICON_SIZES.sm} text-slate-600`} />
                     </div>
                     <div>
                       <p className="font-semibold text-slate-900">{supplier.secondaryContactName}</p>
@@ -239,13 +240,13 @@ export default async function SupplierDetailPage({ params }: Props) {
                         href={`mailto:${supplier.secondaryContactEmail}`}
                         className="flex items-center gap-2 text-slate-600 hover:text-blue-600 transition-colors"
                       >
-                        <Mail className="h-4 w-4 text-slate-400" />
+                        <Mail className={`${ICON_SIZES.sm} text-slate-400`} />
                         {supplier.secondaryContactEmail}
                       </a>
                     )}
                     {supplier.secondaryContactMobile && (
                       <div className="flex items-center gap-2 text-slate-600">
-                        <Phone className="h-4 w-4 text-slate-400" />
+                        <Phone className={`${ICON_SIZES.sm} text-slate-400`} />
                         {supplier.secondaryContactMobile}
                       </div>
                     )}
@@ -255,7 +256,7 @@ export default async function SupplierDetailPage({ params }: Props) {
 
               {!supplier.primaryContactName && !supplier.secondaryContactName && (
                 <div className="text-center py-8 text-slate-400">
-                  <User className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                  <User className={`${ICON_SIZES['3xl']} mx-auto mb-2 opacity-50`} />
                   <p className="text-sm">No contact information provided</p>
                 </div>
               )}
@@ -319,7 +320,7 @@ export default async function SupplierDetailPage({ params }: Props) {
           >
             {supplier.engagements.length === 0 ? (
               <div className="text-center py-8 text-slate-400">
-                <Calendar className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                <Calendar className={`${ICON_SIZES['3xl']} mx-auto mb-2 opacity-50`} />
                 <p className="text-sm">No engagements recorded</p>
               </div>
             ) : (

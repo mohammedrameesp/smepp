@@ -9,6 +9,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { X, ChevronDown, Check } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface MultiSelectTagsProps {
   options: readonly string[];
@@ -118,7 +119,7 @@ export function MultiSelectTags({
                 }}
                 className="hover:text-red-600"
               >
-                <X className="h-3 w-3" />
+                <X className={ICON_SIZES.xs} />
               </button>
             )}
           </Badge>
@@ -137,7 +138,7 @@ export function MultiSelectTags({
             className="flex-1 min-w-[120px] border-0 p-0 h-6 focus-visible:ring-0 shadow-none"
           />
         )}
-        <ChevronDown className="h-4 w-4 text-gray-400 ml-auto self-center" />
+        <ChevronDown className={`${ICON_SIZES.sm} text-gray-400 ml-auto self-center`} />
       </div>
 
       {isOpen && !disabled && (
@@ -156,7 +157,7 @@ export function MultiSelectTags({
               >
                 {option}
                 {value.includes(option) && (
-                  <Check className="h-4 w-4 text-blue-600" />
+                  <Check className={`${ICON_SIZES.sm} text-blue-600`} />
                 )}
               </button>
             ))
@@ -246,7 +247,7 @@ export function TagsInput({
               }}
               className="hover:text-red-600"
             >
-              <X className="h-3 w-3" />
+              <X className={ICON_SIZES.xs} />
             </button>
           )}
         </Badge>

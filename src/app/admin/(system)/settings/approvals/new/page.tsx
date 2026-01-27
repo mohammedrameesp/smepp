@@ -10,6 +10,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Plus, X, GripVertical } from 'lucide-react';
+import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 import Link from 'next/link';
 import { toast } from 'sonner';
 
@@ -257,7 +259,7 @@ export default function NewApprovalPolicyPage() {
             {levels.map((level, index) => (
               <div key={index} className="flex items-center gap-4">
                 <div className="flex items-center gap-2 text-muted-foreground">
-                  <GripVertical className="h-4 w-4" />
+                  <GripVertical className={ICON_SIZES.sm} />
                   <span className="w-8">#{level.levelOrder}</span>
                 </div>
                 <Select
@@ -282,7 +284,7 @@ export default function NewApprovalPolicyPage() {
                   onClick={() => removeLevel(index)}
                   disabled={levels.length <= 1}
                 >
-                  <X className="h-4 w-4" />
+                  <X className={ICON_SIZES.sm} />
                 </Button>
               </div>
             ))}
@@ -293,7 +295,7 @@ export default function NewApprovalPolicyPage() {
               onClick={addLevel}
               disabled={levels.length >= 5}
             >
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className={`${ICON_SIZES.sm} mr-2`} />
               Add Level
             </Button>
           </CardContent>

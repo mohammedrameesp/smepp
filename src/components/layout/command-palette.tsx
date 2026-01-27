@@ -31,6 +31,8 @@ import {
   FileCheck,
   Package,
 } from 'lucide-react';
+import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface CommandItem {
   id: string;
@@ -136,7 +138,7 @@ export function CommandPalette({ open, onOpenChange, enabledModules = [] }: Comm
         <DialogTitle className="sr-only">Command Palette</DialogTitle>
         {/* Search Input */}
         <div className="flex items-center gap-3 px-4 py-4 border-b border-slate-100">
-          <Search className="h-5 w-5 text-slate-400" />
+          <Search className={cn(ICON_SIZES.md, 'text-slate-400')} />
           <input
             ref={inputRef}
             type="text"
@@ -162,7 +164,7 @@ export function CommandPalette({ open, onOpenChange, enabledModules = [] }: Comm
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 text-left group"
                 >
                   <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <item.icon className="h-4 w-4 text-blue-600" />
+                    <item.icon className={cn(ICON_SIZES.sm, 'text-blue-600')} />
                   </div>
                   <div className="flex-1">
                     <p className="text-sm font-medium text-slate-900">{item.label}</p>
@@ -192,7 +194,7 @@ export function CommandPalette({ open, onOpenChange, enabledModules = [] }: Comm
                     onClick={() => handleSelect(item)}
                     className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100 text-left"
                   >
-                    <item.icon className="h-4 w-4 text-slate-400" />
+                    <item.icon className={cn(ICON_SIZES.sm, 'text-slate-400')} />
                     <span className="text-sm text-slate-700">{item.label}</span>
                   </button>
                 ))}

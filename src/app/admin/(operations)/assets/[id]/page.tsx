@@ -53,6 +53,7 @@ import {
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 import { DetailCard } from '@/components/ui/detail-card';
 import { InfoField, InfoFieldGrid } from '@/components/ui/info-field';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -187,7 +188,7 @@ export default async function AssetDetailPage({ params }: Props) {
           {hasPendingRequest && (
             <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
               <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                <AlertTriangle className="h-5 w-5 text-amber-600" />
+                <AlertTriangle className={`${ICON_SIZES.md} text-amber-600`} />
               </div>
               <div>
                 <h3 className="font-semibold text-amber-800">Pending Requests</h3>
@@ -228,7 +229,7 @@ export default async function AssetDetailPage({ params }: Props) {
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
                   isRecentlyExpired ? 'bg-rose-100' : 'bg-amber-100'
                 }`}>
-                  <AlertTriangle className={`h-5 w-5 ${isRecentlyExpired ? 'text-rose-600' : 'text-amber-600'}`} />
+                  <AlertTriangle className={`${ICON_SIZES.md} ${isRecentlyExpired ? 'text-rose-600' : 'text-amber-600'}`} />
                 </div>
                 <div>
                   <h3 className={`font-semibold ${isRecentlyExpired ? 'text-rose-800' : 'text-amber-800'}`}>
@@ -330,9 +331,9 @@ export default async function AssetDetailPage({ params }: Props) {
                 asset.isShared ? 'bg-blue-100' : 'bg-indigo-100'
               }`}>
                 {asset.isShared ? (
-                  <Users className="h-5 w-5 text-blue-600" />
+                  <Users className={`${ICON_SIZES.md} text-blue-600`} />
                 ) : (
-                  <User className="h-5 w-5 text-indigo-600" />
+                  <User className={`${ICON_SIZES.md} text-indigo-600`} />
                 )}
               </div>
               <h2 className="font-semibold text-slate-900">
@@ -343,7 +344,7 @@ export default async function AssetDetailPage({ params }: Props) {
               {asset.isShared ? (
                 <div className="text-center py-4">
                   <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <Users className="h-6 w-6 text-blue-600" />
+                    <Users className={`${ICON_SIZES.lg} text-blue-600`} />
                   </div>
                   <p className="font-semibold text-slate-900 mb-1">Common/Shared Asset</p>
                   <p className="text-slate-500 text-sm">This asset is shared among team members</p>
@@ -389,7 +390,7 @@ export default async function AssetDetailPage({ params }: Props) {
                 <div className="space-y-3">
                   <div className="flex items-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
                     <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <Clock className="h-5 w-5 text-amber-600" />
+                      <Clock className={`${ICON_SIZES.md} text-amber-600`} />
                     </div>
                     <div>
                       <p className="font-semibold text-amber-800">
@@ -414,7 +415,7 @@ export default async function AssetDetailPage({ params }: Props) {
               ) : (
                 <div className="text-center py-4">
                   <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <User className="h-6 w-6 text-slate-400" />
+                    <User className={`${ICON_SIZES.lg} text-slate-400`} />
                   </div>
                   <p className="text-slate-500 text-sm">Unassigned</p>
                   {canAssign && (
@@ -442,7 +443,7 @@ export default async function AssetDetailPage({ params }: Props) {
             <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
               <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
                 <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center">
-                  <Trash2 className="h-5 w-5 text-slate-600" />
+                  <Trash2 className={`${ICON_SIZES.md} text-slate-600`} />
                 </div>
                 <h2 className="font-semibold text-slate-900">Disposal Information</h2>
               </div>
@@ -476,9 +477,9 @@ export default async function AssetDetailPage({ params }: Props) {
                     </p>
                     <p className={`text-sm font-medium flex items-center gap-1 ${Number(asset.disposalGainLoss) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                       {Number(asset.disposalGainLoss) >= 0 ? (
-                        <TrendingUp className="h-4 w-4" />
+                        <TrendingUp className={ICON_SIZES.sm} />
                       ) : (
-                        <TrendingDown className="h-4 w-4" />
+                        <TrendingDown className={ICON_SIZES.sm} />
                       )}
                       QAR {formatNumber(Math.abs(Number(asset.disposalGainLoss)))}
                     </p>

@@ -12,6 +12,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Coins, Loader2, Save, RefreshCw } from 'lucide-react';
+import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 import { toast } from 'sonner';
 import { CURRENCY_MAP } from '@/lib/core/currency';
 import { formatNumber } from '@/lib/utils/math-utils';
@@ -128,13 +130,13 @@ export function ExchangeRateSettings() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Coins className="h-5 w-5" />
+            <Coins className={ICON_SIZES.md} />
             Currency Exchange Rates
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+            <Loader2 className={`${ICON_SIZES.lg} animate-spin text-gray-400`} />
           </div>
         </CardContent>
       </Card>
@@ -147,7 +149,7 @@ export function ExchangeRateSettings() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Coins className="h-5 w-5" />
+            <Coins className={ICON_SIZES.md} />
             Currency Exchange Rates
           </CardTitle>
           <CardDescription>
@@ -156,7 +158,7 @@ export function ExchangeRateSettings() {
         </CardHeader>
         <CardContent>
           <div className="text-center py-8 text-gray-500">
-            <Coins className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+            <Coins className={`${ICON_SIZES['3xl']} mx-auto mb-3 text-gray-300`} />
             <p className="font-medium">No additional currencies configured</p>
             <p className="text-sm mt-1">
               Add currencies in your organization setup to configure exchange rates.
@@ -171,7 +173,7 @@ export function ExchangeRateSettings() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Coins className="h-5 w-5" />
+          <Coins className={ICON_SIZES.md} />
           Currency Exchange Rates
         </CardTitle>
         <CardDescription>
@@ -222,9 +224,9 @@ export function ExchangeRateSettings() {
                   className="mt-5"
                 >
                   {saving ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className={`${ICON_SIZES.sm} animate-spin`} />
                   ) : (
-                    <Save className="h-4 w-4" />
+                    <Save className={ICON_SIZES.sm} />
                   )}
                 </Button>
               </div>
@@ -255,7 +257,7 @@ export function ExchangeRateSettings() {
           onClick={fetchSettings}
           className="w-full"
         >
-          <RefreshCw className="h-4 w-4 mr-2" />
+          <RefreshCw className={`${ICON_SIZES.sm} mr-2`} />
           Refresh Rates
         </Button>
       </CardContent>

@@ -43,6 +43,7 @@ import {
 import { PageHeader, PageContent, PageHeaderButton } from '@/components/ui/page-header';
 import { DetailCard } from '@/components/ui/detail-card';
 import { InfoField, InfoFieldGrid } from '@/components/ui/info-field';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -159,7 +160,7 @@ export default async function EmployeeAssetDetailPage({ params }: Props) {
           {myPendingRequest && (
             <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
               <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                <AlertTriangle className="h-5 w-5 text-amber-600" />
+                <AlertTriangle className={`${ICON_SIZES.md} text-amber-600`} />
               </div>
               <div>
                 <h3 className="font-semibold text-amber-800">
@@ -200,7 +201,7 @@ export default async function EmployeeAssetDetailPage({ params }: Props) {
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
                   isExpired ? 'bg-rose-100' : 'bg-amber-100'
                 }`}>
-                  <AlertTriangle className={`h-5 w-5 ${isExpired ? 'text-rose-600' : 'text-amber-600'}`} />
+                  <AlertTriangle className={`${ICON_SIZES.md} ${isExpired ? 'text-rose-600' : 'text-amber-600'}`} />
                 </div>
                 <div>
                   <h3 className={`font-semibold ${isExpired ? 'text-rose-800' : 'text-amber-800'}`}>
@@ -281,9 +282,9 @@ export default async function EmployeeAssetDetailPage({ params }: Props) {
                   asset.isShared ? 'bg-blue-100' : 'bg-indigo-100'
                 }`}>
                   {asset.isShared ? (
-                    <Users className="h-5 w-5 text-blue-600" />
+                    <Users className={`${ICON_SIZES.md} text-blue-600`} />
                   ) : (
-                    <User className="h-5 w-5 text-indigo-600" />
+                    <User className={`${ICON_SIZES.md} text-indigo-600`} />
                   )}
                 </div>
                 <h2 className="font-semibold text-slate-900">
@@ -294,7 +295,7 @@ export default async function EmployeeAssetDetailPage({ params }: Props) {
                 {asset.isShared ? (
                   <div className="text-center py-4">
                     <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <Users className="h-6 w-6 text-blue-600" />
+                      <Users className={`${ICON_SIZES.lg} text-blue-600`} />
                     </div>
                     <p className="font-semibold text-slate-900 mb-1">Common/Shared Asset</p>
                     <p className="text-slate-500 text-sm">This asset is shared among team members</p>
@@ -348,7 +349,7 @@ export default async function EmployeeAssetDetailPage({ params }: Props) {
                 ) : (
                   <div className="text-center py-4">
                     <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <User className="h-6 w-6 text-slate-400" />
+                      <User className={`${ICON_SIZES.lg} text-slate-400`} />
                     </div>
                     <p className="text-slate-500 text-sm">Unassigned</p>
                   </div>

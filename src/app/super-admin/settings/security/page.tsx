@@ -32,6 +32,7 @@ import {
   Copy,
   Check,
 } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface TwoFactorStatus {
   twoFactorEnabled: boolean;
@@ -246,7 +247,7 @@ export default function SecuritySettingsPage() {
   if (status === 'loading' || isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+        <Loader2 className={`${ICON_SIZES.xl} animate-spin text-slate-400`} />
       </div>
     );
   }
@@ -274,7 +275,7 @@ export default function SecuritySettingsPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className={`p-2 rounded-lg ${twoFactorStatus?.twoFactorEnabled ? 'bg-green-100' : 'bg-slate-100'}`}>
-                <Shield className={`w-5 h-5 ${twoFactorStatus?.twoFactorEnabled ? 'text-green-600' : 'text-slate-500'}`} />
+                <Shield className={`${ICON_SIZES.md} ${twoFactorStatus?.twoFactorEnabled ? 'text-green-600' : 'text-slate-500'}`} />
               </div>
               <div>
                 <CardTitle>Two-Factor Authentication</CardTitle>
@@ -286,12 +287,12 @@ export default function SecuritySettingsPage() {
             <div className="flex items-center gap-2">
               {twoFactorStatus?.twoFactorEnabled ? (
                 <span className="flex items-center gap-1.5 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
-                  <CheckCircle className="w-4 h-4" />
+                  <CheckCircle className={ICON_SIZES.sm} />
                   Enabled
                 </span>
               ) : (
                 <span className="flex items-center gap-1.5 px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-sm font-medium">
-                  <XCircle className="w-4 h-4" />
+                  <XCircle className={ICON_SIZES.sm} />
                   Disabled
                 </span>
               )}
@@ -302,7 +303,7 @@ export default function SecuritySettingsPage() {
           {twoFactorStatus?.twoFactorEnabled ? (
             <>
               <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-lg">
-                <Smartphone className="w-5 h-5 text-slate-500" />
+                <Smartphone className={`${ICON_SIZES.md} text-slate-500`} />
                 <div>
                   <p className="font-medium text-slate-700">Authenticator App</p>
                   <p className="text-sm text-slate-500">
@@ -312,7 +313,7 @@ export default function SecuritySettingsPage() {
               </div>
 
               <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-lg">
-                <Key className="w-5 h-5 text-slate-500" />
+                <Key className={`${ICON_SIZES.md} text-slate-500`} />
                 <div className="flex-1">
                   <p className="font-medium text-slate-700">Backup Codes</p>
                   <p className="text-sm text-slate-500">
@@ -346,7 +347,7 @@ export default function SecuritySettingsPage() {
               </p>
 
               <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5" />
+                <AlertTriangle className={`${ICON_SIZES.md} text-amber-600 mt-0.5`} />
                 <div>
                   <p className="font-medium text-amber-800">Recommended for Super Admins</p>
                   <p className="text-sm text-amber-700">
@@ -359,12 +360,12 @@ export default function SecuritySettingsPage() {
               <Button onClick={handleStartSetup} disabled={isSettingUp}>
                 {isSettingUp ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    <Loader2 className={`${ICON_SIZES.sm} mr-2 animate-spin`} />
                     Setting up...
                   </>
                 ) : (
                   <>
-                    <Shield className="w-4 h-4 mr-2" />
+                    <Shield className={`${ICON_SIZES.sm} mr-2`} />
                     Enable Two-Factor Authentication
                   </>
                 )}
@@ -445,7 +446,7 @@ export default function SecuritySettingsPage() {
                   disabled={verifyCode.length !== 6 || isSettingUp}
                 >
                   {isSettingUp ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className={`${ICON_SIZES.sm} animate-spin`} />
                   ) : (
                     'Verify & Enable'
                   )}
@@ -458,7 +459,7 @@ export default function SecuritySettingsPage() {
             <div className="space-y-4">
               <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
                 <div className="flex items-start gap-2">
-                  <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5" />
+                  <AlertTriangle className={`${ICON_SIZES.md} text-amber-600 mt-0.5`} />
                   <p className="text-sm text-amber-800">
                     Store these codes securely. Each code can only be used once.
                   </p>
@@ -477,9 +478,9 @@ export default function SecuritySettingsPage() {
                       className="p-1 hover:bg-slate-200 rounded"
                     >
                       {copiedIndex === index ? (
-                        <Check className="w-4 h-4 text-green-600" />
+                        <Check className={`${ICON_SIZES.sm} text-green-600`} />
                       ) : (
-                        <Copy className="w-4 h-4 text-slate-400" />
+                        <Copy className={`${ICON_SIZES.sm} text-slate-400`} />
                       )}
                     </button>
                   </div>
@@ -493,12 +494,12 @@ export default function SecuritySettingsPage() {
               >
                 {copiedIndex === -1 ? (
                   <>
-                    <Check className="w-4 h-4 mr-2 text-green-600" />
+                    <Check className={`${ICON_SIZES.sm} mr-2 text-green-600`} />
                     Copied!
                   </>
                 ) : (
                   <>
-                    <Copy className="w-4 h-4 mr-2" />
+                    <Copy className={`${ICON_SIZES.sm} mr-2`} />
                     Copy All Codes
                   </>
                 )}
@@ -554,7 +555,7 @@ export default function SecuritySettingsPage() {
               disabled={disableCode.length !== 6 || isDisabling}
             >
               {isDisabling ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <Loader2 className={`${ICON_SIZES.sm} animate-spin`} />
               ) : (
                 'Disable 2FA'
               )}
@@ -606,7 +607,7 @@ export default function SecuritySettingsPage() {
                   disabled={regenerateCode.length !== 6 || isRegenerating}
                 >
                   {isRegenerating ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className={`${ICON_SIZES.sm} animate-spin`} />
                   ) : (
                     'Regenerate Codes'
                   )}
@@ -627,9 +628,9 @@ export default function SecuritySettingsPage() {
                       className="p-1 hover:bg-slate-200 rounded"
                     >
                       {copiedIndex === index ? (
-                        <Check className="w-4 h-4 text-green-600" />
+                        <Check className={`${ICON_SIZES.sm} text-green-600`} />
                       ) : (
-                        <Copy className="w-4 h-4 text-slate-400" />
+                        <Copy className={`${ICON_SIZES.sm} text-slate-400`} />
                       )}
                     </button>
                   </div>
@@ -643,12 +644,12 @@ export default function SecuritySettingsPage() {
               >
                 {copiedIndex === -1 ? (
                   <>
-                    <Check className="w-4 h-4 mr-2 text-green-600" />
+                    <Check className={`${ICON_SIZES.sm} mr-2 text-green-600`} />
                     Copied!
                   </>
                 ) : (
                   <>
-                    <Copy className="w-4 h-4 mr-2" />
+                    <Copy className={`${ICON_SIZES.sm} mr-2`} />
                     Copy All Codes
                   </>
                 )}

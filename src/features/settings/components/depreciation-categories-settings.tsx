@@ -58,6 +58,8 @@ import {
   Loader2,
   Info,
 } from 'lucide-react';
+import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 import {
   Tooltip,
   TooltipContent,
@@ -335,7 +337,7 @@ export function DepreciationCategoriesSettings({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-amber-100 rounded-lg">
-                <Calculator className="h-5 w-5 text-amber-600" />
+                <Calculator className={`${ICON_SIZES.md} text-amber-600`} />
               </div>
               <div>
                 <CardTitle>Depreciation Categories</CardTitle>
@@ -346,7 +348,7 @@ export function DepreciationCategoriesSettings({
             </div>
             {isAdmin && (
               <Button size="sm" onClick={() => setShowCreateDialog(true)}>
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className={`${ICON_SIZES.sm} mr-2`} />
                 Add Category
               </Button>
             )}
@@ -355,7 +357,7 @@ export function DepreciationCategoriesSettings({
         <CardContent>
           {loading ? (
             <div className="py-8 text-center text-muted-foreground">
-              <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
+              <Loader2 className={`${ICON_SIZES.lg} animate-spin mx-auto mb-2`} />
               Loading categories...
             </div>
           ) : categories.length === 0 ? (
@@ -416,7 +418,7 @@ export function DepreciationCategoriesSettings({
                               onClick={() => openEditDialog(category)}
                               title="Edit"
                             >
-                              <Pencil className="h-4 w-4" />
+                              <Pencil className={ICON_SIZES.sm} />
                             </Button>
                             <Button
                               variant="ghost"
@@ -426,7 +428,7 @@ export function DepreciationCategoriesSettings({
                               disabled={(category.assetsCount ?? 0) > 0}
                               className={(category.assetsCount ?? 0) > 0 ? 'opacity-30' : ''}
                             >
-                              <Trash2 className="h-4 w-4 text-destructive" />
+                              <Trash2 className={`${ICON_SIZES.sm} text-destructive`} />
                             </Button>
                           </div>
                         )}

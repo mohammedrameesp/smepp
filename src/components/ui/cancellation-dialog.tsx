@@ -23,6 +23,7 @@ import { FormError } from '@/components/ui/form-error';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, AlertTriangle, XCircle } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 
 export interface CancellationDialogProps {
   /** Whether the dialog is open */
@@ -149,7 +150,7 @@ export function CancellationDialog({
         <DialogHeader>
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
-              <XCircle className="h-5 w-5 text-red-600" />
+              <XCircle className={`${ICON_SIZES.md} text-red-600`} />
             </div>
             <div>
               <DialogTitle className="capitalize">{displayTitle}</DialogTitle>
@@ -163,7 +164,7 @@ export function CancellationDialog({
 
           {warningMessage && (
             <Alert variant="error">
-              <AlertTriangle className="h-4 w-4" />
+              <AlertTriangle className={ICON_SIZES.sm} />
               <AlertDescription>{warningMessage}</AlertDescription>
             </Alert>
           )}
@@ -223,7 +224,7 @@ export function CancellationDialog({
             onClick={handleConfirm}
             disabled={!canSubmit || isLoading}
           >
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isLoading && <Loader2 className={`mr-2 ${ICON_SIZES.sm} animate-spin`} />}
             {confirmLabel} {entityName}
           </Button>
         </DialogFooter>

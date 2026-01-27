@@ -46,6 +46,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { AssetStatusBadge, type EmployeeAssetServer } from './asset-shared';
 import { Loader2 } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 
 // Using EmployeeAssetServer from asset-shared.tsx (excludes sensitive fields)
 type Asset = EmployeeAssetServer;
@@ -229,7 +230,7 @@ export function EmployeeAssetListTableServerSearch({ currentUserId }: EmployeeAs
         <div>
           Showing {assets.length > 0 ? ((pagination.page - 1) * pagination.pageSize) + 1 : 0} - {Math.min(pagination.page * pagination.pageSize, pagination.total)} of {pagination.total} assets
         </div>
-        {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+        {loading && <Loader2 className={`${ICON_SIZES.sm} animate-spin`} />}
       </div>
 
       {/* Table */}
@@ -296,7 +297,7 @@ export function EmployeeAssetListTableServerSearch({ currentUserId }: EmployeeAs
             {loading && assets.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400" />
+                  <Loader2 className={`${ICON_SIZES.xl} animate-spin mx-auto text-gray-400`} />
                   <p className="text-gray-500 mt-2">Loading assets...</p>
                 </TableCell>
               </TableRow>

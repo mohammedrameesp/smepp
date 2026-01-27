@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
 import { formatDate, formatMonthYear } from '@/lib/core/datetime';
+import { ICON_SIZES } from '@/lib/constants';
 
 // Default brand color (slate)
 const DEFAULT_BRAND_COLOR = '#0f172a';
@@ -526,7 +527,7 @@ export function ChatWidget() {
         size="icon"
         aria-label="Open AI Assistant chat"
       >
-        <Sparkles className="h-6 w-6" />
+        <Sparkles className={ICON_SIZES.lg} />
       </Button>
 
       {/* Chat Panel */}
@@ -553,7 +554,7 @@ export function ChatWidget() {
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 text-white safe-area-inset-top" style={{ backgroundColor: brandColor }}>
             <div className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5" />
+              <Sparkles className={ICON_SIZES.md} />
               <span className="font-semibold">AI Assistant</span>
             </div>
             <div className="flex items-center gap-1">
@@ -564,7 +565,7 @@ export function ChatWidget() {
                 className="h-8 w-8 text-white hover:bg-white/20"
                 aria-label="Show keyboard shortcuts"
               >
-                <HelpCircle className="h-4 w-4" />
+                <HelpCircle className={ICON_SIZES.sm} />
               </Button>
               <Button
                 variant="ghost"
@@ -577,7 +578,7 @@ export function ChatWidget() {
                 aria-label="Toggle conversation history"
                 aria-expanded={showSidebar}
               >
-                <History className="h-4 w-4" />
+                <History className={ICON_SIZES.sm} />
               </Button>
               {conversationId && (
                 <Button
@@ -587,7 +588,7 @@ export function ChatWidget() {
                   className="h-8 w-8 text-white hover:bg-white/20"
                   aria-label="Start new conversation"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className={ICON_SIZES.sm} />
                 </Button>
               )}
               <Button
@@ -597,7 +598,7 @@ export function ChatWidget() {
                 className="h-8 w-8 text-white hover:bg-white/20"
                 aria-label="Close chat"
               >
-                <X className="h-5 w-5" />
+                <X className={ICON_SIZES.md} />
               </Button>
             </div>
           </div>
@@ -658,7 +659,7 @@ export function ChatWidget() {
               >
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                    <Trash2 className="h-5 w-5 text-red-600 dark:text-red-400" />
+                    <Trash2 className={`${ICON_SIZES.md} text-red-600 dark:text-red-400`} />
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900 dark:text-white">Delete conversation?</h3>
@@ -713,7 +714,7 @@ export function ChatWidget() {
                   </div>
                   {/* Search */}
                   <div className="relative">
-                    <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+                    <Search className={`absolute left-2 top-1/2 -translate-y-1/2 ${ICON_SIZES.xs} text-gray-400`} />
                     <Input
                       type="text"
                       placeholder="Search conversations..."
@@ -726,7 +727,7 @@ export function ChatWidget() {
                 <ScrollArea className="flex-1">
                   {loadingConversations ? (
                     <div className="flex items-center justify-center py-8">
-                      <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+                      <Loader2 className={`${ICON_SIZES.md} animate-spin text-gray-400`} />
                     </div>
                   ) : filteredConversations.length === 0 ? (
                     <div className="text-center py-8 px-4">
@@ -759,7 +760,7 @@ export function ChatWidget() {
                                 className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 dark:hover:bg-slate-600 rounded transition-opacity"
                                 aria-label="Delete conversation"
                               >
-                                <Trash2 className="h-3 w-3 text-gray-400 hover:text-red-500" />
+                                <Trash2 className={`${ICON_SIZES.xs} text-gray-400 hover:text-red-500`} />
                               </button>
                             </button>
                           ))}
@@ -777,7 +778,7 @@ export function ChatWidget() {
                 <div className="space-y-4">
                   <div className="text-center py-8">
                     <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-full flex items-center justify-center">
-                      <Sparkles className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+                      <Sparkles className={`${ICON_SIZES.xl} text-blue-600 dark:text-blue-400`} />
                     </div>
                     <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Ask me anything</h3>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -847,10 +848,10 @@ export function ChatWidget() {
                               {formatTime(msg.createdAt)}
                             </span>
                             {msg.role === 'user' && msg.status === 'sent' && (
-                              <Check className="h-3 w-3 text-white/70" />
+                              <Check className={`${ICON_SIZES.xs} text-white/70`} />
                             )}
                             {msg.role === 'user' && msg.status === 'error' && (
-                              <AlertCircle className="h-3 w-3 text-white/70" />
+                              <AlertCircle className={`${ICON_SIZES.xs} text-white/70`} />
                             )}
                           </div>
                         </div>
@@ -862,9 +863,9 @@ export function ChatWidget() {
                             aria-label={copiedMessageId === msg.id ? "Copied to clipboard" : "Copy message"}
                           >
                             {copiedMessageId === msg.id ? (
-                              <Check className="h-4 w-4 text-green-500" />
+                              <Check className={`${ICON_SIZES.sm} text-green-500`} />
                             ) : (
-                              <Copy className="h-4 w-4 text-gray-400" />
+                              <Copy className={`${ICON_SIZES.sm} text-gray-400`} />
                             )}
                           </button>
                         )}
@@ -908,9 +909,9 @@ export function ChatWidget() {
                       )}>
                         <div className="flex items-start gap-2">
                           {rateLimitInfo ? (
-                            <Clock className="h-4 w-4 mt-0.5 shrink-0" />
+                            <Clock className={`${ICON_SIZES.sm} mt-0.5 shrink-0`} />
                           ) : (
-                            <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+                            <AlertCircle className={`${ICON_SIZES.sm} mt-0.5 shrink-0`} />
                           )}
                           <div>
                             <p>{error}</p>
@@ -937,7 +938,7 @@ export function ChatWidget() {
                           onClick={retryLastMessage}
                           className="text-xs"
                         >
-                          <RefreshCw className="h-3 w-3 mr-1" />
+                          <RefreshCw className={`${ICON_SIZES.xs} mr-1`} />
                           Retry
                         </Button>
                       )}
@@ -975,9 +976,9 @@ export function ChatWidget() {
                 aria-label="Send message"
               >
                 {isLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className={`${ICON_SIZES.sm} animate-spin`} />
                 ) : (
-                  <Send className="h-4 w-4" />
+                  <Send className={ICON_SIZES.sm} />
                 )}
               </Button>
             </div>

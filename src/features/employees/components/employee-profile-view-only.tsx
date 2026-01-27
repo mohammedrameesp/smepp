@@ -36,6 +36,7 @@ import {
   FileText,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface HRProfileData {
   id: string;
@@ -148,7 +149,7 @@ export function EmployeeProfileViewOnly({ hrProfile: hr, workEmail }: EmployeePr
       <Card>
         <CardContent className="py-12">
           <div className="text-center text-gray-500">
-            <User className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+            <User className={`${ICON_SIZES['3xl']} mx-auto mb-4 text-gray-300`} />
             <p className="text-lg font-medium">No HR Profile</p>
             <p className="text-sm">Your HR profile has not been set up yet.</p>
           </div>
@@ -176,7 +177,7 @@ export function EmployeeProfileViewOnly({ hrProfile: hr, workEmail }: EmployeePr
         <Dialog open={isRequestDialogOpen} onOpenChange={setIsRequestDialogOpen}>
           <DialogTrigger asChild>
             <Button variant="outline">
-              <Edit3 className="h-4 w-4 mr-2" />
+              <Edit3 className={`${ICON_SIZES.sm} mr-2`} />
               Request Changes
             </Button>
           </DialogTrigger>
@@ -209,7 +210,7 @@ export function EmployeeProfileViewOnly({ hrProfile: hr, workEmail }: EmployeePr
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <User className="h-5 w-5 text-gray-500" />
+            <User className={`${ICON_SIZES.md} text-gray-500`} />
             <div>
               <CardTitle>Personal Information</CardTitle>
               <CardDescription>Basic personal details</CardDescription>
@@ -230,7 +231,7 @@ export function EmployeeProfileViewOnly({ hrProfile: hr, workEmail }: EmployeePr
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Phone className="h-5 w-5 text-gray-500" />
+            <Phone className={`${ICON_SIZES.md} text-gray-500`} />
             <div>
               <CardTitle>Contact Information</CardTitle>
               <CardDescription>Phone numbers and addresses</CardDescription>
@@ -260,7 +261,7 @@ export function EmployeeProfileViewOnly({ hrProfile: hr, workEmail }: EmployeePr
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-gray-500" />
+            <AlertTriangle className={`${ICON_SIZES.md} text-gray-500`} />
             <div>
               <CardTitle>Emergency Contacts</CardTitle>
               <CardDescription>Local and home country contacts</CardDescription>
@@ -307,7 +308,7 @@ export function EmployeeProfileViewOnly({ hrProfile: hr, workEmail }: EmployeePr
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <CreditCard className="h-5 w-5 text-gray-500" />
+            <CreditCard className={`${ICON_SIZES.md} text-gray-500`} />
             <div>
               <CardTitle>Identification & Legal</CardTitle>
               <CardDescription>QID, passport, and visa details</CardDescription>
@@ -362,7 +363,7 @@ export function EmployeeProfileViewOnly({ hrProfile: hr, workEmail }: EmployeePr
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Briefcase className="h-5 w-5 text-gray-500" />
+            <Briefcase className={`${ICON_SIZES.md} text-gray-500`} />
             <div>
               <CardTitle>Employment Information</CardTitle>
               <CardDescription>Job details</CardDescription>
@@ -388,7 +389,7 @@ export function EmployeeProfileViewOnly({ hrProfile: hr, workEmail }: EmployeePr
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Building2 className="h-5 w-5 text-gray-500" />
+            <Building2 className={`${ICON_SIZES.md} text-gray-500`} />
             <div>
               <CardTitle>Bank & Payroll</CardTitle>
               <CardDescription>Banking details for salary</CardDescription>
@@ -407,7 +408,7 @@ export function EmployeeProfileViewOnly({ hrProfile: hr, workEmail }: EmployeePr
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <GraduationCap className="h-5 w-5 text-gray-500" />
+            <GraduationCap className={`${ICON_SIZES.md} text-gray-500`} />
             <div>
               <CardTitle>Education</CardTitle>
               <CardDescription>Qualifications and academic background</CardDescription>
@@ -428,7 +429,7 @@ export function EmployeeProfileViewOnly({ hrProfile: hr, workEmail }: EmployeePr
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-gray-500" />
+            <FileText className={`${ICON_SIZES.md} text-gray-500`} />
             <div>
               <CardTitle>Documents</CardTitle>
               <CardDescription>Uploaded documents</CardDescription>
@@ -451,7 +452,7 @@ export function EmployeeProfileViewOnly({ hrProfile: hr, workEmail }: EmployeePr
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Info className="h-5 w-5 text-gray-500" />
+            <Info className={`${ICON_SIZES.md} text-gray-500`} />
             <div>
               <CardTitle>Additional Information</CardTitle>
               <CardDescription>Driving license, languages, and skills</CardDescription>

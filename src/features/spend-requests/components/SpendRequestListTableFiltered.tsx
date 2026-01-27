@@ -21,6 +21,7 @@ import { useClientDataTable } from '@/hooks/use-client-data-table';
 import { Eye, ShoppingCart } from 'lucide-react';
 import { StatusBadge, PriorityBadge } from './StatusBadge';
 import { formatDate } from '@/lib/core/datetime';
+import { ICON_SIZES } from '@/lib/constants';
 
 const PAGE_SIZE = 50;
 
@@ -196,7 +197,7 @@ export function SpendRequestListTableFiltered({
             {paginatedData.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={isAdmin ? 8 : 7} className="text-center py-8">
-                  <ShoppingCart className="h-10 w-10 mx-auto text-gray-300 mb-2" />
+                  <ShoppingCart className={`${ICON_SIZES['2xl']} mx-auto text-gray-300 mb-2`} />
                   <p className="text-gray-500">
                     {hasActiveFilters
                       ? 'No spend requests match your filters'
@@ -251,7 +252,7 @@ export function SpendRequestListTableFiltered({
                     <div className="flex gap-1 justify-end">
                       <Link href={`${basePath}/${request.id}`}>
                         <Button size="sm" variant="ghost">
-                          <Eye className="h-4 w-4" />
+                          <Eye className={ICON_SIZES.sm} />
                         </Button>
                       </Link>
                     </div>

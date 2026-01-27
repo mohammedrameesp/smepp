@@ -98,6 +98,7 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { z } from 'zod';
+import { ICON_SIZES } from '@/lib/constants';
 
 // Constants
 const PREVIEW_DEBOUNCE_MS = 300;
@@ -474,7 +475,7 @@ export function DisposeAssetDialog({
                 className="text-red-600 hover:text-red-700 hover:bg-red-50"
                 aria-label="Dispose asset"
               >
-                <Trash2 className="h-4 w-4 mr-2" />
+                <Trash2 className={`${ICON_SIZES.sm} mr-2`} />
                 Dispose Asset
               </Button>
             )}
@@ -487,7 +488,7 @@ export function DisposeAssetDialog({
         >
           <DialogHeader className="flex-shrink-0">
             <DialogTitle className="flex items-center gap-2">
-              <Trash2 className="h-5 w-5 text-red-500" aria-hidden="true" />
+              <Trash2 className={`${ICON_SIZES.md} text-red-500`} aria-hidden="true" />
               Dispose Asset
             </DialogTitle>
             <DialogDescription id="dispose-dialog-description">
@@ -504,7 +505,7 @@ export function DisposeAssetDialog({
             aria-label="Asset disposal form"
           >
             <Alert variant="error" className="py-2" role="alert">
-              <AlertTriangle className="h-4 w-4" aria-hidden="true" />
+              <AlertTriangle className={ICON_SIZES.sm} aria-hidden="true" />
               <AlertDescription className="text-xs">
                 Disposing an asset is permanent and removes it from active inventory.
               </AlertDescription>
@@ -638,7 +639,7 @@ export function DisposeAssetDialog({
               <div aria-live="polite" aria-atomic="true">
                 {isLoadingPreview ? (
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />
+                    <Loader2 className={`${ICON_SIZES.xs} animate-spin`} aria-hidden="true" />
                     Calculating preview...
                   </div>
                 ) : previewError ? (
@@ -665,9 +666,9 @@ export function DisposeAssetDialog({
                         }`}
                       >
                         {preview.isGain ? (
-                          <TrendingUp className="h-3 w-3" aria-hidden="true" />
+                          <TrendingUp className={ICON_SIZES.xs} aria-hidden="true" />
                         ) : (
-                          <TrendingDown className="h-3 w-3" aria-hidden="true" />
+                          <TrendingDown className={ICON_SIZES.xs} aria-hidden="true" />
                         )}
                         {formatCurrency(Math.abs(preview.expectedGainLoss))}
                         {preview.finalDepreciationAmount > 0 && (
@@ -703,7 +704,7 @@ export function DisposeAssetDialog({
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" aria-hidden="true" />
+                  <Loader2 className={`${ICON_SIZES.sm} mr-2 animate-spin`} aria-hidden="true" />
                   Disposing...
                 </>
               ) : (

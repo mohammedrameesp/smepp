@@ -8,6 +8,7 @@ import * as React from 'react';
 import { TableRow, TableCell } from '@/components/ui/table';
 import { cn } from '@/lib/core/utils';
 import { Inbox, Search, FileX, AlertCircle } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 
 export type EmptyTableVariant = 'default' | 'search' | 'filter' | 'error';
 
@@ -31,19 +32,19 @@ const variantConfig: Record<
   { icon: React.ReactNode; defaultMessage: string }
 > = {
   default: {
-    icon: <Inbox className="h-8 w-8 text-muted-foreground/50" />,
+    icon: <Inbox className={`${ICON_SIZES.xl} text-muted-foreground/50`} />,
     defaultMessage: 'No data found',
   },
   search: {
-    icon: <Search className="h-8 w-8 text-muted-foreground/50" />,
+    icon: <Search className={`${ICON_SIZES.xl} text-muted-foreground/50`} />,
     defaultMessage: 'No results found',
   },
   filter: {
-    icon: <FileX className="h-8 w-8 text-muted-foreground/50" />,
+    icon: <FileX className={`${ICON_SIZES.xl} text-muted-foreground/50`} />,
     defaultMessage: 'No items match your filters',
   },
   error: {
-    icon: <AlertCircle className="h-8 w-8 text-destructive/50" />,
+    icon: <AlertCircle className={`${ICON_SIZES.xl} text-destructive/50`} />,
     defaultMessage: 'Failed to load data',
   },
 };

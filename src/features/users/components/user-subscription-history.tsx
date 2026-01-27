@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Clock } from 'lucide-react';
 import { formatDate as formatDateUtil } from '@/lib/core/datetime';
 import { formatCurrency } from '@/lib/core/currency';
+import { ICON_SIZES } from '@/lib/constants';
 
 export interface UserSubscriptionActivePeriod {
   startDate: Date;
@@ -98,7 +99,7 @@ export function UserSubscriptionHistory({ subscriptions, viewMode = 'admin' }: U
                         <div>
                           <div className="text-sm text-green-700 font-medium mb-1">Current Usage Period</div>
                           <div className="text-sm text-gray-700">
-                            <Clock className="h-3 w-3 inline mr-1" />
+                            <Clock className={`${ICON_SIZES.xs} inline mr-1`} />
                             Started: {formatDate(subscription.currentPeriod.startDate)}
                           </div>
                           <div className="text-sm text-gray-700">

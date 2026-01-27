@@ -26,6 +26,8 @@ import {
 import { Loader2, CheckCircle, XCircle, Clock, User, MessageSquare } from 'lucide-react';
 import { formatDateTime } from '@/lib/core/datetime';
 import { toast } from 'sonner';
+import { ICON_SIZES } from '@/lib/constants';
+import { cn } from '@/lib/core/utils';
 
 interface ChangeRequest {
   id: string;
@@ -100,11 +102,11 @@ export function ChangeRequestsClient() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'PENDING':
-        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200"><Clock className="h-3 w-3 mr-1" />Pending</Badge>;
+        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200"><Clock className={`${ICON_SIZES.xs} mr-1`} />Pending</Badge>;
       case 'APPROVED':
-        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200"><CheckCircle className="h-3 w-3 mr-1" />Approved</Badge>;
+        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200"><CheckCircle className={`${ICON_SIZES.xs} mr-1`} />Approved</Badge>;
       case 'REJECTED':
-        return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200"><XCircle className="h-3 w-3 mr-1" />Rejected</Badge>;
+        return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200"><XCircle className={`${ICON_SIZES.xs} mr-1`} />Rejected</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -137,11 +139,11 @@ export function ChangeRequestsClient() {
         <CardContent>
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+              <Loader2 className={cn(ICON_SIZES.xl, "animate-spin text-gray-400")} />
             </div>
           ) : requests.length === 0 ? (
             <div className="text-center py-12 text-gray-500">
-              <MessageSquare className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+              <MessageSquare className={`${ICON_SIZES['3xl']} mx-auto mb-4 text-gray-300`} />
               <p>No change requests found</p>
             </div>
           ) : (
@@ -164,7 +166,7 @@ export function ChangeRequestsClient() {
                           {request.hrProfile.user.image ? (
                             <img src={request.hrProfile.user.image} alt="" className="h-full w-full object-cover" />
                           ) : (
-                            <User className="h-4 w-4 text-gray-400" />
+                            <User className={cn(ICON_SIZES.sm, "text-gray-400")} />
                           )}
                         </div>
                         <div>
@@ -246,12 +248,12 @@ export function ChangeRequestsClient() {
             {selectedRequest?.status === 'PENDING' ? (
               <>
                 <Button variant="outline" onClick={() => handleResolve('REJECTED')} disabled={isResolving}>
-                  <XCircle className="h-4 w-4 mr-2" />
+                  <XCircle className={`${ICON_SIZES.sm} mr-2`} />
                   Reject
                 </Button>
                 <Button onClick={() => handleResolve('APPROVED')} disabled={isResolving}>
-                  {isResolving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                  <CheckCircle className="h-4 w-4 mr-2" />
+                  {isResolving && <Loader2 className={`${ICON_SIZES.sm} mr-2 animate-spin`} />}
+                  <CheckCircle className={`${ICON_SIZES.sm} mr-2`} />
                   Approve & Edit Profile
                 </Button>
               </>

@@ -1,5 +1,6 @@
 import { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 
 type ColorVariant = 'blue' | 'emerald' | 'violet' | 'amber' | 'slate';
 
@@ -46,7 +47,7 @@ export function StatCard({ icon: Icon, value, label, color = 'blue', className }
     >
       <div className="flex items-center gap-3">
         <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center', styles.iconBg)}>
-          <Icon className={cn('h-5 w-5', styles.iconColor)} />
+          <Icon className={cn(ICON_SIZES.md, styles.iconColor)} />
         </div>
         <div>
           <p className="text-2xl font-bold text-gray-900">{value}</p>

@@ -2,6 +2,7 @@
 
 import { Play, Clock, Video } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 import type { VideoPlaceholder, UserRole } from '@/lib/help/help-types';
 import { filterByRole } from '@/lib/help/help-types';
 
@@ -22,7 +23,7 @@ export function HelpVideoEmbed({ video }: HelpVideoEmbedProps) {
         <div className="relative aspect-video bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
           <div className="text-center">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/80 shadow-sm mb-3">
-              <Video className="h-8 w-8 text-gray-400" />
+              <Video className={`${ICON_SIZES.xl} text-gray-400`} />
             </div>
             <p className="text-sm text-gray-500 font-medium">Coming Soon</p>
           </div>
@@ -36,7 +37,7 @@ export function HelpVideoEmbed({ video }: HelpVideoEmbedProps) {
           )}
           {video.duration && (
             <div className="flex items-center gap-1 mt-2 text-xs text-gray-400">
-              <Clock className="h-3 w-3" />
+              <Clock className={ICON_SIZES.xs} />
               <span>{video.duration}</span>
             </div>
           )}
@@ -63,7 +64,7 @@ export function HelpVideoEmbed({ video }: HelpVideoEmbedProps) {
         {/* Play button overlay */}
         <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/40 transition-colors">
           <div className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-            <Play className="h-8 w-8 text-gray-900 ml-1" fill="currentColor" />
+            <Play className={`${ICON_SIZES.xl} text-gray-900 ml-1`} fill="currentColor" />
           </div>
         </div>
 

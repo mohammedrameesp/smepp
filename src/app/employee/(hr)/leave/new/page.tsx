@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Loader2, FileEdit } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import Link from 'next/link';
 import { LeaveRequestForm } from '@/features/leave/components';
 import { getAnnualLeaveDetails, type PublicHolidayData } from '@/features/leave/lib/leave-utils';
@@ -164,7 +165,7 @@ export default function EmployeeNewLeavePage() {
         actions={
           <Link href="/employee/leave">
             <Button variant="outline">
-              <ArrowLeft className="h-4 w-4 mr-2" />
+              <ArrowLeft className={`${ICON_SIZES.sm} mr-2`} />
               Back to My Leave
             </Button>
           </Link>
@@ -175,7 +176,7 @@ export default function EmployeeNewLeavePage() {
         <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
           <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
             <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
-              <FileEdit className="h-5 w-5 text-purple-600" />
+              <FileEdit className={`${ICON_SIZES.md} text-purple-600`} />
             </div>
             <div>
               <h2 className="font-semibold text-slate-900">Leave Request Form</h2>
@@ -185,7 +186,7 @@ export default function EmployeeNewLeavePage() {
           <div className="p-6">
             {loading ? (
               <div className="flex items-center justify-center py-12 gap-2 text-slate-500">
-                <Loader2 className="h-5 w-5 animate-spin" />
+                <Loader2 className={`${ICON_SIZES.md} animate-spin`} />
                 <span>Loading...</span>
               </div>
             ) : balances.length === 0 ? (

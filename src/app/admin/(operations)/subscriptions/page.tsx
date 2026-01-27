@@ -34,6 +34,7 @@ import { getAdminAuthContext, hasAccess } from '@/lib/auth/impersonation-check';
 import { SubscriptionListClient } from '@/features/subscriptions';
 import { getExchangeRateToQAR } from '@/lib/core/currency';
 import { Plus } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 
@@ -124,7 +125,7 @@ export default async function AdminSubscriptionsPage() {
         subtitle="Manage company subscriptions and renewals"
         actions={
           <PageHeaderButton href="/admin/subscriptions/new" variant="primary">
-            <Plus className="h-4 w-4" />
+            <Plus className={ICON_SIZES.sm} />
             Add Subscription
           </PageHeaderButton>
         }

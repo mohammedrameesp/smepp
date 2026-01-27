@@ -52,6 +52,8 @@ import {
   Loader2,
   Package,
 } from 'lucide-react';
+import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface Location {
   id: string;
@@ -213,7 +215,7 @@ export function LocationsSettings({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-blue-100 rounded-lg">
-                <MapPin className="h-5 w-5 text-blue-600" />
+                <MapPin className={`${ICON_SIZES.md} text-blue-600`} />
               </div>
               <div>
                 <CardTitle>Locations</CardTitle>
@@ -224,7 +226,7 @@ export function LocationsSettings({
             </div>
             {isAdmin && (
               <Button size="sm" onClick={() => setShowCreateDialog(true)}>
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className={`${ICON_SIZES.sm} mr-2`} />
                 Add Location
               </Button>
             )}
@@ -233,16 +235,16 @@ export function LocationsSettings({
         <CardContent>
           {loading ? (
             <div className="py-8 text-center text-muted-foreground">
-              <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
+              <Loader2 className={`${ICON_SIZES.lg} animate-spin mx-auto mb-2`} />
               Loading locations...
             </div>
           ) : locations.length === 0 ? (
             <div className="py-8 text-center text-muted-foreground space-y-4">
-              <MapPin className="h-12 w-12 mx-auto text-muted-foreground/50" />
+              <MapPin className={`${ICON_SIZES['3xl']} mx-auto text-muted-foreground/50`} />
               <p>No locations configured yet.</p>
               {isAdmin && (
                 <Button variant="outline" onClick={() => setShowCreateDialog(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className={`${ICON_SIZES.sm} mr-2`} />
                   Add Your First Location
                 </Button>
               )}
@@ -263,7 +265,7 @@ export function LocationsSettings({
                     <TableRow key={location.id}>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <MapPin className="h-4 w-4 text-muted-foreground" />
+                          <MapPin className={`${ICON_SIZES.sm} text-muted-foreground`} />
                           <span className="font-medium">{location.name}</span>
                         </div>
                       </TableCell>
@@ -272,7 +274,7 @@ export function LocationsSettings({
                       </TableCell>
                       <TableCell className="text-center">
                         <div className="flex items-center justify-center gap-1 text-muted-foreground">
-                          <Package className="h-4 w-4" />
+                          <Package className={ICON_SIZES.sm} />
                           <span>{location.assetsCount ?? 0}</span>
                         </div>
                       </TableCell>
@@ -285,7 +287,7 @@ export function LocationsSettings({
                               onClick={() => openEditDialog(location)}
                               title="Edit"
                             >
-                              <Pencil className="h-4 w-4" />
+                              <Pencil className={ICON_SIZES.sm} />
                             </Button>
                             <Button
                               variant="ghost"
@@ -295,7 +297,7 @@ export function LocationsSettings({
                               disabled={(location.assetsCount ?? 0) > 0}
                               className={(location.assetsCount ?? 0) > 0 ? 'opacity-30' : ''}
                             >
-                              <Trash2 className="h-4 w-4 text-destructive" />
+                              <Trash2 className={`${ICON_SIZES.sm} text-destructive`} />
                             </Button>
                           </div>
                         )}

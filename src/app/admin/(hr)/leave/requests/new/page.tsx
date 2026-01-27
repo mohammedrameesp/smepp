@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, User } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
+import { cn } from '@/lib/core/utils';
 import { LeaveRequestForm } from '@/features/leave/components';
 import { getAnnualLeaveDetails, type PublicHolidayData } from '@/features/leave/lib/leave-utils';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
@@ -208,7 +210,7 @@ export default function AdminNewLeavePage() {
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
+              <User className={ICON_SIZES.md} />
               Select Employee
             </CardTitle>
             <CardDescription>
@@ -218,7 +220,7 @@ export default function AdminNewLeavePage() {
           <CardContent>
             {loading ? (
               <div className="flex items-center gap-2 text-gray-500">
-                <Loader2 className="h-5 w-5 animate-spin" />
+                <Loader2 className={cn(ICON_SIZES.md, "animate-spin")} />
                 <span>Loading employees...</span>
               </div>
             ) : (
@@ -255,7 +257,7 @@ export default function AdminNewLeavePage() {
             <CardContent>
               {loadingBalances ? (
                 <div className="flex items-center justify-center py-8 gap-2 text-gray-500">
-                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <Loader2 className={cn(ICON_SIZES.md, "animate-spin")} />
                   <span>Loading leave balances...</span>
                 </div>
               ) : balances.length === 0 ? (

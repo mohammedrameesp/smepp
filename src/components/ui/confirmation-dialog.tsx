@@ -22,6 +22,7 @@ import { FormError } from './form-error';
 import { SubmitButton, CancelButton } from './submit-button';
 import { AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 
 export interface ConfirmationDialogProps {
   open: boolean;
@@ -126,7 +127,7 @@ export function ConfirmationDialog({
               >
                 <AlertTriangle
                   className={cn(
-                    'h-5 w-5',
+                    ICON_SIZES.md,
                     variant === 'destructive' && 'text-red-600',
                     variant === 'warning' && 'text-amber-600'
                   )}

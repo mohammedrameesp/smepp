@@ -18,6 +18,7 @@ import { redirect } from 'next/navigation';
 import { AssetRequestStatus } from '@prisma/client';
 import { AssetListClient } from '@/features/assets';
 import { Plus, Inbox, Trash2 } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 import { getAdminAuthContext, hasAccess } from '@/lib/auth/impersonation-check';
@@ -78,7 +79,7 @@ export default async function AdminAssetsPage() {
           <>
             {deletedCount > 0 && (
               <PageHeaderButton href="/admin/assets/deleted" variant="outline">
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className={ICON_SIZES.sm} />
                 Trash
                 <span className="bg-slate-500 text-white text-xs px-1.5 py-0.5 rounded-full">
                   {deletedCount}
@@ -86,7 +87,7 @@ export default async function AdminAssetsPage() {
               </PageHeaderButton>
             )}
             <PageHeaderButton href="/admin/asset-requests" variant="secondary">
-              <Inbox className="h-4 w-4" />
+              <Inbox className={ICON_SIZES.sm} />
               Requests
               {totalPendingRequests > 0 && (
                 <span className="bg-amber-500 text-white text-xs px-1.5 py-0.5 rounded-full">
@@ -95,7 +96,7 @@ export default async function AdminAssetsPage() {
               )}
             </PageHeaderButton>
             <PageHeaderButton href="/admin/assets/new" variant="primary">
-              <Plus className="h-4 w-4" />
+              <Plus className={ICON_SIZES.sm} />
               Add Asset
             </PageHeaderButton>
           </>

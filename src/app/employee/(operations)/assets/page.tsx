@@ -30,6 +30,7 @@ import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 import { EmployeeAssetListTableServerSearch } from '@/features/assets';
 import { Inbox } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 
 /**
  * Employee all assets page component
@@ -87,7 +88,7 @@ export default async function EmployeeAllAssetsPage() {
             value={requestedCount}
             label="pending"
             color="amber"
-            icon={<Inbox className="h-4 w-4" />}
+            icon={<Inbox className={ICON_SIZES.sm} />}
             href="/employee/asset-requests"
             hideWhenZero
           />

@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { Clock, Calendar } from 'lucide-react';
 import { formatDate as formatDateUtil } from '@/lib/core/datetime';
+import { ICON_SIZES } from '@/lib/constants';
 
 export interface UserAssetAssignmentPeriod {
   memberId: string;
@@ -115,7 +116,7 @@ export function UserAssetHistory({ assets, viewMode = 'admin' }: UserAssetHistor
                       <div>
                         <div className="text-sm text-green-700 font-medium mb-1">Current Assignment</div>
                         <div className="text-sm text-gray-700">
-                          <Clock className="h-3 w-3 inline mr-1" />
+                          <Clock className={`${ICON_SIZES.xs} inline mr-1`} />
                           Started: {formatDate(asset.currentPeriod.startDate)}
                         </div>
                         <div className="text-sm text-gray-700">
@@ -182,7 +183,7 @@ export function UserAssetHistory({ assets, viewMode = 'admin' }: UserAssetHistor
                     <div className="text-xs text-gray-600 mb-2">Assignment History:</div>
                     {[...asset.memberPeriods].reverse().map((period, index) => (
                       <div key={index} className="text-sm text-gray-700 mb-1">
-                        <Calendar className="h-3 w-3 inline mr-1" />
+                        <Calendar className={`${ICON_SIZES.xs} inline mr-1`} />
                         {formatDate(period.startDate)} - {period.endDate ? formatDate(period.endDate) : 'Present'}
                         {' '}({formatDuration(period.days)})
                       </div>

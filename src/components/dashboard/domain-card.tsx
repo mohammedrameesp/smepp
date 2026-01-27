@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowRight, Users, Package, FolderKanban, Settings, Briefcase, FileText } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 
 // Icon mapping for Server Component compatibility
 const iconMap = {
@@ -118,7 +119,7 @@ export function DomainCard({
         >
           <div className="flex items-center gap-3">
             <div className={cn('p-2 rounded-lg', styles.bg)}>
-              <Icon className={cn('h-5 w-5', styles.icon)} />
+              <Icon className={cn(ICON_SIZES.md, styles.icon)} />
             </div>
             <CardTitle className={cn('text-lg font-semibold', styles.title)}>
               {domain}
@@ -130,7 +131,7 @@ export function DomainCard({
                 {totalBadges}
               </Badge>
             )}
-            <ArrowRight className={cn('h-4 w-4', styles.icon)} />
+            <ArrowRight className={cn(ICON_SIZES.sm, styles.icon)} />
           </div>
         </Link>
       </CardHeader>

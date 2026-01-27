@@ -8,6 +8,7 @@
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, X } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 
 export interface TableFilterBarProps {
   /** Current search value */
@@ -72,7 +73,7 @@ export function TableFilterBar({
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
         {/* Search input */}
         <div className="relative flex-1 min-w-[200px] max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className={`absolute left-3 top-1/2 -translate-y-1/2 ${ICON_SIZES.sm} text-muted-foreground`} />
           <Input
             type="text"
             placeholder={searchPlaceholder}
@@ -86,7 +87,7 @@ export function TableFilterBar({
               className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-muted rounded"
               aria-label="Clear search"
             >
-              <X className="h-3 w-3 text-muted-foreground" />
+              <X className={`${ICON_SIZES.xs} text-muted-foreground`} />
             </button>
           )}
         </div>
@@ -106,7 +107,7 @@ export function TableFilterBar({
             onClick={onClearFilters}
             className="text-muted-foreground hover:text-foreground whitespace-nowrap"
           >
-            <X className="h-4 w-4 mr-1" />
+            <X className={`${ICON_SIZES.sm} mr-1`} />
             Clear filters
           </Button>
         )}

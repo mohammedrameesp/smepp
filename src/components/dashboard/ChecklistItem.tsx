@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { Check, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { LucideIcon } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface ChecklistItemProps {
   title: string;
@@ -50,10 +51,10 @@ export function ChecklistItem({
             animate={{ scale: 1 }}
             transition={{ type: 'spring', stiffness: 500, damping: 25 }}
           >
-            <Check className="w-5 h-5 text-white" />
+            <Check className={`${ICON_SIZES.md} text-white`} />
           </motion.div>
         ) : (
-          <Icon className="w-5 h-5 text-slate-500" />
+          <Icon className={`${ICON_SIZES.md} text-slate-500`} />
         )}
       </div>
 
@@ -82,7 +83,7 @@ export function ChecklistItem({
           className="flex-shrink-0 flex items-center gap-1 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
         >
           <span>Start</span>
-          <ArrowRight className="w-4 h-4" />
+          <ArrowRight className={ICON_SIZES.sm} />
         </Link>
       )}
     </motion.div>

@@ -8,6 +8,8 @@
 
 import { CheckCircle, Check, Loader2, PartyPopper } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface WelcomeStepProps {
   orgName: string;

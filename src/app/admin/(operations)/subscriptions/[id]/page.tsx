@@ -52,6 +52,8 @@ import {
   CheckCircle,
   XCircle,
 } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
+import { cn } from '@/lib/core/utils';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 import { DetailCard } from '@/components/ui/detail-card';
 import { InfoField, InfoFieldGrid } from '@/components/ui/info-field';
@@ -292,12 +294,12 @@ export default async function SubscriptionDetailPage({ params }: Props) {
             ) : (
               <div className="text-center py-4">
                 <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <User className="h-6 w-6 text-slate-400" />
+                  <User className={cn(ICON_SIZES.lg, 'text-slate-400')} />
                 </div>
                 <p className="text-slate-500 text-sm mb-3">Unassigned</p>
                 <Link href={`/admin/subscriptions/${subscription.id}/edit`}>
                   <Button variant="outline" size="sm" className="gap-1.5">
-                    <UserPlus className="h-4 w-4" />
+                    <UserPlus className={ICON_SIZES.sm} />
                     Assign
                   </Button>
                 </Link>

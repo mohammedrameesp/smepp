@@ -20,6 +20,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Trash2 } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface DeleteButtonProps {
   id: string;
@@ -112,7 +113,7 @@ export function DeleteButton({
             disabled={isDeleting}
             className={buttonClassName}
           >
-            <Trash2 className="h-4 w-4" />
+            <Trash2 className={ICON_SIZES.sm} />
             Delete
           </button>
         </AlertDialogTrigger>

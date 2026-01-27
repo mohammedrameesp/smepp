@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { COUNTRIES } from '@/lib/data/constants';
+import { ICON_SIZES } from '@/lib/constants';
 
 export interface CountrySelectProps {
   value?: string;
@@ -75,12 +76,12 @@ export function CountrySelect({
           )}
         >
           {value || placeholder}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <ChevronsUpDown className={`ml-2 ${ICON_SIZES.sm} shrink-0 opacity-50`} />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
         <div className="flex items-center border-b px-3 py-2">
-          <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+          <Search className={`mr-2 ${ICON_SIZES.sm} shrink-0 opacity-50`} />
           <Input
             ref={inputRef}
             placeholder="Search country..."
@@ -108,7 +109,7 @@ export function CountrySelect({
                 >
                   <Check
                     className={cn(
-                      'mr-2 h-4 w-4',
+                      `mr-2 ${ICON_SIZES.sm}`,
                       value === country ? 'opacity-100' : 'opacity-0'
                     )}
                   />

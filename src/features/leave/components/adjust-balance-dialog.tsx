@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/dialog';
 import { Settings2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface AdjustBalanceDialogProps {
   balanceId: string;
@@ -96,7 +97,7 @@ export function AdjustBalanceDialog({
       <DialogTrigger asChild>
         {trigger || (
           <Button variant="outline" size="sm">
-            <Settings2 className="h-4 w-4 mr-2" />
+            <Settings2 className={`${ICON_SIZES.sm} mr-2`} />
             Adjust
           </Button>
         )}

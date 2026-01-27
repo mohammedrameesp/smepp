@@ -12,6 +12,7 @@
 
 import { PrismaClient } from '@prisma/client';
 import { getOrganizationCodePrefix, getEntityFormat, applyFormat } from '@/lib/utils/code-prefix';
+import { getStatusClasses, getPriorityClasses } from '@/lib/constants';
 
 /**
  * Generate a unique Spend Request reference number using configurable format.
@@ -190,30 +191,19 @@ export function getPriorityLabel(priority: string): string {
 }
 
 /**
- * Get status color for UI badges
+ * Get status color for UI badges.
+ * Uses centralized STATUS_COLORS from @/lib/constants.
  */
 export function getStatusColor(status: string): string {
-  const colors: Record<string, string> = {
-    PENDING: 'bg-yellow-100 text-yellow-800',
-    UNDER_REVIEW: 'bg-blue-100 text-blue-800',
-    APPROVED: 'bg-green-100 text-green-800',
-    REJECTED: 'bg-red-100 text-red-800',
-    COMPLETED: 'bg-gray-100 text-gray-800',
-  };
-  return colors[status] || 'bg-gray-100 text-gray-800';
+  return getStatusClasses(status);
 }
 
 /**
- * Get priority color for UI badges
+ * Get priority color for UI badges.
+ * Uses centralized PRIORITY_COLORS from @/lib/constants.
  */
 export function getPriorityColor(priority: string): string {
-  const colors: Record<string, string> = {
-    LOW: 'bg-gray-100 text-gray-700',
-    MEDIUM: 'bg-blue-100 text-blue-700',
-    HIGH: 'bg-orange-100 text-orange-700',
-    URGENT: 'bg-red-100 text-red-700',
-  };
-  return colors[priority] || 'bg-gray-100 text-gray-700';
+  return getPriorityClasses(priority);
 }
 
 /**

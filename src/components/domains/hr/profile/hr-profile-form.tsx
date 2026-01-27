@@ -22,6 +22,7 @@ import { BirthDatePicker } from '@/components/ui/birth-date-picker';
 import { CountrySelect } from '@/components/ui/country-select';
 import { DepartmentSelect } from '@/components/ui/department-select';
 import { ChevronDown, ChevronUp, User, Phone, AlertTriangle, CreditCard, Briefcase, Building2, GraduationCap, FileText, Info, Loader2 } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 
 import { hrProfileSchema, type HRProfileInput } from '@/features/employees/validations/hr-profile';
 import {
@@ -241,7 +242,7 @@ export function HRProfileForm({ initialData, isAdmin = false, userId, onSave }: 
           <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Icon className="h-5 w-5 text-gray-600" />
+                <Icon className={`${ICON_SIZES.md} text-gray-600`} />
                 <div>
                   <CardTitle className="text-lg">{title}</CardTitle>
                   <CardDescription>{description}</CardDescription>
@@ -250,9 +251,9 @@ export function HRProfileForm({ initialData, isAdmin = false, userId, onSave }: 
               <div className="flex items-center gap-2">
                 {badge}
                 {openSections[id] ? (
-                  <ChevronUp className="h-5 w-5 text-gray-400" />
+                  <ChevronUp className={`${ICON_SIZES.md} text-gray-400`} />
                 ) : (
-                  <ChevronDown className="h-5 w-5 text-gray-400" />
+                  <ChevronDown className={`${ICON_SIZES.md} text-gray-400`} />
                 )}
               </div>
             </div>
@@ -964,7 +965,7 @@ export function HRProfileForm({ initialData, isAdmin = false, userId, onSave }: 
         >
           {isLoading ? (
             <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              <Loader2 className={`${ICON_SIZES.sm} mr-2 animate-spin`} />
               Saving...
             </>
           ) : (

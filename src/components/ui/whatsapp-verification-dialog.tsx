@@ -27,6 +27,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Loader2, MessageCircle, Check, AlertCircle } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import { cn } from '@/lib/core/utils';
 
 // Common country codes
@@ -154,7 +155,7 @@ export function WhatsAppVerificationDialog({
         {state === 'success' && (
           <div className="py-8 text-center">
             <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-              <Check className="h-8 w-8 text-green-600" />
+              <Check className={`${ICON_SIZES.xl} text-green-600`} />
             </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
               WhatsApp Verified!
@@ -170,7 +171,7 @@ export function WhatsAppVerificationDialog({
           <>
             <DialogHeader>
               <div className="flex items-center gap-2 text-green-600 mb-2">
-                <MessageCircle className="h-5 w-5" />
+                <MessageCircle className={ICON_SIZES.md} />
                 <span className="text-sm font-medium">WhatsApp Verification</span>
               </div>
               <DialogTitle className="text-xl">Verify Your WhatsApp Number</DialogTitle>
@@ -217,7 +218,7 @@ export function WhatsAppVerificationDialog({
 
               {error && (
                 <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
+                  <AlertCircle className={`${ICON_SIZES.md} text-red-500 mt-0.5 flex-shrink-0`} />
                   <div>
                     <p className="text-sm text-red-700">{error}</p>
                     {state === 'error' && (
@@ -260,7 +261,7 @@ export function WhatsAppVerificationDialog({
               >
                 {isLoading ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className={`mr-2 ${ICON_SIZES.sm} animate-spin`} />
                     Verifying...
                   </>
                 ) : (
@@ -274,7 +275,7 @@ export function WhatsAppVerificationDialog({
         {/* Verifying State */}
         {state === 'verifying' && (
           <div className="py-8 text-center">
-            <Loader2 className="h-12 w-12 animate-spin text-green-600 mx-auto mb-4" />
+            <Loader2 className={`${ICON_SIZES['2xl']} animate-spin text-green-600 mx-auto mb-4`} />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
               Sending Verification...
             </h3>

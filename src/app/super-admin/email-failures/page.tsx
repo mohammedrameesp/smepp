@@ -16,6 +16,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -234,7 +235,7 @@ export default function EmailFailuresPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <MailWarning className="h-5 w-5 text-gray-400" />
+              <MailWarning className={`${ICON_SIZES.md} text-gray-400`} />
               <span className="text-2xl font-bold">{stats?.total || 0}</span>
             </div>
           </CardContent>
@@ -246,7 +247,7 @@ export default function EmailFailuresPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              <AlertTriangle className={`${ICON_SIZES.md} text-amber-500`} />
               <span className="text-2xl font-bold text-amber-600">{stats?.unresolved || 0}</span>
             </div>
           </CardContent>
@@ -258,7 +259,7 @@ export default function EmailFailuresPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-blue-500" />
+              <Clock className={`${ICON_SIZES.md} text-blue-500`} />
               <span className="text-2xl font-bold">{stats?.last24Hours || 0}</span>
             </div>
           </CardContent>
@@ -270,7 +271,7 @@ export default function EmailFailuresPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <Building2 className="h-5 w-5 text-purple-500" />
+              <Building2 className={`${ICON_SIZES.md} text-purple-500`} />
               <span className="text-lg font-medium capitalize">
                 {stats?.byModule?.[0]?.module || 'N/A'}
               </span>
@@ -287,7 +288,7 @@ export default function EmailFailuresPage() {
         <CardContent className="pt-6">
           <div className="flex flex-wrap items-center gap-4">
             <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-gray-500" />
+              <Filter className={`${ICON_SIZES.sm} text-gray-500`} />
               <span className="text-sm font-medium">Filters:</span>
             </div>
 
@@ -340,7 +341,7 @@ export default function EmailFailuresPage() {
             <div className="flex-1" />
 
             <Button variant="outline" size="sm" onClick={fetchFailures} disabled={loading}>
-              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`${ICON_SIZES.sm} mr-2 ${loading ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
 
@@ -351,7 +352,7 @@ export default function EmailFailuresPage() {
                   onClick={() => setResolveDialog(true)}
                   className="bg-green-600 hover:bg-green-700"
                 >
-                  <CheckCircle className="h-4 w-4 mr-2" />
+                  <CheckCircle className={`${ICON_SIZES.sm} mr-2`} />
                   Resolve ({selectedIds.size})
                 </Button>
                 <Button
@@ -360,7 +361,7 @@ export default function EmailFailuresPage() {
                   onClick={() => handleResolve(false)}
                   disabled={actionLoading}
                 >
-                  <XCircle className="h-4 w-4 mr-2" />
+                  <XCircle className={`${ICON_SIZES.sm} mr-2`} />
                   Unresolve
                 </Button>
               </>
@@ -372,7 +373,7 @@ export default function EmailFailuresPage() {
               onClick={() => setDeleteDialog(true)}
               className="text-red-600 border-red-200 hover:bg-red-50"
             >
-              <Trash2 className="h-4 w-4 mr-2" />
+              <Trash2 className={`${ICON_SIZES.sm} mr-2`} />
               Clean Up
             </Button>
           </div>
@@ -390,11 +391,11 @@ export default function EmailFailuresPage() {
 
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+              <Loader2 className={`${ICON_SIZES.xl} animate-spin text-gray-400`} />
             </div>
           ) : failures.length === 0 ? (
             <div className="text-center py-12">
-              <MailWarning className="h-12 w-12 mx-auto text-gray-300 mb-4" />
+              <MailWarning className={`${ICON_SIZES['3xl']} mx-auto text-gray-300 mb-4`} />
               <p className="text-gray-500">No email failures found</p>
               <p className="text-gray-400 text-sm mt-1">
                 {resolvedFilter === 'false' ? 'All failures have been resolved!' : 'Try adjusting your filters'}
@@ -510,7 +511,7 @@ export default function EmailFailuresPage() {
                       onClick={() => setPage(p => p - 1)}
                       disabled={page === 1}
                     >
-                      <ChevronLeft className="h-4 w-4" />
+                      <ChevronLeft className={ICON_SIZES.sm} />
                       Previous
                     </Button>
                     <Button
@@ -520,7 +521,7 @@ export default function EmailFailuresPage() {
                       disabled={page >= totalPages}
                     >
                       Next
-                      <ChevronRight className="h-4 w-4" />
+                      <ChevronRight className={ICON_SIZES.sm} />
                     </Button>
                   </div>
                 </div>
@@ -556,7 +557,7 @@ export default function EmailFailuresPage() {
               disabled={actionLoading}
               className="bg-green-600 hover:bg-green-700"
             >
-              {actionLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              {actionLoading ? <Loader2 className={`${ICON_SIZES.sm} animate-spin mr-2`} /> : null}
               Resolve
             </Button>
           </DialogFooter>
@@ -581,7 +582,7 @@ export default function EmailFailuresPage() {
               onClick={handleDeleteOld}
               disabled={actionLoading}
             >
-              {actionLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              {actionLoading ? <Loader2 className={`${ICON_SIZES.sm} animate-spin mr-2`} /> : null}
               Delete Old Failures
             </Button>
           </DialogFooter>

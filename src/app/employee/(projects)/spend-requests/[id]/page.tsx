@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { PageHeader, PageContent, PageHeaderButton } from '@/components/ui/page-header';
 import { formatDate, formatDateTime } from '@/lib/core/datetime';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface SpendRequestItem {
   id: string;
@@ -182,7 +183,7 @@ export default function EmployeeSpendRequestDetailPage({ params }: { params: Pro
         />
         <PageContent>
           <div className="flex items-center justify-center h-64">
-            <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+            <Loader2 className={`${ICON_SIZES.xl} animate-spin text-slate-400`} />
           </div>
         </PageContent>
       </>
@@ -253,7 +254,7 @@ export default function EmployeeSpendRequestDetailPage({ params }: { params: Pro
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <PageHeaderButton variant="destructive" disabled={deleting}>
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className={ICON_SIZES.sm} />
                     Delete
                   </PageHeaderButton>
                 </AlertDialogTrigger>
@@ -267,7 +268,7 @@ export default function EmployeeSpendRequestDetailPage({ params }: { params: Pro
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
-                      {deleting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                      {deleting ? <Loader2 className={`${ICON_SIZES.sm} animate-spin mr-2`} /> : null}
                       Delete
                     </AlertDialogAction>
                   </AlertDialogFooter>
@@ -275,7 +276,7 @@ export default function EmployeeSpendRequestDetailPage({ params }: { params: Pro
               </AlertDialog>
             )}
             <PageHeaderButton href="/employee/spend-requests" variant="outline">
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className={ICON_SIZES.sm} />
               Back to Requests
             </PageHeaderButton>
           </div>
@@ -354,9 +355,9 @@ export default function EmployeeSpendRequestDetailPage({ params }: { params: Pro
                   request.status === 'REJECTED' ? 'bg-rose-200' :
                   'bg-blue-100'
                 }`}>
-                  {request.status === 'APPROVED' ? <CheckCircle className="h-5 w-5 text-emerald-700" /> :
-                   request.status === 'REJECTED' ? <XCircle className="h-5 w-5 text-rose-700" /> :
-                   <FileCheck className="h-5 w-5 text-blue-600" />}
+                  {request.status === 'APPROVED' ? <CheckCircle className={`${ICON_SIZES.md} text-emerald-700`} /> :
+                   request.status === 'REJECTED' ? <XCircle className={`${ICON_SIZES.md} text-rose-700`} /> :
+                   <FileCheck className={`${ICON_SIZES.md} text-blue-600`} />}
                 </div>
                 <div>
                   <h2 className={`font-semibold ${
@@ -454,14 +455,14 @@ export default function EmployeeSpendRequestDetailPage({ params }: { params: Pro
               {request.history.map((entry) => (
                 <div key={entry.id} className="flex gap-4 pb-4 border-b border-slate-200 last:border-0">
                   <div className="flex-shrink-0 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
-                    {entry.action === 'CREATED' && <Clock className="h-4 w-4 text-slate-500" />}
-                    {entry.newStatus === 'APPROVED' && <CheckCircle className="h-4 w-4 text-emerald-500" />}
-                    {entry.newStatus === 'REJECTED' && <XCircle className="h-4 w-4 text-rose-500" />}
-                    {entry.newStatus === 'COMPLETED' && <FileCheck className="h-4 w-4 text-slate-500" />}
+                    {entry.action === 'CREATED' && <Clock className={`${ICON_SIZES.sm} text-slate-500`} />}
+                    {entry.newStatus === 'APPROVED' && <CheckCircle className={`${ICON_SIZES.sm} text-emerald-500`} />}
+                    {entry.newStatus === 'REJECTED' && <XCircle className={`${ICON_SIZES.sm} text-rose-500`} />}
+                    {entry.newStatus === 'COMPLETED' && <FileCheck className={`${ICON_SIZES.sm} text-slate-500`} />}
                     {entry.action === 'STATUS_CHANGED' && !['APPROVED', 'REJECTED', 'COMPLETED'].includes(entry.newStatus || '') && (
-                      <Clock className="h-4 w-4 text-blue-500" />
+                      <Clock className={`${ICON_SIZES.sm} text-blue-500`} />
                     )}
-                    {entry.action === 'UPDATED' && <Pencil className="h-4 w-4 text-slate-500" />}
+                    {entry.action === 'UPDATED' && <Pencil className={`${ICON_SIZES.sm} text-slate-500`} />}
                   </div>
                   <div className="flex-1">
                     <div className="flex justify-between items-start">

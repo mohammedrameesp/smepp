@@ -7,6 +7,7 @@
  */
 
 import { GraduationCap, Check, X } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -29,7 +30,7 @@ function GraduationYearHint({ year }: { year: string }) {
   if (isInRange) {
     return (
       <p className="text-xs text-green-600 flex items-center gap-1">
-        <Check className="h-3 w-3" /> Valid year
+        <Check className={ICON_SIZES.xs} /> Valid year
       </p>
     );
   }
@@ -37,7 +38,7 @@ function GraduationYearHint({ year }: { year: string }) {
   if (isValidNumber) {
     return (
       <p className="text-xs text-red-500 flex items-center gap-1">
-        <X className="h-3 w-3" />
+        <X className={ICON_SIZES.xs} />
         Must be between {MIN_GRAD_YEAR} and {MAX_GRAD_YEAR}
       </p>
     );
@@ -68,7 +69,7 @@ export function EducationSkillsStep({ formData, updateField, errors }: Education
     <div className="max-w-2xl mx-auto">
       <div className="text-center mb-8">
         <div className="h-16 w-16 rounded-2xl bg-amber-100 flex items-center justify-center mx-auto mb-4">
-          <GraduationCap className="h-8 w-8 text-amber-600" />
+          <GraduationCap className={`${ICON_SIZES.xl} text-amber-600`} />
         </div>
         <h2 className="text-2xl font-bold text-slate-900 mb-2">Education & Skills</h2>
         <p className="text-slate-600">

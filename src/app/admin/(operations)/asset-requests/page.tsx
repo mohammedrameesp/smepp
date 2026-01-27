@@ -27,6 +27,7 @@ import { AssetRequestListTable } from '@/features/asset-requests';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 import { Package, AlertTriangle, Layers } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 
 /**
  * Admin asset requests list page component
@@ -105,7 +106,7 @@ export default async function AdminAssetRequestsPage() {
         subtitle="Manage asset requests, assignments, and returns"
         actions={
           <PageHeaderButton href="/admin/assets" variant="secondary">
-            <Layers className="h-4 w-4" />
+            <Layers className={ICON_SIZES.sm} />
             All Assets
           </PageHeaderButton>
         }
@@ -123,7 +124,7 @@ export default async function AdminAssetRequestsPage() {
           <div className="bg-white rounded-xl border border-slate-200">
             <div className="text-center py-12">
               <div className="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <AlertTriangle className="h-8 w-8 text-rose-500" />
+                <AlertTriangle className={`${ICON_SIZES.xl} text-rose-500`} />
               </div>
               <h3 className="font-semibold text-slate-900 mb-1">Failed to load requests</h3>
               <p className="text-slate-500 text-sm">There was an error loading asset requests. Please try refreshing the page.</p>
@@ -140,7 +141,7 @@ export default async function AdminAssetRequestsPage() {
               {requests.length === 0 ? (
                 <div className="text-center py-12">
                   <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Package className="h-8 w-8 text-slate-400" />
+                    <Package className={`${ICON_SIZES.xl} text-slate-400`} />
                   </div>
                   <h3 className="font-semibold text-slate-900 mb-1">No requests yet</h3>
                   <p className="text-slate-500 text-sm">Asset requests will appear here</p>

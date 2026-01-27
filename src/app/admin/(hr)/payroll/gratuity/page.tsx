@@ -18,6 +18,7 @@ import { formatDate } from '@/lib/core/datetime';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 import { FileText, Users, DollarSign } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 
 export default async function GratuityReportPage() {
   const session = await getServerSession(authOptions);
@@ -79,15 +80,15 @@ export default async function GratuityReportPage() {
         actions={
           <>
             <PageHeaderButton href="/admin/payroll/runs" variant="secondary">
-              <FileText className="h-4 w-4" />
+              <FileText className={ICON_SIZES.sm} />
               Payroll Runs
             </PageHeaderButton>
             <PageHeaderButton href="/admin/payroll/salary-structures" variant="secondary">
-              <Users className="h-4 w-4" />
+              <Users className={ICON_SIZES.sm} />
               Salary Structures
             </PageHeaderButton>
             <PageHeaderButton href="/admin/payroll/payslips" variant="secondary">
-              <DollarSign className="h-4 w-4" />
+              <DollarSign className={ICON_SIZES.sm} />
               Payslips
             </PageHeaderButton>
           </>

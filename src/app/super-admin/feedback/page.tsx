@@ -2,6 +2,7 @@ import { prisma } from '@/lib/core/prisma';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Bug, Lightbulb, Building2, Calendar, MessageSquare, ExternalLink } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import { formatDistanceToNow } from 'date-fns';
 import Link from 'next/link';
 
@@ -42,7 +43,7 @@ export default async function SuperAdminFeedbackPage() {
       {feedback.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <MessageSquare className="h-12 w-12 text-muted-foreground mb-4" />
+            <MessageSquare className={`${ICON_SIZES['3xl']} text-muted-foreground mb-4`} />
             <h3 className="text-lg font-semibold mb-2">No feedback yet</h3>
             <p className="text-muted-foreground">
               User feedback will appear here when submitted
@@ -59,9 +60,9 @@ export default async function SuperAdminFeedbackPage() {
                     <div className="flex items-start gap-3 sm:gap-4 flex-1 min-w-0">
                       <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
                         {item.type === 'BUG' ? (
-                          <Bug className="h-5 w-5 text-red-500" />
+                          <Bug className={`${ICON_SIZES.md} text-red-500`} />
                         ) : (
-                          <Lightbulb className="h-5 w-5 text-amber-500" />
+                          <Lightbulb className={`${ICON_SIZES.md} text-amber-500`} />
                         )}
                       </div>
                       <div className="min-w-0 flex-1">
@@ -74,7 +75,7 @@ export default async function SuperAdminFeedbackPage() {
                             <>
                               <span>•</span>
                               <span className="flex items-center gap-1 truncate">
-                                <Building2 className="h-3 w-3" />
+                                <Building2 className={ICON_SIZES.xs} />
                                 {item.organizationName}
                               </span>
                             </>
@@ -82,7 +83,7 @@ export default async function SuperAdminFeedbackPage() {
                         </div>
                         {item.pageUrl && (
                           <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1 truncate">
-                            <ExternalLink className="h-3 w-3 flex-shrink-0" />
+                            <ExternalLink className={`${ICON_SIZES.xs} flex-shrink-0`} />
                             <span className="truncate">{item.pageUrl}</span>
                           </p>
                         )}
@@ -106,7 +107,7 @@ export default async function SuperAdminFeedbackPage() {
                       )}
 
                       <div className="text-sm text-muted-foreground flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
+                        <Calendar className={ICON_SIZES.xs} />
                         <span className="hidden sm:inline">{formatDistanceToNow(item.createdAt, { addSuffix: true })}</span>
                         <span className="sm:hidden">{formatDistanceToNow(item.createdAt)}</span>
                       </div>

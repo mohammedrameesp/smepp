@@ -40,6 +40,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 
 // Icon map for string-based icon names
 const iconMap: Record<string, LucideIcon> = {
@@ -159,7 +160,7 @@ export function StatsCard({
     >
       <div className="flex items-center justify-between mb-3">
         <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center', preset.icon)}>
-          <Icon className="h-5 w-5" />
+          <Icon className={ICON_SIZES.md} />
         </div>
         <span className="text-2xl font-bold text-slate-900">{value}</span>
       </div>

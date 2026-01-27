@@ -7,6 +7,7 @@
 
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, XCircle, CheckCircle } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import { formatDate } from '@/lib/core/datetime';
 import {
   getExpiryStatus as getExpiryStatusUtil,
@@ -34,7 +35,7 @@ export function ExpiryBadge({ date, label, showDays = true }: ExpiryBadgeProps) 
   if (status === 'expired') {
     return (
       <Badge variant="destructive" className="flex items-center gap-1">
-        <XCircle className="h-3 w-3" />
+        <XCircle className={ICON_SIZES.xs} />
         {label ? `${label} ` : ''}Expired
         {showDays && ` (${Math.abs(days)} days ago)`}
       </Badge>
@@ -44,7 +45,7 @@ export function ExpiryBadge({ date, label, showDays = true }: ExpiryBadgeProps) 
   if (status === 'expiring') {
     return (
       <Badge variant="outline" className="flex items-center gap-1 bg-yellow-100 text-yellow-800 border-yellow-300">
-        <AlertTriangle className="h-3 w-3" />
+        <AlertTriangle className={ICON_SIZES.xs} />
         {label ? `${label} ` : ''}Expiring
         {showDays && ` (${days} days)`}
       </Badge>
@@ -54,7 +55,7 @@ export function ExpiryBadge({ date, label, showDays = true }: ExpiryBadgeProps) 
   // Valid status - optionally show for completeness
   return (
     <Badge variant="outline" className="flex items-center gap-1 bg-green-50 text-green-700 border-green-300">
-      <CheckCircle className="h-3 w-3" />
+      <CheckCircle className={ICON_SIZES.xs} />
       {label ? `${label} ` : ''}Valid
     </Badge>
   );
@@ -70,7 +71,7 @@ export function ExpiryIndicator({ date }: { date: Date | string | null | undefin
   if (status === 'expired') {
     return (
       <span className="inline-flex items-center text-red-600 text-sm font-medium">
-        <XCircle className="h-4 w-4 mr-1" />
+        <XCircle className={`${ICON_SIZES.sm} mr-1`} />
         Expired
       </span>
     );
@@ -79,7 +80,7 @@ export function ExpiryIndicator({ date }: { date: Date | string | null | undefin
   if (status === 'expiring') {
     return (
       <span className="inline-flex items-center text-yellow-600 text-sm font-medium">
-        <AlertTriangle className="h-4 w-4 mr-1" />
+        <AlertTriangle className={`${ICON_SIZES.sm} mr-1`} />
         {days} days left
       </span>
     );
@@ -117,17 +118,17 @@ export function ExpiryDateDisplay({
   const configs = {
     expired: {
       className: 'bg-red-100 text-red-800 border-red-300',
-      icon: <XCircle className="h-3 w-3 mr-1" />,
+      icon: <XCircle className={`${ICON_SIZES.xs} mr-1`} />,
       text: 'Expired',
     },
     expiring: {
       className: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-      icon: <AlertTriangle className="h-3 w-3 mr-1" />,
+      icon: <AlertTriangle className={`${ICON_SIZES.xs} mr-1`} />,
       text: 'Expiring Soon',
     },
     valid: {
       className: 'bg-green-100 text-green-800 border-green-300',
-      icon: <CheckCircle className="h-3 w-3 mr-1" />,
+      icon: <CheckCircle className={`${ICON_SIZES.xs} mr-1`} />,
       text: 'Valid',
     },
   };

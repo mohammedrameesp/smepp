@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Building2, Users, Eye, Edit } from 'lucide-react';
 import { format } from 'date-fns';
 import { ImpersonateButton } from '@/components/super-admin/impersonate-button';
+import { ICON_SIZES } from '@/lib/constants';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,7 +39,7 @@ export default async function OrganizationsPage() {
       <div className="bg-white rounded-xl border border-gray-100">
         {organizations.length === 0 ? (
           <div className="p-12 text-center">
-            <Building2 className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+            <Building2 className={`${ICON_SIZES['3xl']} text-gray-300 mx-auto mb-4`} />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">No organizations yet</h3>
             <p className="text-gray-500 text-sm">Organizations are created through self-service signup</p>
           </div>
@@ -87,7 +88,7 @@ export default async function OrganizationsPage() {
                         </td>
                         <td className="px-4 lg:px-6 py-4">
                           <div className="flex items-center gap-1.5 text-sm text-gray-900">
-                            <Users className="h-4 w-4 text-gray-400" />
+                            <Users className={`${ICON_SIZES.sm} text-gray-400`} />
                             {org._count.teamMembers}
                           </div>
                         </td>
@@ -114,14 +115,14 @@ export default async function OrganizationsPage() {
                               className="text-gray-400 hover:text-gray-600 p-1.5 hover:bg-gray-100 rounded"
                               title="View"
                             >
-                              <Eye className="h-4 w-4" />
+                              <Eye className={ICON_SIZES.sm} />
                             </Link>
                             <Link
                               href={`/super-admin/organizations/${org.id}?edit=true`}
                               className="text-gray-400 hover:text-gray-600 p-1.5 hover:bg-gray-100 rounded"
                               title="Edit"
                             >
-                              <Edit className="h-4 w-4" />
+                              <Edit className={ICON_SIZES.sm} />
                             </Link>
                           </div>
                         </td>

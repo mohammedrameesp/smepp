@@ -32,6 +32,7 @@ import {
   Loader2,
   Trash2,
 } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface PayrollWorkflowActionsProps {
   payrollRunId: string;
@@ -146,9 +147,9 @@ export function PayrollWorkflowActions({
               disabled={isLoading !== null}
             >
               {isLoading === 'processed' ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className={`mr-2 ${ICON_SIZES.sm} animate-spin`} />
               ) : (
-                <Play className="mr-2 h-4 w-4" />
+                <Play className={`mr-2 ${ICON_SIZES.sm}`} />
               )}
               Generate Payslips
             </Button>
@@ -161,9 +162,9 @@ export function PayrollWorkflowActions({
               disabled={isLoading !== null}
             >
               {isLoading === 'submitted' ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className={`mr-2 ${ICON_SIZES.sm} animate-spin`} />
               ) : (
-                <Send className="mr-2 h-4 w-4" />
+                <Send className={`mr-2 ${ICON_SIZES.sm}`} />
               )}
               Submit for Approval
             </Button>
@@ -177,9 +178,9 @@ export function PayrollWorkflowActions({
                 disabled={isLoading !== null}
               >
                 {isLoading === 'approved' ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className={`mr-2 ${ICON_SIZES.sm} animate-spin`} />
                 ) : (
-                  <CheckCircle className="mr-2 h-4 w-4" />
+                  <CheckCircle className={`mr-2 ${ICON_SIZES.sm}`} />
                 )}
                 Approve
               </Button>
@@ -189,9 +190,9 @@ export function PayrollWorkflowActions({
                 disabled={isLoading !== null}
               >
                 {isLoading === 'rejected' ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className={`mr-2 ${ICON_SIZES.sm} animate-spin`} />
                 ) : (
-                  <XCircle className="mr-2 h-4 w-4" />
+                  <XCircle className={`mr-2 ${ICON_SIZES.sm}`} />
                 )}
                 Reject
               </Button>
@@ -205,9 +206,9 @@ export function PayrollWorkflowActions({
               disabled={isLoading !== null}
             >
               {isLoading === 'paid' ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className={`mr-2 ${ICON_SIZES.sm} animate-spin`} />
               ) : (
-                <CreditCard className="mr-2 h-4 w-4" />
+                <CreditCard className={`mr-2 ${ICON_SIZES.sm}`} />
               )}
               Mark as Paid
             </Button>
@@ -225,9 +226,9 @@ export function PayrollWorkflowActions({
                 disabled={isLoading !== null}
               >
                 {isLoading === 'wps' ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className={`mr-2 ${ICON_SIZES.sm} animate-spin`} />
                 ) : (
-                  <FileText className="mr-2 h-4 w-4" />
+                  <FileText className={`mr-2 ${ICON_SIZES.sm}`} />
                 )}
                 {wpsGenerated ? 'Regenerate WPS File' : 'Generate WPS File'}
               </Button>
@@ -241,9 +242,9 @@ export function PayrollWorkflowActions({
               <AlertDialogTrigger asChild>
                 <Button variant="destructive" disabled={isLoading !== null}>
                   {isLoading === 'delete' ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className={`mr-2 ${ICON_SIZES.sm} animate-spin`} />
                   ) : (
-                    <Trash2 className="mr-2 h-4 w-4" />
+                    <Trash2 className={`mr-2 ${ICON_SIZES.sm}`} />
                   )}
                   {currentStatus === PayrollStatus.CANCELLED ? 'Delete' : 'Cancel'}
                 </Button>

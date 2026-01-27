@@ -9,6 +9,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { AlertCircle, ArrowRight, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface PendingAssignment {
   id: string;
@@ -57,7 +58,7 @@ export function PendingAssignmentsAlert({ basePath = '/employee/asset-requests' 
     <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-3">
-          <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+          <AlertCircle className={`${ICON_SIZES.md} text-yellow-600 flex-shrink-0 mt-0.5`} />
           <div className="flex-1">
             <h3 className="font-medium text-yellow-800">
               You have {pendingAssignments.length} pending asset{pendingAssignments.length > 1 ? 's' : ''} to accept
@@ -84,7 +85,7 @@ export function PendingAssignmentsAlert({ basePath = '/employee/asset-requests' 
               <Link href={basePath}>
                 <Button size="sm" variant="outline" className="bg-white hover:bg-yellow-100">
                   View Pending Assignments
-                  <ArrowRight className="h-4 w-4 ml-2" />
+                  <ArrowRight className={`${ICON_SIZES.sm} ml-2`} />
                 </Button>
               </Link>
             </div>
@@ -95,7 +96,7 @@ export function PendingAssignmentsAlert({ basePath = '/employee/asset-requests' 
           className="text-yellow-600 hover:text-yellow-800 p-1"
           aria-label="Dismiss"
         >
-          <X className="h-4 w-4" />
+          <X className={ICON_SIZES.sm} />
         </button>
       </div>
     </div>

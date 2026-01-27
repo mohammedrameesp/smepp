@@ -19,6 +19,7 @@ import { EmployeeActions } from './employee-actions';
 import { SPONSORSHIP_TYPES } from '@/lib/data/constants';
 import { calculateTenure } from '@/features/employees/lib/hr-utils';
 import { getDisplayEmail } from '@/lib/utils/user-display';
+import { getRoleClasses, ICON_SIZES } from '@/lib/constants';
 
 // Role derivation for simplified access control display
 type AccessRole = 'Admin' | 'Manager' | 'HR' | 'Finance' | 'Operations' | 'Employee';
@@ -38,13 +39,13 @@ function deriveAccessRole(employee: {
   return 'Employee';
 }
 
-const ROLE_STYLES: Record<AccessRole, { bg: string; text: string; icon: typeof ShieldCheck }> = {
-  Admin: { bg: 'bg-red-100', text: 'text-red-700', icon: ShieldCheck },
-  Manager: { bg: 'bg-purple-100', text: 'text-purple-700', icon: UserCog },
-  HR: { bg: 'bg-green-100', text: 'text-green-700', icon: UserCog },
-  Finance: { bg: 'bg-yellow-100', text: 'text-yellow-700', icon: CircleDollarSign },
-  Operations: { bg: 'bg-blue-100', text: 'text-blue-700', icon: Briefcase },
-  Employee: { bg: 'bg-gray-100', text: 'text-gray-600', icon: User },
+const ROLE_ICONS: Record<AccessRole, typeof ShieldCheck> = {
+  Admin: ShieldCheck,
+  Manager: UserCog,
+  HR: UserCog,
+  Finance: CircleDollarSign,
+  Operations: Briefcase,
+  Employee: User,
 };
 
 interface Employee {
@@ -214,11 +215,11 @@ export function EmployeeListTable() {
       {/* Error Alert */}
       {error && (
         <Alert variant="error">
-          <AlertTriangle className="h-4 w-4" />
+          <AlertTriangle className={ICON_SIZES.sm} />
           <AlertDescription className="flex flex-col sm:flex-row items-center justify-between gap-3">
             <span>{error}</span>
             <Button variant="outline" size="sm" onClick={fetchEmployees} className="ml-4">
-              <RefreshCw className="h-4 w-4 mr-1" />
+              <RefreshCw className={`${ICON_SIZES.sm} mr-1`} />
               Retry
             </Button>
           </AlertDescription>
@@ -274,9 +275,9 @@ export function EmployeeListTable() {
           Showing {employees.length > 0 ? ((pagination.page - 1) * pagination.pageSize) + 1 : 0} - {Math.min(pagination.page * pagination.pageSize, pagination.total)} of {pagination.total} employees
         </div>
         <div className="flex items-center gap-2">
-          {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+          {loading && <Loader2 className={`${ICON_SIZES.sm} animate-spin`} />}
           <Button variant="outline" size="sm" onClick={handleExport}>
-            <Download className="h-4 w-4 mr-1" />
+            <Download className={`${ICON_SIZES.sm} mr-1`} />
             Export
           </Button>
         </div>
@@ -306,7 +307,7 @@ export function EmployeeListTable() {
             {loading && employees.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={9} className="text-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400" />
+                  <Loader2 className={`${ICON_SIZES.xl} animate-spin mx-auto text-gray-400`} />
                   <p className="text-gray-500 mt-2">Loading employees...</p>
                 </TableCell>
               </TableRow>
@@ -341,7 +342,7 @@ export function EmployeeListTable() {
                             className="h-full w-full object-cover"
                           />
                         ) : (
-                          <User className="h-5 w-5 text-gray-400" />
+                          <User className={`${ICON_SIZES.md} text-gray-400`} />
                         )}
                       </div>
                       <div>
@@ -363,11 +364,11 @@ export function EmployeeListTable() {
                   <TableCell className="hidden md:table-cell">
                     {(() => {
                       const role = deriveAccessRole(employee);
-                      const style = ROLE_STYLES[role];
-                      const Icon = style.icon;
+                      const roleClasses = getRoleClasses(role);
+                      const Icon = ROLE_ICONS[role];
                       return (
-                        <Badge variant="secondary" className={`gap-1 text-xs ${style.bg} ${style.text} hover:${style.bg}`}>
-                          <Icon className="h-3 w-3" />
+                        <Badge variant="secondary" className={`gap-1 text-xs ${roleClasses} hover:${roleClasses.split(' ')[0]}`}>
+                          <Icon className={ICON_SIZES.xs} />
                           {role}
                         </Badge>
                       );

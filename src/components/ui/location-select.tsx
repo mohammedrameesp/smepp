@@ -9,6 +9,7 @@
 import * as React from 'react';
 import { Check, ChevronsUpDown, Search, MapPin } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -105,19 +106,19 @@ export function LocationSelect({
           <span className="flex items-center gap-2 truncate">
             {selectedLocation ? (
               <>
-                <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <MapPin className={`${ICON_SIZES.sm} shrink-0 text-muted-foreground`} />
                 {selectedLocation.name}
               </>
             ) : (
               placeholder
             )}
           </span>
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <ChevronsUpDown className={`ml-2 ${ICON_SIZES.sm} shrink-0 opacity-50`} />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
         <div className="flex items-center border-b px-3 py-2">
-          <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+          <Search className={`mr-2 ${ICON_SIZES.sm} shrink-0 opacity-50`} />
           <Input
             ref={inputRef}
             placeholder="Search locations..."
@@ -152,7 +153,7 @@ export function LocationSelect({
               >
                 <Check
                   className={cn(
-                    'mr-2 h-4 w-4',
+                    `mr-2 ${ICON_SIZES.sm}`,
                     !value ? 'opacity-100' : 'opacity-0'
                   )}
                 />
@@ -170,7 +171,7 @@ export function LocationSelect({
                 >
                   <Check
                     className={cn(
-                      'mr-2 h-4 w-4',
+                      `mr-2 ${ICON_SIZES.sm}`,
                       value === location.name ? 'opacity-100' : 'opacity-0'
                     )}
                   />

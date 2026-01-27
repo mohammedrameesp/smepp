@@ -21,6 +21,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { AlertCircle, Send } from 'lucide-react';
 import { toast } from 'sonner';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface Asset {
   id: string;
@@ -85,7 +86,7 @@ export function AssetRequestDialog({ asset, trigger }: AssetRequestDialogProps) 
       <DialogTrigger asChild>
         {trigger || (
           <button className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg transition-all bg-transparent text-slate-300 hover:text-white border border-slate-500 hover:border-slate-400 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-800 focus-visible:ring-slate-400">
-            <Send className="h-4 w-4" />
+            <Send className={ICON_SIZES.sm} />
             Request
           </button>
         )}
@@ -126,7 +127,7 @@ export function AssetRequestDialog({ asset, trigger }: AssetRequestDialogProps) 
 
           {error && (
             <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 p-3 rounded-lg">
-              <AlertCircle className="h-4 w-4 flex-shrink-0" />
+              <AlertCircle className={`${ICON_SIZES.sm} flex-shrink-0`} />
               {error}
             </div>
           )}

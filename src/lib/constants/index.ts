@@ -8,3 +8,4 @@
 
 export * from './limits';
 export * from './procurement-categories';
+export * from './ui-constants';

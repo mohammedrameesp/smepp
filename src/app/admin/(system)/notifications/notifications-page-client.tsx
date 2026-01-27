@@ -35,6 +35,7 @@ import { cn } from '@/lib/core/utils';
 import { useNotifications } from '@/features/notifications/components';
 import { formatDate } from '@/lib/core/datetime';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface Notification {
   id: string;
@@ -145,9 +146,9 @@ export function NotificationsPageClient({
               variant="secondary"
             >
               {markingAllRead ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className={`${ICON_SIZES.sm} animate-spin`} />
               ) : (
-                <CheckCheck className="h-4 w-4" />
+                <CheckCheck className={ICON_SIZES.sm} />
               )}
               Mark all as read
             </PageHeaderButton>
@@ -207,7 +208,7 @@ export function NotificationsPageClient({
           <CardContent>
             {filteredNotifications.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
-                <Bell className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <Bell className={`${ICON_SIZES['3xl']} mx-auto mb-4 opacity-50`} />
                 <p>
                   {filter === 'unread'
                     ? 'No unread notifications'
@@ -238,7 +239,7 @@ export function NotificationsPageClient({
                         <TableCell>
                           <Icon
                             className={cn(
-                              'h-5 w-5',
+                              ICON_SIZES.md,
                               getIconColor(notification.type)
                             )}
                           />
@@ -296,7 +297,7 @@ export function NotificationsPageClient({
                                     }
                                   }}
                                 >
-                                  <ExternalLink className="h-4 w-4" />
+                                  <ExternalLink className={ICON_SIZES.sm} />
                                 </Button>
                               </Link>
                             )}
@@ -307,7 +308,7 @@ export function NotificationsPageClient({
                                 className="h-8 w-8"
                                 onClick={() => handleMarkRead(notification.id)}
                               >
-                                <CheckCircle className="h-4 w-4 text-green-600" />
+                                <CheckCircle className={`${ICON_SIZES.sm} text-green-600`} />
                               </Button>
                             )}
                           </div>

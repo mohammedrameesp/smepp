@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -39,7 +40,7 @@ export function SegmentError({
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="text-center pb-2">
           <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-red-100 mb-4">
-            <AlertTriangle className="h-7 w-7 text-red-500" aria-hidden="true" />
+            <AlertTriangle className={`${ICON_SIZES.xl} text-red-500`} aria-hidden="true" />
           </div>
           <CardTitle className="text-xl font-bold text-gray-900">
             Something went wrong
@@ -72,7 +73,7 @@ export function SegmentError({
             className="w-full h-11 bg-[#2F2F2F] hover:bg-[#1a1a1a] text-white font-semibold rounded-lg"
             aria-label="Try loading again"
           >
-            <RefreshCw className="mr-2 h-4 w-4" aria-hidden="true" />
+            <RefreshCw className={`mr-2 ${ICON_SIZES.sm}`} aria-hidden="true" />
             Try again
           </Button>
           <Button
@@ -81,7 +82,7 @@ export function SegmentError({
             className="w-full h-11 font-semibold rounded-lg border-2"
             aria-label="Go to dashboard"
           >
-            <Home className="mr-2 h-4 w-4" aria-hidden="true" />
+            <Home className={`mr-2 ${ICON_SIZES.sm}`} aria-hidden="true" />
             Go to Dashboard
           </Button>
         </CardFooter>

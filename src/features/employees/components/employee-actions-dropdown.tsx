@@ -7,6 +7,7 @@
 
 import { useState } from 'react';
 import { MoreVertical, UserMinus, Trash2 } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -50,7 +51,7 @@ export function EmployeeActionsDropdown({
             className="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg transition-all bg-slate-100 text-slate-700 hover:bg-slate-200 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-slate-400"
             aria-label="Admin actions"
           >
-            <MoreVertical className="h-4 w-4" />
+            <MoreVertical className={ICON_SIZES.sm} />
             <span className="hidden sm:inline">Actions</span>
           </button>
         </DropdownMenuTrigger>
@@ -60,7 +61,7 @@ export function EmployeeActionsDropdown({
               onClick={() => setOffboardDialogOpen(true)}
               className="cursor-pointer"
             >
-              <UserMinus className="h-4 w-4 mr-2" />
+              <UserMinus className={`${ICON_SIZES.sm} mr-2`} />
               Offboard Employee
             </DropdownMenuItem>
           )}
@@ -69,7 +70,7 @@ export function EmployeeActionsDropdown({
             onClick={() => setDeleteDialogOpen(true)}
             className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
           >
-            <Trash2 className="h-4 w-4 mr-2" />
+            <Trash2 className={`${ICON_SIZES.sm} mr-2`} />
             Delete User
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -201,7 +202,7 @@ function DeleteUserDialogInner({
           >
             {isDeleting ? (
               <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className={`${ICON_SIZES.sm} mr-2 animate-spin`} />
                 Deleting...
               </>
             ) : (

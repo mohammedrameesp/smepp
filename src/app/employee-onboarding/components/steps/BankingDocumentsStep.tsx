@@ -7,6 +7,7 @@
  */
 
 import { Building2, FileText, Check, X } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -26,7 +27,7 @@ function IbanValidationHint({ iban }: { iban: string }) {
   if (isValidLength) {
     return (
       <p className="text-xs text-green-600 flex items-center gap-1">
-        <Check className="h-3 w-3" /> Valid IBAN format
+        <Check className={ICON_SIZES.xs} /> Valid IBAN format
       </p>
     );
   }
@@ -57,7 +58,7 @@ export function BankingDocumentsStep({ formData, updateField, errors }: BankingD
     <div className="max-w-2xl mx-auto">
       <div className="text-center mb-8">
         <div className="h-16 w-16 rounded-2xl bg-amber-100 flex items-center justify-center mx-auto mb-4">
-          <Building2 className="h-8 w-8 text-amber-600" />
+          <Building2 className={`${ICON_SIZES.xl} text-amber-600`} />
         </div>
         <h2 className="text-2xl font-bold text-slate-900 mb-2">Banking & Documents</h2>
         <p className="text-slate-600">
@@ -130,7 +131,7 @@ export function BankingDocumentsStep({ formData, updateField, errors }: BankingD
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
-              <FileText className="h-4 w-4 text-slate-500" />
+              <FileText className={`${ICON_SIZES.sm} text-slate-500`} />
               <CardTitle className="text-base">Required Documents</CardTitle>
             </div>
             <CardDescription>

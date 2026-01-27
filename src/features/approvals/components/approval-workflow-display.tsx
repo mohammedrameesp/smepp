@@ -19,6 +19,7 @@ import {
   DEFAULT_ASSET_POLICIES,
 } from '../lib/default-policies';
 import Link from 'next/link';
+import { ICON_SIZES } from '@/lib/constants';
 
 // Role display names
 const ROLE_LABELS: Record<string, string> = {
@@ -129,7 +130,7 @@ function ApprovalChain({ levels }: { levels: ApprovalLevel[] }) {
     <div className="flex items-center gap-1 flex-wrap">
       {sortedLevels.map((level, index) => (
         <div key={level.id} className="flex items-center">
-          {index > 0 && <ArrowRight className="h-3 w-3 mx-1 text-muted-foreground" />}
+          {index > 0 && <ArrowRight className={`${ICON_SIZES.xs} mx-1 text-muted-foreground`} />}
           <Badge variant="outline" className="font-normal">
             {ROLE_LABELS[level.approverRole] || level.approverRole}
           </Badge>
@@ -171,7 +172,7 @@ function ModuleSection({
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Icon className="h-4 w-4 text-muted-foreground" />
+          <Icon className={`${ICON_SIZES.sm} text-muted-foreground`} />
           <h4 className="font-medium">{config.label}</h4>
         </div>
         {isDefault && (
@@ -272,7 +273,7 @@ export function ApprovalWorkflowDisplay({ enabledModules, className }: ApprovalW
     <Card className={className}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <GitBranch className="h-5 w-5" />
+          <GitBranch className={ICON_SIZES.md} />
           Approval Workflows
         </CardTitle>
         <CardDescription>
@@ -299,7 +300,7 @@ export function ApprovalWorkflowDisplay({ enabledModules, className }: ApprovalW
             {/* Info alert about auto-skip */}
             {hasAnyDefaults && (
               <Alert>
-                <Info className="h-4 w-4" />
+                <Info className={ICON_SIZES.sm} />
                 <AlertDescription>
                   Using default approval workflow for some modules. Steps are auto-skipped if no approver
                   is available (e.g., no line manager assigned to the employee).
@@ -311,7 +312,7 @@ export function ApprovalWorkflowDisplay({ enabledModules, className }: ApprovalW
             <div className="flex justify-end pt-2">
               <Button asChild variant="outline">
                 <Link href="/admin/settings/approvals">
-                  <Settings className="h-4 w-4 mr-2" />
+                  <Settings className={`${ICON_SIZES.sm} mr-2`} />
                   Customize Policies
                 </Link>
               </Button>

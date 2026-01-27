@@ -26,6 +26,7 @@ import {
   RefreshCw,
   Building2,
 } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface PlatformConfig {
   configured: boolean;
@@ -203,7 +204,7 @@ export default function WhatsAppSettingsPage() {
   if (status === 'loading' || isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+        <Loader2 className={`${ICON_SIZES.xl} animate-spin text-slate-400`} />
       </div>
     );
   }
@@ -229,7 +230,7 @@ export default function WhatsAppSettingsPage() {
 
       {success && (
         <Alert className="border-green-200 bg-green-50 text-green-800">
-          <CheckCircle className="h-4 w-4" />
+          <CheckCircle className={ICON_SIZES.sm} />
           <AlertDescription>{success}</AlertDescription>
         </Alert>
       )}
@@ -247,7 +248,7 @@ export default function WhatsAppSettingsPage() {
                 }`}
               >
                 <MessageCircle
-                  className={`w-5 h-5 ${
+                  className={`${ICON_SIZES.md} ${
                     config?.configured && config?.config?.isActive
                       ? 'text-green-600'
                       : 'text-slate-500'
@@ -264,17 +265,17 @@ export default function WhatsAppSettingsPage() {
             <div className="flex items-center gap-2">
               {config?.configured && config?.config?.isActive ? (
                 <span className="flex items-center gap-1.5 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
-                  <CheckCircle className="w-4 h-4" />
+                  <CheckCircle className={ICON_SIZES.sm} />
                   Active
                 </span>
               ) : config?.configured ? (
                 <span className="flex items-center gap-1.5 px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-sm font-medium">
-                  <XCircle className="w-4 h-4" />
+                  <XCircle className={ICON_SIZES.sm} />
                   Disabled
                 </span>
               ) : (
                 <span className="flex items-center gap-1.5 px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-sm font-medium">
-                  <XCircle className="w-4 h-4" />
+                  <XCircle className={ICON_SIZES.sm} />
                   Not Configured
                 </span>
               )}
@@ -322,7 +323,7 @@ export default function WhatsAppSettingsPage() {
                 onClick={() => setShowToken(!showToken)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               >
-                {showToken ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {showToken ? <EyeOff className={ICON_SIZES.sm} /> : <Eye className={ICON_SIZES.sm} />}
               </button>
             </div>
             <p className="text-xs text-muted-foreground">
@@ -359,7 +360,7 @@ export default function WhatsAppSettingsPage() {
             <Button onClick={handleSave} disabled={isSaving}>
               {isSaving ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <Loader2 className={`${ICON_SIZES.sm} mr-2 animate-spin`} />
                   Saving...
                 </>
               ) : (
@@ -395,9 +396,9 @@ export default function WhatsAppSettingsPage() {
                   onClick={() => copyToClipboard(config.webhookUrl, 'webhookUrl')}
                 >
                   {copiedField === 'webhookUrl' ? (
-                    <Check className="h-4 w-4 text-green-600" />
+                    <Check className={`${ICON_SIZES.sm} text-green-600`} />
                   ) : (
-                    <Copy className="h-4 w-4" />
+                    <Copy className={ICON_SIZES.sm} />
                   )}
                 </Button>
               </div>
@@ -418,9 +419,9 @@ export default function WhatsAppSettingsPage() {
                   }
                 >
                   {copiedField === 'verifyToken' ? (
-                    <Check className="h-4 w-4 text-green-600" />
+                    <Check className={`${ICON_SIZES.sm} text-green-600`} />
                   ) : (
-                    <Copy className="h-4 w-4" />
+                    <Copy className={ICON_SIZES.sm} />
                   )}
                 </Button>
               </div>
@@ -439,7 +440,7 @@ export default function WhatsAppSettingsPage() {
                 <CardDescription>Platform-wide WhatsApp usage this month</CardDescription>
               </div>
               <Button variant="outline" size="sm" onClick={fetchData}>
-                <RefreshCw className="h-4 w-4 mr-2" />
+                <RefreshCw className={`${ICON_SIZES.sm} mr-2`} />
                 Refresh
               </Button>
             </div>
@@ -500,7 +501,7 @@ export default function WhatsAppSettingsPage() {
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center">
-                          <Building2 className="h-4 w-4 text-slate-500" />
+                          <Building2 className={`${ICON_SIZES.sm} text-slate-500`} />
                         </div>
                         <div>
                           <p className="font-medium">{tenant.organizationName}</p>

@@ -20,6 +20,7 @@ import { formatCurrency } from '@/lib/core/currency';
 import { formatDate } from '@/lib/core/datetime';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface PageProps {
   searchParams: Promise<{
@@ -94,19 +95,19 @@ export default async function SalaryStructuresPage({ searchParams }: PageProps) 
         actions={
           <>
             <PageHeaderButton href="/admin/payroll/salary-structures/new" variant="primary">
-              <Plus className="h-4 w-4" />
+              <Plus className={ICON_SIZES.sm} />
               Add Salary Structure
             </PageHeaderButton>
             <PageHeaderButton href="/admin/payroll/runs" variant="secondary">
-              <FileText className="h-4 w-4" />
+              <FileText className={ICON_SIZES.sm} />
               Payroll Runs
             </PageHeaderButton>
             <PageHeaderButton href="/admin/payroll/payslips" variant="secondary">
-              <DollarSign className="h-4 w-4" />
+              <DollarSign className={ICON_SIZES.sm} />
               Payslips
             </PageHeaderButton>
             <PageHeaderButton href="/admin/payroll/loans" variant="secondary">
-              <CreditCard className="h-4 w-4" />
+              <CreditCard className={ICON_SIZES.sm} />
               Loans
             </PageHeaderButton>
           </>
@@ -179,7 +180,7 @@ export default async function SalaryStructuresPage({ searchParams }: PageProps) 
                       <TableCell>
                         <Button asChild variant="ghost" size="icon">
                           <Link href={`/admin/payroll/salary-structures/${salary.id}/edit`}>
-                            <Pencil className="h-4 w-4" />
+                            <Pencil className={ICON_SIZES.sm} />
                           </Link>
                         </Button>
                       </TableCell>

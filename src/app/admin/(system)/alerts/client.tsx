@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Search, Calendar, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import type { Alert } from './page';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface AlertsClientProps {
   alerts: Alert[];
@@ -94,7 +95,7 @@ export function AlertsClient({ alerts, counts }: AlertsClientProps) {
     return (
       <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
         <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <CheckCircle className="h-8 w-8 text-emerald-500" />
+          <CheckCircle className={`${ICON_SIZES.xl} text-emerald-500`} />
         </div>
         <h3 className="font-semibold text-slate-900 text-lg mb-1">All clear!</h3>
         <p className="text-slate-500 mb-4">No upcoming alerts in the next 30 days.</p>
@@ -131,7 +132,7 @@ export function AlertsClient({ alerts, counts }: AlertsClientProps) {
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${ICON_SIZES.sm} text-gray-400`} />
               <Input
                 placeholder="Search by name..."
                 value={searchTerm}
@@ -141,7 +142,7 @@ export function AlertsClient({ alerts, counts }: AlertsClientProps) {
             </div>
             <Select value={dateRange} onValueChange={(v) => setDateRange(v as DateRange)}>
               <SelectTrigger>
-                <Calendar className="h-4 w-4 mr-2 text-gray-400" />
+                <Calendar className={`${ICON_SIZES.sm} mr-2 text-gray-400`} />
                 <SelectValue placeholder="Date range" />
               </SelectTrigger>
               <SelectContent>

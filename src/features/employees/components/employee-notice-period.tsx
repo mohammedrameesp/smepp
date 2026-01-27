@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Clock, AlertCircle, CheckCircle } from 'lucide-react';
 import { formatDate } from '@/lib/core/datetime';
+import { ICON_SIZES } from '@/lib/constants';
 import {
   calculateNoticePeriod,
   isInProbation,
@@ -102,7 +103,7 @@ export function EmployeeNoticePeriod({
       <div className="flex items-start gap-3">
         {inProbation ? (
           <>
-            <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5 shrink-0" />
+            <AlertCircle className={`${ICON_SIZES.md} text-amber-500 mt-0.5 shrink-0`} />
             <div>
               <p className="text-sm font-medium text-gray-900">In Probation Period</p>
               <p className="text-xs text-muted-foreground">
@@ -114,7 +115,7 @@ export function EmployeeNoticePeriod({
           </>
         ) : (
           <>
-            <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 shrink-0" />
+            <CheckCircle className={`${ICON_SIZES.md} text-green-500 mt-0.5 shrink-0`} />
             <div>
               <p className="text-sm font-medium text-gray-900">Probation Completed</p>
               <p className="text-xs text-muted-foreground">
@@ -127,7 +128,7 @@ export function EmployeeNoticePeriod({
 
       {/* Notice Period */}
       <div className="flex items-start gap-3">
-        <Clock className="h-5 w-5 text-blue-500 mt-0.5 shrink-0" />
+        <Clock className={`${ICON_SIZES.md} text-blue-500 mt-0.5 shrink-0`} />
         <div>
           <p className="text-sm font-medium text-gray-900">
             {noticePeriodDays} Days Notice Period

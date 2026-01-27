@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, FileText, Calendar, Clock, Phone, ExternalLink, Info } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import Link from 'next/link';
 import { DetailCard } from '@/components/ui/detail-card';
 import { InfoField, InfoFieldGrid } from '@/components/ui/info-field';
@@ -205,7 +206,7 @@ export default function EmployeeLeaveRequestDetailPage() {
               />
             )}
             <PageHeaderButton href="/employee/leave" variant="outline">
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className={ICON_SIZES.sm} />
               Back to My Leave
             </PageHeaderButton>
           </div>
@@ -252,9 +253,9 @@ export default function EmployeeLeaveRequestDetailPage() {
                     rel="noopener noreferrer"
                     className="flex items-center gap-2 text-blue-600 hover:underline"
                   >
-                    <FileText className="h-4 w-4" />
+                    <FileText className={ICON_SIZES.sm} />
                     View Document
-                    <ExternalLink className="h-3 w-3" />
+                    <ExternalLink className={ICON_SIZES.xs} />
                   </a>
                 </div>
               )}
@@ -262,7 +263,7 @@ export default function EmployeeLeaveRequestDetailPage() {
               {(request.emergencyContact || request.emergencyPhone) && (
                 <div className="border-t border-slate-200 pt-4">
                   <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2 flex items-center gap-2">
-                    <Phone className="h-4 w-4" />
+                    <Phone className={ICON_SIZES.sm} />
                     Emergency Contact
                   </p>
                   <div>
@@ -337,7 +338,7 @@ export default function EmployeeLeaveRequestDetailPage() {
                 request.status === 'APPROVED' ? 'bg-emerald-100' :
                 request.status === 'REJECTED' ? 'bg-red-100' : 'bg-slate-100'
               }`}>
-                <Info className={`h-5 w-5 ${
+                <Info className={`${ICON_SIZES.md} ${
                   request.status === 'APPROVED' ? 'text-emerald-600' :
                   request.status === 'REJECTED' ? 'text-red-600' : 'text-slate-600'
                 }`} />

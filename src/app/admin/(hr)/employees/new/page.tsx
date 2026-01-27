@@ -15,6 +15,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RefreshCw, AlertTriangle, User, Briefcase, Shield, Mail, Building2, Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { DepartmentSelect } from '@/components/ui/department-select';
+import { ICON_SIZES } from '@/lib/constants';
+import { cn } from '@/lib/core/utils';
 import { createUserSchema, type CreateUserInput, USER_ROLES, ROLE_CONFIG, type UserRole } from '@/features/users/validations/users';
 import { VALIDATION_PATTERNS } from '@/lib/validations/patterns';
 import { DatePicker } from '@/components/ui/date-picker';
@@ -262,7 +264,7 @@ export default function NewEmployeePage() {
           <Card>
             <CardHeader className="pb-4">
               <div className="flex items-center gap-2">
-                <User className="h-5 w-5 text-slate-600" />
+                <User className={cn(ICON_SIZES.md, "text-slate-600")} />
                 <CardTitle className="text-lg">Basic Information</CardTitle>
               </div>
             </CardHeader>
@@ -312,7 +314,7 @@ export default function NewEmployeePage() {
                 <div className="space-y-2">
                   <Label htmlFor="email">
                     <div className="flex items-center gap-2">
-                      <Mail className="h-4 w-4" />
+                      <Mail className={ICON_SIZES.sm} />
                       Email Address <span className="text-red-500">*</span>
                     </div>
                   </Label>
@@ -333,11 +335,11 @@ export default function NewEmployeePage() {
                     {/* Email check status indicator */}
                     <div className="absolute right-3 top-1/2 -translate-y-1/2">
                       {checkingEmail ? (
-                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                        <Loader2 className={cn(ICON_SIZES.sm, "animate-spin text-muted-foreground")} />
                       ) : emailCheckResult?.available ? (
-                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        <CheckCircle className={cn(ICON_SIZES.sm, "text-green-500")} />
                       ) : emailCheckResult && !emailCheckResult.available && !emailCheckResult.canProceed ? (
-                        <XCircle className="h-4 w-4 text-red-500" />
+                        <XCircle className={cn(ICON_SIZES.sm, "text-red-500")} />
                       ) : null}
                     </div>
                   </div>
@@ -384,7 +386,7 @@ export default function NewEmployeePage() {
           <Card>
             <CardHeader className="pb-4">
               <div className="flex items-center gap-2">
-                <Briefcase className="h-5 w-5 text-slate-600" />
+                <Briefcase className={cn(ICON_SIZES.md, "text-slate-600")} />
                 <CardTitle className="text-lg">Employee Settings</CardTitle>
               </div>
             </CardHeader>
@@ -440,7 +442,7 @@ export default function NewEmployeePage() {
                         onClick={generateNextEmployeeCode}
                         title="Regenerate code"
                       >
-                        <RefreshCw className="h-4 w-4" />
+                        <RefreshCw className={ICON_SIZES.sm} />
                       </Button>
                     </div>
                     {errors.employeeId && (
@@ -574,7 +576,7 @@ export default function NewEmployeePage() {
 
               {!isEmployee && (
                 <Alert className="border-amber-200 bg-amber-50">
-                  <AlertTriangle className="h-4 w-4 text-amber-600" />
+                  <AlertTriangle className={cn(ICON_SIZES.sm, "text-amber-600")} />
                   <AlertDescription className="text-amber-800">
                     Service accounts only appear in team management, not in HR features like payroll or leave.
                   </AlertDescription>
@@ -588,7 +590,7 @@ export default function NewEmployeePage() {
           <Card>
             <CardHeader className="pb-4">
               <div className="flex items-center gap-2">
-                <Shield className="h-5 w-5 text-slate-600" />
+                <Shield className={cn(ICON_SIZES.md, "text-slate-600")} />
                 <CardTitle className="text-lg">Role & Permissions</CardTitle>
               </div>
             </CardHeader>
@@ -629,7 +631,7 @@ export default function NewEmployeePage() {
           {/* Info Alert */}
           {canLogin && isEmployee && (
             <Alert className="bg-slate-50 border-slate-200">
-              <Building2 className="h-4 w-4 text-slate-600" />
+              <Building2 className={cn(ICON_SIZES.sm, "text-slate-600")} />
               <AlertDescription className="text-slate-700">
                 {authConfig?.hasSSO
                   ? `An invitation email will be sent. They can join by logging in with ${authConfig.hasCustomGoogleOAuth && authConfig.hasCustomAzureOAuth ? 'Google or Microsoft' : authConfig.hasCustomGoogleOAuth ? 'Google' : 'Microsoft'}.`

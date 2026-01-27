@@ -19,6 +19,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Loader2, User, Building2, Mail, Check } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 import { isLikelyServiceAccount } from '@/lib/utils/service-account-detection';
 
 interface AccountTypeOption {
@@ -33,7 +34,7 @@ interface AccountTypeOption {
 const accountTypeOptions: AccountTypeOption[] = [
   {
     type: 'employee',
-    icon: <User className="h-6 w-6" />,
+    icon: <User className={ICON_SIZES.lg} />,
     title: 'Employee Account',
     description: 'This is my personal work account',
     features: [
@@ -45,7 +46,7 @@ const accountTypeOptions: AccountTypeOption[] = [
   },
   {
     type: 'service',
-    icon: <Building2 className="h-6 w-6" />,
+    icon: <Building2 className={ICON_SIZES.lg} />,
     title: 'Service Account',
     description: 'This is a shared/generic account',
     features: [
@@ -114,7 +115,7 @@ export function AccountTypeConfirmationDialog({
       >
         <DialogHeader>
           <div className="flex items-center gap-2 text-blue-600 mb-2">
-            <Mail className="h-5 w-5" />
+            <Mail className={ICON_SIZES.md} />
             <span className="text-sm font-medium">Account Setup</span>
           </div>
           <DialogTitle className="text-xl">Confirm Your Account Type</DialogTitle>
@@ -171,7 +172,7 @@ export function AccountTypeConfirmationDialog({
                 <ul className="space-y-2 mb-4 flex-1">
                   {option.features.map((feature, index) => (
                     <li key={index} className="flex items-start gap-2 text-sm text-gray-600">
-                      <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                      <Check className={`${ICON_SIZES.sm} text-green-500 mt-0.5 flex-shrink-0`} />
                       <span>{feature}</span>
                     </li>
                   ))}
@@ -185,7 +186,7 @@ export function AccountTypeConfirmationDialog({
                 >
                   {isLoading && selectedType === option.type ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className={`mr-2 ${ICON_SIZES.sm} animate-spin`} />
                       Confirming...
                     </>
                   ) : (

@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { ExportUserPDFButton } from './export-user-pdf-button';
 import { DeleteUserButton } from './delete-user-button';
 import { FileText } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface UserDetailActionsProps {
   userId: string;
@@ -33,7 +34,7 @@ export function UserDetailActions({ userId, userName, userEmail, currentUserId, 
       {!isSystemAccount && (
         <Link href={`/admin/users/${userId}/hr`}>
           <Button variant="outline">
-            <FileText className="h-4 w-4 mr-2" />
+            <FileText className={`${ICON_SIZES.sm} mr-2`} />
             HR Profile
           </Button>
         </Link>

@@ -47,6 +47,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AssetStatusBadge, type EmployeeAsset } from './asset-shared';
 import { Search } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 
 // Using EmployeeAsset from asset-shared.tsx
 type Asset = EmployeeAsset;
@@ -326,7 +327,7 @@ export function EmployeeAssetListTable({ assets, currentUserId }: EmployeeAssetL
       ) : (
         <div className="text-center py-12 text-gray-500 border rounded-lg bg-gray-50">
           <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Search className="h-8 w-8 text-slate-400" />
+            <Search className={`${ICON_SIZES.xl} text-slate-400`} />
           </div>
           <p className="text-lg font-medium">No assets found</p>
           <p className="text-sm">Try adjusting your filters or search terms</p>

@@ -7,6 +7,7 @@
 
 import { Badge } from '@/components/ui/badge';
 import { AssetRequestStatus } from '@prisma/client';
+import { getStatusClassesWithBorder } from '@/lib/constants';
 
 interface AssetRequestStatusBadgeProps {
   status: AssetRequestStatus | string;
@@ -28,24 +29,12 @@ export function getRequestStatusLabel(status: AssetRequestStatus | string): stri
   return labels[status] || status;
 }
 
+/**
+ * Get status color for asset request badges.
+ * Uses centralized STATUS_COLORS from @/lib/constants.
+ */
 export function getRequestStatusColor(status: AssetRequestStatus | string): string {
-  switch (status) {
-    case 'PENDING_ADMIN_APPROVAL':
-    case 'PENDING_USER_ACCEPTANCE':
-    case 'PENDING_RETURN_APPROVAL':
-      return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-    case 'ACCEPTED':
-    case 'APPROVED':
-      return 'bg-green-100 text-green-800 border-green-200';
-    case 'REJECTED':
-    case 'REJECTED_BY_USER':
-      return 'bg-red-100 text-red-800 border-red-200';
-    case 'EXPIRED':
-    case 'CANCELLED':
-      return 'bg-gray-100 text-gray-600 border-gray-200';
-    default:
-      return 'bg-gray-100 text-gray-800 border-gray-200';
-  }
+  return getStatusClassesWithBorder(status);
 }
 
 export function AssetRequestStatusBadge({ status, className = '' }: AssetRequestStatusBadgeProps) {

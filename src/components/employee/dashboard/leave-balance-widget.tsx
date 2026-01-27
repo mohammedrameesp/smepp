@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { CalendarDays, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface LeaveBalance {
   id: string;
@@ -25,7 +26,7 @@ export function LeaveBalanceWidget({ balances, year, className }: LeaveBalanceWi
     <div className={cn('bg-white border border-gray-200 rounded-xl p-4', className)}>
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-          <CalendarDays className="h-5 w-5 text-gray-500" />
+          <CalendarDays className={`${ICON_SIZES.md} text-gray-500`} />
           Leave Balance
         </h3>
         <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">{year}</span>
@@ -81,7 +82,7 @@ export function LeaveBalanceWidget({ balances, year, className }: LeaveBalanceWi
 
       <Link href="/employee/leave/new">
         <Button className="w-full mt-4 bg-slate-800 hover:bg-slate-900">
-          <Plus className="h-4 w-4 mr-2" />
+          <Plus className={`${ICON_SIZES.sm} mr-2`} />
           Request Leave
         </Button>
       </Link>

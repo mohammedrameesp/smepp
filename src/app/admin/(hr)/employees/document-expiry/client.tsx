@@ -10,6 +10,8 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, AlertTriangle, XCircle, User, Search } from 'lucide-react';
 import { formatDate } from '@/lib/core/datetime';
+import { ICON_SIZES } from '@/lib/constants';
+import { cn } from '@/lib/core/utils';
 
 interface ExpiringDocument {
   employeeId: string;
@@ -95,14 +97,14 @@ export function DocumentExpiryClient() {
     if (status === 'expired') {
       return (
         <Badge variant="destructive" className="flex items-center gap-1">
-          <XCircle className="h-3 w-3" />
+          <XCircle className={ICON_SIZES.xs} />
           Expired {Math.abs(daysRemaining)}d ago
         </Badge>
       );
     }
     return (
       <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300 flex items-center gap-1">
-        <AlertTriangle className="h-3 w-3" />
+        <AlertTriangle className={ICON_SIZES.xs} />
         {daysRemaining}d remaining
       </Badge>
     );
@@ -111,7 +113,7 @@ export function DocumentExpiryClient() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+        <Loader2 className={cn(ICON_SIZES.xl, "animate-spin text-gray-400")} />
       </div>
     );
   }
@@ -123,7 +125,7 @@ export function DocumentExpiryClient() {
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${ICON_SIZES.sm} text-gray-400`} />
               <Input
                 placeholder="Search by name or email..."
                 value={searchTerm}
@@ -168,7 +170,7 @@ export function DocumentExpiryClient() {
         <CardContent>
           {filteredAlerts.length === 0 ? (
             <div className="text-center py-12">
-              <AlertTriangle className="h-12 w-12 text-green-500 mx-auto mb-4" />
+              <AlertTriangle className={`${ICON_SIZES['3xl']} text-green-500 mx-auto mb-4`} />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
                 {alerts.length === 0 ? 'No Expiring Documents' : 'No Matching Results'}
               </h3>
@@ -202,7 +204,7 @@ export function DocumentExpiryClient() {
                           className="flex items-center gap-3 hover:opacity-80"
                         >
                           <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                            <User className="h-5 w-5 text-gray-400" />
+                            <User className={cn(ICON_SIZES.md, "text-gray-400")} />
                           </div>
                           <div>
                             <div className="font-medium text-gray-900">

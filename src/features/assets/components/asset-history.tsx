@@ -44,6 +44,7 @@ import { Button } from '@/components/ui/button';
 import { formatRelativeTime } from '@/lib/core/datetime';
 import { User, MapPin, RefreshCw, Plus, Edit, UserMinus, AlertCircle } from 'lucide-react';
 import { z } from 'zod';
+import { ICON_SIZES } from '@/lib/constants';
 
 // Zod schema for type validation
 const MemberSchema = z.object({
@@ -83,19 +84,19 @@ const TIMELINE_LINE_OFFSET = TIMELINE_DOT_SIZE / 2 - 1; // Center the line (11px
 function getActionIcon(action: string) {
   switch (action) {
     case 'CREATED':
-      return <Plus className="h-3 w-3" />;
+      return <Plus className={ICON_SIZES.xs} />;
     case 'ASSIGNED':
-      return <User className="h-3 w-3" />;
+      return <User className={ICON_SIZES.xs} />;
     case 'UNASSIGNED':
-      return <UserMinus className="h-3 w-3" />;
+      return <UserMinus className={ICON_SIZES.xs} />;
     case 'STATUS_CHANGED':
-      return <RefreshCw className="h-3 w-3" />;
+      return <RefreshCw className={ICON_SIZES.xs} />;
     case 'LOCATION_CHANGED':
-      return <MapPin className="h-3 w-3" />;
+      return <MapPin className={ICON_SIZES.xs} />;
     case 'UPDATED':
-      return <Edit className="h-3 w-3" />;
+      return <Edit className={ICON_SIZES.xs} />;
     default:
-      return <Edit className="h-3 w-3" />;
+      return <Edit className={ICON_SIZES.xs} />;
   }
 }
 
@@ -330,7 +331,7 @@ export default function AssetHistory({ assetId }: AssetHistoryProps) {
         </CardHeader>
         <CardContent>
           <div className="flex items-start gap-3 text-sm">
-            <AlertCircle className="h-4 w-4 text-red-600 flex-shrink-0 mt-0.5" />
+            <AlertCircle className={`${ICON_SIZES.sm} text-red-600 flex-shrink-0 mt-0.5`} />
             <div className="flex-1">
               <p className="text-red-600 mb-2">{error}</p>
               <Button
@@ -339,7 +340,7 @@ export default function AssetHistory({ assetId }: AssetHistoryProps) {
                 onClick={handleRetry}
                 className="h-8"
               >
-                <RefreshCw className="h-3 w-3 mr-1" />
+                <RefreshCw className={`${ICON_SIZES.xs} mr-1`} />
                 Try Again
               </Button>
             </div>

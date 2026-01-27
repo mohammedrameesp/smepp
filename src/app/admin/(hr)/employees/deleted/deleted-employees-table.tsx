@@ -12,6 +12,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { formatDate } from '@/lib/core/datetime';
+import { ICON_SIZES } from '@/lib/constants';
+import { cn } from '@/lib/core/utils';
 
 interface DeletedEmployee {
   id: string;
@@ -58,7 +60,7 @@ export function DeletedEmployeesTable({ employees }: DeletedEmployeesTableProps)
     return (
       <div className="text-center py-16 bg-white rounded-2xl border border-slate-200">
         <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Trash2 className="h-8 w-8 text-slate-400" />
+          <Trash2 className={cn(ICON_SIZES.xl, "text-slate-400")} />
         </div>
         <h3 className="text-lg font-semibold text-slate-900 mb-2">Trash is empty</h3>
         <p className="text-slate-500 max-w-md mx-auto">
@@ -71,7 +73,7 @@ export function DeletedEmployeesTable({ employees }: DeletedEmployeesTableProps)
   return (
     <>
       <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 flex items-start gap-3">
-        <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+        <AlertTriangle className={cn(ICON_SIZES.md, "text-amber-600 flex-shrink-0 mt-0.5")} />
         <div>
           <p className="text-amber-800 font-medium">Auto-deletion enabled</p>
           <p className="text-amber-700 text-sm">
@@ -100,7 +102,7 @@ export function DeletedEmployeesTable({ employees }: DeletedEmployeesTableProps)
                     <td className="py-4 px-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center">
-                          <User className="h-5 w-5 text-slate-500" />
+                          <User className={cn(ICON_SIZES.md, "text-slate-500")} />
                         </div>
                         <div>
                           <p className="font-medium text-slate-900">{employee.name || 'Unnamed'}</p>
@@ -142,7 +144,7 @@ export function DeletedEmployeesTable({ employees }: DeletedEmployeesTableProps)
                           disabled={isRestoring === employee.id}
                           className="text-emerald-600 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
                         >
-                          <RotateCcw className="h-4 w-4 mr-1" />
+                          <RotateCcw className={`${ICON_SIZES.sm} mr-1`} />
                           {isRestoring === employee.id ? 'Restoring...' : 'Restore'}
                         </Button>
                       </div>

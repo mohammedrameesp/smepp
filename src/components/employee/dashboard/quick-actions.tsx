@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Palmtree, ShoppingCart, Search, CreditCard, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface QuickAction {
   label: string;
@@ -76,7 +77,7 @@ export function QuickActions({ actions = defaultActions, className }: QuickActio
                 )}
               >
                 <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center mb-2', action.iconBgColor)}>
-                  <Icon className={cn('h-5 w-5', action.iconColor)} />
+                  <Icon className={cn(ICON_SIZES.md, action.iconColor)} />
                 </div>
                 <p className="text-sm font-medium text-gray-900">{action.label}</p>
               </div>
@@ -89,7 +90,7 @@ export function QuickActions({ actions = defaultActions, className }: QuickActio
         href="/help"
         className="flex items-center justify-center gap-1 mt-4 text-sm text-gray-500 hover:text-gray-700"
       >
-        <HelpCircle className="h-4 w-4" />
+        <HelpCircle className={ICON_SIZES.sm} />
         Help & Support
       </Link>
     </div>

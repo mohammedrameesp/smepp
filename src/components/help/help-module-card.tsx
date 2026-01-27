@@ -4,6 +4,7 @@ import Link from 'next/link';
 import * as Icons from 'lucide-react';
 import { HelpCircle, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 import type { ModuleInfo } from '@/lib/help/help-categories';
 
 interface HelpModuleCardProps {
@@ -28,7 +29,7 @@ export function HelpModuleCard({ module, categoryColor = 'text-blue-600' }: Help
         <div className={cn('p-2 rounded-lg bg-gray-50 group-hover:bg-blue-50 transition-colors')}>
           <DynamicIcon
             name={module.icon}
-            className={cn('h-5 w-5 text-gray-400 group-hover:text-blue-600 transition-colors', categoryColor)}
+            className={cn(`${ICON_SIZES.md} text-gray-400 group-hover:text-blue-600 transition-colors`, categoryColor)}
           />
         </div>
         <div className="flex-1 min-w-0">
@@ -44,7 +45,7 @@ export function HelpModuleCard({ module, categoryColor = 'text-blue-600' }: Help
           </div>
           <p className="text-sm text-gray-500 mt-1 line-clamp-2">{module.description}</p>
         </div>
-        <ArrowRight className="h-4 w-4 text-gray-300 group-hover:text-blue-600 transition-colors flex-shrink-0 mt-1" />
+        <ArrowRight className={`${ICON_SIZES.sm} text-gray-300 group-hover:text-blue-600 transition-colors flex-shrink-0 mt-1`} />
       </div>
     </Link>
   );

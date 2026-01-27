@@ -1,6 +1,7 @@
 'use client';
 
 import { AlertTriangle, ArrowLeft, Trash2, Database, RefreshCw } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import Link from 'next/link';
 import { ResetPlatformButton } from '../components/ResetPlatformButton';
 
@@ -13,7 +14,7 @@ export default function ResetPage() {
           href="/super-admin"
           className="w-9 h-9 rounded-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-colors"
         >
-          <ArrowLeft className="h-4 w-4 text-slate-500" />
+          <ArrowLeft className={`${ICON_SIZES.sm} text-slate-500`} />
         </Link>
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Testing Tools</h1>
@@ -23,7 +24,7 @@ export default function ResetPage() {
 
       {/* Warning Banner */}
       <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
-        <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+        <AlertTriangle className={`${ICON_SIZES.md} text-amber-600 shrink-0 mt-0.5`} />
         <div>
           <h3 className="font-semibold text-amber-800">Development Only</h3>
           <p className="text-amber-700 text-sm mt-1">
@@ -38,7 +39,7 @@ export default function ResetPage() {
         <div className="bg-white rounded-xl border border-slate-200 p-6">
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center shrink-0">
-              <Trash2 className="h-6 w-6 text-red-600" />
+              <Trash2 className={`${ICON_SIZES.lg} text-red-600`} />
             </div>
             <div className="flex-1">
               <h3 className="font-semibold text-slate-900">Reset Platform</h3>
@@ -54,7 +55,7 @@ export default function ResetPage() {
         <div className="bg-white rounded-xl border border-slate-200 p-6">
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center shrink-0">
-              <Database className="h-6 w-6 text-blue-600" />
+              <Database className={`${ICON_SIZES.lg} text-blue-600`} />
             </div>
             <div className="flex-1">
               <h3 className="font-semibold text-slate-900">Database Status</h3>
@@ -73,7 +74,7 @@ export default function ResetPage() {
         <div className="bg-white rounded-xl border border-slate-200 p-6">
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 bg-violet-100 rounded-xl flex items-center justify-center shrink-0">
-              <RefreshCw className="h-6 w-6 text-violet-600" />
+              <RefreshCw className={`${ICON_SIZES.lg} text-violet-600`} />
             </div>
             <div className="flex-1">
               <h3 className="font-semibold text-slate-900">Clear Cache</h3>

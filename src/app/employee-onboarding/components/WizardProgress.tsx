@@ -8,6 +8,7 @@
 
 import { Check } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface WizardProgressProps {
   currentStep: number;
@@ -64,7 +65,7 @@ export function WizardProgress({ currentStep, totalSteps, steps }: WizardProgres
                   transition={{ duration: 0.2 }}
                 >
                   {isCompleted ? (
-                    <Check className="w-4 h-4 text-white" />
+                    <Check className={`${ICON_SIZES.sm} text-white`} />
                   ) : (
                     <span
                       className={`text-sm font-medium ${

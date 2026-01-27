@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { CalendarDays } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface LeaveType {
   id: string;
@@ -117,7 +118,7 @@ export function LeaveTypesSettings() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <CalendarDays className="h-5 w-5" />
+            <CalendarDays className={ICON_SIZES.md} />
             Leave Types
           </CardTitle>
           <CardDescription>

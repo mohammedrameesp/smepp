@@ -46,6 +46,8 @@ import {
   Trash2,
   Loader2,
 } from 'lucide-react';
+import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface AssetCategory {
   id: string;
@@ -271,7 +273,7 @@ export function AssetCategoriesSettings({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-emerald-100 rounded-lg">
-                <Tags className="h-5 w-5 text-emerald-600" />
+                <Tags className={`${ICON_SIZES.md} text-emerald-600`} />
               </div>
               <div>
                 <CardTitle>Asset Categories</CardTitle>
@@ -282,7 +284,7 @@ export function AssetCategoriesSettings({
             </div>
             {isAdmin && (
               <Button size="sm" onClick={() => setShowCreateDialog(true)}>
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className={`${ICON_SIZES.sm} mr-2`} />
                 Add Category
               </Button>
             )}
@@ -291,7 +293,7 @@ export function AssetCategoriesSettings({
         <CardContent>
           {loading ? (
             <div className="py-8 text-center text-muted-foreground">
-              <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
+              <Loader2 className={`${ICON_SIZES.lg} animate-spin mx-auto mb-2`} />
               Loading categories...
             </div>
           ) : categories.length === 0 ? (
@@ -341,7 +343,7 @@ export function AssetCategoriesSettings({
                               onClick={() => openEditDialog(category)}
                               title="Edit"
                             >
-                              <Pencil className="h-4 w-4" />
+                              <Pencil className={ICON_SIZES.sm} />
                             </Button>
                             <Button
                               variant="ghost"
@@ -351,7 +353,7 @@ export function AssetCategoriesSettings({
                               disabled={category._count.assets > 0}
                               className={category._count.assets > 0 ? 'opacity-30' : ''}
                             >
-                              <Trash2 className="h-4 w-4 text-destructive" />
+                              <Trash2 className={`${ICON_SIZES.sm} text-destructive`} />
                             </Button>
                           </div>
                         )}

@@ -9,6 +9,7 @@
 
 import { CheckCircle2, Clock, XCircle, SkipForward, User, ChevronRight, Send } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -58,7 +59,7 @@ interface ApprovalChainStatusProps {
 }
 
 function getStatusIcon(status: ApprovalStep['status'], size: 'sm' | 'md' = 'md') {
-  const sizeClass = size === 'sm' ? 'h-4 w-4' : 'h-5 w-5';
+  const sizeClass = size === 'sm' ? ICON_SIZES.sm : ICON_SIZES.md;
   switch (status) {
     case 'APPROVED':
       return <CheckCircle2 className={cn(sizeClass, 'text-emerald-500')} />;
@@ -196,7 +197,7 @@ export function ApprovalChainStatus({ approvalChain, approvalSummary, submittedA
                       'border-emerald-300 dark:border-emerald-700'
                     )}
                   >
-                    <Send className="h-4 w-4 text-emerald-500" />
+                    <Send className={`${ICON_SIZES.sm} text-emerald-500`} />
                     <div className="flex flex-col">
                       <span className="text-xs font-medium leading-tight">Submitted</span>
                       <span className="text-[10px] leading-tight text-muted-foreground">
@@ -220,7 +221,7 @@ export function ApprovalChainStatus({ approvalChain, approvalSummary, submittedA
               {/* Connector from submitted to first approval */}
               <div className="flex-1 flex items-center px-2">
                 <div className="h-0.5 flex-1 bg-emerald-300 dark:bg-emerald-600" />
-                <ChevronRight className="h-4 w-4 -ml-1 flex-shrink-0 text-emerald-400" />
+                <ChevronRight className={`${ICON_SIZES.sm} -ml-1 flex-shrink-0 text-emerald-400`} />
               </div>
             </div>
 
@@ -280,7 +281,7 @@ export function ApprovalChainStatus({ approvalChain, approvalSummary, submittedA
                         </p>
                         {step.approver && (
                           <div className="flex items-center gap-1 text-xs">
-                            <User className="h-3 w-3" />
+                            <User className={ICON_SIZES.xs} />
                             <span>{step.approver.name || step.approver.email}</span>
                           </div>
                         )}
@@ -303,7 +304,8 @@ export function ApprovalChainStatus({ approvalChain, approvalSummary, submittedA
                     <div className="flex-1 flex items-center px-2">
                       <div className={cn('h-0.5 flex-1', getConnectorColor(step.status))} />
                       <ChevronRight className={cn(
-                        'h-4 w-4 -ml-1 flex-shrink-0',
+                        ICON_SIZES.sm,
+                        '-ml-1 flex-shrink-0',
                         step.status === 'APPROVED' ? 'text-emerald-400' :
                         step.status === 'REJECTED' ? 'text-red-400' :
                         step.status === 'SKIPPED' ? 'text-amber-400' :
@@ -327,7 +329,7 @@ export function ApprovalChainStatus({ approvalChain, approvalSummary, submittedA
                   'border-emerald-300 dark:border-emerald-700'
                 )}
               >
-                <Send className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                <Send className={`${ICON_SIZES.sm} text-emerald-500 flex-shrink-0`} />
                 <div className="flex flex-col min-w-0">
                   <span className="text-xs font-medium leading-tight">Submitted</span>
                   <span className="text-[10px] leading-tight text-muted-foreground truncate">

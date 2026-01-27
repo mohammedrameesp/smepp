@@ -7,6 +7,7 @@ import { Plus, Users, FileText } from 'lucide-react';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 import { LeaveCalendarClient } from './client';
+import { ICON_SIZES } from '@/lib/constants';
 
 export default async function AdminLeaveCalendarPage() {
   const session = await getServerSession(authOptions);
@@ -49,15 +50,15 @@ export default async function AdminLeaveCalendarPage() {
         actions={
           <>
             <PageHeaderButton href="/admin/leave/requests/new" variant="primary">
-              <Plus className="h-4 w-4" />
+              <Plus className={ICON_SIZES.sm} />
               Create Request
             </PageHeaderButton>
             <PageHeaderButton href="/admin/leave/requests" variant="secondary">
-              <FileText className="h-4 w-4" />
+              <FileText className={ICON_SIZES.sm} />
               All Requests
             </PageHeaderButton>
             <PageHeaderButton href="/admin/leave/balances" variant="secondary">
-              <Users className="h-4 w-4" />
+              <Users className={ICON_SIZES.sm} />
               Leave Balances
             </PageHeaderButton>
           </>

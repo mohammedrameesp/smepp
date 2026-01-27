@@ -18,6 +18,7 @@ import { Plus, Eye, FileText, Users, DollarSign } from 'lucide-react';
 import { formatCurrency } from '@/lib/core/currency';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface PageProps {
   searchParams: Promise<{
@@ -125,19 +126,19 @@ export default async function LoansPage({ searchParams }: PageProps) {
         actions={
           <>
             <PageHeaderButton href="/admin/payroll/loans/new" variant="primary">
-              <Plus className="h-4 w-4" />
+              <Plus className={ICON_SIZES.sm} />
               New Loan
             </PageHeaderButton>
             <PageHeaderButton href="/admin/payroll/runs" variant="secondary">
-              <FileText className="h-4 w-4" />
+              <FileText className={ICON_SIZES.sm} />
               Payroll Runs
             </PageHeaderButton>
             <PageHeaderButton href="/admin/payroll/salary-structures" variant="secondary">
-              <Users className="h-4 w-4" />
+              <Users className={ICON_SIZES.sm} />
               Salary Structures
             </PageHeaderButton>
             <PageHeaderButton href="/admin/payroll/payslips" variant="secondary">
-              <DollarSign className="h-4 w-4" />
+              <DollarSign className={ICON_SIZES.sm} />
               Payslips
             </PageHeaderButton>
           </>
@@ -236,7 +237,7 @@ export default async function LoansPage({ searchParams }: PageProps) {
                     <TableCell>
                       <Button asChild variant="ghost" size="icon">
                         <Link href={`/admin/payroll/loans/${loan.id}`}>
-                          <Eye className="h-4 w-4" />
+                          <Eye className={ICON_SIZES.sm} />
                         </Link>
                       </Button>
                     </TableCell>

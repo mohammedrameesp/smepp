@@ -11,6 +11,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Save, RefreshCw } from 'lucide-react';
+import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 import { toast } from 'sonner';
 
 interface SalaryComponentPercentages {
@@ -102,7 +104,7 @@ export function PayrollSettings() {
     return (
       <Card>
         <CardContent className="py-8 flex items-center justify-center">
-          <Loader2 className="h-6 w-6 animate-spin" />
+          <Loader2 className={`${ICON_SIZES.lg} animate-spin`} />
         </CardContent>
       </Card>
     );
@@ -215,14 +217,14 @@ export function PayrollSettings() {
         <div className="flex gap-3">
           <Button onClick={handleSave} disabled={isSaving || !isValid}>
             {isSaving ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Loader2 className={`mr-2 ${ICON_SIZES.sm} animate-spin`} />
             ) : (
-              <Save className="mr-2 h-4 w-4" />
+              <Save className={`mr-2 ${ICON_SIZES.sm}`} />
             )}
             Save Settings
           </Button>
           <Button variant="outline" onClick={handleReset}>
-            <RefreshCw className="mr-2 h-4 w-4" />
+            <RefreshCw className={`mr-2 ${ICON_SIZES.sm}`} />
             Reset to Defaults
           </Button>
         </div>

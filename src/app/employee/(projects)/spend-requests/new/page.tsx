@@ -18,6 +18,7 @@ import {
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { DEFAULT_RATES_TO_QAR } from '@/lib/core/currency';
 import { formatNumber } from '@/lib/utils/math-utils';
+import { ICON_SIZES } from '@/lib/constants';
 
 // Type configuration for dynamic UI based on purchase type
 const TYPE_CONFIG: Record<string, {
@@ -418,7 +419,7 @@ export default function NewSpendRequestPage() {
         actions={
           <Link href="/employee/spend-requests">
             <Button variant="outline">
-              <ArrowLeft className="h-4 w-4 mr-2" />
+              <ArrowLeft className={`${ICON_SIZES.sm} mr-2`} />
               Back to Requests
             </Button>
           </Link>
@@ -755,7 +756,7 @@ export default function NewSpendRequestPage() {
                                 asChild
                               >
                                 <a href={item.productUrl} target="_blank" rel="noopener noreferrer">
-                                  <ExternalLink className="h-4 w-4" />
+                                  <ExternalLink className={ICON_SIZES.sm} />
                                 </a>
                               </Button>
                             )}
@@ -770,7 +771,7 @@ export default function NewSpendRequestPage() {
                             disabled={items.length === 1}
                             className="text-red-600 hover:text-red-700 hover:bg-red-50"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className={ICON_SIZES.sm} />
                           </Button>
                         </td>
                       </tr>
@@ -793,7 +794,7 @@ export default function NewSpendRequestPage() {
                           onClick={() => removeItem(item.id)}
                           className="text-red-600 hover:text-red-700"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className={ICON_SIZES.sm} />
                         </Button>
                       )}
                     </div>
@@ -891,7 +892,7 @@ export default function NewSpendRequestPage() {
                         {item.productUrl && (
                           <Button type="button" variant="outline" size="icon" asChild>
                             <a href={item.productUrl} target="_blank" rel="noopener noreferrer">
-                              <ExternalLink className="h-4 w-4" />
+                              <ExternalLink className={ICON_SIZES.sm} />
                             </a>
                           </Button>
                         )}
@@ -902,7 +903,7 @@ export default function NewSpendRequestPage() {
               </div>
 
               <Button type="button" variant="outline" className="mt-4" onClick={addItem}>
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className={`${ICON_SIZES.sm} mr-2`} />
                 Add Item
               </Button>
 
@@ -1016,7 +1017,7 @@ export default function NewSpendRequestPage() {
               </Button>
             </Link>
             <Button type="submit" disabled={submitting}>
-              {submitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              {submitting && <Loader2 className={`${ICON_SIZES.sm} animate-spin mr-2`} />}
               Submit Request
             </Button>
           </div>

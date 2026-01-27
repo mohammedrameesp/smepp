@@ -9,6 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Plus, Pencil, Info } from 'lucide-react';
+import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import Link from 'next/link';
 
@@ -81,7 +83,7 @@ export default async function ApprovalPoliciesPage() {
         actions={
           <Button asChild>
             <Link href="/admin/settings/approvals/new">
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className={`${ICON_SIZES.sm} mr-2`} />
               New Policy
             </Link>
           </Button>
@@ -97,7 +99,7 @@ export default async function ApprovalPoliciesPage() {
             </p>
             <Button asChild>
               <Link href="/admin/settings/approvals/new">
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className={`${ICON_SIZES.sm} mr-2`} />
                 Create First Policy
               </Link>
             </Button>
@@ -106,7 +108,7 @@ export default async function ApprovalPoliciesPage() {
       ) : (
         <div className="space-y-6">
           <Alert>
-            <Info className="h-4 w-4" />
+            <Info className={ICON_SIZES.sm} />
             <AlertDescription>
               <strong>Smart routing:</strong> Steps are automatically skipped if no one can approve them.
               For example, if an employee has no Line Manager set, the request goes directly to HR or Admin.
@@ -146,7 +148,7 @@ export default async function ApprovalPoliciesPage() {
                         <div className="flex gap-2">
                           <Button variant="outline" size="sm" asChild>
                             <Link href={`/admin/settings/approvals/${policy.id}/edit`}>
-                              <Pencil className="h-4 w-4" />
+                              <Pencil className={ICON_SIZES.sm} />
                             </Link>
                           </Button>
                         </div>

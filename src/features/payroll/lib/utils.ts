@@ -13,6 +13,7 @@
 import { PayrollStatus, LoanStatus } from '@prisma/client';
 import { getOrganizationCodePrefix, getEntityFormat, applyFormat } from '@/lib/utils/code-prefix';
 import Decimal from 'decimal.js';
+import { getStatusColor } from '@/lib/constants';
 
 // FIN-003: Configure Decimal.js for financial precision
 Decimal.set({ precision: 20, rounding: Decimal.ROUND_HALF_UP });
@@ -128,25 +129,11 @@ export function getPayrollStatusVariant(status: PayrollStatus): 'default' | 'sec
 }
 
 /**
- * Get payroll status color
+ * Get payroll status color (hex).
+ * Uses centralized STATUS_COLORS from @/lib/constants.
  */
 export function getPayrollStatusColor(status: PayrollStatus): string {
-  switch (status) {
-    case 'DRAFT':
-      return '#6B7280'; // Gray
-    case 'PENDING_APPROVAL':
-      return '#F59E0B'; // Amber
-    case 'APPROVED':
-      return '#3B82F6'; // Blue
-    case 'PROCESSED':
-      return '#8B5CF6'; // Purple
-    case 'PAID':
-      return '#10B981'; // Green
-    case 'CANCELLED':
-      return '#EF4444'; // Red
-    default:
-      return '#6B7280';
-  }
+  return getStatusColor(status).hex;
 }
 
 /**
@@ -190,21 +177,11 @@ export function getLoanStatusVariant(status: LoanStatus): 'default' | 'secondary
 }
 
 /**
- * Get loan status color
+ * Get loan status color (hex).
+ * Uses centralized STATUS_COLORS from @/lib/constants.
  */
 export function getLoanStatusColor(status: LoanStatus): string {
-  switch (status) {
-    case 'ACTIVE':
-      return '#10B981'; // Green
-    case 'PAUSED':
-      return '#F59E0B'; // Amber
-    case 'COMPLETED':
-      return '#6B7280'; // Gray
-    case 'WRITTEN_OFF':
-      return '#EF4444'; // Red
-    default:
-      return '#6B7280';
-  }
+  return getStatusColor(status).hex;
 }
 
 /**

@@ -12,6 +12,8 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ArrowRight, ArrowLeft, AlertCircle, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 
 import { StepTransition } from './StepTransition';
 import { WizardProgress } from './WizardProgress';
@@ -280,7 +282,7 @@ export function SetupWizardClient() {
   if (status === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <Loader2 className="h-8 w-8 animate-spin text-slate-600" />
+        <Loader2 className={`${ICON_SIZES.xl} animate-spin text-slate-600`} />
       </div>
     );
   }
@@ -290,7 +292,7 @@ export function SetupWizardClient() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
         <div className="w-full max-w-md bg-white rounded-2xl border border-slate-200 p-8 text-center">
-          <AlertCircle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
+          <AlertCircle className={`${ICON_SIZES['3xl']} text-amber-500 mx-auto mb-4`} />
           <h3 className="text-lg font-semibold text-slate-900 mb-2">
             No Organization Found
           </h3>
@@ -415,7 +417,7 @@ export function SetupWizardClient() {
         <div className="max-w-4xl mx-auto">
           {error && currentStep !== 3 && (
             <Alert variant="error" className="mb-6 max-w-lg mx-auto">
-              <AlertCircle className="h-4 w-4" />
+              <AlertCircle className={ICON_SIZES.sm} />
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
@@ -433,7 +435,7 @@ export function SetupWizardClient() {
                   onClick={goBack}
                   className="text-slate-600 hover:text-slate-900"
                 >
-                  <ArrowLeft className="w-5 h-5 mr-2" />
+                  <ArrowLeft className={`${ICON_SIZES.md} mr-2`} />
                   Back
                 </Button>
               ) : (
@@ -457,18 +459,18 @@ export function SetupWizardClient() {
                 >
                   {isLoading ? (
                     <>
-                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      <Loader2 className={`${ICON_SIZES.md} mr-2 animate-spin`} />
                       Saving...
                     </>
                   ) : currentStep === 5 ? (
                     <>
                       Finish Setup
-                      <ArrowRight className="w-5 h-5 ml-2" />
+                      <ArrowRight className={`${ICON_SIZES.md} ml-2`} />
                     </>
                   ) : (
                     <>
                       Continue
-                      <ArrowRight className="w-5 h-5 ml-2" />
+                      <ArrowRight className={`${ICON_SIZES.md} ml-2`} />
                     </>
                   )}
                 </Button>

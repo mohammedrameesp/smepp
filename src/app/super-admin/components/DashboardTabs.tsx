@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 import {
   LayoutDashboard,
   MessageSquare,
@@ -65,7 +66,7 @@ export function DashboardTabs({ stats: _stats }: DashboardTabsProps) {
                     : 'text-slate-500 border-transparent hover:text-slate-700'
                 )}
               >
-                <Icon className="h-4 w-4" />
+                <Icon className={ICON_SIZES.sm} />
                 {tab.label}
               </button>
             );
@@ -312,21 +313,21 @@ function EngagementTab() {
           <p className="text-blue-100 text-sm">Daily Active Users</p>
           <p className="text-4xl font-bold mt-2">89</p>
           <p className="text-blue-200 text-sm mt-2">
-            <ArrowUp className="h-3 w-3 inline mr-1" />+12% vs last week
+            <ArrowUp className={`${ICON_SIZES.xs} inline mr-1`} />+12% vs last week
           </p>
         </div>
         <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-6 text-white">
           <p className="text-emerald-100 text-sm">Weekly Active Users</p>
           <p className="text-4xl font-bold mt-2">234</p>
           <p className="text-emerald-200 text-sm mt-2">
-            <ArrowUp className="h-3 w-3 inline mr-1" />+8% vs last week
+            <ArrowUp className={`${ICON_SIZES.xs} inline mr-1`} />+8% vs last week
           </p>
         </div>
         <div className="bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl p-6 text-white">
           <p className="text-violet-100 text-sm">Monthly Active Users</p>
           <p className="text-4xl font-bold mt-2">298</p>
           <p className="text-violet-200 text-sm mt-2">
-            <ArrowUp className="h-3 w-3 inline mr-1" />+15% vs last month
+            <ArrowUp className={`${ICON_SIZES.xs} inline mr-1`} />+15% vs last month
           </p>
         </div>
       </div>
@@ -419,7 +420,7 @@ function ActivityItem({
   return (
     <div className="flex items-center gap-4 p-3 bg-slate-50 rounded-lg">
       <div className={cn('w-10 h-10 rounded-full flex items-center justify-center', iconBg)}>
-        <Icon className={cn('h-4 w-4', iconColor)} />
+        <Icon className={cn(ICON_SIZES.sm, iconColor)} />
       </div>
       <div className="flex-1">
         <p className="text-sm text-slate-900">
@@ -473,7 +474,7 @@ function AlertItem({
 
   return (
     <div className={cn('flex items-start gap-2 p-3 rounded-lg', bgColor)}>
-      <Icon className={cn('h-4 w-4 mt-0.5', iconColor)} />
+      <Icon className={cn(ICON_SIZES.sm, 'mt-0.5', iconColor)} />
       <div>
         <p className={cn('text-sm font-medium', titleColor)}>{title}</p>
         <p className={cn('text-xs', detailColor)}>{detail}</p>
@@ -505,7 +506,7 @@ function MessageStatCard({
     <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
       <div className="flex items-center gap-3">
         <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center', iconBg)}>
-          <Icon className={cn('h-5 w-5', iconColor)} />
+          <Icon className={cn(ICON_SIZES.md, iconColor)} />
         </div>
         <div>
           <p className="font-medium text-slate-900">{title}</p>
@@ -549,7 +550,7 @@ function SecurityStatCard({
   return (
     <div className="bg-slate-50 rounded-xl p-5">
       <div className="flex items-center gap-2 mb-2">
-        <Icon className={cn('h-4 w-4', iconColor)} />
+        <Icon className={cn(ICON_SIZES.sm, iconColor)} />
         <span className="text-sm text-slate-600">{label}</span>
       </div>
       <p className="text-3xl font-bold text-slate-900">{value}</p>
@@ -587,7 +588,7 @@ function SecurityEventRow({
     <tr>
       <td className="px-4 py-3">
         <span className={cn('flex items-center gap-2', colors[type])}>
-          <Icon className="h-4 w-4" />
+          <Icon className={ICON_SIZES.sm} />
           {event}
         </span>
       </td>
@@ -661,7 +662,7 @@ function HealthStatusCard({
 
   return (
     <div className={cn('border rounded-xl p-4 text-center', statusColors[status])}>
-      <Icon className="h-6 w-6 mx-auto mb-2" />
+      <Icon className={`${ICON_SIZES.lg} mx-auto mb-2`} />
       <p className="text-sm font-medium">{label}</p>
       <p className="text-xs mt-1">{detail}</p>
     </div>

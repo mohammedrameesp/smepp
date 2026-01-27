@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 export const dynamic = 'force-dynamic';
 import { Badge } from '@/components/ui/badge';
 import { Users, Mail, Building2, Calendar } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import { formatDistanceToNow } from 'date-fns';
 import { getDisplayInitials, getDisplayEmail } from '@/lib/utils/user-display';
 
@@ -38,7 +39,7 @@ export default async function SuperAdminUsersPage() {
       {members.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <Users className="h-12 w-12 text-muted-foreground mb-4" />
+            <Users className={`${ICON_SIZES['3xl']} text-muted-foreground mb-4`} />
             <h3 className="text-lg font-semibold mb-2">No users yet</h3>
             <p className="text-muted-foreground">
               Users will appear here when they sign up
@@ -61,7 +62,7 @@ export default async function SuperAdminUsersPage() {
                       <p className="font-medium truncate">{member.name || 'No name'}</p>
                       {getDisplayEmail(member.email) && (
                         <p className="text-sm text-muted-foreground flex items-center gap-1 truncate">
-                          <Mail className="h-3 w-3 flex-shrink-0" />
+                          <Mail className={`${ICON_SIZES.xs} flex-shrink-0`} />
                           <span className="truncate">{getDisplayEmail(member.email)}</span>
                         </p>
                       )}
@@ -72,7 +73,7 @@ export default async function SuperAdminUsersPage() {
                     <div className="hidden md:block">
                       {member.tenant ? (
                         <div className="flex items-center gap-1 text-sm">
-                          <Building2 className="h-4 w-4 text-muted-foreground" />
+                          <Building2 className={`${ICON_SIZES.sm} text-muted-foreground`} />
                           <span className="truncate max-w-[150px]">{member.tenant.name}</span>
                         </div>
                       ) : (
@@ -83,7 +84,7 @@ export default async function SuperAdminUsersPage() {
                     <Badge variant="outline">{member.isAdmin ? 'Admin' : 'Member'}</Badge>
 
                     <div className="text-sm text-muted-foreground flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
+                      <Calendar className={ICON_SIZES.xs} />
                       <span className="hidden sm:inline">{formatDistanceToNow(member.createdAt, { addSuffix: true })}</span>
                       <span className="sm:hidden">{formatDistanceToNow(member.createdAt)}</span>
                     </div>

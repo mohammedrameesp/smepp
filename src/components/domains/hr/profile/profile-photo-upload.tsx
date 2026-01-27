@@ -19,6 +19,7 @@ import {
   User,
   CropIcon,
 } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import {
   Popover,
   PopoverContent,
@@ -271,7 +272,7 @@ export function ProfilePhotoUpload({
               className="text-slate-400 hover:text-slate-600 transition-colors"
               aria-label="Photo guidelines"
             >
-              <Info className="h-4 w-4" />
+              <Info className={ICON_SIZES.sm} />
             </button>
           </PopoverTrigger>
           <PopoverContent className="w-72 p-3" align="start">
@@ -307,7 +308,7 @@ export function ProfilePhotoUpload({
               />
               {isUploading && (
                 <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
-                  <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                  <Loader2 className={`${ICON_SIZES.lg} animate-spin text-blue-600`} />
                 </div>
               )}
             </div>
@@ -316,7 +317,7 @@ export function ProfilePhotoUpload({
           {/* Actions */}
           <div className="flex flex-col justify-center gap-2">
             <div className="flex items-center gap-1 text-xs text-green-600">
-              <Check className="h-3 w-3" />
+              <Check className={ICON_SIZES.xs} />
               <span>Photo uploaded</span>
             </div>
             <div className="flex gap-2">
@@ -327,7 +328,7 @@ export function ProfilePhotoUpload({
                 onClick={() => setShowIdPreview(true)}
                 className="text-xs"
               >
-                <Eye className="h-3 w-3 mr-1" />
+                <Eye className={`${ICON_SIZES.xs} mr-1`} />
                 ID Preview
               </Button>
               {!disabled && (
@@ -338,7 +339,7 @@ export function ProfilePhotoUpload({
                   onClick={handleRemove}
                   className="text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
                 >
-                  <X className="h-3 w-3 mr-1" />
+                  <X className={`${ICON_SIZES.xs} mr-1`} />
                   Remove
                 </Button>
               )}
@@ -365,13 +366,13 @@ export function ProfilePhotoUpload({
           >
             {isUploading ? (
               <>
-                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                <Loader2 className={`${ICON_SIZES.xl} animate-spin text-blue-600`} />
                 <span className="text-sm text-gray-600">Uploading...</span>
               </>
             ) : (
               <>
                 <div className="h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center">
-                  <User className="h-8 w-8 text-slate-400" />
+                  <User className={`${ICON_SIZES.xl} text-slate-400`} />
                 </div>
                 <span className="text-sm text-gray-600">Click to upload photo</span>
                 <span className="text-xs text-gray-400">JPG or PNG, min {MIN_RESOLUTION}x{MIN_RESOLUTION}px</span>
@@ -410,7 +411,7 @@ export function ProfilePhotoUpload({
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <User className="h-8 w-8 text-slate-500" />
+                        <User className={`${ICON_SIZES.xl} text-slate-500`} />
                       </div>
                     )}
                   </div>
@@ -445,13 +446,13 @@ export function ProfilePhotoUpload({
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <CropIcon className="h-5 w-5" />
+              <CropIcon className={ICON_SIZES.md} />
               Crop Photo to Square
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-              <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+              <AlertCircle className={`${ICON_SIZES.sm} text-amber-600 mt-0.5 flex-shrink-0`} />
               <p className="text-sm text-amber-800">
                 Your photo is not square. We&apos;ll crop it to a 1:1 ratio for the best result.
               </p>
@@ -498,12 +499,12 @@ export function ProfilePhotoUpload({
               >
                 {isUploading ? (
                   <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    <Loader2 className={`${ICON_SIZES.sm} mr-2 animate-spin`} />
                     Processing...
                   </>
                 ) : (
                   <>
-                    <Check className="h-4 w-4 mr-2" />
+                    <Check className={`${ICON_SIZES.sm} mr-2`} />
                     Crop & Upload
                   </>
                 )}

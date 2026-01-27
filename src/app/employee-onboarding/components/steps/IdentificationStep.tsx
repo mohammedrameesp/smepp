@@ -7,6 +7,7 @@
  */
 
 import { CreditCard, AlertTriangle, Check, X } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { DatePicker } from '@/components/ui/date-picker';
@@ -26,7 +27,7 @@ function QidValidationHint({ qid }: { qid: string }) {
   if (isComplete) {
     return (
       <p className="text-xs text-green-600 flex items-center gap-1">
-        <Check className="h-3 w-3" /> Valid QID format
+        <Check className={ICON_SIZES.xs} /> Valid QID format
       </p>
     );
   }
@@ -36,12 +37,12 @@ function QidValidationHint({ qid }: { qid: string }) {
       {/* Only show "Starts with 2 or 3" when it's wrong */}
       {!isValidStart && qid.length > 0 && (
         <p className="text-xs flex items-center gap-1 text-red-500">
-          <X className="h-3 w-3" />
+          <X className={ICON_SIZES.xs} />
           Must start with 2 or 3
         </p>
       )}
       <p className={`text-xs flex items-center gap-1 ${isValidLength ? 'text-green-600' : 'text-slate-500'}`}>
-        {isValidLength ? <Check className="h-3 w-3" /> : <X className="h-3 w-3 text-slate-400" />}
+        {isValidLength ? <Check className={ICON_SIZES.xs} /> : <X className={`${ICON_SIZES.xs} text-slate-400`} />}
         {qid.length}/11 digits
       </p>
     </div>
@@ -65,7 +66,7 @@ function ExpiryWarning({ date, label }: { date: string | null | undefined; label
   if (!isExpired(date)) return null;
   return (
     <div className="flex items-center gap-1.5 text-amber-600 text-xs mt-1">
-      <AlertTriangle className="h-3 w-3" />
+      <AlertTriangle className={ICON_SIZES.xs} />
       <span>{label} appears to be expired</span>
     </div>
   );
@@ -90,7 +91,7 @@ export function IdentificationStep({ formData, updateField, errors }: Identifica
     <div className="max-w-2xl mx-auto">
       <div className="text-center mb-8">
         <div className="h-16 w-16 rounded-2xl bg-purple-100 flex items-center justify-center mx-auto mb-4">
-          <CreditCard className="h-8 w-8 text-purple-600" />
+          <CreditCard className={`${ICON_SIZES.xl} text-purple-600`} />
         </div>
         <h2 className="text-2xl font-bold text-slate-900 mb-2">Identification & Legal</h2>
         <p className="text-slate-600">

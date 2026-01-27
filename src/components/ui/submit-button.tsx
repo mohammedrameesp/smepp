@@ -10,6 +10,7 @@ import * as React from 'react';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 
 export interface SubmitButtonProps extends React.ComponentProps<typeof Button> {
   isLoading?: boolean;
@@ -45,7 +46,7 @@ export function SubmitButton({
       className={className}
       {...props}
     >
-      {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+      {isLoading && <Loader2 className={`mr-2 ${ICON_SIZES.sm} animate-spin`} />}
       {isLoading && loadingText ? loadingText : children}
     </Button>
   );
@@ -69,7 +70,7 @@ export function DestructiveSubmitButton({
       className={className}
       {...props}
     >
-      {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+      {isLoading && <Loader2 className={`mr-2 ${ICON_SIZES.sm} animate-spin`} />}
       {isLoading && loadingText ? loadingText : children}
     </Button>
   );

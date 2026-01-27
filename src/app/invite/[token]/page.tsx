@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Building2, Check, X, Mail, AlertCircle, Clock } from 'lucide-react';
 import Link from 'next/link';
+import { ICON_SIZES } from '@/lib/constants';
 import { useTenantBranding } from '@/hooks/use-tenant-branding';
 import { formatDate } from '@/lib/core/datetime';
 
@@ -151,7 +152,7 @@ export default function InvitePage() {
   if (loading || status === 'loading' || brandingLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <Loader2 className={`${ICON_SIZES.xl} animate-spin text-muted-foreground`} />
       </div>
     );
   }
@@ -166,7 +167,7 @@ export default function InvitePage() {
             <CardHeader className="text-center">
               <div className="flex justify-center mb-4">
                 <div className="h-16 w-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                  <X className="h-8 w-8 text-red-600 dark:text-red-400" />
+                  <X className={`${ICON_SIZES.xl} text-red-600 dark:text-red-400`} />
                 </div>
               </div>
               <CardTitle className="text-xl">Invalid Invitation</CardTitle>
@@ -193,7 +194,7 @@ export default function InvitePage() {
             <CardHeader className="text-center">
               <div className="flex justify-center mb-4">
                 <div className="h-16 w-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                  <Check className="h-8 w-8 text-green-600 dark:text-green-400" />
+                  <Check className={`${ICON_SIZES.xl} text-green-600 dark:text-green-400`} />
                 </div>
               </div>
               <CardTitle className="text-xl">Welcome to {orgName}!</CardTitle>
@@ -205,7 +206,7 @@ export default function InvitePage() {
               <p className="text-muted-foreground mb-4">
                 Redirecting to your dashboard...
               </p>
-              <Loader2 className="h-5 w-5 animate-spin mx-auto" />
+              <Loader2 className={`${ICON_SIZES.md} animate-spin mx-auto`} />
             </CardContent>
           </Card>
         </div>
@@ -231,7 +232,7 @@ export default function InvitePage() {
                   className="h-16 w-16 rounded-xl flex items-center justify-center"
                   style={{ backgroundColor: primaryColor }}
                 >
-                  <Building2 className="h-8 w-8 text-white" />
+                  <Building2 className={`${ICON_SIZES.xl} text-white`} />
                 </div>
               )}
             </div>
@@ -245,14 +246,14 @@ export default function InvitePage() {
             {/* Invitation details */}
             <div className="bg-muted/50 rounded-lg p-4 space-y-3">
               <div className="flex items-center gap-3">
-                <Mail className="h-4 w-4 text-muted-foreground" />
+                <Mail className={`${ICON_SIZES.sm} text-muted-foreground`} />
                 <div>
                   <p className="text-xs text-muted-foreground">Invitation sent to</p>
                   <p className="font-medium">{invitation?.email}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <Building2 className="h-4 w-4 text-muted-foreground" />
+                <Building2 className={`${ICON_SIZES.sm} text-muted-foreground`} />
                 <div>
                   <p className="text-xs text-muted-foreground">Your role</p>
                   <p className="font-medium capitalize">{invitation?.role.toLowerCase()}</p>
@@ -263,7 +264,7 @@ export default function InvitePage() {
             {/* Error alert */}
             {error && (
               <Alert variant="error">
-                <AlertCircle className="h-4 w-4" />
+                <AlertCircle className={ICON_SIZES.sm} />
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
@@ -274,7 +275,7 @@ export default function InvitePage() {
               if (hoursLeft > 0 && hoursLeft < 24) {
                 return (
                   <Alert className="border-amber-200 bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200">
-                    <Clock className="h-4 w-4" />
+                    <Clock className={ICON_SIZES.sm} />
                     <AlertDescription>
                       This invitation expires in {Math.ceil(hoursLeft)} hour{Math.ceil(hoursLeft) !== 1 ? 's' : ''}. Accept it soon!
                     </AlertDescription>
@@ -288,7 +289,7 @@ export default function InvitePage() {
             {session?.user?.email && invitation?.email &&
               session.user.email.toLowerCase() !== invitation.email.toLowerCase() && (
                 <Alert variant="error">
-                  <AlertCircle className="h-4 w-4" />
+                  <AlertCircle className={ICON_SIZES.sm} />
                   <AlertDescription>
                     You&apos;re signed in as <strong>{session.user.email}</strong>, but this invitation was sent to{' '}
                     <strong>{invitation.email}</strong>. Please sign out and sign in with the correct email.
@@ -338,12 +339,12 @@ export default function InvitePage() {
                 >
                   {accepting ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className={`mr-2 ${ICON_SIZES.sm} animate-spin`} />
                       Joining...
                     </>
                   ) : (
                     <>
-                      <Check className="mr-2 h-4 w-4" />
+                      <Check className={`mr-2 ${ICON_SIZES.sm}`} />
                       Accept Invitation
                     </>
                   )}

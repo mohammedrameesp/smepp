@@ -8,6 +8,8 @@
 import { useState, useEffect } from 'react';
 import { SubscriptionListTable, type SubscriptionListItem } from './subscription-list-table';
 import { Loader2, AlertCircle } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
+import { cn } from '@/lib/core/utils';
 import { Button } from '@/components/ui/button';
 
 export function SubscriptionListClient() {
@@ -39,7 +41,7 @@ export function SubscriptionListClient() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-400 mb-3" />
+        <Loader2 className={cn(ICON_SIZES.xl, 'animate-spin text-gray-400 mb-3')} />
         <p className="text-gray-500">Loading subscriptions...</p>
       </div>
     );
@@ -48,7 +50,7 @@ export function SubscriptionListClient() {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
-        <AlertCircle className="h-8 w-8 text-red-400 mb-3" />
+        <AlertCircle className={cn(ICON_SIZES.xl, 'text-red-400 mb-3')} />
         <p className="text-red-600 mb-3">{error}</p>
         <Button variant="outline" onClick={fetchSubscriptions}>
           Try Again

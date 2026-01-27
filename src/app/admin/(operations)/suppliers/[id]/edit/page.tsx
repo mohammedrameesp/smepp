@@ -14,6 +14,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CountrySelect } from '@/components/ui/country-select';
 import { Loader2 } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -206,7 +207,7 @@ export default function EditSupplierPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
+        <Loader2 className={`${ICON_SIZES.xl} animate-spin text-gray-500`} />
       </div>
     );
   }
@@ -531,7 +532,7 @@ export default function EditSupplierPage() {
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className={`mr-2 ${ICON_SIZES.sm} animate-spin`} />
                     Saving...
                   </>
                 ) : (

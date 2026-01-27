@@ -20,6 +20,7 @@ import { formatCurrency } from '@/lib/core/currency';
 import { getMonthName, getPayrollStatusText, getPayrollStatusColor } from '@/features/payroll/lib/utils';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
+import { ICON_SIZES } from '@/lib/constants';
 
 export default async function PayrollDashboardPage() {
   const session = await getServerSession(authOptions);
@@ -83,11 +84,11 @@ export default async function PayrollDashboardPage() {
         actions={
           <div className="flex gap-2">
             <PageHeaderButton href="/admin/payroll/gratuity" variant="secondary">
-              <Calculator className="h-4 w-4" />
+              <Calculator className={ICON_SIZES.sm} />
               Gratuity Report
             </PageHeaderButton>
             <PageHeaderButton href="/admin/payroll/runs/new" variant="primary">
-              <Plus className="h-4 w-4" />
+              <Plus className={ICON_SIZES.sm} />
               New Payroll Run
             </PageHeaderButton>
           </div>
@@ -145,14 +146,14 @@ export default async function PayrollDashboardPage() {
               <Button asChild variant="outline" size="sm">
                 <Link href={`/admin/payroll/runs/${currentMonthPayroll.id}`}>
                   View Details
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  <ArrowRight className={`ml-2 ${ICON_SIZES.sm}`} />
                 </Link>
               </Button>
             </div>
           ) : (
             <Button asChild>
               <Link href="/admin/payroll/runs/new">
-                <Plus className="mr-2 h-4 w-4" />
+                <Plus className={`mr-2 ${ICON_SIZES.sm}`} />
                 Create Payroll Run for {getMonthName(currentMonth)}
               </Link>
             </Button>
@@ -170,25 +171,25 @@ export default async function PayrollDashboardPage() {
           <CardContent className="space-y-2">
             <Button asChild variant="outline" className="w-full justify-start">
               <Link href="/admin/payroll/salary-structures">
-                <Users className="mr-2 h-4 w-4" />
+                <Users className={`mr-2 ${ICON_SIZES.sm}`} />
                 Manage Salary Structures
               </Link>
             </Button>
             <Button asChild variant="outline" className="w-full justify-start">
               <Link href="/admin/payroll/runs">
-                <FileText className="mr-2 h-4 w-4" />
+                <FileText className={`mr-2 ${ICON_SIZES.sm}`} />
                 View All Payroll Runs
               </Link>
             </Button>
             <Button asChild variant="outline" className="w-full justify-start">
               <Link href="/admin/payroll/payslips">
-                <DollarSign className="mr-2 h-4 w-4" />
+                <DollarSign className={`mr-2 ${ICON_SIZES.sm}`} />
                 Search Payslips
               </Link>
             </Button>
             <Button asChild variant="outline" className="w-full justify-start">
               <Link href="/admin/payroll/loans">
-                <CreditCard className="mr-2 h-4 w-4" />
+                <CreditCard className={`mr-2 ${ICON_SIZES.sm}`} />
                 Manage Loans & Advances
               </Link>
             </Button>

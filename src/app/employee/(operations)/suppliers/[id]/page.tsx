@@ -23,6 +23,7 @@ import { PageHeader, PageContent, PageHeaderButton } from '@/components/ui/page-
 import { DetailCard } from '@/components/ui/detail-card';
 import { InfoField, InfoFieldGrid } from '@/components/ui/info-field';
 import { formatDate } from '@/lib/core/datetime';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -94,7 +95,7 @@ export default async function EmployeeSupplierDetailPage({ params }: Props) {
         ]}
         actions={
           <PageHeaderButton href="/employee/suppliers" variant="outline">
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className={ICON_SIZES.sm} />
             Back to Suppliers
           </PageHeaderButton>
         }
@@ -127,7 +128,7 @@ export default async function EmployeeSupplierDetailPage({ params }: Props) {
               {supplier.website && (
                 <div className="col-span-2 p-4 bg-slate-50 rounded-xl">
                   <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1 flex items-center gap-1">
-                    <Globe className="h-3 w-3" /> Website
+                    <Globe className={ICON_SIZES.xs} /> Website
                   </p>
                   <a
                     href={supplier.website}
@@ -146,7 +147,7 @@ export default async function EmployeeSupplierDetailPage({ params }: Props) {
           <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
               <div className="w-10 h-10 bg-rose-100 rounded-xl flex items-center justify-center">
-                <User className="h-5 w-5 text-rose-600" />
+                <User className={`${ICON_SIZES.md} text-rose-600`} />
               </div>
               <div>
                 <h2 className="font-semibold text-slate-900">Contact Information</h2>
@@ -170,7 +171,7 @@ export default async function EmployeeSupplierDetailPage({ params }: Props) {
                     {supplier.primaryContactEmail && (
                       <div className="p-3 bg-slate-50 rounded-xl col-span-2">
                         <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1 flex items-center gap-1">
-                          <Mail className="h-3 w-3" /> Email
+                          <Mail className={ICON_SIZES.xs} /> Email
                         </p>
                         <a
                           href={`mailto:${supplier.primaryContactEmail}`}
@@ -183,7 +184,7 @@ export default async function EmployeeSupplierDetailPage({ params }: Props) {
                     {supplier.primaryContactMobile && (
                       <div className="p-3 bg-slate-50 rounded-xl col-span-2">
                         <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1 flex items-center gap-1">
-                          <Phone className="h-3 w-3" /> Mobile
+                          <Phone className={ICON_SIZES.xs} /> Mobile
                         </p>
                         <p className="font-semibold text-slate-900">{supplier.primaryContactMobile}</p>
                       </div>
@@ -208,7 +209,7 @@ export default async function EmployeeSupplierDetailPage({ params }: Props) {
                     {supplier.secondaryContactEmail && (
                       <div className="p-3 bg-slate-50 rounded-xl col-span-2">
                         <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1 flex items-center gap-1">
-                          <Mail className="h-3 w-3" /> Email
+                          <Mail className={ICON_SIZES.xs} /> Email
                         </p>
                         <a
                           href={`mailto:${supplier.secondaryContactEmail}`}
@@ -221,7 +222,7 @@ export default async function EmployeeSupplierDetailPage({ params }: Props) {
                     {supplier.secondaryContactMobile && (
                       <div className="p-3 bg-slate-50 rounded-xl col-span-2">
                         <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1 flex items-center gap-1">
-                          <Phone className="h-3 w-3" /> Mobile
+                          <Phone className={ICON_SIZES.xs} /> Mobile
                         </p>
                         <p className="font-semibold text-slate-900">{supplier.secondaryContactMobile}</p>
                       </div>

@@ -23,6 +23,7 @@ import {
   AlertTriangle,
   FileText,
 } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 
 /**
  * TeamMember with HR profile fields (all consolidated into one model)
@@ -119,7 +120,7 @@ export function EmployeeHRViewSection({ employee }: EmployeeHRViewSectionProps) 
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <User className="h-5 w-5 text-gray-500" />
+            <User className={`${ICON_SIZES.md} text-gray-500`} />
             <div>
               <CardTitle>Personal Information</CardTitle>
               <CardDescription>Basic personal details</CardDescription>
@@ -140,7 +141,7 @@ export function EmployeeHRViewSection({ employee }: EmployeeHRViewSectionProps) 
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Phone className="h-5 w-5 text-gray-500" />
+            <Phone className={`${ICON_SIZES.md} text-gray-500`} />
             <div>
               <CardTitle>Contact Information</CardTitle>
               <CardDescription>Phone numbers and addresses</CardDescription>
@@ -170,7 +171,7 @@ export function EmployeeHRViewSection({ employee }: EmployeeHRViewSectionProps) 
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-gray-500" />
+            <AlertTriangle className={`${ICON_SIZES.md} text-gray-500`} />
             <div>
               <CardTitle>Emergency Contacts</CardTitle>
               <CardDescription>Local and home country contacts</CardDescription>
@@ -217,7 +218,7 @@ export function EmployeeHRViewSection({ employee }: EmployeeHRViewSectionProps) 
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <CreditCard className="h-5 w-5 text-gray-500" />
+            <CreditCard className={`${ICON_SIZES.md} text-gray-500`} />
             <div>
               <CardTitle>Identification & Legal</CardTitle>
               <CardDescription>QID, passport, and visa details</CardDescription>
@@ -275,7 +276,7 @@ export function EmployeeHRViewSection({ employee }: EmployeeHRViewSectionProps) 
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Briefcase className="h-5 w-5 text-gray-500" />
+            <Briefcase className={`${ICON_SIZES.md} text-gray-500`} />
             <div>
               <CardTitle>Employment Information</CardTitle>
               <CardDescription>Job details</CardDescription>
@@ -307,7 +308,7 @@ export function EmployeeHRViewSection({ employee }: EmployeeHRViewSectionProps) 
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Building2 className="h-5 w-5 text-gray-500" />
+            <Building2 className={`${ICON_SIZES.md} text-gray-500`} />
             <div>
               <CardTitle>Banking Information</CardTitle>
               <CardDescription>Bank account details</CardDescription>
@@ -326,7 +327,7 @@ export function EmployeeHRViewSection({ employee }: EmployeeHRViewSectionProps) 
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <GraduationCap className="h-5 w-5 text-gray-500" />
+            <GraduationCap className={`${ICON_SIZES.md} text-gray-500`} />
             <div>
               <CardTitle>Education</CardTitle>
               <CardDescription>Qualifications and academic background</CardDescription>
@@ -347,7 +348,7 @@ export function EmployeeHRViewSection({ employee }: EmployeeHRViewSectionProps) 
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-gray-500" />
+            <FileText className={`${ICON_SIZES.md} text-gray-500`} />
             <div>
               <CardTitle>Documents</CardTitle>
               <CardDescription>Uploaded documents</CardDescription>
@@ -373,7 +374,7 @@ export function EmployeeHRViewSection({ employee }: EmployeeHRViewSectionProps) 
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Info className="h-5 w-5 text-gray-500" />
+            <Info className={`${ICON_SIZES.md} text-gray-500`} />
             <div>
               <CardTitle>Additional Information</CardTitle>
               <CardDescription>Driving license, languages, and skills</CardDescription>

@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/dialog';
 import { Trash2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface DeleteUserButtonProps {
   userId: string;
@@ -62,7 +63,7 @@ export function DeleteUserButton({ userId, userName }: DeleteUserButtonProps) {
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <button className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg transition-all bg-red-600 text-white hover:bg-red-700 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-800 focus-visible:ring-red-500">
-          <Trash2 className="h-4 w-4" />
+          <Trash2 className={ICON_SIZES.sm} />
           Delete User
         </button>
       </DialogTrigger>
@@ -91,7 +92,7 @@ export function DeleteUserButton({ userId, userName }: DeleteUserButtonProps) {
           >
             {isDeleting ? (
               <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className={`${ICON_SIZES.sm} mr-2 animate-spin`} />
                 Deleting...
               </>
             ) : (

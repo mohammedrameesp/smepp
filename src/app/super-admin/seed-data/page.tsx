@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Database, Check, AlertCircle } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface Organization {
   id: string;
@@ -90,7 +91,7 @@ export default function SeedDataPage() {
         <CardContent>
           {loading ? (
             <div className="flex items-center gap-2 text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className={`${ICON_SIZES.sm} animate-spin`} />
               Loading organizations...
             </div>
           ) : (
@@ -126,12 +127,12 @@ export default function SeedDataPage() {
               >
                 {seeding ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    <Loader2 className={`${ICON_SIZES.sm} animate-spin mr-2`} />
                     Seeding Data...
                   </>
                 ) : (
                   <>
-                    <Database className="h-4 w-4 mr-2" />
+                    <Database className={`${ICON_SIZES.sm} mr-2`} />
                     Seed Comprehensive Test Data
                   </>
                 )}
@@ -147,12 +148,12 @@ export default function SeedDataPage() {
             <CardTitle className="flex items-center gap-2">
               {result.success ? (
                 <>
-                  <Check className="h-5 w-5 text-green-500" />
+                  <Check className={`${ICON_SIZES.md} text-green-500`} />
                   Seeding Complete
                 </>
               ) : (
                 <>
-                  <AlertCircle className="h-5 w-5 text-red-500" />
+                  <AlertCircle className={`${ICON_SIZES.md} text-red-500`} />
                   Seeding Failed
                 </>
               )}

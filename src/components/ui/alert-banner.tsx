@@ -7,6 +7,7 @@
 import * as React from 'react';
 import { LucideIcon, AlertTriangle, CheckCircle, XCircle, Info } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 
 const variantStyles = {
   warning: {
@@ -80,7 +81,7 @@ export function AlertBanner({
           styles.iconBox
         )}
       >
-        <Icon className={cn('h-5 w-5', styles.icon)} />
+        <Icon className={cn(ICON_SIZES.md, styles.icon)} />
       </div>
       <div className="flex-1 min-w-0">
         <h3 className={cn('font-semibold', styles.title)}>{title}</h3>

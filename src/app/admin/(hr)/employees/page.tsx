@@ -3,6 +3,7 @@ import { prisma } from '@/lib/core/prisma';
 import { getAdminAuthContext, hasAccess } from '@/lib/auth/impersonation-check';
 import { ClipboardList, AlertTriangle, Calendar, FileText, Trash2 } from 'lucide-react';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
+import { ICON_SIZES } from '@/lib/constants';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 import { TeamClient } from './team-client';
 
@@ -95,7 +96,7 @@ export default async function AdminTeamPage() {
         actions={
           <>
             <PageHeaderButton href="/admin/employees/change-requests" variant="secondary">
-              <ClipboardList className="h-4 w-4" />
+              <ClipboardList className={ICON_SIZES.sm} />
               Change Requests
               {pendingChangeRequests > 0 && (
                 <span className="bg-rose-500 text-white text-xs px-1.5 py-0.5 rounded-full">
@@ -104,7 +105,7 @@ export default async function AdminTeamPage() {
               )}
             </PageHeaderButton>
             <PageHeaderButton href="/admin/employees/document-expiry" variant="secondary">
-              <FileText className="h-4 w-4" />
+              <FileText className={ICON_SIZES.sm} />
               Document Expiry
               {expiringDocumentsCount > 0 && (
                 <span className="bg-amber-500 text-white text-xs px-1.5 py-0.5 rounded-full">
@@ -114,7 +115,7 @@ export default async function AdminTeamPage() {
             </PageHeaderButton>
             {deletedEmployeesCount > 0 && (
               <PageHeaderButton href="/admin/employees/deleted" variant="secondary">
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className={ICON_SIZES.sm} />
                 Deleted
                 <span className="bg-slate-500 text-white text-xs px-1.5 py-0.5 rounded-full">
                   {deletedEmployeesCount}

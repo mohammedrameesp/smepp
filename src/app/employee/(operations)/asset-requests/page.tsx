@@ -28,6 +28,7 @@ import { Button } from '@/components/ui/button';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Package, Clock, FileText, AlertCircle } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import { AssetRequestListTable } from '@/features/asset-requests';
 import { PendingAssignmentsAlert } from '@/features/asset-requests';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
@@ -106,21 +107,21 @@ export default async function EmployeeAssetRequestsPage() {
             value={pendingAssignments.length}
             label="pending acceptance"
             color="amber"
-            icon={<AlertCircle className="h-4 w-4" />}
+            icon={<AlertCircle className={ICON_SIZES.sm} />}
             hideWhenZero
           />
           <StatChip
             value={pendingRequests.length}
             label="pending approval"
             color="blue"
-            icon={<Clock className="h-4 w-4" />}
+            icon={<Clock className={ICON_SIZES.sm} />}
             hideWhenZero
           />
           <StatChip
             value={requests.length}
             label="total requests"
             color="slate"
-            icon={<FileText className="h-4 w-4" />}
+            icon={<FileText className={ICON_SIZES.sm} />}
           />
         </StatChipGroup>
       </PageHeader>

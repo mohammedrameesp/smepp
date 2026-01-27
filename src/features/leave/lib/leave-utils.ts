@@ -8,6 +8,7 @@
 import { LeaveStatus, LeaveRequestType } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import { formatDate, formatDayMonth } from '@/lib/core/datetime';
+import { getStatusColor } from '@/lib/constants';
 
 // Type definitions for Qatar labor law fields
 export interface PayTier {
@@ -736,21 +737,11 @@ export function formatLeaveDays(days: number | string | Decimal): string {
 }
 
 /**
- * Get status color for badges
+ * Get status color (hex) for badges.
+ * Uses centralized STATUS_COLORS from @/lib/constants.
  */
 export function getLeaveStatusColor(status: LeaveStatus): string {
-  switch (status) {
-    case 'PENDING':
-      return '#F59E0B'; // Amber
-    case 'APPROVED':
-      return '#10B981'; // Green
-    case 'REJECTED':
-      return '#EF4444'; // Red
-    case 'CANCELLED':
-      return '#6B7280'; // Gray
-    default:
-      return '#6B7280';
-  }
+  return getStatusColor(status).hex;
 }
 
 /**

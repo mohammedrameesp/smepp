@@ -31,6 +31,7 @@ import {
 } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Copy } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import {
   ArrowLeft,
   Building2,
@@ -1185,7 +1186,7 @@ export default function OrganizationDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <Loader2 className={`${ICON_SIZES.xl} animate-spin text-muted-foreground`} />
       </div>
     );
   }
@@ -1194,13 +1195,13 @@ export default function OrganizationDetailPage() {
     return (
       <div className="max-w-2xl mx-auto">
         <Alert variant="error">
-          <AlertCircle className="h-4 w-4" />
+          <AlertCircle className={ICON_SIZES.sm} />
           <AlertDescription>{error || 'Organization not found'}</AlertDescription>
         </Alert>
         <div className="mt-4">
           <Link href="/super-admin">
             <Button variant="outline">
-              <ArrowLeft className="h-4 w-4 mr-2" />
+              <ArrowLeft className={`${ICON_SIZES.sm} mr-2`} />
               Back to Dashboard
             </Button>
           </Link>
@@ -1219,7 +1220,7 @@ export default function OrganizationDetailPage() {
           href="/super-admin"
           className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
         >
-          <ArrowLeft className="h-4 w-4 mr-1" />
+          <ArrowLeft className={`${ICON_SIZES.sm} mr-1`} />
           Back to Dashboard
         </Link>
       </div>
@@ -1235,7 +1236,7 @@ export default function OrganizationDetailPage() {
             />
           ) : (
             <div className="h-16 w-16 rounded-xl bg-blue-100 flex items-center justify-center">
-              <Building2 className="h-8 w-8 text-blue-600" />
+              <Building2 className={`${ICON_SIZES.xl} text-blue-600`} />
             </div>
           )}
           <div>
@@ -1256,7 +1257,7 @@ export default function OrganizationDetailPage() {
                 </Badge>
               )}
               <span className="text-sm text-muted-foreground flex items-center gap-1">
-                <Calendar className="h-3 w-3" />
+                <Calendar className={ICON_SIZES.xs} />
                 Created {formatDistanceToNow(new Date(org.createdAt), { addSuffix: true })}
               </span>
             </div>
@@ -1265,14 +1266,14 @@ export default function OrganizationDetailPage() {
 
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={openEditDialog}>
-            <Pencil className="h-4 w-4 mr-2" />
+            <Pencil className={`${ICON_SIZES.sm} mr-2`} />
             Edit
           </Button>
           <Button
             variant="outline"
             onClick={() => setInviteDialogOpen(true)}
           >
-            <UserPlus className="h-4 w-4 mr-2" />
+            <UserPlus className={`${ICON_SIZES.sm} mr-2`} />
             Invite User
           </Button>
           <Button
@@ -1283,12 +1284,12 @@ export default function OrganizationDetailPage() {
           >
             {impersonating ? (
               <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className={`${ICON_SIZES.sm} mr-2 animate-spin`} />
                 Loading...
               </>
             ) : (
               <>
-                <ExternalLink className="h-4 w-4 mr-2" />
+                <ExternalLink className={`${ICON_SIZES.sm} mr-2`} />
                 Visit Portal
               </>
             )}
@@ -1298,7 +1299,7 @@ export default function OrganizationDetailPage() {
             className="text-red-600 hover:text-red-700 hover:bg-red-50"
             onClick={() => setDeleteDialogOpen(true)}
           >
-            <Trash2 className="h-4 w-4" />
+            <Trash2 className={ICON_SIZES.sm} />
           </Button>
         </div>
       </div>
@@ -1336,7 +1337,7 @@ export default function OrganizationDetailPage() {
         <Card className="border-amber-200 bg-amber-50">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-amber-800 flex items-center gap-2">
-              <FileText className="h-4 w-4" />
+              <FileText className={ICON_SIZES.sm} />
               Internal Notes
             </CardTitle>
           </CardHeader>
@@ -1350,7 +1351,7 @@ export default function OrganizationDetailPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Package className="h-5 w-5" />
+            <Package className={ICON_SIZES.md} />
             Installed Modules
           </CardTitle>
           <CardDescription>Modules enabled for this organization</CardDescription>
@@ -1362,16 +1363,16 @@ export default function OrganizationDetailPage() {
             ) : (
               (org.enabledModules || []).map((moduleId) => {
                 const moduleConfig: Record<string, { name: string; icon: React.ReactNode; color: string }> = {
-                  assets: { name: 'Assets', icon: <Package className="h-3 w-3" />, color: 'bg-blue-100 text-blue-800' },
-                  subscriptions: { name: 'Subscriptions', icon: <CreditCard className="h-3 w-3" />, color: 'bg-purple-100 text-purple-800' },
-                  suppliers: { name: 'Suppliers', icon: <Truck className="h-3 w-3" />, color: 'bg-green-100 text-green-800' },
-                  employees: { name: 'Employees', icon: <Users className="h-3 w-3" />, color: 'bg-orange-100 text-orange-800' },
-                  leave: { name: 'Leave', icon: <CalendarDays className="h-3 w-3" />, color: 'bg-teal-100 text-teal-800' },
-                  payroll: { name: 'Payroll', icon: <DollarSign className="h-3 w-3" />, color: 'bg-emerald-100 text-emerald-800' },
-                  'spend-requests': { name: 'Spend Requests', icon: <ShoppingCart className="h-3 w-3" />, color: 'bg-pink-100 text-pink-800' },
-                  documents: { name: 'Company Documents', icon: <FileCheck className="h-3 w-3" />, color: 'bg-amber-100 text-amber-800' },
+                  assets: { name: 'Assets', icon: <Package className={ICON_SIZES.xs} />, color: 'bg-blue-100 text-blue-800' },
+                  subscriptions: { name: 'Subscriptions', icon: <CreditCard className={ICON_SIZES.xs} />, color: 'bg-purple-100 text-purple-800' },
+                  suppliers: { name: 'Suppliers', icon: <Truck className={ICON_SIZES.xs} />, color: 'bg-green-100 text-green-800' },
+                  employees: { name: 'Employees', icon: <Users className={ICON_SIZES.xs} />, color: 'bg-orange-100 text-orange-800' },
+                  leave: { name: 'Leave', icon: <CalendarDays className={ICON_SIZES.xs} />, color: 'bg-teal-100 text-teal-800' },
+                  payroll: { name: 'Payroll', icon: <DollarSign className={ICON_SIZES.xs} />, color: 'bg-emerald-100 text-emerald-800' },
+                  'spend-requests': { name: 'Spend Requests', icon: <ShoppingCart className={ICON_SIZES.xs} />, color: 'bg-pink-100 text-pink-800' },
+                  documents: { name: 'Company Documents', icon: <FileCheck className={ICON_SIZES.xs} />, color: 'bg-amber-100 text-amber-800' },
                 };
-                const config = moduleConfig[moduleId] || { name: moduleId, icon: <Package className="h-3 w-3" />, color: 'bg-gray-100 text-gray-800' };
+                const config = moduleConfig[moduleId] || { name: moduleId, icon: <Package className={ICON_SIZES.xs} />, color: 'bg-gray-100 text-gray-800' };
                 return (
                   <Badge key={moduleId} variant="secondary" className={`${config.color} flex items-center gap-1`}>
                     {config.icon}
@@ -1388,7 +1389,7 @@ export default function OrganizationDetailPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5" />
+            <Sparkles className={ICON_SIZES.md} />
             AI Features
           </CardTitle>
           <CardDescription>Control AI-powered features for this organization</CardDescription>
@@ -1397,7 +1398,7 @@ export default function OrganizationDetailPage() {
           <div className="flex items-center justify-between p-4 border rounded-lg">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center justify-center">
-                <Sparkles className="h-5 w-5 text-white" />
+                <Sparkles className={`${ICON_SIZES.md} text-white`} />
               </div>
               <div>
                 <p className="font-medium">AI Chat Assistant</p>
@@ -1407,7 +1408,7 @@ export default function OrganizationDetailPage() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              {togglingAiChat && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+              {togglingAiChat && <Loader2 className={`${ICON_SIZES.sm} animate-spin text-muted-foreground`} />}
               <Switch
                 checked={org.aiChatEnabled}
                 onCheckedChange={handleToggleAiChat}
@@ -1440,7 +1441,7 @@ export default function OrganizationDetailPage() {
                     onClick={handleSaveAiBudget}
                     disabled={savingAiBudget}
                   >
-                    {savingAiBudget ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
+                    {savingAiBudget ? <Loader2 className={`${ICON_SIZES.sm} animate-spin`} /> : 'Save'}
                   </Button>
                 </div>
               </div>
@@ -1452,7 +1453,7 @@ export default function OrganizationDetailPage() {
             <div className="mt-4 p-4 bg-gray-50 rounded-lg">
               <div className="flex items-center justify-between mb-3">
                 <h4 className="text-sm font-medium text-gray-700">Usage This Month</h4>
-                {aiUsageLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                {aiUsageLoading && <Loader2 className={`${ICON_SIZES.sm} animate-spin text-muted-foreground`} />}
               </div>
               {aiUsage ? (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -1487,10 +1488,10 @@ export default function OrganizationDetailPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <MessageCircle className="h-5 w-5" />
+            <MessageCircle className={ICON_SIZES.md} />
             WhatsApp Integration
             {(savingWhatsApp || togglingWhatsAppPlatform) && (
-              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              <Loader2 className={`${ICON_SIZES.sm} animate-spin text-muted-foreground`} />
             )}
           </CardTitle>
           <CardDescription>Configure WhatsApp Business API for approval notifications</CardDescription>
@@ -1577,7 +1578,7 @@ export default function OrganizationDetailPage() {
                     <p className="text-xs text-muted-foreground">Permanent access token from Meta Business Manager</p>
                   </div>
                   <Button onClick={handleSaveWhatsAppConfig} disabled={savingWhatsApp}>
-                    {savingWhatsApp ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    {savingWhatsApp ? <Loader2 className={`mr-2 ${ICON_SIZES.sm} animate-spin`} /> : null}
                     Save Configuration
                   </Button>
 
@@ -1594,7 +1595,7 @@ export default function OrganizationDetailPage() {
                             size="icon"
                             onClick={() => copyWaField(whatsAppStatus.customConfig!.webhookUrl, 'url')}
                           >
-                            {copiedWaField === 'url' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                            {copiedWaField === 'url' ? <Check className={ICON_SIZES.sm} /> : <Copy className={ICON_SIZES.sm} />}
                           </Button>
                         </div>
                       </div>
@@ -1607,7 +1608,7 @@ export default function OrganizationDetailPage() {
                             size="icon"
                             onClick={() => copyWaField(whatsAppStatus.customConfig!.webhookVerifyToken, 'token')}
                           >
-                            {copiedWaField === 'token' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                            {copiedWaField === 'token' ? <Check className={ICON_SIZES.sm} /> : <Copy className={ICON_SIZES.sm} />}
                           </Button>
                         </div>
                       </div>
@@ -1647,10 +1648,10 @@ export default function OrganizationDetailPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Globe className="h-5 w-5" />
+            <Globe className={ICON_SIZES.md} />
             Custom Domain
             {(settingDomain || verifyingDomain || removingDomain) && (
-              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              <Loader2 className={`${ICON_SIZES.sm} animate-spin text-muted-foreground`} />
             )}
           </CardTitle>
           <CardDescription>
@@ -1660,14 +1661,14 @@ export default function OrganizationDetailPage() {
         <CardContent className="space-y-4">
           {domainError && (
             <Alert variant="error">
-              <AlertCircle className="h-4 w-4" />
+              <AlertCircle className={ICON_SIZES.sm} />
               <AlertDescription>{domainError}</AlertDescription>
             </Alert>
           )}
 
           {domainSuccess && (
             <Alert className="border-green-200 bg-green-50 text-green-800">
-              <Check className="h-4 w-4" />
+              <Check className={ICON_SIZES.sm} />
               <AlertDescription>{domainSuccess}</AlertDescription>
             </Alert>
           )}
@@ -1680,7 +1681,7 @@ export default function OrganizationDetailPage() {
                   <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${
                     customDomainStatus.isActive ? 'bg-green-100' : 'bg-amber-100'
                   }`}>
-                    <Globe className={`h-5 w-5 ${
+                    <Globe className={`${ICON_SIZES.md} ${
                       customDomainStatus.isActive ? 'text-green-600' : 'text-amber-600'
                     }`} />
                   </div>
@@ -1702,7 +1703,7 @@ export default function OrganizationDetailPage() {
                     disabled={removingDomain}
                     className="text-red-600 hover:text-red-700 hover:bg-red-50"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className={ICON_SIZES.sm} />
                   </Button>
                 </div>
               </div>
@@ -1769,7 +1770,7 @@ export default function OrganizationDetailPage() {
               {/* Verification Result */}
               {verificationResult && !verificationResult.verified && (
                 <Alert variant="error">
-                  <AlertCircle className="h-4 w-4" />
+                  <AlertCircle className={ICON_SIZES.sm} />
                   <AlertDescription>
                     <p className="font-medium">{verificationResult.error}</p>
                     {verificationResult.txtRecordsFound && verificationResult.txtRecordsFound.length > 0 && (
@@ -1800,15 +1801,15 @@ export default function OrganizationDetailPage() {
                   variant="outline"
                 >
                   {verifyingDomain ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className={`${ICON_SIZES.sm} animate-spin`} />
                   ) : customDomainStatus.verified ? (
                     <>
-                      <Check className="h-4 w-4 mr-2" />
+                      <Check className={`${ICON_SIZES.sm} mr-2`} />
                       Verified
                     </>
                   ) : (
                     <>
-                      <RefreshCw className="h-4 w-4 mr-2" />
+                      <RefreshCw className={`${ICON_SIZES.sm} mr-2`} />
                       Verify Now
                     </>
                   )}
@@ -1818,7 +1819,7 @@ export default function OrganizationDetailPage() {
               {/* SSL Setup Instructions */}
               {customDomainStatus.isActive && (
                 <Alert className="border-blue-200 bg-blue-50 text-blue-800">
-                  <AlertCircle className="h-4 w-4" />
+                  <AlertCircle className={ICON_SIZES.sm} />
                   <AlertDescription>
                     <p className="font-medium">Vercel Setup Required</p>
                     <p className="text-sm mt-1">
@@ -1859,7 +1860,7 @@ export default function OrganizationDetailPage() {
                     disabled={settingDomain || !newCustomDomain.trim()}
                   >
                     {settingDomain ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <Loader2 className={`${ICON_SIZES.sm} animate-spin`} />
                     ) : (
                       'Set Domain'
                     )}
@@ -1888,10 +1889,10 @@ export default function OrganizationDetailPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5" />
+            <Shield className={ICON_SIZES.md} />
             Authentication Settings
             {savingAuthConfig && (
-              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              <Loader2 className={`${ICON_SIZES.sm} animate-spin text-muted-foreground`} />
             )}
           </CardTitle>
           <CardDescription>Configure login methods and restrictions for this organization</CardDescription>
@@ -1919,7 +1920,7 @@ export default function OrganizationDetailPage() {
                     return (
                       <div key={method.id} className="flex items-center justify-between p-3 border rounded-lg">
                         <div className="flex items-center gap-3">
-                          <IconComponent className="h-4 w-4 text-muted-foreground" />
+                          <IconComponent className={`${ICON_SIZES.sm} text-muted-foreground`} />
                           <span>{method.label}</span>
                         </div>
                         <Switch
@@ -1964,7 +1965,7 @@ export default function OrganizationDetailPage() {
                         className="ml-2 hover:text-red-600"
                         disabled={savingAuthConfig}
                       >
-                        <X className="h-3 w-3" />
+                        <X className={ICON_SIZES.xs} />
                       </button>
                     </Badge>
                   ))}
@@ -1985,7 +1986,7 @@ export default function OrganizationDetailPage() {
                     onClick={handleAddDomain}
                     disabled={savingAuthConfig || !newDomain.trim()}
                   >
-                    <Plus className="h-4 w-4 mr-1" />
+                    <Plus className={`${ICON_SIZES.sm} mr-1`} />
                     Add Domain
                   </Button>
                 </div>
@@ -1995,7 +1996,7 @@ export default function OrganizationDetailPage() {
               <Collapsible open={oauthSectionOpen} onOpenChange={setOauthSectionOpen}>
                 <CollapsibleTrigger className="flex items-center justify-between w-full p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                   <div className="flex items-center gap-2">
-                    <Settings className="h-4 w-4 text-muted-foreground" />
+                    <Settings className={`${ICON_SIZES.sm} text-muted-foreground`} />
                     <span className="font-medium">Custom OAuth Apps (Enterprise)</span>
                     {(authConfig.hasCustomGoogleOAuth || authConfig.hasCustomAzureOAuth) && (
                       <Badge variant="outline" className="ml-2 bg-green-50 text-green-700 border-green-200">
@@ -2003,7 +2004,7 @@ export default function OrganizationDetailPage() {
                       </Badge>
                     )}
                   </div>
-                  <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${oauthSectionOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`${ICON_SIZES.sm} text-muted-foreground transition-transform ${oauthSectionOpen ? 'rotate-180' : ''}`} />
                 </CollapsibleTrigger>
                 <CollapsibleContent className="space-y-4 pt-4">
                   <p className="text-sm text-muted-foreground">
@@ -2012,7 +2013,7 @@ export default function OrganizationDetailPage() {
 
                   {oauthSuccess && (
                     <Alert className="border-green-200 bg-green-50 text-green-800">
-                      <Check className="h-4 w-4" />
+                      <Check className={ICON_SIZES.sm} />
                       <AlertDescription>{oauthSuccess}</AlertDescription>
                     </Alert>
                   )}
@@ -2022,7 +2023,7 @@ export default function OrganizationDetailPage() {
                   <div className="p-4 border rounded-lg space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <svg className="h-5 w-5" viewBox="0 0 24 24">
+                        <svg className={ICON_SIZES.md} viewBox="0 0 24 24">
                           <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                           <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
                           <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
@@ -2043,7 +2044,7 @@ export default function OrganizationDetailPage() {
                           disabled={savingGoogleOAuth}
                           className="text-red-600 hover:text-red-700 hover:bg-red-50"
                         >
-                          <Trash2 className="h-4 w-4 mr-1" />
+                          <Trash2 className={`${ICON_SIZES.sm} mr-1`} />
                           Clear
                         </Button>
                       )}
@@ -2076,7 +2077,7 @@ export default function OrganizationDetailPage() {
                             onClick={() => setShowGoogleSecret(!showGoogleSecret)}
                             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                           >
-                            {showGoogleSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            {showGoogleSecret ? <EyeOff className={ICON_SIZES.sm} /> : <Eye className={ICON_SIZES.sm} />}
                           </button>
                         </div>
                         <p className="text-xs text-muted-foreground">
@@ -2092,7 +2093,7 @@ export default function OrganizationDetailPage() {
                       >
                         {savingGoogleOAuth ? (
                           <>
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            <Loader2 className={`${ICON_SIZES.sm} mr-2 animate-spin`} />
                             Saving...
                           </>
                         ) : (
@@ -2108,7 +2109,7 @@ export default function OrganizationDetailPage() {
                   <div className="p-4 border rounded-lg space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <svg className="h-5 w-5" viewBox="0 0 23 23">
+                        <svg className={ICON_SIZES.md} viewBox="0 0 23 23">
                           <path fill="#f3f3f3" d="M0 0h23v23H0z"/>
                           <path fill="#f35325" d="M1 1h10v10H1z"/>
                           <path fill="#81bc06" d="M12 1h10v10H12z"/>
@@ -2130,7 +2131,7 @@ export default function OrganizationDetailPage() {
                           disabled={savingAzureOAuth}
                           className="text-red-600 hover:text-red-700 hover:bg-red-50"
                         >
-                          <Trash2 className="h-4 w-4 mr-1" />
+                          <Trash2 className={`${ICON_SIZES.sm} mr-1`} />
                           Clear
                         </Button>
                       )}
@@ -2163,7 +2164,7 @@ export default function OrganizationDetailPage() {
                             onClick={() => setShowAzureSecret(!showAzureSecret)}
                             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                           >
-                            {showAzureSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            {showAzureSecret ? <EyeOff className={ICON_SIZES.sm} /> : <Eye className={ICON_SIZES.sm} />}
                           </button>
                         </div>
                         <p className="text-xs text-muted-foreground">
@@ -2192,7 +2193,7 @@ export default function OrganizationDetailPage() {
                       >
                         {savingAzureOAuth ? (
                           <>
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            <Loader2 className={`${ICON_SIZES.sm} mr-2 animate-spin`} />
                             Saving...
                           </>
                         ) : (
@@ -2214,7 +2215,7 @@ export default function OrganizationDetailPage() {
             </>
           ) : (
             <div className="flex items-center justify-center py-4">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              <Loader2 className={`${ICON_SIZES.lg} animate-spin text-muted-foreground`} />
             </div>
           )}
         </CardContent>
@@ -2224,7 +2225,7 @@ export default function OrganizationDetailPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Mail className="h-5 w-5" />
+            <Mail className={ICON_SIZES.md} />
             Email Configuration
           </CardTitle>
           <CardDescription>
@@ -2236,30 +2237,30 @@ export default function OrganizationDetailPage() {
             <CollapsibleTrigger asChild>
               <Button variant="outline" className="w-full justify-between">
                 <div className="flex items-center gap-2">
-                  <Settings className="h-4 w-4" />
+                  <Settings className={ICON_SIZES.sm} />
                   <span>Custom SMTP Settings</span>
                 </div>
                 <div className="flex items-center gap-2">
                   {emailConfig?.isConfigured && (
                     <Badge variant="default" className="bg-green-100 text-green-800">
-                      <Check className="h-3 w-3 mr-1" />
+                      <Check className={`${ICON_SIZES.xs} mr-1`} />
                       Configured
                     </Badge>
                   )}
-                  <ChevronDown className={`h-4 w-4 transition-transform ${emailSectionOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`${ICON_SIZES.sm} transition-transform ${emailSectionOpen ? 'rotate-180' : ''}`} />
                 </div>
               </Button>
             </CollapsibleTrigger>
             <CollapsibleContent className="pt-4 space-y-4">
               {emailSuccess && (
                 <Alert className="bg-green-50 border-green-200">
-                  <Check className="h-4 w-4 text-green-600" />
+                  <Check className={`${ICON_SIZES.sm} text-green-600`} />
                   <AlertDescription className="text-green-800">{emailSuccess}</AlertDescription>
                 </Alert>
               )}
               {emailError && (
                 <Alert variant="error">
-                  <AlertCircle className="h-4 w-4" />
+                  <AlertCircle className={ICON_SIZES.sm} />
                   <AlertDescription>{emailError}</AlertDescription>
                 </Alert>
               )}
@@ -2315,7 +2316,7 @@ export default function OrganizationDetailPage() {
                       className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
                       onClick={() => setShowSmtpPassword(!showSmtpPassword)}
                     >
-                      {showSmtpPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      {showSmtpPassword ? <EyeOff className={ICON_SIZES.sm} /> : <Eye className={ICON_SIZES.sm} />}
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground">For Gmail, use an App Password</p>
@@ -2388,7 +2389,7 @@ export default function OrganizationDetailPage() {
                 >
                   {savingEmailConfig ? (
                     <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      <Loader2 className={`${ICON_SIZES.sm} mr-2 animate-spin`} />
                       Saving...
                     </>
                   ) : (
@@ -2431,7 +2432,7 @@ export default function OrganizationDetailPage() {
                     >
                       {testingEmail ? (
                         <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          <Loader2 className={`${ICON_SIZES.sm} mr-2 animate-spin`} />
                           Sending...
                         </>
                       ) : (
@@ -2443,7 +2444,7 @@ export default function OrganizationDetailPage() {
                       size="icon"
                       onClick={() => setClearEmailConfigDialogOpen(true)}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className={ICON_SIZES.sm} />
                     </Button>
                   </>
                 )}
@@ -2466,7 +2467,7 @@ export default function OrganizationDetailPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Activity className="h-5 w-5" />
+              <Activity className={ICON_SIZES.md} />
               Module Usage Insights
             </CardTitle>
             <CardDescription>Usage statistics per module</CardDescription>
@@ -2476,7 +2477,7 @@ export default function OrganizationDetailPage() {
               {(org.enabledModules || []).includes('assets') && (
                 <div className="p-4 rounded-lg bg-blue-50 border border-blue-100">
                   <div className="flex items-center gap-2 mb-2">
-                    <Package className="h-4 w-4 text-blue-600" />
+                    <Package className={`${ICON_SIZES.sm} text-blue-600`} />
                     <span className="font-medium text-blue-900">Assets</span>
                   </div>
                   <div className="space-y-1 text-sm">
@@ -2501,7 +2502,7 @@ export default function OrganizationDetailPage() {
               {(org.enabledModules || []).includes('subscriptions') && (
                 <div className="p-4 rounded-lg bg-purple-50 border border-purple-100">
                   <div className="flex items-center gap-2 mb-2">
-                    <CreditCard className="h-4 w-4 text-purple-600" />
+                    <CreditCard className={`${ICON_SIZES.sm} text-purple-600`} />
                     <span className="font-medium text-purple-900">Subscriptions</span>
                   </div>
                   <div className="space-y-1 text-sm">
@@ -2516,7 +2517,7 @@ export default function OrganizationDetailPage() {
               {(org.enabledModules || []).includes('suppliers') && (
                 <div className="p-4 rounded-lg bg-green-50 border border-green-100">
                   <div className="flex items-center gap-2 mb-2">
-                    <Truck className="h-4 w-4 text-green-600" />
+                    <Truck className={`${ICON_SIZES.sm} text-green-600`} />
                     <span className="font-medium text-green-900">Suppliers</span>
                   </div>
                   <div className="space-y-1 text-sm">
@@ -2537,7 +2538,7 @@ export default function OrganizationDetailPage() {
               {(org.enabledModules || []).includes('employees') && (
                 <div className="p-4 rounded-lg bg-orange-50 border border-orange-100">
                   <div className="flex items-center gap-2 mb-2">
-                    <Users className="h-4 w-4 text-orange-600" />
+                    <Users className={`${ICON_SIZES.sm} text-orange-600`} />
                     <span className="font-medium text-orange-900">Employees</span>
                   </div>
                   <div className="space-y-1 text-sm">
@@ -2552,7 +2553,7 @@ export default function OrganizationDetailPage() {
               {(org.enabledModules || []).includes('leave') && (
                 <div className="p-4 rounded-lg bg-teal-50 border border-teal-100">
                   <div className="flex items-center gap-2 mb-2">
-                    <CalendarDays className="h-4 w-4 text-teal-600" />
+                    <CalendarDays className={`${ICON_SIZES.sm} text-teal-600`} />
                     <span className="font-medium text-teal-900">Leave</span>
                   </div>
                   <div className="space-y-1 text-sm">
@@ -2573,7 +2574,7 @@ export default function OrganizationDetailPage() {
               {(org.enabledModules || []).includes('payroll') && (
                 <div className="p-4 rounded-lg bg-emerald-50 border border-emerald-100">
                   <div className="flex items-center gap-2 mb-2">
-                    <DollarSign className="h-4 w-4 text-emerald-600" />
+                    <DollarSign className={`${ICON_SIZES.sm} text-emerald-600`} />
                     <span className="font-medium text-emerald-900">Payroll</span>
                   </div>
                   <div className="space-y-1 text-sm">
@@ -2588,7 +2589,7 @@ export default function OrganizationDetailPage() {
               {(org.enabledModules || []).includes('spend-requests') && (
                 <div className="p-4 rounded-lg bg-pink-50 border border-pink-100">
                   <div className="flex items-center gap-2 mb-2">
-                    <ShoppingCart className="h-4 w-4 text-pink-600" />
+                    <ShoppingCart className={`${ICON_SIZES.sm} text-pink-600`} />
                     <span className="font-medium text-pink-900">Spend Requests</span>
                   </div>
                   <div className="space-y-1 text-sm">
@@ -2609,7 +2610,7 @@ export default function OrganizationDetailPage() {
               {(org.enabledModules || []).includes('documents') && (
                 <div className="p-4 rounded-lg bg-amber-50 border border-amber-100">
                   <div className="flex items-center gap-2 mb-2">
-                    <FileCheck className="h-4 w-4 text-amber-600" />
+                    <FileCheck className={`${ICON_SIZES.sm} text-amber-600`} />
                     <span className="font-medium text-amber-900">Documents</span>
                   </div>
                   <div className="space-y-1 text-sm">
@@ -2630,7 +2631,7 @@ export default function OrganizationDetailPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5" />
+              <Clock className={ICON_SIZES.md} />
               Recent Activity
             </CardTitle>
             <CardDescription>Last 10 actions in this organization</CardDescription>
@@ -2663,7 +2664,7 @@ export default function OrganizationDetailPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
+            <Users className={ICON_SIZES.md} />
             Members
           </CardTitle>
           <CardDescription>Users in this organization</CardDescription>
@@ -2701,7 +2702,7 @@ export default function OrganizationDetailPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Mail className="h-5 w-5" />
+            <Mail className={ICON_SIZES.md} />
             Pending Invitations
           </CardTitle>
           <CardDescription>Invitations waiting to be accepted</CardDescription>
@@ -2719,12 +2720,12 @@ export default function OrganizationDetailPage() {
                       <Badge variant="secondary">{inv.role}</Badge>
                       {inv.isExpired ? (
                         <span className="text-xs text-red-600 flex items-center gap-1">
-                          <AlertCircle className="h-3 w-3" />
+                          <AlertCircle className={ICON_SIZES.xs} />
                           Expired
                         </span>
                       ) : (
                         <span className="text-xs text-muted-foreground flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
+                          <Clock className={ICON_SIZES.xs} />
                           Expires {format(new Date(inv.expiresAt), 'MMM d, yyyy')}
                         </span>
                       )}
@@ -2737,15 +2738,15 @@ export default function OrganizationDetailPage() {
                     disabled={resendingId === inv.id}
                   >
                     {resendingId === inv.id ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <Loader2 className={`${ICON_SIZES.sm} animate-spin`} />
                     ) : copiedUrl === inv.id ? (
                       <>
-                        <Check className="h-4 w-4 mr-1 text-green-600" />
+                        <Check className={`${ICON_SIZES.sm} mr-1 text-green-600`} />
                         Copied!
                       </>
                     ) : (
                       <>
-                        <RefreshCw className="h-4 w-4 mr-1" />
+                        <RefreshCw className={`${ICON_SIZES.sm} mr-1`} />
                         {inv.isExpired ? 'Regenerate' : 'Resend & Copy'}
                       </>
                     )}
@@ -2799,7 +2800,7 @@ export default function OrganizationDetailPage() {
             <Button onClick={handleEditOrg} disabled={updating || !editName.trim()}>
               {updating ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className={`mr-2 ${ICON_SIZES.sm} animate-spin`} />
                   Saving...
                 </>
               ) : (
@@ -2822,7 +2823,7 @@ export default function OrganizationDetailPage() {
           <div className="space-y-4 py-4">
             {inviteSuccess && (
               <Alert className="border-green-200 bg-green-50 text-green-800">
-                <Check className="h-4 w-4" />
+                <Check className={ICON_SIZES.sm} />
                 <AlertDescription>{inviteSuccess}</AlertDescription>
               </Alert>
             )}
@@ -2872,12 +2873,12 @@ export default function OrganizationDetailPage() {
             >
               {inviting ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className={`mr-2 ${ICON_SIZES.sm} animate-spin`} />
                   Sending...
                 </>
               ) : (
                 <>
-                  <Mail className="mr-2 h-4 w-4" />
+                  <Mail className={`mr-2 ${ICON_SIZES.sm}`} />
                   Send Invitation
                 </>
               )}
@@ -2897,7 +2898,7 @@ export default function OrganizationDetailPage() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <Alert variant="error">
-              <AlertCircle className="h-4 w-4" />
+              <AlertCircle className={ICON_SIZES.sm} />
               <AlertDescription>
                 Deleting this organization will remove:
                 <ul className="mt-2 list-disc list-inside text-sm">
@@ -2931,12 +2932,12 @@ export default function OrganizationDetailPage() {
             >
               {deleting ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className={`mr-2 ${ICON_SIZES.sm} animate-spin`} />
                   Deleting...
                 </>
               ) : (
                 <>
-                  <Trash2 className="mr-2 h-4 w-4" />
+                  <Trash2 className={`mr-2 ${ICON_SIZES.sm}`} />
                   Delete Organization
                 </>
               )}
@@ -2992,7 +2993,7 @@ export default function OrganizationDetailPage() {
             >
               {clearingEmailConfig ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader2 className={`${ICON_SIZES.sm} mr-2 animate-spin`} />
                   Clearing...
                 </>
               ) : (
@@ -3008,7 +3009,7 @@ export default function OrganizationDetailPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-amber-500" />
+              <Shield className={`${ICON_SIZES.md} text-amber-500`} />
               2FA Verification Required
             </DialogTitle>
             <DialogDescription>
@@ -3055,7 +3056,7 @@ export default function OrganizationDetailPage() {
               disabled={reauthCode.length < 6 || isReauthing}
             >
               {isReauthing ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <Loader2 className={`${ICON_SIZES.sm} animate-spin`} />
               ) : (
                 'Verify & Continue'
               )}

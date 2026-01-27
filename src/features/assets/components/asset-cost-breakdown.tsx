@@ -36,6 +36,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Activity, AlertCircle, RefreshCw, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { z } from 'zod';
+import { ICON_SIZES } from '@/lib/constants';
 
 // Constants for utilization thresholds
 const UTILIZATION_EXCELLENT = 70; // >= 70% is excellent (green)
@@ -68,21 +69,21 @@ function getUtilizationStatus(percentage: number): {
       label: 'Excellent',
       color: 'text-green-700',
       bgColor: 'bg-green-500',
-      icon: <TrendingUp className="h-4 w-4" aria-hidden="true" />,
+      icon: <TrendingUp className={ICON_SIZES.sm} aria-hidden="true" />,
     };
   } else if (percentage >= UTILIZATION_GOOD) {
     return {
       label: 'Good',
       color: 'text-yellow-700',
       bgColor: 'bg-yellow-500',
-      icon: <Minus className="h-4 w-4" aria-hidden="true" />,
+      icon: <Minus className={ICON_SIZES.sm} aria-hidden="true" />,
     };
   } else {
     return {
       label: 'Poor',
       color: 'text-red-700',
       bgColor: 'bg-red-500',
-      icon: <TrendingDown className="h-4 w-4" aria-hidden="true" />,
+      icon: <TrendingDown className={ICON_SIZES.sm} aria-hidden="true" />,
     };
   }
 }
@@ -168,7 +169,7 @@ export function AssetCostBreakdown({ assetId, isShared }: AssetUtilizationProps)
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <AlertCircle className="h-5 w-5 text-red-500" aria-hidden="true" />
+            <AlertCircle className={`${ICON_SIZES.md} text-red-500`} aria-hidden="true" />
             Asset Utilization
           </CardTitle>
         </CardHeader>
@@ -181,7 +182,7 @@ export function AssetCostBreakdown({ assetId, isShared }: AssetUtilizationProps)
               onClick={() => fetchData()}
               className="gap-2"
             >
-              <RefreshCw className="h-4 w-4" aria-hidden="true" />
+              <RefreshCw className={ICON_SIZES.sm} aria-hidden="true" />
               Retry
             </Button>
           </div>
@@ -201,7 +202,7 @@ export function AssetCostBreakdown({ assetId, isShared }: AssetUtilizationProps)
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Activity className="h-5 w-5" aria-hidden="true" />
+          <Activity className={ICON_SIZES.md} aria-hidden="true" />
           Asset Utilization
         </CardTitle>
         <CardDescription>

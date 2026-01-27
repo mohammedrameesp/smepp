@@ -21,6 +21,7 @@ import {
 import { cn } from '@/lib/core/utils';
 import { formatNumber } from '@/lib/utils/math-utils';
 import { formatDayMonth, formatDate, formatRelativeTime } from '@/lib/core/datetime';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface UsageData {
   overview: {
@@ -177,7 +178,7 @@ export default function AIUsagePage() {
                       of {formatLargeNumber(overview.monthlyTokenLimit)} limit
                     </p>
                   </div>
-                  <Sparkles className="h-8 w-8 text-blue-500" />
+                  <Sparkles className={`${ICON_SIZES.xl} text-blue-500`} />
                 </div>
                 <Progress
                   value={overview.percentUsed}
@@ -206,7 +207,7 @@ export default function AIUsagePage() {
                     <p className="text-2xl font-bold">{formatLargeNumber(overview.monthlyRequestCount)}</p>
                     <p className="text-xs text-muted-foreground">This month</p>
                   </div>
-                  <TrendingUp className="h-8 w-8 text-green-500" />
+                  <TrendingUp className={`${ICON_SIZES.xl} text-green-500`} />
                 </div>
               </CardContent>
             </Card>
@@ -219,7 +220,7 @@ export default function AIUsagePage() {
                     <p className="text-2xl font-bold">{auditSummary.uniqueUsers}</p>
                     <p className="text-xs text-muted-foreground">Using AI chat</p>
                   </div>
-                  <Users className="h-8 w-8 text-purple-500" />
+                  <Users className={`${ICON_SIZES.xl} text-purple-500`} />
                 </div>
               </CardContent>
             </Card>
@@ -232,7 +233,7 @@ export default function AIUsagePage() {
                     <p className="text-2xl font-bold">${formatNumber(overview.estimatedCost)}</p>
                     <p className="text-xs text-muted-foreground">This month</p>
                   </div>
-                  <DollarSign className="h-8 w-8 text-emerald-500" />
+                  <DollarSign className={`${ICON_SIZES.xl} text-emerald-500`} />
                 </div>
               </CardContent>
             </Card>
@@ -250,7 +251,7 @@ export default function AIUsagePage() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <BarChart3 className="h-5 w-5" />
+                    <BarChart3 className={ICON_SIZES.md} />
                     Daily Token Usage
                   </CardTitle>
                   <CardDescription>Token consumption over the selected period</CardDescription>
@@ -407,7 +408,7 @@ export default function AIUsagePage() {
                         <p className="text-sm font-medium text-muted-foreground">Total Queries</p>
                         <p className="text-2xl font-bold">{formatLargeNumber(auditSummary.totalQueries)}</p>
                       </div>
-                      <Sparkles className="h-8 w-8 text-blue-500" />
+                      <Sparkles className={`${ICON_SIZES.xl} text-blue-500`} />
                     </div>
                   </CardContent>
                 </Card>

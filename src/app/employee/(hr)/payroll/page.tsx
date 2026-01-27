@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { FileText, Calculator, CreditCard, ArrowRight, DollarSign, Wallet } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import { formatCurrency } from '@/lib/core/currency';
 import { getMonthName, getPayrollStatusText, getPayrollStatusColor } from '@/features/payroll/lib/utils';
 import { calculateGratuity, getServiceDurationText } from '@/features/payroll/lib/gratuity';
@@ -88,7 +89,7 @@ export default async function EmployeePayrollPage() {
         actions={
           <Link href="/employee/payroll/payslips">
             <Button variant="outline">
-              <FileText className="h-4 w-4 mr-2" />
+              <FileText className={`${ICON_SIZES.sm} mr-2`} />
               All Payslips
             </Button>
           </Link>
@@ -99,7 +100,7 @@ export default async function EmployeePayrollPage() {
             value={formatCurrency(grossSalary)}
             label="monthly"
             color="emerald"
-            icon={<DollarSign className="h-4 w-4" />}
+            icon={<DollarSign className={ICON_SIZES.sm} />}
             hideWhenZero
           />
           {gratuityCalculation && (
@@ -107,14 +108,14 @@ export default async function EmployeePayrollPage() {
               value={formatCurrency(gratuityCalculation.gratuityAmount)}
               label="gratuity"
               color="blue"
-              icon={<Calculator className="h-4 w-4" />}
+              icon={<Calculator className={ICON_SIZES.sm} />}
             />
           )}
           <StatChip
             value={formatCurrency(totalLoanRemaining)}
             label="loan balance"
             color="amber"
-            icon={<Wallet className="h-4 w-4" />}
+            icon={<Wallet className={ICON_SIZES.sm} />}
             hideWhenZero
           />
         </StatChipGroup>
@@ -178,7 +179,7 @@ export default async function EmployeePayrollPage() {
         <div className="bg-white rounded-2xl border border-slate-200 p-5">
           <div className="flex items-center justify-between mb-3">
             <p className="text-sm font-medium text-slate-600">Gratuity Projection</p>
-            <Calculator className="h-4 w-4 text-slate-400" />
+            <Calculator className={`${ICON_SIZES.sm} text-slate-400`} />
           </div>
           {gratuityCalculation ? (
             <>
@@ -189,7 +190,7 @@ export default async function EmployeePayrollPage() {
                 {getServiceDurationText(gratuityCalculation.monthsOfService)} of service
               </p>
               <Link href="/employee/payroll/gratuity" className="text-sm text-blue-600 hover:text-blue-700 font-medium inline-flex items-center">
-                View Details <ArrowRight className="ml-1 h-3 w-3" />
+                View Details <ArrowRight className={`ml-1 ${ICON_SIZES.xs}`} />
               </Link>
             </>
           ) : (
@@ -203,7 +204,7 @@ export default async function EmployeePayrollPage() {
         <div className="bg-white rounded-2xl border border-slate-200 p-5">
           <div className="flex items-center justify-between mb-3">
             <p className="text-sm font-medium text-slate-600">Active Loans</p>
-            <CreditCard className="h-4 w-4 text-slate-400" />
+            <CreditCard className={`${ICON_SIZES.sm} text-slate-400`} />
           </div>
           {loans.length > 0 ? (
             <>
@@ -223,7 +224,7 @@ export default async function EmployeePayrollPage() {
         <div className="bg-white rounded-2xl border border-slate-200 p-5">
           <div className="flex items-center justify-between mb-3">
             <p className="text-sm font-medium text-slate-600">Latest Payslip</p>
-            <FileText className="h-4 w-4 text-slate-400" />
+            <FileText className={`${ICON_SIZES.sm} text-slate-400`} />
           </div>
           {recentPayslips.length > 0 ? (
             <>
@@ -234,7 +235,7 @@ export default async function EmployeePayrollPage() {
                 {getMonthName(recentPayslips[0].payrollRun.month)} {recentPayslips[0].payrollRun.year}
               </p>
               <Link href={`/employee/payroll/payslips/${recentPayslips[0].id}`} className="text-sm text-blue-600 hover:text-blue-700 font-medium inline-flex items-center">
-                View Payslip <ArrowRight className="ml-1 h-3 w-3" />
+                View Payslip <ArrowRight className={`ml-1 ${ICON_SIZES.xs}`} />
               </Link>
             </>
           ) : (

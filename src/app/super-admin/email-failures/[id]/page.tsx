@@ -16,6 +16,7 @@ import {
   FileText,
   Code,
 } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -134,7 +135,7 @@ export default function EmailFailureDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+        <Loader2 className={`${ICON_SIZES.xl} animate-spin text-gray-400`} />
       </div>
     );
   }
@@ -142,11 +143,11 @@ export default function EmailFailureDetailPage() {
   if (error || !failure) {
     return (
       <div className="text-center py-24">
-        <AlertTriangle className="h-12 w-12 mx-auto text-amber-500 mb-4" />
+        <AlertTriangle className={`${ICON_SIZES['3xl']} mx-auto text-amber-500 mb-4`} />
         <p className="text-gray-600 mb-4">{error || 'Not found'}</p>
         <Link href="/super-admin/email-failures">
           <Button variant="outline">
-            <ArrowLeft className="h-4 w-4 mr-2" />
+            <ArrowLeft className={`${ICON_SIZES.sm} mr-2`} />
             Back to List
           </Button>
         </Link>
@@ -161,7 +162,7 @@ export default function EmailFailureDetailPage() {
         <div className="flex items-center gap-4">
           <Link href="/super-admin/email-failures">
             <Button variant="ghost" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-2" />
+              <ArrowLeft className={`${ICON_SIZES.sm} mr-2`} />
               Back
             </Button>
           </Link>
@@ -177,7 +178,7 @@ export default function EmailFailureDetailPage() {
               onClick={() => handleResolve(false)}
               disabled={actionLoading}
             >
-              <XCircle className="h-4 w-4 mr-2" />
+              <XCircle className={`${ICON_SIZES.sm} mr-2`} />
               Mark Unresolved
             </Button>
           ) : (
@@ -185,7 +186,7 @@ export default function EmailFailureDetailPage() {
               onClick={() => setResolveDialog(true)}
               className="bg-green-600 hover:bg-green-700"
             >
-              <CheckCircle className="h-4 w-4 mr-2" />
+              <CheckCircle className={`${ICON_SIZES.sm} mr-2`} />
               Resolve
             </Button>
           )}
@@ -198,9 +199,9 @@ export default function EmailFailureDetailPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {failure.resolved ? (
-                <CheckCircle className="h-6 w-6 text-green-600" />
+                <CheckCircle className={`${ICON_SIZES.lg} text-green-600`} />
               ) : (
-                <AlertTriangle className="h-6 w-6 text-red-600" />
+                <AlertTriangle className={`${ICON_SIZES.lg} text-red-600`} />
               )}
               <div>
                 <p className={`font-medium ${failure.resolved ? 'text-green-800' : 'text-red-800'}`}>
@@ -225,7 +226,7 @@ export default function EmailFailureDetailPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
-              <MailWarning className="h-4 w-4" />
+              <MailWarning className={ICON_SIZES.sm} />
               Email Details
             </CardTitle>
           </CardHeader>
@@ -241,7 +242,7 @@ export default function EmailFailureDetailPage() {
             <div>
               <label className="text-sm font-medium text-gray-500">Timestamp</label>
               <p className="mt-1 flex items-center gap-2">
-                <Clock className="h-4 w-4 text-gray-400" />
+                <Clock className={`${ICON_SIZES.sm} text-gray-400`} />
                 {formatDate(failure.createdAt)}
               </p>
             </div>
@@ -252,7 +253,7 @@ export default function EmailFailureDetailPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
-              <User className="h-4 w-4" />
+              <User className={ICON_SIZES.sm} />
               Recipient
             </CardTitle>
           </CardHeader>
@@ -274,7 +275,7 @@ export default function EmailFailureDetailPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
-              <Building2 className="h-4 w-4" />
+              <Building2 className={ICON_SIZES.sm} />
               Organization
             </CardTitle>
           </CardHeader>
@@ -302,7 +303,7 @@ export default function EmailFailureDetailPage() {
         <Card className="border-red-200">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2 text-red-700">
-              <AlertTriangle className="h-4 w-4" />
+              <AlertTriangle className={ICON_SIZES.sm} />
               Error Details
             </CardTitle>
           </CardHeader>
@@ -328,7 +329,7 @@ export default function EmailFailureDetailPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
-              <Code className="h-4 w-4" />
+              <Code className={ICON_SIZES.sm} />
               Additional Metadata
             </CardTitle>
           </CardHeader>
@@ -345,7 +346,7 @@ export default function EmailFailureDetailPage() {
         <Card className="border-green-200">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2 text-green-700">
-              <FileText className="h-4 w-4" />
+              <FileText className={ICON_SIZES.sm} />
               Resolution Notes
             </CardTitle>
           </CardHeader>
@@ -381,7 +382,7 @@ export default function EmailFailureDetailPage() {
               disabled={actionLoading}
               className="bg-green-600 hover:bg-green-700"
             >
-              {actionLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              {actionLoading ? <Loader2 className={`${ICON_SIZES.sm} animate-spin mr-2`} /> : null}
               Resolve
             </Button>
           </DialogFooter>

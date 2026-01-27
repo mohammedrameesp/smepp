@@ -55,6 +55,8 @@ import { formatDate } from '@/lib/core/datetime';
 import { formatBillingCycle, getNextRenewalDate, getDaysUntilRenewal } from '@/features/subscriptions';
 import { formatCurrency } from '@/lib/core/currency';
 import { Loader2 } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
+import { cn } from '@/lib/core/utils';
 
 interface Subscription {
   id: string;
@@ -244,7 +246,7 @@ export function SubscriptionListTableServerSearch() {
         <div>
           Showing {subscriptions.length > 0 ? ((pagination.page - 1) * pagination.pageSize) + 1 : 0} - {Math.min(pagination.page * pagination.pageSize, pagination.total)} of {pagination.total} subscriptions
         </div>
-        {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+        {loading && <Loader2 className={cn(ICON_SIZES.sm, 'animate-spin')} />}
       </div>
 
       {/* Table */}
@@ -280,7 +282,7 @@ export function SubscriptionListTableServerSearch() {
             {loading && subscriptions.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400" />
+                  <Loader2 className={cn(ICON_SIZES.xl, 'animate-spin mx-auto text-gray-400')} />
                   <p className="text-gray-500 mt-2">Loading subscriptions...</p>
                 </TableCell>
               </TableRow>

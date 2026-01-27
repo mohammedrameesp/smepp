@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Laptop, X } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface AssetAssignmentAlertProps {
   pendingCount: number;
@@ -23,7 +24,7 @@ export function AssetAssignmentAlert({ pendingCount, className }: AssetAssignmen
       )}
     >
       <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0">
-        <Laptop className="h-4 w-4 text-yellow-600" />
+        <Laptop className={`${ICON_SIZES.sm} text-yellow-600`} />
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-yellow-800">
@@ -41,7 +42,7 @@ export function AssetAssignmentAlert({ pendingCount, className }: AssetAssignmen
         onClick={() => setDismissed(true)}
         className="p-1 text-yellow-400 hover:text-yellow-600 rounded"
       >
-        <X className="h-4 w-4" />
+        <X className={ICON_SIZES.sm} />
       </button>
     </div>
   );

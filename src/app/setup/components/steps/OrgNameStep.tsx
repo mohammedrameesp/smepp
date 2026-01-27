@@ -10,6 +10,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Building2, Check, X, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 import { generateCodePrefixFromName } from '@/lib/utils/code-prefix';
 
 // Validate website URL (allows with or without protocol)

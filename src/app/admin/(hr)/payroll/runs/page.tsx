@@ -21,6 +21,7 @@ import { formatDate } from '@/lib/core/datetime';
 import { getMonthName, getPayrollStatusText, getPayrollStatusColor } from '@/features/payroll/lib/utils';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface PageProps {
   searchParams: Promise<{
@@ -82,19 +83,19 @@ export default async function PayrollRunsPage({ searchParams }: PageProps) {
         actions={
           <>
             <PageHeaderButton href="/admin/payroll/runs/new" variant="primary">
-              <Plus className="h-4 w-4" />
+              <Plus className={ICON_SIZES.sm} />
               New Payroll Run
             </PageHeaderButton>
             <PageHeaderButton href="/admin/payroll/salary-structures" variant="secondary">
-              <Users className="h-4 w-4" />
+              <Users className={ICON_SIZES.sm} />
               Salary Structures
             </PageHeaderButton>
             <PageHeaderButton href="/admin/payroll/payslips" variant="secondary">
-              <DollarSign className="h-4 w-4" />
+              <DollarSign className={ICON_SIZES.sm} />
               Payslips
             </PageHeaderButton>
             <PageHeaderButton href="/admin/payroll/loans" variant="secondary">
-              <CreditCard className="h-4 w-4" />
+              <CreditCard className={ICON_SIZES.sm} />
               Loans
             </PageHeaderButton>
           </>
@@ -188,7 +189,7 @@ export default async function PayrollRunsPage({ searchParams }: PageProps) {
                     <TableCell>
                       <Button asChild variant="ghost" size="icon">
                         <Link href={`/admin/payroll/runs/${run.id}`}>
-                          <Eye className="h-4 w-4" />
+                          <Eye className={ICON_SIZES.sm} />
                         </Link>
                       </Button>
                     </TableCell>

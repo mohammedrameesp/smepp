@@ -1,6 +1,7 @@
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { FileText, Calculator, CreditCard, DollarSign } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 
 export default function PayrollOverviewLoading() {
   return (
@@ -26,7 +27,7 @@ export default function PayrollOverviewLoading() {
         <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden mb-6">
           <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
             <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
-              <DollarSign className="h-5 w-5 text-emerald-600" />
+              <DollarSign className={`${ICON_SIZES.md} text-emerald-600`} />
             </div>
             <div>
               <h2 className="font-semibold text-slate-900">Salary Overview</h2>
@@ -62,7 +63,7 @@ export default function PayrollOverviewLoading() {
             <div key={i} className="bg-white rounded-2xl border border-slate-200 p-5">
               <div className="flex items-center justify-between mb-3">
                 <Skeleton className="h-4 w-32" />
-                <Icon className="h-4 w-4 text-slate-400" />
+                <Icon className={`${ICON_SIZES.sm} text-slate-400`} />
               </div>
               <Skeleton className="h-8 w-40 mb-2" />
               <Skeleton className="h-3 w-24" />
@@ -75,7 +76,7 @@ export default function PayrollOverviewLoading() {
           <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                <FileText className="h-5 w-5 text-blue-600" />
+                <FileText className={`${ICON_SIZES.md} text-blue-600`} />
               </div>
               <div>
                 <h2 className="font-semibold text-slate-900">Recent Payslips</h2>

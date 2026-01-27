@@ -8,6 +8,7 @@
 
 import { AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface FormError {
   field: string;
@@ -37,7 +38,7 @@ export function FormErrorSummary({
       )}
     >
       <div className="flex items-start gap-3">
-        <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" aria-hidden="true" />
+        <AlertCircle className={`${ICON_SIZES.md} text-red-500 mt-0.5 flex-shrink-0`} aria-hidden="true" />
         <div className="flex-1">
           <h3 className="text-sm font-medium text-red-800">{title}</h3>
           <ul className="mt-2 text-sm text-red-700 list-disc list-inside space-y-1">

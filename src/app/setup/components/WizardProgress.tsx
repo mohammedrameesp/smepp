@@ -8,6 +8,8 @@
 
 import { Check } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface WizardProgressProps {
   currentStep: number;

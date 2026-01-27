@@ -7,6 +7,7 @@
 
 import { LeaveStatus } from '@prisma/client';
 import { Clock, CheckCircle, XCircle, Ban, Edit, FileText } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface HistoryEntry {
   id: string;
@@ -29,17 +30,17 @@ interface LeaveRequestHistoryProps {
 function getActionIcon(action: string) {
   switch (action) {
     case 'CREATED':
-      return <FileText className="h-4 w-4 text-blue-500" />;
+      return <FileText className={`${ICON_SIZES.sm} text-blue-500`} />;
     case 'APPROVED':
-      return <CheckCircle className="h-4 w-4 text-green-500" />;
+      return <CheckCircle className={`${ICON_SIZES.sm} text-green-500`} />;
     case 'REJECTED':
-      return <XCircle className="h-4 w-4 text-red-500" />;
+      return <XCircle className={`${ICON_SIZES.sm} text-red-500`} />;
     case 'CANCELLED':
-      return <Ban className="h-4 w-4 text-gray-500" />;
+      return <Ban className={`${ICON_SIZES.sm} text-gray-500`} />;
     case 'UPDATED':
-      return <Edit className="h-4 w-4 text-amber-500" />;
+      return <Edit className={`${ICON_SIZES.sm} text-amber-500`} />;
     default:
-      return <Clock className="h-4 w-4 text-gray-400" />;
+      return <Clock className={`${ICON_SIZES.sm} text-gray-400`} />;
   }
 }
 

@@ -16,6 +16,7 @@ import { AssetRequestStatusBadge } from './asset-request-status-badge';
 import { AssetRequestTypeBadge } from './asset-request-type-badge';
 import { ClipboardList } from 'lucide-react';
 import { formatDate } from '@/lib/core/datetime';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface Asset {
   id: string;

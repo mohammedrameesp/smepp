@@ -16,6 +16,7 @@
 import * as React from 'react';
 import { useCallback, useEffect, useState, useRef } from 'react';
 import { Loader2, MapPin, AlertCircle, ChevronDown, Search } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -31,7 +32,7 @@ const LeafletMap = dynamic(() => import('./leaflet-map'), {
   ssr: false,
   loading: () => (
     <div className="h-[200px] w-full bg-slate-100 rounded-lg flex items-center justify-center">
-      <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+      <Loader2 className={`${ICON_SIZES.lg} animate-spin text-slate-400`} />
     </div>
   ),
 });
@@ -126,18 +127,18 @@ function SearchableSelect<T>({
           type="button"
         >
           {loading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className={`${ICON_SIZES.sm} animate-spin`} />
           ) : selectedItem ? (
             <span className="truncate">{getItemLabel(selectedItem)}</span>
           ) : (
             <span>{placeholder}</span>
           )}
-          <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <ChevronDown className={`ml-2 ${ICON_SIZES.sm} shrink-0 opacity-50`} />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[250px] p-0" align="start">
         <div className="flex items-center border-b px-3 py-2">
-          <Search className="h-4 w-4 mr-2 opacity-50" />
+          <Search className={`${ICON_SIZES.sm} mr-2 opacity-50`} />
           <input
             ref={searchInputRef}
             type="text"
@@ -382,7 +383,7 @@ export function QatarAddressSelect({
     return (
       <div className="space-y-3">
         <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 px-3 py-2 rounded-lg">
-          <AlertCircle className="h-4 w-4" />
+          <AlertCircle className={ICON_SIZES.sm} />
           <span>Address lookup unavailable. Please enter manually.</span>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -519,7 +520,7 @@ export function QatarAddressSelect({
         <div className="mt-4">
           {loadingLocation ? (
             <div className="h-[200px] w-full bg-slate-100 rounded-lg flex items-center justify-center">
-              <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+              <Loader2 className={`${ICON_SIZES.lg} animate-spin text-slate-400`} />
             </div>
           ) : location ? (
             <div className="relative">
@@ -529,14 +530,14 @@ export function QatarAddressSelect({
                 zoom={17}
               />
               <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded text-xs text-slate-600 flex items-center gap-1 z-10">
-                <MapPin className="h-3 w-3" />
+                <MapPin className={ICON_SIZES.xs} />
                 Zone {value.zone}, Street {value.street}, Building {value.building}
               </div>
             </div>
           ) : (
             <div className="h-[200px] w-full bg-slate-100 rounded-lg flex items-center justify-center text-slate-500">
               <div className="text-center">
-                <MapPin className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <MapPin className={`${ICON_SIZES.xl} mx-auto mb-2 opacity-50`} />
                 <p className="text-sm">Location not found</p>
               </div>
             </div>

@@ -21,6 +21,7 @@ import { Calendar, Clock, CheckCircle, XCircle, AlertCircle, ExternalLink } from
 import Link from 'next/link';
 import { formatDate } from '@/lib/core/datetime';
 import { getAnnualLeaveDetails } from '@/features/leave/lib/leave-utils';
+import { getStatusClasses, ICON_SIZES } from '@/lib/constants';
 
 interface LeaveBalance {
   id: string;
@@ -105,15 +106,16 @@ export function EmployeeLeaveSection({ userId }: EmployeeLeaveSectionProps) {
   }, [userId, currentYear]);
 
   const getStatusBadge = (status: string) => {
+    const statusClasses = getStatusClasses(status);
     switch (status) {
       case 'APPROVED':
-        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100"><CheckCircle className="h-3 w-3 mr-1" />Approved</Badge>;
+        return <Badge className={`${statusClasses} hover:${statusClasses.split(' ')[0]}`}><CheckCircle className={`${ICON_SIZES.xs} mr-1`} />Approved</Badge>;
       case 'REJECTED':
-        return <Badge className="bg-red-100 text-red-800 hover:bg-red-100"><XCircle className="h-3 w-3 mr-1" />Rejected</Badge>;
+        return <Badge className={`${statusClasses} hover:${statusClasses.split(' ')[0]}`}><XCircle className={`${ICON_SIZES.xs} mr-1`} />Rejected</Badge>;
       case 'PENDING':
-        return <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100"><Clock className="h-3 w-3 mr-1" />Pending</Badge>;
+        return <Badge className={`${statusClasses} hover:${statusClasses.split(' ')[0]}`}><Clock className={`${ICON_SIZES.xs} mr-1`} />Pending</Badge>;
       case 'CANCELLED':
-        return <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100">Cancelled</Badge>;
+        return <Badge className={`${statusClasses} hover:${statusClasses.split(' ')[0]}`}>Cancelled</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
@@ -200,7 +202,7 @@ export function EmployeeLeaveSection({ userId }: EmployeeLeaveSectionProps) {
           </div>
           <Link href={`/admin/leave/balances?userId=${userId}`}>
             <Button variant="outline" size="sm">
-              <ExternalLink className="h-4 w-4 mr-2" />
+              <ExternalLink className={`${ICON_SIZES.sm} mr-2`} />
               Manage Balances
             </Button>
           </Link>
@@ -208,7 +210,7 @@ export function EmployeeLeaveSection({ userId }: EmployeeLeaveSectionProps) {
         <CardContent>
           {balances.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
-              <Calendar className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+              <Calendar className={`${ICON_SIZES.xl} mx-auto mb-2 text-gray-400`} />
               <p>No leave balances found for {currentYear}</p>
               <p className="text-sm mt-1">Initialize balances to start tracking leave</p>
             </div>
@@ -318,7 +320,7 @@ export function EmployeeLeaveSection({ userId }: EmployeeLeaveSectionProps) {
           </div>
           <Link href={`/admin/leave/requests?userId=${userId}`}>
             <Button variant="outline" size="sm">
-              <ExternalLink className="h-4 w-4 mr-2" />
+              <ExternalLink className={`${ICON_SIZES.sm} mr-2`} />
               View All Requests
             </Button>
           </Link>
@@ -326,7 +328,7 @@ export function EmployeeLeaveSection({ userId }: EmployeeLeaveSectionProps) {
         <CardContent>
           {requests.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
-              <AlertCircle className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+              <AlertCircle className={`${ICON_SIZES.xl} mx-auto mb-2 text-gray-400`} />
               <p>No leave requests found</p>
             </div>
           ) : (

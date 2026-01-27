@@ -9,6 +9,7 @@ import { SpendRequestListTable } from '@/features/spend-requests/components';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 import { DetailCard } from '@/components/ui/detail-card';
+import { ICON_SIZES } from '@/lib/constants';
 
 export default async function EmployeeSpendRequestsPage() {
   const session = await getServerSession(authOptions);
@@ -42,7 +43,7 @@ export default async function EmployeeSpendRequestsPage() {
         actions={
           <Link href="/employee/spend-requests/new">
             <Button>
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className={`${ICON_SIZES.sm} mr-2`} />
               New Request
             </Button>
           </Link>
@@ -53,14 +54,14 @@ export default async function EmployeeSpendRequestsPage() {
             value={totalRequests}
             label="total requests"
             color="slate"
-            icon={<FileText className="h-4 w-4" />}
+            icon={<FileText className={ICON_SIZES.sm} />}
           />
           {pendingRequests > 0 && (
             <StatChip
               value={pendingRequests}
               label="pending"
               color="amber"
-              icon={<Clock className="h-4 w-4" />}
+              icon={<Clock className={ICON_SIZES.sm} />}
             />
           )}
           {approvedRequests > 0 && (
@@ -68,7 +69,7 @@ export default async function EmployeeSpendRequestsPage() {
               value={approvedRequests}
               label="approved"
               color="emerald"
-              icon={<CheckCircle className="h-4 w-4" />}
+              icon={<CheckCircle className={ICON_SIZES.sm} />}
             />
           )}
           {rejectedRequests > 0 && (
@@ -76,7 +77,7 @@ export default async function EmployeeSpendRequestsPage() {
               value={rejectedRequests}
               label="rejected"
               color="rose"
-              icon={<XCircle className="h-4 w-4" />}
+              icon={<XCircle className={ICON_SIZES.sm} />}
             />
           )}
         </StatChipGroup>

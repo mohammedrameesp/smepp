@@ -14,6 +14,8 @@ import { Button } from '@/components/ui/button';
 import { Eye, Loader2 } from 'lucide-react';
 import { StatusBadge, PriorityBadge } from './StatusBadge';
 import { formatDate } from '@/lib/core/datetime';
+import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface SpendRequest {
   id: string;
@@ -164,7 +166,7 @@ export function SpendRequestListTable({ isAdmin = false }: SpendRequestListTable
         <div>
           Showing {requests.length > 0 ? ((pagination.page - 1) * pagination.limit) + 1 : 0} - {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} requests
         </div>
-        {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+        {loading && <Loader2 className={cn(ICON_SIZES.sm, 'animate-spin')} />}
       </div>
 
       {/* Table */}
@@ -186,7 +188,7 @@ export function SpendRequestListTable({ isAdmin = false }: SpendRequestListTable
             {loading && requests.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={isAdmin ? 8 : 7} className="text-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400" />
+                  <Loader2 className={cn(ICON_SIZES.xl, 'animate-spin mx-auto text-gray-400')} />
                   <p className="text-gray-500 mt-2">Loading spend requests...</p>
                 </TableCell>
               </TableRow>
@@ -245,7 +247,7 @@ export function SpendRequestListTable({ isAdmin = false }: SpendRequestListTable
                     <div className="flex gap-1 justify-end">
                       <Link href={`${basePath}/${request.id}`}>
                         <Button size="sm" variant="ghost">
-                          <Eye className="h-4 w-4" />
+                          <Eye className={ICON_SIZES.sm} />
                         </Button>
                       </Link>
                     </div>

@@ -55,6 +55,8 @@ import {
   Loader2,
   Star,
 } from 'lucide-react';
+import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface AssetCategory {
   id: string;
@@ -227,7 +229,7 @@ export function AssetTypeMappingsSettings({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-amber-100 rounded-lg">
-                <Sparkles className="h-5 w-5 text-amber-600" />
+                <Sparkles className={`${ICON_SIZES.md} text-amber-600`} />
               </div>
               <div>
                 <CardTitle>Custom Asset Types</CardTitle>
@@ -238,7 +240,7 @@ export function AssetTypeMappingsSettings({
             </div>
             {isAdmin && (
               <Button size="sm" onClick={() => setShowCreateDialog(true)}>
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className={`${ICON_SIZES.sm} mr-2`} />
                 Add Type
               </Button>
             )}
@@ -247,12 +249,12 @@ export function AssetTypeMappingsSettings({
         <CardContent>
           {loading ? (
             <div className="py-8 text-center text-muted-foreground">
-              <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
+              <Loader2 className={`${ICON_SIZES.lg} animate-spin mx-auto mb-2`} />
               Loading custom types...
             </div>
           ) : mappings.length === 0 ? (
             <div className="py-8 text-center text-muted-foreground">
-              <Star className="h-8 w-8 mx-auto mb-2 text-amber-400" />
+              <Star className={`${ICON_SIZES.xl} mx-auto mb-2 text-amber-400`} />
               <p>No custom types yet.</p>
               <p className="text-sm mt-1">
                 Add custom asset types for your organization that will appear in suggestions.
@@ -294,7 +296,7 @@ export function AssetTypeMappingsSettings({
                               onClick={() => openEditDialog(mapping)}
                               title="Edit"
                             >
-                              <Pencil className="h-4 w-4" />
+                              <Pencil className={ICON_SIZES.sm} />
                             </Button>
                             <Button
                               variant="ghost"
@@ -302,7 +304,7 @@ export function AssetTypeMappingsSettings({
                               onClick={() => setDeleteMapping(mapping)}
                               title="Delete"
                             >
-                              <Trash2 className="h-4 w-4 text-destructive" />
+                              <Trash2 className={`${ICON_SIZES.sm} text-destructive`} />
                             </Button>
                           </div>
                         )}
@@ -319,7 +321,7 @@ export function AssetTypeMappingsSettings({
             <p className="text-sm text-amber-900">
               <strong>How it works:</strong> Custom types appear in suggestions when users
               create assets. They&apos;re shown with a{' '}
-              <Star className="h-3 w-3 inline text-amber-500 fill-amber-500" /> star and
+              <Star className={`${ICON_SIZES.xs} inline text-amber-500 fill-amber-500`} /> star and
               automatically assign the mapped category.
             </p>
           </div>

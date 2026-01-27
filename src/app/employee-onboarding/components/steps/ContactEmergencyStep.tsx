@@ -8,6 +8,7 @@
 
 import { useCallback } from 'react';
 import { Phone, Lock, MapPin, Home, Mail } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -57,7 +58,7 @@ export function ContactEmergencyStep({ formData, updateField, errors, workEmail 
     <div className="max-w-2xl mx-auto">
       <div className="text-center mb-8">
         <div className="h-16 w-16 rounded-2xl bg-green-100 flex items-center justify-center mx-auto mb-4">
-          <Phone className="h-8 w-8 text-green-600" />
+          <Phone className={`${ICON_SIZES.xl} text-green-600`} />
         </div>
         <h2 className="text-2xl font-bold text-slate-900 mb-2">Contact & Emergency</h2>
         <p className="text-slate-600">
@@ -70,7 +71,7 @@ export function ContactEmergencyStep({ formData, updateField, errors, workEmail 
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-emerald-600" />
+              <MapPin className={`${ICON_SIZES.sm} text-emerald-600`} />
               <CardTitle className="text-base">Qatar Details</CardTitle>
             </div>
             <CardDescription>Your contact information in Qatar</CardDescription>
@@ -151,7 +152,7 @@ export function ContactEmergencyStep({ formData, updateField, errors, workEmail 
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
-              <Home className="h-4 w-4 text-blue-600" />
+              <Home className={`${ICON_SIZES.sm} text-blue-600`} />
               <CardTitle className="text-base">Home Country Details</CardTitle>
               <span className="text-xs text-slate-400 font-normal">(Optional)</span>
             </div>
@@ -231,7 +232,7 @@ export function ContactEmergencyStep({ formData, updateField, errors, workEmail 
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
-              <Mail className="h-4 w-4 text-violet-600" />
+              <Mail className={`${ICON_SIZES.sm} text-violet-600`} />
               <CardTitle className="text-base">Email</CardTitle>
             </div>
           </CardHeader>

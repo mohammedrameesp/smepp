@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, Command, X } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 import { Input } from '@/components/ui/input';
 
 interface HelpSearchInputProps {
@@ -73,7 +74,7 @@ export function HelpSearchInput({
       <Search
         className={cn(
           'absolute left-3 top-1/2 -translate-y-1/2 text-gray-400',
-          size === 'sm' ? 'h-4 w-4' : 'h-5 w-5'
+          size === 'sm' ? ICON_SIZES.sm : ICON_SIZES.md
         )}
       />
 
@@ -101,7 +102,7 @@ export function HelpSearchInput({
           onClick={() => setQuery('')}
           className="absolute right-12 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600"
         >
-          <X className="h-4 w-4" />
+          <X className={ICON_SIZES.sm} />
         </button>
       )}
 
@@ -109,7 +110,7 @@ export function HelpSearchInput({
       {showShortcut && !query && (
         <div className="absolute right-3 top-1/2 -translate-y-1/2 hidden sm:flex items-center gap-1 text-gray-400 text-xs">
           <kbd className="px-1.5 py-0.5 bg-gray-100 border rounded text-xs font-mono">
-            <Command className="h-3 w-3 inline" />
+            <Command className={`${ICON_SIZES.xs} inline`} />
           </kbd>
           <kbd className="px-1.5 py-0.5 bg-gray-100 border rounded text-xs font-mono">K</kbd>
         </div>

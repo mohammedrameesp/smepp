@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/select';
 import { Loader2, Calculator } from 'lucide-react';
 import { toast } from 'sonner';
+import { ICON_SIZES } from '@/lib/constants';
 import { formatCurrency } from '@/lib/core/currency';
 
 interface Employee {
@@ -224,7 +225,7 @@ export default function NewLoanPage() {
               <Card className="bg-muted/50">
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
-                    <Calculator className="h-5 w-5" />
+                    <Calculator className={ICON_SIZES.md} />
                     Repayment Summary
                   </CardTitle>
                 </CardHeader>
@@ -257,7 +258,7 @@ export default function NewLoanPage() {
                 <Link href="/admin/payroll/loans">Cancel</Link>
               </Button>
               <Button type="submit" disabled={isLoading || !memberId || !principalAmount || !monthlyDeduction || !description}>
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isLoading && <Loader2 className={`mr-2 ${ICON_SIZES.sm} animate-spin`} />}
                 Create Loan
               </Button>
             </div>

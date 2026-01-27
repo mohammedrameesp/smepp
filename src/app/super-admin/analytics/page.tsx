@@ -6,6 +6,7 @@ import {
   TrendingUp,
   TrendingDown,
 } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import { ModuleUsageChart } from './components/ModuleUsageChart';
 import { OnboardingFunnel } from './components/OnboardingFunnel';
 import { OrganizationBreakdown } from './components/OrganizationBreakdown';
@@ -288,14 +289,14 @@ function MetricCard({
           <p className="text-3xl font-bold text-slate-900 mt-1">{value}</p>
         </div>
         <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${iconBg}`}>
-          <Icon className={`h-5 w-5 ${iconColor}`} />
+          <Icon className={`${ICON_SIZES.md} ${iconColor}`} />
         </div>
       </div>
       <div className="flex items-center gap-2 mt-3">
         <span className="text-xs text-slate-500">{subValue}</span>
         {trend !== undefined && (
           <span className={`text-xs font-medium flex items-center gap-0.5 ${trend >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-            {trend >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+            {trend >= 0 ? <TrendingUp className={ICON_SIZES.xs} /> : <TrendingDown className={ICON_SIZES.xs} />}
             {Math.abs(trend)}%
           </span>
         )}
@@ -324,7 +325,7 @@ function GrowthItem({
         <p className="text-xs text-slate-500">+{current} in last {period}</p>
       </div>
       <div className={`flex items-center gap-1 text-sm font-medium ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
-        {isPositive ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+        {isPositive ? <TrendingUp className={ICON_SIZES.sm} /> : <TrendingDown className={ICON_SIZES.sm} />}
         {Math.abs(growth)}%
       </div>
     </div>

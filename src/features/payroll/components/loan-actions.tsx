@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { Pause, Play, XCircle, Loader2 } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface LoanActionsProps {
   loanId: string;
@@ -88,9 +89,9 @@ export function LoanActions({ loanId, currentStatus, remainingAmount }: LoanActi
               disabled={isLoading !== null}
             >
               {isLoading === 'paused' ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className={`mr-2 ${ICON_SIZES.sm} animate-spin`} />
               ) : (
-                <Pause className="mr-2 h-4 w-4" />
+                <Pause className={`mr-2 ${ICON_SIZES.sm}`} />
               )}
               Pause Deductions
             </Button>
@@ -103,9 +104,9 @@ export function LoanActions({ loanId, currentStatus, remainingAmount }: LoanActi
               disabled={isLoading !== null}
             >
               {isLoading === 'resumed' ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className={`mr-2 ${ICON_SIZES.sm} animate-spin`} />
               ) : (
-                <Play className="mr-2 h-4 w-4" />
+                <Play className={`mr-2 ${ICON_SIZES.sm}`} />
               )}
               Resume Deductions
             </Button>
@@ -117,9 +118,9 @@ export function LoanActions({ loanId, currentStatus, remainingAmount }: LoanActi
               <AlertDialogTrigger asChild>
                 <Button variant="destructive" disabled={isLoading !== null}>
                   {isLoading === 'write-off' ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className={`mr-2 ${ICON_SIZES.sm} animate-spin`} />
                   ) : (
-                    <XCircle className="mr-2 h-4 w-4" />
+                    <XCircle className={`mr-2 ${ICON_SIZES.sm}`} />
                   )}
                   Write Off
                 </Button>

@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { signOut } from 'next-auth/react';
 import { Loader2 } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 
 /**
  * Organization Deleted Page
@@ -18,7 +19,7 @@ export default function OrgDeletedPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
-      <Loader2 className="h-8 w-8 animate-spin text-slate-600 mb-4" />
+      <Loader2 className={`${ICON_SIZES.xl} animate-spin text-slate-600 mb-4`} />
       <p className="text-slate-600">Signing out...</p>
     </div>
   );

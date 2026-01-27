@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Plus, FileText } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import { LeaveRequestsTable } from '@/features/leave/components';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { DetailCard } from '@/components/ui/detail-card';
@@ -28,7 +29,7 @@ export default async function EmployeeLeaveRequestsPage() {
         actions={
           <Link href="/employee/leave/new">
             <Button>
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className={`${ICON_SIZES.sm} mr-2`} />
               New Request
             </Button>
           </Link>

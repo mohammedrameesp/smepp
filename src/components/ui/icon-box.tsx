@@ -7,6 +7,7 @@
 import * as React from 'react';
 import { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 
 const colorVariants = {
   blue: 'bg-blue-100 text-blue-600',
@@ -27,9 +28,9 @@ const sizeVariants = {
 } as const;
 
 const iconSizeVariants = {
-  sm: 'h-4 w-4',
-  md: 'h-5 w-5',
-  lg: 'h-6 w-6',
+  sm: ICON_SIZES.sm,
+  md: ICON_SIZES.md,
+  lg: ICON_SIZES.lg,
 } as const;
 
 export interface IconBoxProps {

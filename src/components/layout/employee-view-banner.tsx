@@ -9,6 +9,8 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Shield, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface EmployeeViewBannerProps {
   isVisible?: boolean;
@@ -43,7 +45,7 @@ export function EmployeeViewBanner({ isVisible = false }: EmployeeViewBannerProp
       <div className="max-w-6xl mx-auto px-6">
         <div className="flex items-center justify-between py-2">
           <div className="flex items-center gap-2 text-sm">
-            <Shield className="h-4 w-4" />
+            <Shield className={ICON_SIZES.sm} />
             <span>
               <span className="font-medium">Employee View</span>
               <span className="opacity-80 hidden sm:inline"> - You&apos;re viewing your personal employee portal</span>
@@ -59,7 +61,7 @@ export function EmployeeViewBanner({ isVisible = false }: EmployeeViewBannerProp
           >
             {exiting ? (
               <>
-                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                <Loader2 className={cn(ICON_SIZES.xs, 'mr-1 animate-spin')} />
                 Returning...
               </>
             ) : (

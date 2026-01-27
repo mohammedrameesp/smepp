@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { ChevronRight, Home } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface BreadcrumbItem {
   label: string;
@@ -21,13 +22,13 @@ export function HelpBreadcrumb({ items, className }: HelpBreadcrumbProps) {
         href="/help"
         className="flex items-center gap-1 text-gray-500 hover:text-gray-700 transition-colors"
       >
-        <Home className="h-4 w-4" />
+        <Home className={ICON_SIZES.sm} />
         <span className="sr-only">Help Home</span>
       </Link>
 
       {items.map((item, index) => (
         <div key={index} className="flex items-center gap-1">
-          <ChevronRight className="h-4 w-4 text-gray-300" />
+          <ChevronRight className={`${ICON_SIZES.sm} text-gray-300`} />
           {item.href && index < items.length - 1 ? (
             <Link
               href={item.href}

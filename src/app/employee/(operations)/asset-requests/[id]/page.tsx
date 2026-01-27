@@ -36,6 +36,7 @@ import { AssetRequestStatusBadge, AssetRequestTypeBadge, AssetAcceptDialog } fro
 import { formatDateTime } from '@/lib/core/datetime';
 import Link from 'next/link';
 import { ArrowLeft, Package, User, Clock, FileText, XCircle, AlertCircle, CheckCircle } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import { PageHeader, PageContent, PageHeaderButton } from '@/components/ui/page-header';
 import { DetailCard } from '@/components/ui/detail-card';
 import { InfoField, InfoFieldGrid } from '@/components/ui/info-field';
@@ -208,7 +209,7 @@ export default function EmployeeAssetRequestDetailPage({ params }: PageProps) {
         />
         <PageContent className="max-w-4xl">
           <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
-            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <AlertCircle className={`${ICON_SIZES['3xl']} text-red-500 mx-auto mb-4`} />
             <p className="text-lg font-medium text-slate-900 mb-4">{error || 'Request not found'}</p>
             <Link href="/employee/asset-requests">
               <Button variant="outline" size="sm">Back to Requests</Button>
@@ -244,7 +245,7 @@ export default function EmployeeAssetRequestDetailPage({ params }: PageProps) {
                     setShowAcceptDialog(true);
                   }}
                 >
-                  <XCircle className="h-4 w-4" />
+                  <XCircle className={ICON_SIZES.sm} />
                   Decline
                 </PageHeaderButton>
                 <PageHeaderButton
@@ -254,7 +255,7 @@ export default function EmployeeAssetRequestDetailPage({ params }: PageProps) {
                     setShowAcceptDialog(true);
                   }}
                 >
-                  <CheckCircle className="h-4 w-4" />
+                  <CheckCircle className={ICON_SIZES.sm} />
                   Accept
                 </PageHeaderButton>
               </>
@@ -269,7 +270,7 @@ export default function EmployeeAssetRequestDetailPage({ params }: PageProps) {
               </PageHeaderButton>
             )}
             <PageHeaderButton href="/employee/asset-requests" variant="outline">
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className={ICON_SIZES.sm} />
               Back
             </PageHeaderButton>
           </div>
@@ -287,7 +288,7 @@ export default function EmployeeAssetRequestDetailPage({ params }: PageProps) {
         {isPendingAcceptance && (
           <div className="mb-6 bg-amber-50 border border-amber-200 rounded-xl p-4">
             <div className="flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5" />
+              <AlertCircle className={`${ICON_SIZES.md} text-amber-600 mt-0.5`} />
               <div>
                 <h3 className="font-medium text-amber-800">Action Required</h3>
                 <p className="text-sm text-amber-700 mt-1">
@@ -349,7 +350,7 @@ export default function EmployeeAssetRequestDetailPage({ params }: PageProps) {
                 <div className="p-4 bg-slate-50 rounded-xl">
                   <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Assigned By</p>
                   <p className="flex items-center gap-2 font-medium text-slate-900">
-                    <User className="h-4 w-4 text-slate-400" />
+                    <User className={`${ICON_SIZES.sm} text-slate-400`} />
                     {request.assignedByUser.name || request.assignedByUser.email}
                   </p>
                 </div>
@@ -360,7 +361,7 @@ export default function EmployeeAssetRequestDetailPage({ params }: PageProps) {
                   <div className="p-4 bg-slate-50 rounded-xl">
                     <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Processed By</p>
                     <p className="flex items-center gap-2 font-medium text-slate-900">
-                      <User className="h-4 w-4 text-slate-400" />
+                      <User className={`${ICON_SIZES.sm} text-slate-400`} />
                       {request.processedByUser.name || request.processedByUser.email}
                       <span className="text-slate-500 text-sm">on {formatDateTime(request.processedAt)}</span>
                     </p>

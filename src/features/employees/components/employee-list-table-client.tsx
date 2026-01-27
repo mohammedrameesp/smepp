@@ -10,6 +10,7 @@ import { EmployeeListTableFiltered, type EmployeeListItem } from './employee-lis
 import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ICON_SIZES } from '@/lib/constants';
 
 export function EmployeeListTableClient() {
   const [employees, setEmployees] = useState<EmployeeListItem[]>([]);
@@ -44,7 +45,7 @@ export function EmployeeListTableClient() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-400 mb-3" />
+        <Loader2 className={`${ICON_SIZES.xl} animate-spin text-gray-400 mb-3`} />
         <p className="text-gray-500">Loading employees...</p>
       </div>
     );
@@ -53,11 +54,11 @@ export function EmployeeListTableClient() {
   if (error) {
     return (
       <Alert variant="error">
-        <AlertCircle className="h-4 w-4" />
+        <AlertCircle className={ICON_SIZES.sm} />
         <AlertDescription className="flex items-center justify-between">
           <span>{error}</span>
           <Button variant="outline" size="sm" onClick={fetchEmployees}>
-            <RefreshCw className="h-4 w-4 mr-1" />
+            <RefreshCw className={`${ICON_SIZES.sm} mr-1`} />
             Retry
           </Button>
         </AlertDescription>

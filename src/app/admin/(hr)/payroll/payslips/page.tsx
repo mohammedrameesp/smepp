@@ -20,6 +20,7 @@ import { formatCurrency } from '@/lib/core/currency';
 import { getMonthName, getPayrollStatusColor } from '@/features/payroll/lib/utils';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface PageProps {
   searchParams: Promise<{
@@ -122,15 +123,15 @@ export default async function PayslipsSearchPage({ searchParams }: PageProps) {
         actions={
           <>
             <PageHeaderButton href="/admin/payroll/runs" variant="secondary">
-              <FileText className="h-4 w-4" />
+              <FileText className={ICON_SIZES.sm} />
               Payroll Runs
             </PageHeaderButton>
             <PageHeaderButton href="/admin/payroll/salary-structures" variant="secondary">
-              <Users className="h-4 w-4" />
+              <Users className={ICON_SIZES.sm} />
               Salary Structures
             </PageHeaderButton>
             <PageHeaderButton href="/admin/payroll/gratuity" variant="secondary">
-              <Calculator className="h-4 w-4" />
+              <Calculator className={ICON_SIZES.sm} />
               Gratuity
             </PageHeaderButton>
           </>
@@ -149,7 +150,7 @@ export default async function PayslipsSearchPage({ searchParams }: PageProps) {
               <div className="flex-1 min-w-[200px]">
                 <label className="text-sm font-medium mb-1 block">Search Employee</label>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${ICON_SIZES.sm} text-muted-foreground`} />
                   <input
                     type="text"
                     name="search"
@@ -266,7 +267,7 @@ export default async function PayslipsSearchPage({ searchParams }: PageProps) {
                       <TableCell>
                         <Button asChild variant="ghost" size="icon">
                           <Link href={`/admin/payroll/payslips/${payslip.id}`}>
-                            <Eye className="h-4 w-4" />
+                            <Eye className={ICON_SIZES.sm} />
                           </Link>
                         </Button>
                       </TableCell>

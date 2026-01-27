@@ -37,6 +37,7 @@ import { CurrencySelector } from '@/components/currency-selector';
 import { ApprovalWorkflowDisplay } from '@/features/approvals/components';
 import type { CodeFormatConfig } from '@/lib/utils/code-prefix';
 import Link from 'next/link';
+import { ICON_SIZES } from '@/lib/constants';
 
 // Types
 interface Organization {
@@ -94,7 +95,7 @@ function ModuleRequiredPlaceholder({
   return (
     <Card className="border-dashed">
       <CardContent className="py-12 text-center">
-        <Lock className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+        <Lock className={`${ICON_SIZES['3xl']} mx-auto text-muted-foreground/50 mb-4`} />
         <h3 className="text-lg font-medium mb-2">Enable {moduleName} Module</h3>
         <p className="text-muted-foreground mb-4">
           These settings require the {moduleName} module to be enabled.
@@ -327,11 +328,11 @@ export function OrganizationTabs({
       <Tabs defaultValue="profile" className="space-y-6">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="profile" className="flex items-center gap-2">
-            <Building2 className="h-4 w-4" />
+            <Building2 className={ICON_SIZES.sm} />
             Profile & Branding
           </TabsTrigger>
           <TabsTrigger value="config" className="flex items-center gap-2">
-            <Settings2 className="h-4 w-4" />
+            <Settings2 className={ICON_SIZES.sm} />
             Configuration
           </TabsTrigger>
         </TabsList>
@@ -365,12 +366,12 @@ export function OrganizationTabs({
                           />
                         ) : (
                           <div className="h-20 w-20 rounded-xl bg-blue-100 flex items-center justify-center border">
-                            <Building2 className="h-8 w-8 text-blue-600" />
+                            <Building2 className={`${ICON_SIZES.xl} text-blue-600`} />
                           </div>
                         )}
                         {uploadingLogo && (
                           <div className="absolute inset-0 bg-black/50 rounded-xl flex items-center justify-center">
-                            <Loader2 className="h-6 w-6 text-white animate-spin" />
+                            <Loader2 className={`${ICON_SIZES.lg} text-white animate-spin`} />
                           </div>
                         )}
                       </div>
@@ -396,7 +397,7 @@ export function OrganizationTabs({
                         onClick={() => fileInputRef.current?.click()}
                         disabled={uploadingLogo || !isAdmin}
                       >
-                        <Camera className="h-4 w-4 mr-2" />
+                        <Camera className={`${ICON_SIZES.sm} mr-2`} />
                         {logoPreview ? 'Change' : 'Upload'}
                       </Button>
                       <p className="text-xs text-muted-foreground">PNG, WebP, SVG up to 1MB</p>
@@ -437,7 +438,7 @@ export function OrganizationTabs({
                     <AutoSaveIndicator status={websiteAutoSave.status} error={websiteAutoSave.error} />
                   </div>
                   <div className="relative">
-                    <Globe className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Globe className={`absolute left-3 top-3 ${ICON_SIZES.sm} text-muted-foreground`} />
                     <Input
                       id="website"
                       type="url"
@@ -456,7 +457,7 @@ export function OrganizationTabs({
                   <Label>Subdomain</Label>
                   <div className="flex items-center gap-2">
                     <div className="relative flex-1">
-                      <Globe className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Globe className={`absolute left-3 top-3 ${ICON_SIZES.sm} text-muted-foreground`} />
                       <Input
                         value={org.slug}
                         readOnly
@@ -505,7 +506,7 @@ export function OrganizationTabs({
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2">
-                    <Palette className="h-5 w-5" />
+                    <Palette className={ICON_SIZES.md} />
                     Branding
                   </CardTitle>
                   <CardDescription>Customize your organization&apos;s colors</CardDescription>
@@ -588,7 +589,7 @@ export function OrganizationTabs({
                   <div className="flex items-center justify-between">
                     <div>
                       <CardTitle className="flex items-center gap-2">
-                        <Settings2 className="h-5 w-5" />
+                        <Settings2 className={ICON_SIZES.md} />
                         Reference Code Prefix
                       </CardTitle>
                       <CardDescription>2-3 character prefix used for employee IDs, asset tags, and other codes</CardDescription>
@@ -628,7 +629,7 @@ export function OrganizationTabs({
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <LayoutGrid className="h-5 w-5" />
+                    <LayoutGrid className={ICON_SIZES.md} />
                     Enabled Modules
                   </CardTitle>
                   <CardDescription>
@@ -676,7 +677,7 @@ export function OrganizationTabs({
                       <div className="flex items-center justify-between">
                         <div>
                           <CardTitle className="flex items-center gap-2">
-                            <TrendingDown className="h-5 w-5" />
+                            <TrendingDown className={ICON_SIZES.md} />
                             Depreciation Tracking
                           </CardTitle>
                           <CardDescription>
@@ -718,7 +719,7 @@ export function OrganizationTabs({
                       <div className="flex items-center justify-between">
                         <div>
                           <CardTitle className="flex items-center gap-2">
-                            <MapPin className="h-5 w-5" />
+                            <MapPin className={ICON_SIZES.md} />
                             Multiple Locations
                           </CardTitle>
                           <CardDescription>
@@ -772,7 +773,7 @@ export function OrganizationTabs({
                   <div className="flex items-center justify-between">
                     <div>
                       <CardTitle className="flex items-center gap-2">
-                        <Coins className="h-5 w-5" />
+                        <Coins className={ICON_SIZES.md} />
                         Additional Currencies
                       </CardTitle>
                       <CardDescription>Select currencies your organization works with (besides QAR)</CardDescription>
@@ -802,7 +803,7 @@ export function OrganizationTabs({
                   <div className="flex items-center justify-between">
                     <div>
                       <CardTitle className="flex items-center gap-2">
-                        <Settings2 className="h-5 w-5" />
+                        <Settings2 className={ICON_SIZES.md} />
                         Weekend Days
                       </CardTitle>
                       <CardDescription>

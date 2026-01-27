@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Plus, Clock, FileText, Calendar } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import { LeaveBalanceCard } from '@/features/leave/components';
 import { getLeaveStatusVariant, getDateRangeText, formatLeaveDays, getAnnualLeaveDetails } from '@/features/leave/lib/leave-utils';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
@@ -122,7 +123,7 @@ export default async function EmployeeLeavePage() {
         actions={
           <Link href="/employee/leave/new">
             <Button>
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className={`${ICON_SIZES.sm} mr-2`} />
               Request Leave
             </Button>
           </Link>
@@ -133,13 +134,13 @@ export default async function EmployeeLeavePage() {
             value={totalAvailable.toFixed(1)}
             label="days available"
             color="emerald"
-            icon={<Calendar className="h-4 w-4" />}
+            icon={<Calendar className={ICON_SIZES.sm} />}
           />
           <StatChip
             value={pendingRequests}
             label={pendingRequests === 1 ? 'pending request' : 'pending requests'}
             color="amber"
-            icon={<Clock className="h-4 w-4" />}
+            icon={<Clock className={ICON_SIZES.sm} />}
             hideWhenZero
           />
         </StatChipGroup>

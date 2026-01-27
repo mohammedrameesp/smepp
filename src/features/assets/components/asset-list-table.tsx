@@ -27,6 +27,7 @@ import { useClientDataTable } from '@/hooks/use-client-data-table';
 import { AssetActions } from './asset-actions';
 import { AssetStatusBadge, type AdminAsset } from './asset-shared';
 import { Users, MapPin, Clock, Package } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 
 const PAGE_SIZE = 50;
 
@@ -271,7 +272,7 @@ export function AssetListTable({ assets }: AssetListTableProps) {
             {paginatedData.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-8">
-                  <Package className="h-10 w-10 mx-auto text-gray-300 mb-2" />
+                  <Package className={`${ICON_SIZES['2xl']} mx-auto text-gray-300 mb-2`} />
                   <p className="text-gray-500">
                     {hasActiveFilters
                       ? 'No assets match your filters'
@@ -307,12 +308,12 @@ export function AssetListTable({ assets }: AssetListTableProps) {
                     {asset.isShared ? (
                       <div className="flex items-center gap-1.5">
                         <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                          <Users className="h-3 w-3 mr-1" />
+                          <Users className={`${ICON_SIZES.xs} mr-1`} />
                           Shared
                         </Badge>
                         {asset.location && (
                           <span className="text-gray-500 text-xs flex items-center gap-0.5">
-                            <MapPin className="h-3 w-3" />
+                            <MapPin className={ICON_SIZES.xs} />
                             {asset.location.name}
                           </span>
                         )}
@@ -330,7 +331,7 @@ export function AssetListTable({ assets }: AssetListTableProps) {
                         className="inline-flex items-center gap-1.5"
                       >
                         <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
-                          <Clock className="h-3 w-3 mr-1" />
+                          <Clock className={`${ICON_SIZES.xs} mr-1`} />
                           Pending
                         </Badge>
                         <span className="text-xs text-amber-600 truncate max-w-[100px]">

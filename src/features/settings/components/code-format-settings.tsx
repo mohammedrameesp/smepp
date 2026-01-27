@@ -21,6 +21,8 @@ import {
   Check,
   AlertCircle,
 } from 'lucide-react';
+import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 import {
   type EntityType,
   type CodeFormatConfig,
@@ -124,7 +126,7 @@ export function CodeFormatSettings({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-indigo-100 rounded-lg">
-              <Hash className="h-5 w-5 text-indigo-600" />
+              <Hash className={`${ICON_SIZES.md} text-indigo-600`} />
             </div>
             <div>
               <CardTitle>Reference Code Formats</CardTitle>
@@ -135,23 +137,23 @@ export function CodeFormatSettings({
           </div>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={handleResetAll}>
-              <RotateCcw className="h-4 w-4 mr-2" />
+              <RotateCcw className={`${ICON_SIZES.sm} mr-2`} />
               Reset All
             </Button>
             <Button size="sm" onClick={handleSave} disabled={saving}>
               {saving ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader2 className={`${ICON_SIZES.sm} mr-2 animate-spin`} />
                   Saving...
                 </>
               ) : saved ? (
                 <>
-                  <Check className="h-4 w-4 mr-2" />
+                  <Check className={`${ICON_SIZES.sm} mr-2`} />
                   Saved
                 </>
               ) : (
                 <>
-                  <Save className="h-4 w-4 mr-2" />
+                  <Save className={`${ICON_SIZES.sm} mr-2`} />
                   Save Changes
                 </>
               )}
@@ -162,7 +164,7 @@ export function CodeFormatSettings({
       <CardContent className="space-y-6">
         {error && (
           <Alert variant="error">
-            <AlertCircle className="h-4 w-4" />
+            <AlertCircle className={ICON_SIZES.sm} />
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
@@ -170,7 +172,7 @@ export function CodeFormatSettings({
         {/* Token Reference */}
         <div className="bg-slate-50 rounded-lg p-4">
           <div className="flex items-center gap-2 mb-3">
-            <Info className="h-4 w-4 text-slate-500" />
+            <Info className={`${ICON_SIZES.sm} text-slate-500`} />
             <span className="text-sm font-medium text-slate-700">Available Tokens</span>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -238,7 +240,7 @@ export function CodeFormatSettings({
                   disabled={isDefault}
                   className="text-slate-500"
                 >
-                  <RotateCcw className="h-4 w-4" />
+                  <RotateCcw className={ICON_SIZES.sm} />
                 </Button>
               </div>
             );

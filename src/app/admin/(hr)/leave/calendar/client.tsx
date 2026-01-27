@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { getLeaveStatusVariant, formatLeaveDays, isPublicHoliday, type PublicHolidayData } from '@/features/leave/lib/leave-utils';
+import { ICON_SIZES } from '@/lib/constants';
 import { LeaveStatus } from '@prisma/client';
 import Link from 'next/link';
 import { formatDayMonth } from '@/lib/core/datetime';
@@ -196,13 +197,13 @@ export function LeaveCalendarClient() {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <Button variant="outline" size="icon" onClick={() => navigateMonth(-1)}>
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className={ICON_SIZES.sm} />
               </Button>
               <span className="font-semibold text-lg min-w-[180px] text-center">
                 {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
               </span>
               <Button variant="outline" size="icon" onClick={() => navigateMonth(1)}>
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className={ICON_SIZES.sm} />
               </Button>
             </div>
             <Button variant="outline" onClick={goToToday} disabled={isCurrentMonth}>

@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { AlertCircle, CheckCircle, XCircle } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface Asset {
   id: string;
@@ -211,7 +212,7 @@ export function AssetAcceptDialog({
 
           {error && (
             <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 p-3 rounded-lg">
-              <AlertCircle className="h-4 w-4 flex-shrink-0" />
+              <AlertCircle className={`${ICON_SIZES.sm} flex-shrink-0`} />
               {error}
             </div>
           )}
@@ -225,7 +226,7 @@ export function AssetAcceptDialog({
                 onClick={() => setMode('decline')}
                 disabled={isSubmitting}
               >
-                <XCircle className="h-4 w-4 mr-2" />
+                <XCircle className={`${ICON_SIZES.sm} mr-2`} />
                 Decline
               </Button>
               <Button
@@ -233,7 +234,7 @@ export function AssetAcceptDialog({
                 onClick={() => setMode('accept')}
                 disabled={isSubmitting}
               >
-                <CheckCircle className="h-4 w-4 mr-2" />
+                <CheckCircle className={`${ICON_SIZES.sm} mr-2`} />
                 Accept
               </Button>
             </>

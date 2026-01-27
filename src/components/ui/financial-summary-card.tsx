@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
 import { formatCurrency } from '@/lib/core/currency';
+import { ICON_SIZES } from '@/lib/constants';
 
 // Icon map for financial icons
 const iconMap: Record<string, LucideIcon> = {
@@ -202,7 +203,7 @@ export function FinancialSummaryCard({
         <div className="flex items-center gap-2">
           {(IconComponent || customIcon) && (
             <div className={cn('rounded-lg flex items-center justify-center', styles.icon, compact ? 'w-8 h-8' : 'w-10 h-10')}>
-              {customIcon || (IconComponent && <IconComponent className={compact ? 'h-4 w-4' : 'h-5 w-5'} />)}
+              {customIcon || (IconComponent && <IconComponent className={compact ? ICON_SIZES.sm : ICON_SIZES.md} />)}
             </div>
           )}
           <div>
@@ -226,7 +227,7 @@ export function FinancialSummaryCard({
       {/* Trend indicator */}
       {trendInfo && !loading && (
         <div className={cn('flex items-center gap-1 mt-2', trendInfo.colorClass)}>
-          <trendInfo.icon className="h-4 w-4" />
+          <trendInfo.icon className={ICON_SIZES.sm} />
           <span className="text-sm font-medium">{trendInfo.text}</span>
           {trendInfo.comparedTo && (
             <span className="text-xs text-slate-500 ml-1">{trendInfo.comparedTo}</span>

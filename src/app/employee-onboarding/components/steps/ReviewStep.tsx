@@ -7,6 +7,7 @@
  */
 
 import { CheckCircle2, Pencil, User, Phone, CreditCard, Building2, GraduationCap, Lock } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatDate } from '@/lib/core/datetime';
@@ -64,7 +65,7 @@ function ReviewSection({
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Icon className="h-4 w-4 text-slate-500" />
+            <Icon className={`${ICON_SIZES.sm} text-slate-500`} />
             <CardTitle className="text-base">{title}</CardTitle>
           </div>
           <Button
@@ -73,7 +74,7 @@ function ReviewSection({
             onClick={() => onEdit(step)}
             className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 h-8"
           >
-            <Pencil className="h-3 w-3 mr-1" />
+            <Pencil className={`${ICON_SIZES.xs} mr-1`} />
             Edit
           </Button>
         </div>
@@ -97,7 +98,7 @@ export function ReviewStep({ formData, workEmail, onEdit }: ReviewStepProps) {
     <div className="max-w-2xl mx-auto">
       <div className="text-center mb-8">
         <div className="h-16 w-16 rounded-2xl bg-green-100 flex items-center justify-center mx-auto mb-4">
-          <CheckCircle2 className="h-8 w-8 text-green-600" />
+          <CheckCircle2 className={`${ICON_SIZES.xl} text-green-600`} />
         </div>
         <h2 className="text-2xl font-bold text-slate-900 mb-2">Review Your Information</h2>
         <p className="text-slate-600">
@@ -132,7 +133,7 @@ export function ReviewStep({ formData, workEmail, onEdit }: ReviewStepProps) {
               <Field label="Personal Email" value={formData.personalEmail} />
               <div>
                 <dt className="text-xs text-slate-500 flex items-center gap-1">
-                  <Lock className="h-3 w-3" />
+                  <Lock className={ICON_SIZES.xs} />
                   Work Email
                 </dt>
                 <dd className="text-sm text-slate-900">{workEmail || '-'}</dd>
@@ -209,19 +210,19 @@ export function ReviewStep({ formData, workEmail, onEdit }: ReviewStepProps) {
             <div className="flex gap-2 flex-wrap">
               {formData.qidUrl && (
                 <span className="inline-flex items-center px-2 py-1 text-xs bg-green-100 text-green-700 rounded">
-                  <CheckCircle2 className="h-3 w-3 mr-1" />
+                  <CheckCircle2 className={`${ICON_SIZES.xs} mr-1`} />
                   QID Copy
                 </span>
               )}
               {formData.passportCopyUrl && (
                 <span className="inline-flex items-center px-2 py-1 text-xs bg-green-100 text-green-700 rounded">
-                  <CheckCircle2 className="h-3 w-3 mr-1" />
+                  <CheckCircle2 className={`${ICON_SIZES.xs} mr-1`} />
                   Passport Copy
                 </span>
               )}
               {formData.photoUrl && (
                 <span className="inline-flex items-center px-2 py-1 text-xs bg-green-100 text-green-700 rounded">
-                  <CheckCircle2 className="h-3 w-3 mr-1" />
+                  <CheckCircle2 className={`${ICON_SIZES.xs} mr-1`} />
                   Photo
                 </span>
               )}

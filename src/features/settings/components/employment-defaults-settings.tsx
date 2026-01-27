@@ -23,6 +23,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Loader2, Save, RefreshCw, Plus, Trash2, Info } from 'lucide-react';
+import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 import { toast } from 'sonner';
 import { type NoticePeriodTier, QATAR_EMPLOYMENT_DEFAULTS } from '@/lib/domains/hr';
 
@@ -170,7 +172,7 @@ export function EmploymentDefaultsSettings() {
     return (
       <Card>
         <CardContent className="py-8 flex items-center justify-center">
-          <Loader2 className="h-6 w-6 animate-spin" />
+          <Loader2 className={`${ICON_SIZES.lg} animate-spin`} />
         </CardContent>
       </Card>
     );
@@ -235,7 +237,7 @@ export function EmploymentDefaultsSettings() {
               Notice Periods (Post-Probation)
             </h3>
             <Button variant="outline" size="sm" onClick={addTier}>
-              <Plus className="mr-1 h-4 w-4" />
+              <Plus className={`mr-1 ${ICON_SIZES.sm}`} />
               Add Tier
             </Button>
           </div>
@@ -283,7 +285,7 @@ export function EmploymentDefaultsSettings() {
                         onClick={() => removeTier(index)}
                         disabled={settings.noticePeriodTiers.length <= 1}
                       >
-                        <Trash2 className="h-4 w-4 text-destructive" />
+                        <Trash2 className={`${ICON_SIZES.sm} text-destructive`} />
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -293,7 +295,7 @@ export function EmploymentDefaultsSettings() {
           </Table>
 
           <div className="flex items-start gap-2 p-3 bg-muted/50 rounded-lg">
-            <Info className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
+            <Info className={`${ICON_SIZES.sm} mt-0.5 text-muted-foreground shrink-0`} />
             <p className="text-sm text-muted-foreground">
               Per Qatar Labor Law (Article 48): Notice period increases with length of service.
               Default is 30 days for 0-2 years, and 60 days for 2+ years of service.
@@ -305,14 +307,14 @@ export function EmploymentDefaultsSettings() {
         <div className="flex gap-3 pt-2">
           <Button onClick={handleSave} disabled={isSaving}>
             {isSaving ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Loader2 className={`mr-2 ${ICON_SIZES.sm} animate-spin`} />
             ) : (
-              <Save className="mr-2 h-4 w-4" />
+              <Save className={`mr-2 ${ICON_SIZES.sm}`} />
             )}
             Save Settings
           </Button>
           <Button variant="outline" onClick={handleReset}>
-            <RefreshCw className="mr-2 h-4 w-4" />
+            <RefreshCw className={`mr-2 ${ICON_SIZES.sm}`} />
             Reset to Qatar Defaults
           </Button>
         </div>

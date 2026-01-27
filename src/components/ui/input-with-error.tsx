@@ -11,6 +11,7 @@ import { AlertCircle } from 'lucide-react';
 import { Input } from './input';
 import { Label } from './label';
 import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface InputWithErrorProps extends React.ComponentProps<'input'> {
   label?: string;
@@ -53,7 +54,7 @@ const InputWithError = React.forwardRef<HTMLInputElement, InputWithErrorProps>(
           {error && (
             <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
               <AlertCircle
-                className="h-4 w-4 text-destructive"
+                className={`${ICON_SIZES.sm} text-destructive`}
                 aria-hidden="true"
               />
             </div>
@@ -73,7 +74,7 @@ const InputWithError = React.forwardRef<HTMLInputElement, InputWithErrorProps>(
             role="alert"
             className="text-sm text-destructive flex items-center gap-1.5"
           >
-            <AlertCircle className="h-3.5 w-3.5 flex-shrink-0" aria-hidden="true" />
+            <AlertCircle className={`${ICON_SIZES.xs} flex-shrink-0`} aria-hidden="true" />
             {error}
           </p>
         )}

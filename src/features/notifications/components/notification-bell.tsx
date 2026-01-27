@@ -6,6 +6,7 @@
 'use client';
 
 import { Bell } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -24,7 +25,7 @@ function NotificationBellFallback() {
       size="icon"
       className="relative h-9 w-9 text-white hover:bg-white/20"
     >
-      <Bell className="h-5 w-5" />
+      <Bell className={ICON_SIZES.md} />
       <span className="sr-only">Notifications</span>
     </Button>
   );
@@ -42,7 +43,7 @@ export function NotificationBell() {
             size="icon"
             className="relative h-9 w-9 text-white hover:bg-white/20"
           >
-            <Bell className="h-5 w-5" />
+            <Bell className={ICON_SIZES.md} />
             {unreadCount > 0 && (
               <span className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center rounded-full bg-red-500 text-[10px] font-medium text-white px-1">
                 {unreadCount > 99 ? '99+' : unreadCount}

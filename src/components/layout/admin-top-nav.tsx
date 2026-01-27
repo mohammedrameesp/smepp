@@ -39,6 +39,7 @@ import { type BadgeCounts } from '@/components/layout/badge-types';
 import { cn } from '@/lib/core/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { ICON_SIZES } from '@/lib/constants';
 
 // Fallback avatar button shown during SSR to prevent layout shift
 function UserAvatarFallback({ initials }: { initials: string }) {
@@ -121,7 +122,7 @@ function AccessRoleBadge({
 
   return (
     <Badge variant="secondary" className={`mt-1.5 gap-1 text-xs ${style.bg} ${style.text}`}>
-      <Icon className="h-3 w-3" />
+      <Icon className={ICON_SIZES.xs} />
       {accessRole}
     </Badge>
   );
@@ -254,7 +255,7 @@ export function AdminTopNav({
                 className="h-9 px-3 bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded-lg text-sm text-slate-300 flex items-center gap-2 transition-colors"
                 aria-label="Search"
               >
-                <Search className="h-4 w-4" />
+                <Search className={ICON_SIZES.sm} />
                 <span className="hidden sm:inline">Search...</span>
                 <kbd className="hidden md:inline text-xs bg-slate-600 text-slate-400 px-1.5 py-0.5 rounded">⌘K</kbd>
               </button>
@@ -268,7 +269,7 @@ export function AdminTopNav({
                   disabled={isSwitching}
                   className="text-emerald-400 hover:text-emerald-300 hover:bg-slate-700"
                 >
-                  <Users className="h-4 w-4 mr-1.5" />
+                  <Users className={cn(ICON_SIZES.sm, 'mr-1.5')} />
                   <span className="hidden sm:inline">{isSwitching ? 'Switching...' : 'My Portal'}</span>
                 </Button>
               )}
@@ -311,38 +312,38 @@ export function AdminTopNav({
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
                       <Link href="/profile" className="flex items-center gap-2 cursor-pointer">
-                        <User className="h-4 w-4 text-slate-400" />
+                        <User className={cn(ICON_SIZES.sm, 'text-slate-400')} />
                         Profile
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                       <Link href="/admin/settings" className="flex items-center gap-2 cursor-pointer">
-                        <Settings className="h-4 w-4 text-slate-400" />
+                        <Settings className={cn(ICON_SIZES.sm, 'text-slate-400')} />
                         Settings
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                       <Link href="/admin/organization" className="flex items-center gap-2 cursor-pointer">
-                        <Building2 className="h-4 w-4 text-slate-400" />
+                        <Building2 className={cn(ICON_SIZES.sm, 'text-slate-400')} />
                         Organization
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
                       <Link href="/admin/reports" className="flex items-center gap-2 cursor-pointer">
-                        <BarChart3 className="h-4 w-4 text-slate-400" />
+                        <BarChart3 className={cn(ICON_SIZES.sm, 'text-slate-400')} />
                         Reports
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                       <Link href="/admin/activity" className="flex items-center gap-2 cursor-pointer">
-                        <Activity className="h-4 w-4 text-slate-400" />
+                        <Activity className={cn(ICON_SIZES.sm, 'text-slate-400')} />
                         Activity Log
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                       <Link href="/help" className="flex items-center gap-2 cursor-pointer">
-                        <HelpCircle className="h-4 w-4 text-slate-400" />
+                        <HelpCircle className={cn(ICON_SIZES.sm, 'text-slate-400')} />
                         Help & Support
                       </Link>
                     </DropdownMenuItem>
@@ -351,7 +352,7 @@ export function AdminTopNav({
                       onClick={() => signOut({ callbackUrl: '/login?signedOut=true' })}
                       className="flex items-center gap-2 cursor-pointer text-rose-600 focus:text-rose-600 focus:bg-rose-50"
                     >
-                      <LogOut className="h-4 w-4" />
+                      <LogOut className={ICON_SIZES.sm} />
                       Sign out
                     </DropdownMenuItem>
                   </DropdownMenuContent>

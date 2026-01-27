@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
 import { TwoFactorBanner } from '@/components/super-admin/two-factor-banner';
+import { ICON_SIZES } from '@/lib/constants';
 
 const mainNavItems = [
   { icon: LayoutDashboard, href: '/super-admin', title: 'Dashboard' },
@@ -146,15 +147,15 @@ function LoginForm() {
             </div>
             <div className="space-y-4 pt-4">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-indigo-500/10 rounded-lg flex items-center justify-center"><ShieldCheck className="w-4 h-4 text-indigo-400" /></div>
+                <div className="w-8 h-8 bg-indigo-500/10 rounded-lg flex items-center justify-center"><ShieldCheck className={`${ICON_SIZES.sm} text-indigo-400`} /></div>
                 <span className="text-slate-400 text-sm">Two-factor authentication</span>
               </div>
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-indigo-500/10 rounded-lg flex items-center justify-center"><KeyRound className="w-4 h-4 text-indigo-400" /></div>
+                <div className="w-8 h-8 bg-indigo-500/10 rounded-lg flex items-center justify-center"><KeyRound className={`${ICON_SIZES.sm} text-indigo-400`} /></div>
                 <span className="text-slate-400 text-sm">End-to-end encryption</span>
               </div>
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-indigo-500/10 rounded-lg flex items-center justify-center"><ClipboardList className="w-4 h-4 text-indigo-400" /></div>
+                <div className="w-8 h-8 bg-indigo-500/10 rounded-lg flex items-center justify-center"><ClipboardList className={`${ICON_SIZES.sm} text-indigo-400`} /></div>
                 <span className="text-slate-400 text-sm">Complete audit logging</span>
               </div>
             </div>
@@ -176,7 +177,7 @@ function LoginForm() {
           <div className="flex items-center justify-center gap-3 mb-6">
             <div className="flex items-center gap-2">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all ${step === 'credentials' ? 'bg-slate-900 text-white' : 'bg-indigo-500 text-white'}`}>
-                {step === '2fa' ? <Check className="w-4 h-4" /> : '1'}
+                {step === '2fa' ? <Check className={ICON_SIZES.sm} /> : '1'}
               </div>
               <span className={`text-sm font-medium ${step === 'credentials' ? 'text-slate-900' : 'text-indigo-600'}`}>Credentials</span>
             </div>
@@ -211,19 +212,19 @@ function LoginForm() {
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                       tabIndex={-1}
                     >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      {showPassword ? <EyeOff className={ICON_SIZES.sm} /> : <Eye className={ICON_SIZES.sm} />}
                     </button>
                   </div>
                 </div>
                 <Button type="submit" className="w-full h-12 bg-slate-800 hover:bg-slate-700 rounded-xl" disabled={isLoading}>
-                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Continue'}
+                  {isLoading ? <Loader2 className={`${ICON_SIZES.sm} animate-spin`} /> : 'Continue'}
                 </Button>
               </form>
             </>
           ) : (
             <>
               <div className="flex items-center gap-3 p-3 bg-indigo-50 rounded-xl mb-6">
-                <div className="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center flex-shrink-0"><Check className="w-4 h-4 text-white" /></div>
+                <div className="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center flex-shrink-0"><Check className={`${ICON_SIZES.sm} text-white`} /></div>
                 <div className="flex-1 min-w-0"><p className="text-sm font-medium text-indigo-900 truncate">{email}</p></div>
                 <button type="button" onClick={() => { setStep('credentials'); setError(''); setOtpCode(['', '', '', '', '', '']); }} className="text-xs text-indigo-600 hover:text-indigo-700 font-medium">Change</button>
               </div>
@@ -243,7 +244,7 @@ function LoginForm() {
                   </div>
                 )}
                 <Button type="submit" className="w-full h-12 bg-slate-800 hover:bg-slate-700 rounded-xl" disabled={isLoading || (!isBackupCode && otpCode.join('').length !== 6)}>
-                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Verify & Sign In'}
+                  {isLoading ? <Loader2 className={`${ICON_SIZES.sm} animate-spin`} /> : 'Verify & Sign In'}
                 </Button>
               </form>
               <p className="text-center mt-6">
@@ -322,7 +323,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
           const active = isActive(item.href);
           return (
             <Link key={item.href} href={item.href} className={cn('flex items-center gap-3 px-4 py-2.5 text-sm transition-colors', active ? 'bg-white/10 text-white border-l-2 border-white' : 'text-slate-300 hover:text-white hover:bg-white/5')}>
-              <Icon className="h-4 w-4 opacity-70" />{item.title}
+              <Icon className={`${ICON_SIZES.sm} opacity-70`} />{item.title}
             </Link>
           );
         })}
@@ -332,7 +333,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
           const active = isActive(item.href);
           return (
             <Link key={item.href} href={item.href} className={cn('flex items-center gap-3 px-4 py-2.5 text-sm transition-colors', active ? 'bg-white/10 text-white border-l-2 border-white' : 'text-slate-300 hover:text-white hover:bg-white/5')}>
-              <Icon className="h-4 w-4 opacity-70" />{item.title}
+              <Icon className={`${ICON_SIZES.sm} opacity-70`} />{item.title}
             </Link>
           );
         })}
@@ -344,7 +345,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
             <div className="text-sm font-medium truncate">{session.user.name || 'Super Admin'}</div>
             <div className="text-xs text-slate-400 truncate">{session.user.email}</div>
           </div>
-          <button onClick={() => signOut({ callbackUrl: '/super-admin' })} className="text-slate-400 hover:text-white transition-colors" title="Sign Out"><LogOut className="h-4 w-4" /></button>
+          <button onClick={() => signOut({ callbackUrl: '/super-admin' })} className="text-slate-400 hover:text-white transition-colors" title="Sign Out"><LogOut className={ICON_SIZES.sm} /></button>
         </div>
       </div>
     </>
@@ -359,7 +360,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
           <aside className="fixed left-0 top-0 bottom-0 w-64 bg-slate-900 text-white flex flex-col z-50">
             <div className="absolute right-2 top-2">
               <button onClick={() => setMobileMenuOpen(false)} className="p-2 text-slate-400 hover:text-white">
-                <X className="h-5 w-5" />
+                <X className={ICON_SIZES.md} />
               </button>
             </div>
             <SidebarContent />
@@ -379,7 +380,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
           <div className="px-4 lg:px-8 py-4 flex items-center justify-between gap-4">
             {/* Mobile menu button */}
             <button onClick={() => setMobileMenuOpen(true)} className="lg:hidden p-2 -ml-2 text-gray-600 hover:text-gray-900">
-              <Menu className="h-5 w-5" />
+              <Menu className={ICON_SIZES.md} />
             </button>
             <div className="flex-1 min-w-0">
               <h1 className="text-lg lg:text-xl font-semibold text-gray-900 truncate">{pageInfo.title}</h1>
@@ -387,7 +388,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
             </div>
             <div className="flex items-center gap-2 lg:gap-4">
               <div className="relative hidden md:block">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Search className={`absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 ${ICON_SIZES.sm}`} />
                 <input type="text" placeholder="Search organizations..." className="pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm w-48 lg:w-64 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
               </div>
             </div>

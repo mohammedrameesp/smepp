@@ -11,6 +11,7 @@ import { UserActions } from './user-actions';
 import { formatDate } from '@/lib/core/datetime';
 import { Users } from 'lucide-react';
 import { getDisplayEmail } from '@/lib/utils/user-display';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface User {
   id: string;
@@ -138,7 +139,7 @@ export function UserListClient({ users, currentUserId }: UserListClientProps) {
         renderUserTable(users)
       ) : (
         <div className="text-center py-8">
-          <Users className="h-10 w-10 mx-auto text-gray-300 mb-2" />
+          <Users className={`${ICON_SIZES['2xl']} mx-auto text-gray-300 mb-2`} />
           <p className="text-gray-500">No users found</p>
         </div>
       )}

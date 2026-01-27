@@ -14,6 +14,7 @@ import { OrganizationTabs } from './organization-tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { AlertCircle } from 'lucide-react';
+import { ICON_SIZES } from '@/lib/constants';
 import type { CodeFormatConfig } from '@/lib/utils/code-prefix';
 
 export default async function OrganizationPage() {
@@ -70,7 +71,7 @@ export default async function OrganizationPage() {
     return (
       <PageContent>
         <Alert variant="error">
-          <AlertCircle className="h-4 w-4" />
+          <AlertCircle className={ICON_SIZES.sm} />
           <AlertDescription>
             Organization not found or you don&apos;t have access.
           </AlertDescription>

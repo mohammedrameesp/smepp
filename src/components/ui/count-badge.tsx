@@ -6,6 +6,7 @@
 
 import * as React from 'react';
 import { cn } from '@/lib/core/utils';
+import { ICON_SIZES } from '@/lib/constants';
 
 export type CountBadgeVariant = 'default' | 'primary' | 'destructive' | 'warning' | 'success' | 'muted';
 
@@ -144,7 +145,7 @@ export function IconCountBadge({
 
   return (
     <span className={cn('relative inline-flex', className)}>
-      <Icon className="h-5 w-5" />
+      <Icon className={ICON_SIZES.md} />
       {showCount && (
         <CountBadge
           count={count}
