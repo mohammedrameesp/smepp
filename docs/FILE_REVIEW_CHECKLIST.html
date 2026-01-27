@@ -62,11 +62,11 @@
 <body>
   <div class="container">
     <h1>Source Code Review Checklist</h1>
-    <p>Generated: 2026-01-27 | Total Files: <strong>949</strong></p>
+    <p>Generated: 2026-01-27 | Total Files: <strong>955</strong></p>
 
     <div class="stats">
       <div class="stat">
-        <div class="stat-value" id="totalFiles">949</div>
+        <div class="stat-value" id="totalFiles">955</div>
         <div class="stat-label">Total Files</div>
       </div>
       <div class="stat">
@@ -94,7 +94,7 @@
       </div>
       <div class="progress-bar">
         <div class="progress-fill" id="progressFill" style="width: 0%"></div>
-        <span class="progress-text" id="progressText">0 / 949 files reviewed</span>
+        <span class="progress-text" id="progressText">0 / 955 files reviewed</span>
       </div>
     </div>
 
@@ -126,13 +126,13 @@
 
   <script>
     const files = [
-      // app/(marketing)
+      // app - (marketing)
       "src/app/(marketing)/cookies/page.tsx",
       "src/app/(marketing)/layout.tsx",
       "src/app/(marketing)/page.tsx",
       "src/app/(marketing)/privacy/page.tsx",
       "src/app/(marketing)/terms/page.tsx",
-      // app/admin/(hr)/employees
+      // app - admin
       "src/app/admin/(hr)/employees/[id]/edit/page.tsx",
       "src/app/admin/(hr)/employees/[id]/page.tsx",
       "src/app/admin/(hr)/employees/change-requests/client.tsx",
@@ -148,7 +148,6 @@
       "src/app/admin/(hr)/error.tsx",
       "src/app/admin/(hr)/layout.tsx",
       "src/app/admin/(hr)/layout-client.tsx",
-      // app/admin/(hr)/leave
       "src/app/admin/(hr)/leave/balances/client.tsx",
       "src/app/admin/(hr)/leave/balances/page.tsx",
       "src/app/admin/(hr)/leave/calendar/client.tsx",
@@ -157,7 +156,6 @@
       "src/app/admin/(hr)/leave/requests/loading.tsx",
       "src/app/admin/(hr)/leave/requests/new/page.tsx",
       "src/app/admin/(hr)/leave/requests/page.tsx",
-      // app/admin/(hr)/payroll
       "src/app/admin/(hr)/payroll/gratuity/page.tsx",
       "src/app/admin/(hr)/payroll/loans/[id]/page.tsx",
       "src/app/admin/(hr)/payroll/loans/new/page.tsx",
@@ -171,7 +169,6 @@
       "src/app/admin/(hr)/payroll/salary-structures/[id]/edit/page.tsx",
       "src/app/admin/(hr)/payroll/salary-structures/new/page.tsx",
       "src/app/admin/(hr)/payroll/salary-structures/page.tsx",
-      // app/admin/(operations)
       "src/app/admin/(operations)/asset-requests/[id]/page.tsx",
       "src/app/admin/(operations)/asset-requests/loading.tsx",
       "src/app/admin/(operations)/asset-requests/page.tsx",
@@ -194,12 +191,10 @@
       "src/app/admin/(operations)/suppliers/[id]/page.tsx",
       "src/app/admin/(operations)/suppliers/loading.tsx",
       "src/app/admin/(operations)/suppliers/page.tsx",
-      // app/admin/(projects)
       "src/app/admin/(projects)/error.tsx",
-      "src/app/admin/(projects)/purchase-requests/[id]/page.tsx",
-      "src/app/admin/(projects)/purchase-requests/loading.tsx",
-      "src/app/admin/(projects)/purchase-requests/page.tsx",
-      // app/admin/(system)
+      "src/app/admin/(projects)/spend-requests/[id]/page.tsx",
+      "src/app/admin/(projects)/spend-requests/loading.tsx",
+      "src/app/admin/(projects)/spend-requests/page.tsx",
       "src/app/admin/(system)/activity/page.tsx",
       "src/app/admin/(system)/alerts/client.tsx",
       "src/app/admin/(system)/alerts/page.tsx",
@@ -230,14 +225,13 @@
       "src/app/admin/(system)/users/[id]/page.tsx",
       "src/app/admin/(system)/users/new/page.tsx",
       "src/app/admin/(system)/users/page.tsx",
-      // app/admin root
       "src/app/admin/layout.tsx",
       "src/app/admin/layout-client.tsx",
       "src/app/admin/loading.tsx",
       "src/app/admin/modules/error.tsx",
       "src/app/admin/modules/page.tsx",
       "src/app/admin/page.tsx",
-      // app/api - admin
+      // app - api
       "src/app/api/activity/route.ts",
       "src/app/api/admin/ai-usage/route.ts",
       "src/app/api/admin/backup/route.ts",
@@ -258,7 +252,6 @@
       "src/app/api/admin/team/invitations/[id]/route.ts",
       "src/app/api/admin/team/invitations/route.ts",
       "src/app/api/admin/team/route.ts",
-      // app/api - approvals
       "src/app/api/approval-policies/[id]/route.ts",
       "src/app/api/approval-policies/create-defaults/route.ts",
       "src/app/api/approval-policies/route.ts",
@@ -267,7 +260,6 @@
       "src/app/api/approval-steps/analytics/route.ts",
       "src/app/api/approval-steps/by-entity/[entityType]/[entityId]/route.ts",
       "src/app/api/approval-steps/route.ts",
-      // app/api - assets
       "src/app/api/asset-categories/[id]/route.ts",
       "src/app/api/asset-categories/route.ts",
       "src/app/api/asset-requests/[id]/accept/route.ts",
@@ -297,7 +289,6 @@
       "src/app/api/asset-type-mappings/[id]/route.ts",
       "src/app/api/asset-type-mappings/route.ts",
       "src/app/api/asset-types/suggestions/route.ts",
-      // app/api - auth
       "src/app/api/auth/[...nextauth]/route.ts",
       "src/app/api/auth/forgot-password/route.ts",
       "src/app/api/auth/oauth/azure/callback/route.ts",
@@ -308,22 +299,19 @@
       "src/app/api/auth/reset-password/route.ts",
       "src/app/api/auth/set-password/route.ts",
       "src/app/api/auth/signup/route.ts",
-      // app/api - chat
       "src/app/api/chat/gdpr-delete/route.ts",
       "src/app/api/chat/route.ts",
       "src/app/api/chat/stream/route.ts",
-      // app/api - company documents
       "src/app/api/company-documents/[id]/route.ts",
       "src/app/api/company-documents/expiry-alerts/route.ts",
       "src/app/api/company-documents/route.ts",
       "src/app/api/company-document-types/[id]/route.ts",
       "src/app/api/company-document-types/route.ts",
-      // app/api - cron
       "src/app/api/cron/chat-cleanup/route.ts",
       "src/app/api/cron/cleanup-deleted-assets/route.ts",
       "src/app/api/cron/cleanup-deleted-users/route.ts",
       "src/app/api/cron/depreciation/route.ts",
-      // app/api - misc
+      "src/app/api/cron/document-expiry-alerts/route.ts",
       "src/app/api/debug/session/route.ts",
       "src/app/api/depreciation/categories/[id]/route.ts",
       "src/app/api/depreciation/categories/route.ts",
@@ -344,7 +332,6 @@
       "src/app/api/internal/resolve-domain/route.ts",
       "src/app/api/invitations/[token]/route.ts",
       "src/app/api/invitations/pending/route.ts",
-      // app/api - leave
       "src/app/api/leave/balances/[id]/route.ts",
       "src/app/api/leave/balances/route.ts",
       "src/app/api/leave/calendar/route.ts",
@@ -356,7 +343,6 @@
       "src/app/api/leave/requests/route.ts",
       "src/app/api/leave/types/[id]/route.ts",
       "src/app/api/leave/types/route.ts",
-      // app/api - locations, modules, notifications
       "src/app/api/locations/[id]/route.ts",
       "src/app/api/locations/route.ts",
       "src/app/api/modules/[moduleId]/data-count/route.ts",
@@ -364,10 +350,8 @@
       "src/app/api/notifications/[id]/read/route.ts",
       "src/app/api/notifications/route.ts",
       "src/app/api/notifications/unread-count/route.ts",
-      // app/api - organizations
       "src/app/api/organization/settings/route.ts",
       "src/app/api/organizations/[id]/code-formats/route.ts",
-      "src/app/api/organizations/[id]/invitations/route.ts",
       "src/app/api/organizations/[id]/members/[memberId]/route.ts",
       "src/app/api/organizations/[id]/route.ts",
       "src/app/api/organizations/logo/route.ts",
@@ -376,7 +360,6 @@
       "src/app/api/organizations/settings/route.ts",
       "src/app/api/organizations/setup-progress/route.ts",
       "src/app/api/organizations/signup/route.ts",
-      // app/api - payroll
       "src/app/api/payroll/gratuity/[memberId]/route.ts",
       "src/app/api/payroll/gratuity/route.ts",
       "src/app/api/payroll/loans/[id]/pause/route.ts",
@@ -396,13 +379,8 @@
       "src/app/api/payroll/runs/route.ts",
       "src/app/api/payroll/salary-structures/[id]/route.ts",
       "src/app/api/payroll/salary-structures/route.ts",
-      // app/api - misc continued
       "src/app/api/permissions/check/route.ts",
       "src/app/api/public/tenant-branding/route.ts",
-      "src/app/api/purchase-requests/[id]/route.ts",
-      "src/app/api/purchase-requests/[id]/status/route.ts",
-      "src/app/api/purchase-requests/export/route.ts",
-      "src/app/api/purchase-requests/route.ts",
       "src/app/api/qnas/buildings/[zone]/[street]/route.ts",
       "src/app/api/qnas/location/[zone]/[street]/[building]/route.ts",
       "src/app/api/qnas/streets/[zone]/route.ts",
@@ -411,19 +389,24 @@
       "src/app/api/settings/employment-defaults/route.ts",
       "src/app/api/settings/exchange-rate/route.ts",
       "src/app/api/settings/payroll-percentages/route.ts",
+      "src/app/api/spend-requests/[id]/route.ts",
+      "src/app/api/spend-requests/[id]/status/route.ts",
+      "src/app/api/spend-requests/export/route.ts",
+      "src/app/api/spend-requests/route.ts",
       "src/app/api/subdomains/check/route.ts",
-      // app/api - subscriptions
       "src/app/api/subscriptions/[id]/cancel/route.ts",
       "src/app/api/subscriptions/[id]/cost/route.ts",
       "src/app/api/subscriptions/[id]/periods/route.ts",
+      "src/app/api/subscriptions/[id]/permanent-delete/route.ts",
       "src/app/api/subscriptions/[id]/reactivate/route.ts",
+      "src/app/api/subscriptions/[id]/restore/route.ts",
       "src/app/api/subscriptions/[id]/route.ts",
       "src/app/api/subscriptions/categories/route.ts",
+      "src/app/api/subscriptions/deleted/route.ts",
       "src/app/api/subscriptions/export/route.ts",
       "src/app/api/subscriptions/filters/route.ts",
       "src/app/api/subscriptions/import/route.ts",
       "src/app/api/subscriptions/route.ts",
-      // app/api - super-admin
       "src/app/api/super-admin/admins/[id]/route.ts",
       "src/app/api/super-admin/admins/route.ts",
       "src/app/api/super-admin/ai-usage/route.ts",
@@ -431,6 +414,7 @@
       "src/app/api/super-admin/auth/backup-codes/route.ts",
       "src/app/api/super-admin/auth/enable-2fa/route.ts",
       "src/app/api/super-admin/auth/login/route.ts",
+      "src/app/api/super-admin/auth/reauth-2fa/route.ts",
       "src/app/api/super-admin/auth/setup-2fa/route.ts",
       "src/app/api/super-admin/auth/verify-2fa/route.ts",
       "src/app/api/super-admin/backups/[path]/route.ts",
@@ -458,11 +442,9 @@
       "src/app/api/super-admin/seed-comprehensive/route.ts",
       "src/app/api/super-admin/seed-leave-types/route.ts",
       "src/app/api/super-admin/set-password/route.ts",
-      "src/app/api/super-admin/stats/route.ts",
       "src/app/api/super-admin/storage/route.ts",
       "src/app/api/super-admin/whatsapp/config/route.ts",
       "src/app/api/super-admin/whatsapp/stats/route.ts",
-      // app/api - suppliers
       "src/app/api/suppliers/[id]/approve/route.ts",
       "src/app/api/suppliers/[id]/engagements/route.ts",
       "src/app/api/suppliers/[id]/reject/route.ts",
@@ -472,7 +454,6 @@
       "src/app/api/suppliers/import/route.ts",
       "src/app/api/suppliers/register/route.ts",
       "src/app/api/suppliers/route.ts",
-      // app/api - users & misc
       "src/app/api/team-members/route.ts",
       "src/app/api/upload/route.ts",
       "src/app/api/users/[id]/hr-profile/route.ts",
@@ -493,7 +474,7 @@
       "src/app/api/webhooks/whatsapp/route.ts",
       "src/app/api/whatsapp/config/route.ts",
       "src/app/api/whatsapp/phones/route.ts",
-      // app/employee
+      // app - employee
       "src/app/employee/(hr)/error.tsx",
       "src/app/employee/(hr)/leave/[id]/loading.tsx",
       "src/app/employee/(hr)/leave/[id]/page.tsx",
@@ -532,17 +513,17 @@
       "src/app/employee/(operations)/suppliers/loading.tsx",
       "src/app/employee/(operations)/suppliers/page.tsx",
       "src/app/employee/(projects)/error.tsx",
-      "src/app/employee/(projects)/purchase-requests/[id]/loading.tsx",
-      "src/app/employee/(projects)/purchase-requests/[id]/page.tsx",
-      "src/app/employee/(projects)/purchase-requests/loading.tsx",
-      "src/app/employee/(projects)/purchase-requests/new/loading.tsx",
-      "src/app/employee/(projects)/purchase-requests/new/page.tsx",
-      "src/app/employee/(projects)/purchase-requests/page.tsx",
+      "src/app/employee/(projects)/spend-requests/[id]/loading.tsx",
+      "src/app/employee/(projects)/spend-requests/[id]/page.tsx",
+      "src/app/employee/(projects)/spend-requests/loading.tsx",
+      "src/app/employee/(projects)/spend-requests/new/loading.tsx",
+      "src/app/employee/(projects)/spend-requests/new/page.tsx",
+      "src/app/employee/(projects)/spend-requests/page.tsx",
       "src/app/employee/layout.tsx",
       "src/app/employee/layout-client.tsx",
       "src/app/employee/loading.tsx",
       "src/app/employee/page.tsx",
-      // app/employee-onboarding
+      // app - employee-onboarding
       "src/app/employee-onboarding/components/steps/BankingDocumentsStep.tsx",
       "src/app/employee-onboarding/components/steps/ContactEmergencyStep.tsx",
       "src/app/employee-onboarding/components/steps/EducationSkillsStep.tsx",
@@ -553,30 +534,46 @@
       "src/app/employee-onboarding/components/WizardProgress.tsx",
       "src/app/employee-onboarding/EmployeeOnboardingClient.tsx",
       "src/app/employee-onboarding/page.tsx",
-      // app root pages
+      // app - error.tsx
       "src/app/error.tsx",
+      // app - forbidden
       "src/app/forbidden/page.tsx",
+      // app - forgot-password
       "src/app/forgot-password/page.tsx",
+      // app - get-started
       "src/app/get-started/page.tsx",
+      // app - global-error.tsx
       "src/app/global-error.tsx",
+      // app - help
       "src/app/help/[category]/[module]/module-content.tsx",
       "src/app/help/[category]/[module]/page.tsx",
       "src/app/help/layout.tsx",
       "src/app/help/layout-client.tsx",
       "src/app/help/page.tsx",
       "src/app/help/search/page.tsx",
+      // app - invite
       "src/app/invite/[token]/page.tsx",
+      // app - layout.tsx
       "src/app/layout.tsx",
+      // app - login
       "src/app/login/layout.tsx",
       "src/app/login/page.tsx",
+      // app - no-access
+      "src/app/no-access/page.tsx",
+      // app - not-found.tsx
       "src/app/not-found.tsx",
+      // app - org-deleted
       "src/app/org-deleted/page.tsx",
+      // app - pending
       "src/app/pending/page.tsx",
+      // app - profile
       "src/app/profile/layout.tsx",
       "src/app/profile/page.tsx",
+      // app - reset-password
       "src/app/reset-password/[token]/page.tsx",
+      // app - set-password
       "src/app/set-password/[token]/page.tsx",
-      // app/setup
+      // app - setup
       "src/app/setup/components/SetupWizardClient.tsx",
       "src/app/setup/components/steps/ColorStep.tsx",
       "src/app/setup/components/steps/CurrencyStep.tsx",
@@ -587,8 +584,9 @@
       "src/app/setup/components/StepTransition.tsx",
       "src/app/setup/components/WizardProgress.tsx",
       "src/app/setup/page.tsx",
+      // app - signup
       "src/app/signup/page.tsx",
-      // app/super-admin
+      // app - super-admin
       "src/app/super-admin/admins/page.tsx",
       "src/app/super-admin/analytics/components/index.ts",
       "src/app/super-admin/analytics/components/ModuleUsageChart.tsx",
@@ -606,7 +604,6 @@
       "src/app/super-admin/feedback/page.tsx",
       "src/app/super-admin/layout.tsx",
       "src/app/super-admin/organizations/[id]/page.tsx",
-      "src/app/super-admin/organizations/new/page.tsx",
       "src/app/super-admin/organizations/page.tsx",
       "src/app/super-admin/page.tsx",
       "src/app/super-admin/reset/page.tsx",
@@ -617,15 +614,21 @@
       "src/app/super-admin/storage/page.tsx",
       "src/app/super-admin/system/page.tsx",
       "src/app/super-admin/users/page.tsx",
+      // app - suppliers
       "src/app/suppliers/register/page.tsx",
-      // components
+      // components - approvals
       "src/components/approvals/approval-chain-status.tsx",
       "src/components/approvals/index.ts",
+      // components - auth
       "src/components/auth/permission-refresh.tsx",
       "src/components/auth/TenantBrandedPanel.tsx",
+      // components - chat
       "src/components/chat/chat-widget.tsx",
+      // components - cookie-consent.tsx
       "src/components/cookie-consent.tsx",
+      // components - currency-selector.tsx
       "src/components/currency-selector.tsx",
+      // components - dashboard
       "src/components/dashboard/celebrations-widget.tsx",
       "src/components/dashboard/ChecklistItem.tsx",
       "src/components/dashboard/dashboard-skeleton.tsx",
@@ -633,6 +636,7 @@
       "src/components/dashboard/expiry-alerts-widget.tsx",
       "src/components/dashboard/index.ts",
       "src/components/dashboard/SetupChecklist.tsx",
+      // components - domains
       "src/components/domains/hr/index.ts",
       "src/components/domains/hr/profile/document-link.tsx",
       "src/components/domains/hr/profile/document-upload.tsx",
@@ -644,6 +648,7 @@
       "src/components/domains/hr/profile/profile-photo-upload.tsx",
       "src/components/domains/index.ts",
       "src/components/domains/operations/index.ts",
+      // components - employee
       "src/components/employee/dashboard/alert-banner.tsx",
       "src/components/employee/dashboard/asset-assignment-alert.tsx",
       "src/components/employee/dashboard/celebrations-card.tsx",
@@ -654,9 +659,12 @@
       "src/components/employee/dashboard/requests-card.tsx",
       "src/components/employee/dashboard/stat-card.tsx",
       "src/components/employee/dashboard/upcoming-card.tsx",
+      // components - feedback
       "src/components/feedback/feedback-dialog.tsx",
       "src/components/feedback/feedback-trigger.tsx",
+      // components - forms
       "src/components/forms/form-section.tsx",
+      // components - help
       "src/components/help/help-breadcrumb.tsx",
       "src/components/help/help-category-card.tsx",
       "src/components/help/help-content-section.tsx",
@@ -668,9 +676,11 @@
       "src/components/help/help-validation-table.tsx",
       "src/components/help/help-video-embed.tsx",
       "src/components/help/index.ts",
+      // components - impersonation
       "src/components/impersonation/impersonation-banner.tsx",
       "src/components/impersonation/impersonation-handler.tsx",
       "src/components/impersonation/index.ts",
+      // components - layout
       "src/components/layout/admin-top-nav.tsx",
       "src/components/layout/badge-types.ts",
       "src/components/layout/command-palette.tsx",
@@ -679,11 +689,19 @@
       "src/components/layout/index.ts",
       "src/components/layout/mobile-bottom-nav.tsx",
       "src/components/layout/page-wrapper.tsx",
+      // components - main-content.tsx
       "src/components/main-content.tsx",
+      // components - providers.tsx
       "src/components/providers.tsx",
+      // components - providers
+      "src/components/providers/api-error-provider.tsx",
+      // components - shared
       "src/components/shared/delete-button.tsx",
       "src/components/shared/index.ts",
-      // components/ui
+      // components - super-admin
+      "src/components/super-admin/impersonate-button.tsx",
+      "src/components/super-admin/two-factor-banner.tsx",
+      // components - ui
       "src/components/ui/account-type-confirmation-dialog.tsx",
       "src/components/ui/alert.tsx",
       "src/components/ui/alert-banner.tsx",
@@ -754,7 +772,7 @@
       "src/components/ui/user-avatar.tsx",
       "src/components/ui/user-profile.tsx",
       "src/components/ui/whatsapp-verification-dialog.tsx",
-      // features/approvals
+      // features - approvals
       "src/features/approvals/components/approval-workflow-display.tsx",
       "src/features/approvals/components/index.ts",
       "src/features/approvals/lib/approval-engine.ts",
@@ -762,7 +780,7 @@
       "src/features/approvals/lib/index.ts",
       "src/features/approvals/lib/process-entity-approval.ts",
       "src/features/approvals/validations/approvals.ts",
-      // features/asset-requests
+      // features - asset-requests
       "src/features/asset-requests/components/admin-request-actions.tsx",
       "src/features/asset-requests/components/asset-accept-dialog.tsx",
       "src/features/asset-requests/components/asset-assign-dialog.tsx",
@@ -779,7 +797,7 @@
       "src/features/asset-requests/lib/utils.ts",
       "src/features/asset-requests/validations/asset-request.ts",
       "src/features/asset-requests/validations/index.ts",
-      // features/assets
+      // features - assets
       "src/features/assets/components/asset-actions.tsx",
       "src/features/assets/components/asset-cost-breakdown.tsx",
       "src/features/assets/components/asset-history.tsx",
@@ -821,7 +839,7 @@
       "src/features/assets/validations/asset-type-mappings.ts",
       "src/features/assets/validations/depreciation.ts",
       "src/features/assets/validations/index.ts",
-      // features/company-documents
+      // features - company-documents
       "src/features/company-documents/components/CompanyDocumentForm.tsx",
       "src/features/company-documents/components/index.ts",
       "src/features/company-documents/index.ts",
@@ -829,7 +847,7 @@
       "src/features/company-documents/lib/index.ts",
       "src/features/company-documents/validations/company-documents.ts",
       "src/features/company-documents/validations/index.ts",
-      // features/employees
+      // features - employees
       "src/features/employees/components/cancel-offboarding-button.tsx",
       "src/features/employees/components/employee-actions.tsx",
       "src/features/employees/components/employee-actions-dropdown.tsx",
@@ -846,7 +864,7 @@
       "src/features/employees/lib/hr-utils.ts",
       "src/features/employees/validations/hr-profile.ts",
       "src/features/employees/validations/offboarding.ts",
-      // features/leave
+      // features - leave
       "src/features/leave/components/adjust-balance-dialog.tsx",
       "src/features/leave/components/approval-chain-status.tsx",
       "src/features/leave/components/cancel-leave-dialog.tsx",
@@ -865,11 +883,11 @@
       "src/features/leave/lib/leave-utils.ts",
       "src/features/leave/lib/seed-leave-types.ts",
       "src/features/leave/validations/leave.ts",
-      // features/locations
+      // features - locations
       "src/features/locations/index.ts",
       "src/features/locations/validations/index.ts",
       "src/features/locations/validations/locations.ts",
-      // features/notifications
+      // features - notifications
       "src/features/notifications/components/index.ts",
       "src/features/notifications/components/notification-bell.tsx",
       "src/features/notifications/components/notification-dropdown.tsx",
@@ -878,10 +896,10 @@
       "src/features/notifications/lib/index.ts",
       "src/features/notifications/lib/notification-service.ts",
       "src/features/notifications/validations/notifications.ts",
-      // features/onboarding
+      // features - onboarding
       "src/features/onboarding/lib/index.ts",
       "src/features/onboarding/lib/progress-tracker.ts",
-      // features/payroll
+      // features - payroll
       "src/features/payroll/components/index.ts",
       "src/features/payroll/components/loan-actions.tsx",
       "src/features/payroll/components/payroll-workflow-actions.tsx",
@@ -893,16 +911,7 @@
       "src/features/payroll/lib/wps.ts",
       "src/features/payroll/types/payroll.ts",
       "src/features/payroll/validations/payroll.ts",
-      // features/purchase-requests
-      "src/features/purchase-requests/components/index.ts",
-      "src/features/purchase-requests/components/PurchaseRequestListClient.tsx",
-      "src/features/purchase-requests/components/PurchaseRequestListTable.tsx",
-      "src/features/purchase-requests/components/PurchaseRequestListTableFiltered.tsx",
-      "src/features/purchase-requests/components/StatusBadge.tsx",
-      "src/features/purchase-requests/lib/index.ts",
-      "src/features/purchase-requests/lib/purchase-request-creation.ts",
-      "src/features/purchase-requests/lib/purchase-request-utils.ts",
-      // features/settings
+      // features - settings
       "src/features/settings/components/asset-categories-settings.tsx",
       "src/features/settings/components/asset-type-mappings-settings.tsx",
       "src/features/settings/components/code-format-settings.tsx",
@@ -915,7 +924,16 @@
       "src/features/settings/components/locations-settings.tsx",
       "src/features/settings/components/payroll-settings.tsx",
       "src/features/settings/components/public-holidays-settings.tsx",
-      // features/subscriptions
+      // features - spend-requests
+      "src/features/spend-requests/components/index.ts",
+      "src/features/spend-requests/components/SpendRequestListClient.tsx",
+      "src/features/spend-requests/components/SpendRequestListTable.tsx",
+      "src/features/spend-requests/components/SpendRequestListTableFiltered.tsx",
+      "src/features/spend-requests/components/StatusBadge.tsx",
+      "src/features/spend-requests/lib/index.ts",
+      "src/features/spend-requests/lib/spend-request-creation.ts",
+      "src/features/spend-requests/lib/spend-request-utils.ts",
+      // features - subscriptions
       "src/features/subscriptions/components/cards/cost-breakdown.tsx",
       "src/features/subscriptions/components/cards/history-timeline.tsx",
       "src/features/subscriptions/components/cards/subscription-renewal-display.tsx",
@@ -937,7 +955,7 @@
       "src/features/subscriptions/lib/subscription-utils.ts",
       "src/features/subscriptions/validations/index.ts",
       "src/features/subscriptions/validations/subscriptions.ts",
-      // features/suppliers
+      // features - suppliers
       "src/features/suppliers/components/employee-supplier-list-table.tsx",
       "src/features/suppliers/components/index.ts",
       "src/features/suppliers/components/share-supplier-link-button.tsx",
@@ -953,7 +971,7 @@
       "src/features/suppliers/lib/supplier-utils.ts",
       "src/features/suppliers/validations/index.ts",
       "src/features/suppliers/validations/suppliers.ts",
-      // features/users
+      // features - users
       "src/features/users/components/delete-user-button.tsx",
       "src/features/users/components/export-user-pdf-button.tsx",
       "src/features/users/components/index.ts",
@@ -964,19 +982,23 @@
       "src/features/users/components/user-list-client.tsx",
       "src/features/users/components/user-subscription-history.tsx",
       "src/features/users/validations/users.ts",
-      // hooks
+      // hooks - use-auto-save.tsx
       "src/hooks/use-auto-save.tsx",
+      // hooks - use-client-data-table.ts
       "src/hooks/use-client-data-table.ts",
+      // hooks - use-permission.ts
       "src/hooks/use-permission.ts",
+      // hooks - use-subdomain.ts
       "src/hooks/use-subdomain.ts",
+      // hooks - use-tenant-branding.ts
       "src/hooks/use-tenant-branding.ts",
-      // lib/access-control
+      // lib - access-control
       "src/lib/access-control/index.ts",
       "src/lib/access-control/manager-filter.ts",
       "src/lib/access-control/permissions.ts",
       "src/lib/access-control/permission-service.ts",
       "src/lib/access-control/seed-permissions.ts",
-      // lib/ai
+      // lib - ai
       "src/lib/ai/audit-logger.ts",
       "src/lib/ai/budget-tracker.ts",
       "src/lib/ai/chat-service.ts",
@@ -984,23 +1006,23 @@
       "src/lib/ai/input-sanitizer.ts",
       "src/lib/ai/permissions.ts",
       "src/lib/ai/rate-limiter.ts",
-      // lib/api
+      // lib - api
       "src/lib/api/fetch-with-retry.ts",
       "src/lib/api/index.ts",
       "src/lib/api/leave.ts",
-      // lib/client
+      // lib - auth
+      "src/lib/auth/impersonation-check.ts",
+      // lib - client
       "src/lib/client/download.ts",
       "src/lib/client/upload.ts",
-      // lib/constants
+      // lib - constants
       "src/lib/constants/index.ts",
       "src/lib/constants/limits.ts",
       "src/lib/constants/procurement-categories.ts",
-      // lib/core
+      // lib - core
       "src/lib/core/activity.ts",
       "src/lib/core/api-error-interceptor.ts",
-      "src/lib/core/approval-utils.ts",
       "src/lib/core/auth.ts",
-      "src/lib/core/branding.ts",
       "src/lib/core/caching/index.ts",
       "src/lib/core/caching/memory-cache.ts",
       "src/lib/core/csv-utils.ts",
@@ -1012,7 +1034,6 @@
       "src/lib/core/datetime/timezone.ts",
       "src/lib/core/error-alert-templates.ts",
       "src/lib/core/error-logger.ts",
-      "src/lib/core/error-utils.ts",
       "src/lib/core/export-utils.ts",
       "src/lib/core/get-org-info.ts",
       "src/lib/core/import-utils.ts",
@@ -1020,19 +1041,18 @@
       "src/lib/core/log.ts",
       "src/lib/core/prisma.ts",
       "src/lib/core/prisma-tenant.ts",
-      "src/lib/core/status-transition.ts",
       "src/lib/core/theme.ts",
       "src/lib/core/utils.ts",
-      // lib/data
+      // lib - data
       "src/lib/data/constants.ts",
-      // lib/db
+      // lib - db
       "src/lib/db/pagination.ts",
       "src/lib/db/search-filter.ts",
-      // lib/domains
+      // lib - domains
       "src/lib/domains/hr/employment-defaults.ts",
       "src/lib/domains/hr/index.ts",
       "src/lib/domains/index.ts",
-      // lib/email
+      // lib - email
       "src/lib/email/client.ts",
       "src/lib/email/failure-handler.ts",
       "src/lib/email/failure-templates.ts",
@@ -1042,9 +1062,9 @@
       "src/lib/email/templates/general.ts",
       "src/lib/email/templates/index.ts",
       "src/lib/email/utils.ts",
-      // lib/files
+      // lib - files
       "src/lib/files/sanity.ts",
-      // lib/help
+      // lib - help
       "src/lib/help/content/hr/employees.ts",
       "src/lib/help/content/hr/leave.ts",
       "src/lib/help/content/hr/payroll.ts",
@@ -1052,7 +1072,7 @@
       "src/lib/help/content/operations/assets.ts",
       "src/lib/help/content/operations/subscriptions.ts",
       "src/lib/help/content/operations/suppliers.ts",
-      "src/lib/help/content/projects/purchase-requests.ts",
+      "src/lib/help/content/projects/spend-requests.ts",
       "src/lib/help/content/system/approvals.ts",
       "src/lib/help/content/system/documents.ts",
       "src/lib/help/content/system/settings.ts",
@@ -1060,13 +1080,13 @@
       "src/lib/help/help-categories.ts",
       "src/lib/help/help-types.ts",
       "src/lib/help/index.ts",
-      // lib/hooks
+      // lib - hooks
       "src/lib/hooks/index.ts",
       "src/lib/hooks/use-leave-balance.ts",
       "src/lib/hooks/use-submit-action.ts",
-      // lib/hr
+      // lib - hr
       "src/lib/hr/work-milestones.ts",
-      // lib/http
+      // lib - http
       "src/lib/http/approval-handler.ts",
       "src/lib/http/errors.ts",
       "src/lib/http/export-handler.ts",
@@ -1074,29 +1094,30 @@
       "src/lib/http/import-handler.ts",
       "src/lib/http/list-handler.ts",
       "src/lib/http/responses.ts",
-      // lib/images
+      // lib - images
       "src/lib/images/index.ts",
       "src/lib/images/logo-inverse.ts",
-      // lib/modules
+      // lib - modules
       "src/lib/modules/access.ts",
       "src/lib/modules/index.ts",
       "src/lib/modules/registry.ts",
+      "src/lib/modules/routes.generated.ts",
       "src/lib/modules/routes.ts",
-      // lib/multi-tenant
+      // lib - multi-tenant
       "src/lib/multi-tenant/custom-domain.ts",
       "src/lib/multi-tenant/feature-flags.ts",
       "src/lib/multi-tenant/index.ts",
       "src/lib/multi-tenant/limits.ts",
       "src/lib/multi-tenant/subdomain.ts",
-      // lib/oauth
+      // lib - oauth
       "src/lib/oauth/azure.ts",
       "src/lib/oauth/google.ts",
       "src/lib/oauth/utils.ts",
-      // lib/qnas
+      // lib - qnas
       "src/lib/qnas/client.ts",
       "src/lib/qnas/index.ts",
       "src/lib/qnas/types.ts",
-      // lib/security
+      // lib - security
       "src/lib/security/account-lockout.ts",
       "src/lib/security/backup-encryption.ts",
       "src/lib/security/cron-auth.ts",
@@ -1105,31 +1126,33 @@
       "src/lib/security/impersonation.ts",
       "src/lib/security/password-validation.ts",
       "src/lib/security/rateLimit.ts",
-      // lib/storage
+      // lib - storage
       "src/lib/storage/cleanup.ts",
       "src/lib/storage/index.ts",
       "src/lib/storage/supabase.ts",
-      // lib/two-factor
+      // lib - two-factor
       "src/lib/two-factor/backup-codes.ts",
       "src/lib/two-factor/encryption.ts",
       "src/lib/two-factor/index.ts",
       "src/lib/two-factor/require-recent-2fa.ts",
       "src/lib/two-factor/totp.ts",
-      // lib/types
+      // lib - types
       "src/lib/types/index.ts",
       "src/lib/types/leave.ts",
       "src/lib/types/tenant-branding.ts",
-      // lib/ui
+      // lib - ui
       "src/lib/ui/status-config.ts",
+      // lib - ui-constants.ts
       "src/lib/ui-constants.ts",
-      // lib/utils
+      // lib - utils
       "src/lib/utils/calendar-utils.ts",
       "src/lib/utils/code-prefix.ts",
       "src/lib/utils/json-utils.ts",
       "src/lib/utils/math-utils.ts",
       "src/lib/utils/service-account-detection.ts",
+      "src/lib/utils/user-display.ts",
       "src/lib/utils/whatsapp-verification-check.ts",
-      // lib/validations
+      // lib - validations
       "src/lib/validations/core/index.ts",
       "src/lib/validations/core/upload.ts",
       "src/lib/validations/core/users.ts",
@@ -1139,10 +1162,10 @@
       "src/lib/validations/pagination-schema.ts",
       "src/lib/validations/patterns.ts",
       "src/lib/validations/projects/index.ts",
-      "src/lib/validations/projects/purchase-request.ts",
+      "src/lib/validations/projects/spend-request.ts",
       "src/lib/validations/system/index.ts",
       "src/lib/validations/workflow-schemas.ts",
-      // lib/whatsapp
+      // lib - whatsapp
       "src/lib/whatsapp/action-tokens.ts",
       "src/lib/whatsapp/approval-integration.ts",
       "src/lib/whatsapp/client.ts",
@@ -1151,8 +1174,8 @@
       "src/lib/whatsapp/send-notification.ts",
       "src/lib/whatsapp/templates.ts",
       "src/lib/whatsapp/types.ts",
-      // middleware
-      "src/middleware.ts"
+      // middleware.ts
+      "src/middleware.ts",
     ];
 
     function getDirectory(path) {
