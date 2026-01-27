@@ -13,7 +13,7 @@ import {
 } from '@/features/assets/lib/asset-export';
 
 // Mock csv-utils
-jest.mock('@/lib/core/csv-utils', () => ({
+jest.mock('@/lib/core/import-export/csv-utils', () => ({
   formatDateForCSV: (date: Date | null) => {
     if (!date) return '';
     return new Date(date).toISOString().split('T')[0];

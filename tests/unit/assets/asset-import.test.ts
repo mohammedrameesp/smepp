@@ -7,7 +7,7 @@ import { AssetStatus } from '@prisma/client';
 import { parseAssetRow, buildAssetDbData, type ParsedAssetData } from '@/features/assets/lib/asset-import';
 
 // Mock import-utils
-jest.mock('@/lib/core/import-utils', () => ({
+jest.mock('@/lib/core/import-export/import-utils', () => ({
   createRowValueGetter: (row: Record<string, string | undefined>) => (possibleNames: string[]) => {
     for (const name of possibleNames) {
       const value = row[name];
