@@ -28,7 +28,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
-import { formatDate } from '@/lib/core/datetime';
+import { formatDate, getQatarStartOfDay } from '@/lib/core/datetime';
 import { AssetMaintenanceRecords, AssetStatusCard } from '@/features/assets';
 import { AssetRequestDialog, AssetReturnDialog } from '@/features/asset-requests';
 import {
@@ -180,8 +180,7 @@ export default async function EmployeeAssetDetailPage({ params }: Props) {
 
           {/* Warranty Expiry Alert */}
           {asset.warrantyExpiry && (() => {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
+            const today = getQatarStartOfDay();
             const expiryDate = new Date(asset.warrantyExpiry);
             expiryDate.setHours(0, 0, 0, 0);
             const daysUntilExpiry = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));

@@ -1,4 +1,5 @@
 import { cn } from '@/lib/core/utils';
+import { getQatarStartOfDay, formatDayMonth } from '@/lib/core/datetime';
 
 type MilestoneTier = 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond';
 
@@ -29,8 +30,7 @@ interface CelebrationsCardProps {
 }
 
 function getRelativeDay(date: Date): string {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = getQatarStartOfDay();
   const targetDate = new Date(date);
   targetDate.setHours(0, 0, 0, 0);
 
@@ -39,7 +39,7 @@ function getRelativeDay(date: Date): string {
   if (diffDays === 0) return 'today';
   if (diffDays === 1) return 'tomorrow';
   if (diffDays < 7) return `in ${diffDays} days`;
-  return targetDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return formatDayMonth(targetDate);
 }
 
 function getInitials(name: string): string {

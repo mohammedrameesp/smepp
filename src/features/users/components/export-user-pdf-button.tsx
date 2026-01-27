@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { FileDown, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { formatDate, formatDateTime } from '@/lib/core/datetime';
 
 interface Asset {
   id: string;
@@ -69,7 +70,7 @@ export function ExportUserPDFButton({ userId, userName }: ExportUserPDFButtonPro
 
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
-      doc.text(`Generated on: ${new Date().toLocaleString()}`, pageWidth / 2, y, { align: 'center' });
+      doc.text(`Generated on: ${formatDateTime(new Date())}`, pageWidth / 2, y, { align: 'center' });
       y += 15;
 
       // Employee Information
@@ -86,7 +87,7 @@ export function ExportUserPDFButton({ userId, userName }: ExportUserPDFButtonPro
       y += 6;
       doc.text(`Role: ${user.role}`, 20, y);
       y += 6;
-      doc.text(`Employee Since: ${new Date(user.createdAt).toLocaleDateString()}`, 20, y);
+      doc.text(`Employee Since: ${formatDate(user.createdAt)}`, 20, y);
       y += 12;
 
       // Assets Section

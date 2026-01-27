@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/table';
 import { calculateGratuity, getServiceDurationText } from '@/features/payroll/lib/gratuity';
 import { formatCurrency } from '@/lib/core/currency';
+import { formatDate } from '@/lib/core/datetime';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 import { FileText, Users, DollarSign } from 'lucide-react';
@@ -158,7 +159,7 @@ export default async function GratuityReportPage() {
                     </TableCell>
                     <TableCell>{emp.member?.designation || '-'}</TableCell>
                     <TableCell>
-                      {new Date(emp.member!.dateOfJoining!).toLocaleDateString()}
+                      {formatDate(emp.member!.dateOfJoining!)}
                     </TableCell>
                     <TableCell>
                       {getServiceDurationText(emp.gratuity.monthsOfService)}

@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { Eye, Loader2 } from 'lucide-react';
 import { StatusBadge, PriorityBadge } from './StatusBadge';
+import { formatDate } from '@/lib/core/datetime';
 
 interface SpendRequest {
   id: string;
@@ -112,15 +113,6 @@ export function SpendRequestListTable({ isAdmin = false }: SpendRequestListTable
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(num) + ' ' + currency;
-  };
-
-  // Format date
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    });
   };
 
   const basePath = isAdmin ? '/admin/spend-requests' : '/employee/spend-requests';

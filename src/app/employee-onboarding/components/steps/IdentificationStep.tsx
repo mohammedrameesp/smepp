@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { DatePicker } from '@/components/ui/date-picker';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { toInputDateString, getQatarStartOfDay } from '@/lib/core/datetime';
 
 // QID validation hint component
 function QidValidationHint({ qid }: { qid: string }) {
@@ -52,8 +53,7 @@ function isExpired(dateStr: string | null | undefined): boolean {
   if (!dateStr) return false;
   try {
     const date = new Date(dateStr);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = getQatarStartOfDay();
     return date < today;
   } catch {
     return false;
@@ -76,12 +76,6 @@ interface IdentificationStepProps {
   updateField: (field: string, value: unknown) => void;
   errors: Record<string, string>;
 }
-
-const formatDateForPicker = (date: Date | string | null | undefined): string => {
-  if (!date) return '';
-  const d = typeof date === 'string' ? new Date(date) : date;
-  return d.toISOString().split('T')[0];
-};
 
 // Calculate minimum date (2 years back from today)
 const getMinExpiryDate = (): Date => {
@@ -134,7 +128,7 @@ export function IdentificationStep({ formData, updateField, errors }: Identifica
               <div className="space-y-2">
                 <Label>Expiry Date <span className="text-red-500">*</span></Label>
                 <DatePicker
-                  value={formatDateForPicker(formData.qidExpiry as string)}
+                  value={toInputDateString(formData.qidExpiry as string)}
                   onChange={(val) => updateField('qidExpiry', val)}
                   placeholder="DD/MM/YYYY"
                   minDate={minExpiryDate}
@@ -171,7 +165,7 @@ export function IdentificationStep({ formData, updateField, errors }: Identifica
               <div className="space-y-2">
                 <Label>Expiry Date <span className="text-red-500">*</span></Label>
                 <DatePicker
-                  value={formatDateForPicker(formData.passportExpiry as string)}
+                  value={toInputDateString(formData.passportExpiry as string)}
                   onChange={(val) => updateField('passportExpiry', val)}
                   placeholder="DD/MM/YYYY"
                   minDate={minExpiryDate}
@@ -195,7 +189,7 @@ export function IdentificationStep({ formData, updateField, errors }: Identifica
               <div className="space-y-2">
                 <Label>Health Card Expiry</Label>
                 <DatePicker
-                  value={formatDateForPicker(formData.healthCardExpiry as string)}
+                  value={toInputDateString(formData.healthCardExpiry as string)}
                   onChange={(val) => updateField('healthCardExpiry', val)}
                   placeholder="DD/MM/YYYY"
                   minDate={minExpiryDate}
@@ -206,7 +200,7 @@ export function IdentificationStep({ formData, updateField, errors }: Identifica
               <div className="space-y-2">
                 <Label>Driving License Expiry</Label>
                 <DatePicker
-                  value={formatDateForPicker(formData.drivingLicenseExpiry as string)}
+                  value={toInputDateString(formData.drivingLicenseExpiry as string)}
                   onChange={(val) => updateField('drivingLicenseExpiry', val)}
                   placeholder="DD/MM/YYYY"
                   minDate={minExpiryDate}

@@ -9,6 +9,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import logger from '@/lib/core/log';
+import { getQatarStartOfDay } from '@/lib/core/datetime';
 
 export async function GET() {
   try {
@@ -18,9 +19,8 @@ export async function GET() {
     }
 
     // Get message stats for current month
-    const startOfMonth = new Date();
+    const startOfMonth = getQatarStartOfDay();
     startOfMonth.setDate(1);
-    startOfMonth.setHours(0, 0, 0, 0);
 
     const [
       totalMessagesSent,

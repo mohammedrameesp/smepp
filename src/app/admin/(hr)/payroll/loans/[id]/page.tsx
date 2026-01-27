@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { PageHeader, PageContent, PageHeaderButton } from '@/components/ui/page-header';
 import { formatCurrency } from '@/lib/core/currency';
+import { formatDate } from '@/lib/core/datetime';
 import { LoanActions } from '@/features/payroll/components';
 import { DetailCard } from '@/components/ui/detail-card';
 import { InfoField, InfoFieldGrid } from '@/components/ui/info-field';
@@ -226,11 +227,7 @@ export default async function LoanDetailPage({ params }: PageProps) {
                     {loan.repayments.map((repayment) => (
                       <TableRow key={repayment.id}>
                         <TableCell className="text-slate-600">
-                          {new Date(repayment.paymentDate).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                          })}
+                          {formatDate(repayment.paymentDate)}
                         </TableCell>
                         <TableCell className="text-right font-semibold text-emerald-600">
                           {formatCurrency(Number(repayment.amount))}
@@ -275,20 +272,12 @@ export default async function LoanDetailPage({ params }: PageProps) {
               <InfoField label="Loan Type" value={loan.type.replace(/_/g, ' ')} />
               <InfoField
                 label="Start Date"
-                value={new Date(loan.startDate).toLocaleDateString('en-US', {
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric',
-                })}
+                value={formatDate(loan.startDate)}
               />
               {loan.endDate && (
                 <InfoField
                   label="Expected End"
-                  value={new Date(loan.endDate).toLocaleDateString('en-US', {
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric',
-                  })}
+                  value={formatDate(loan.endDate)}
                 />
               )}
             </InfoFieldGrid>
@@ -302,11 +291,7 @@ export default async function LoanDetailPage({ params }: PageProps) {
                 {loan.approvedAt && (
                   <InfoField
                     label="Approved On"
-                    value={new Date(loan.approvedAt).toLocaleDateString('en-US', {
-                      day: 'numeric',
-                      month: 'long',
-                      year: 'numeric',
-                    })}
+                    value={formatDate(loan.approvedAt)}
                   />
                 )}
               </InfoFieldGrid>
@@ -319,21 +304,13 @@ export default async function LoanDetailPage({ params }: PageProps) {
               <div className="flex items-center justify-between text-sm">
                 <span className="text-slate-500">Created</span>
                 <span className="text-slate-900">
-                  {new Date(loan.createdAt).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric',
-                  })}
+                  {formatDate(loan.createdAt)}
                 </span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-slate-500">Last Updated</span>
                 <span className="text-slate-900">
-                  {new Date(loan.updatedAt).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric',
-                  })}
+                  {formatDate(loan.updatedAt)}
                 </span>
               </div>
             </div>

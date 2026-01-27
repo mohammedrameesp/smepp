@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Info, Calculator, TrendingUp, Calendar, DollarSign } from 'lucide-react';
 import { calculateGratuity, projectGratuity, getServiceDurationText } from '@/features/payroll/lib/gratuity';
 import { formatCurrency } from '@/lib/core/currency';
+import { formatDate } from '@/lib/core/datetime';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 import { DetailCard } from '@/components/ui/detail-card';
@@ -126,11 +127,7 @@ export default async function EmployeeGratuityPage() {
               <InfoField label="Weekly Rate" value={formatCurrency(gratuityCalculation.weeklyRate)} />
               <InfoField
                 label="Date of Joining"
-                value={dateOfJoining.toLocaleDateString('en-US', {
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric',
-                })}
+                value={formatDate(dateOfJoining)}
               />
             </div>
           </DetailCard>

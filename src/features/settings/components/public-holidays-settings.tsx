@@ -14,6 +14,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
+import { formatDayMonth } from '@/lib/core/datetime';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -262,18 +263,15 @@ export function PublicHolidaysSettings({ isAdmin = true }: PublicHolidaysSetting
     return Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
   }
 
-  function formatDate(dateString: string | null): string {
+  function formatHolidayDate(dateString: string | null): string {
     if (!dateString) return '';
-    return new Date(dateString).toLocaleDateString('en-GB', {
-      day: 'numeric',
-      month: 'short',
-    });
+    return formatDayMonth(new Date(dateString));
   }
 
   function formatDateRange(startDate: string | null, endDate: string | null): string {
     if (!startDate || !endDate) return 'Not set';
-    const start = formatDate(startDate);
-    const end = formatDate(endDate);
+    const start = formatHolidayDate(startDate);
+    const end = formatHolidayDate(endDate);
     if (start === end) return start;
     return `${start} - ${end}`;
   }

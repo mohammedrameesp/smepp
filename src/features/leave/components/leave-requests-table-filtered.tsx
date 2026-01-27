@@ -28,6 +28,7 @@ import { TableFilterBar } from '@/components/ui/table-filter-bar';
 import { useClientDataTable } from '@/hooks/use-client-data-table';
 import { CalendarDays } from 'lucide-react';
 import { getLeaveStatusVariant, getDateRangeText, formatLeaveDays, getRequestTypeText } from '@/features/leave/lib/leave-utils';
+import { formatDate } from '@/lib/core/datetime';
 import { LeaveStatus } from '@prisma/client';
 
 const PAGE_SIZE = 50;
@@ -305,11 +306,7 @@ export function LeaveRequestsTableFiltered({
                     </Badge>
                   </TableCell>
                   <TableCell className="text-sm text-gray-500 hidden lg:table-cell">
-                    {new Date(request.createdAt).toLocaleDateString('en-GB', {
-                      day: 'numeric',
-                      month: 'short',
-                      year: 'numeric',
-                    })}
+                    {formatDate(request.createdAt)}
                   </TableCell>
                   <TableCell className="text-right">
                     <Button variant="outline" size="sm" asChild>

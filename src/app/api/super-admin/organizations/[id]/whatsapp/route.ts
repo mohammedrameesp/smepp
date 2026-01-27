@@ -11,6 +11,7 @@ import { prisma } from '@/lib/core/prisma';
 import { z } from 'zod';
 import { setTenantPlatformWhatsAppAccess, getTenantWhatsAppStatus, encrypt } from '@/lib/whatsapp/config';
 import logger from '@/lib/core/log';
+import { getQatarStartOfDay } from '@/lib/core/datetime';
 
 const updateSchema = z.object({
   // Source selection
@@ -72,9 +73,8 @@ export async function GET(
     });
 
     // Get message stats for current month
-    const startOfMonth = new Date();
+    const startOfMonth = getQatarStartOfDay();
     startOfMonth.setDate(1);
-    startOfMonth.setHours(0, 0, 0, 0);
 
     const [messagesSent, messagesDelivered, messagesFailed, recentLogs] = await Promise.all([
       prisma.whatsAppMessageLog.count({

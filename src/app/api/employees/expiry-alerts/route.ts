@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
+import { getQatarStartOfDay } from '@/lib/core/datetime';
 
 // GET /api/employees/expiry-alerts - Get document expiry alerts for admin dashboard
 async function getExpiryAlertsHandler(request: NextRequest, context: APIContext) {
@@ -18,8 +19,7 @@ async function getExpiryAlertsHandler(request: NextRequest, context: APIContext)
 
   const db = tenantPrisma as TenantPrismaClient;
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = getQatarStartOfDay();
   const thirtyDaysFromNow = new Date(today);
   thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
 

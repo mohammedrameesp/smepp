@@ -57,6 +57,7 @@ import {
 import { TrendingDown, Settings, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
+import { formatDate } from '@/lib/core/datetime';
 
 interface DepreciationCategory {
   id: string;
@@ -379,11 +380,7 @@ export function DepreciationCard({ assetId, onUpdate }: DepreciationCardProps) {
             {asset.lastDepreciationDate && (
               <div className="text-sm text-muted-foreground pt-2 border-t">
                 Last calculated:{' '}
-                {new Date(asset.lastDepreciationDate).toLocaleDateString('en-GB', {
-                  day: '2-digit',
-                  month: 'short',
-                  year: 'numeric',
-                })}
+                {formatDate(asset.lastDepreciationDate)}
               </div>
             )}
           </div>

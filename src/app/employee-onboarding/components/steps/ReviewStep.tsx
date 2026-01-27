@@ -9,6 +9,7 @@
 import { CheckCircle2, Pencil, User, Phone, CreditCard, Building2, GraduationCap, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { formatDate } from '@/lib/core/datetime';
 
 interface ReviewStepProps {
   formData: Record<string, string | null>;
@@ -16,14 +17,12 @@ interface ReviewStepProps {
   onEdit: (step: number) => void;
 }
 
-function formatDate(dateStr: string | null | undefined): string {
+// formatDate is imported from @/lib/core/datetime
+// Local wrapper to handle null/undefined and return '-' placeholder
+function formatDateValue(dateStr: string | null | undefined): string {
   if (!dateStr) return '-';
   try {
-    return new Date(dateStr).toLocaleDateString('en-GB', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    });
+    return formatDate(dateStr);
   } catch {
     return dateStr;
   }
@@ -110,7 +109,7 @@ export function ReviewStep({ formData, workEmail, onEdit }: ReviewStepProps) {
         {/* Personal Information */}
         <ReviewSection title="Personal Information" icon={User} step={1} onEdit={onEdit}>
           <dl className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <Field label="Date of Birth" value={formatDate(formData.dateOfBirth)} />
+            <Field label="Date of Birth" value={formatDateValue(formData.dateOfBirth)} />
             <Field label="Gender" value={formData.gender} />
             <Field label="Nationality" value={formData.nationality} />
             <Field label="Marital Status" value={formData.maritalStatus} />
@@ -191,11 +190,11 @@ export function ReviewStep({ formData, workEmail, onEdit }: ReviewStepProps) {
         <ReviewSection title="ID & Legal" icon={CreditCard} step={3} onEdit={onEdit}>
           <dl className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             <Field label="QID Number" value={formData.qidNumber} />
-            <Field label="QID Expiry" value={formatDate(formData.qidExpiry)} />
+            <Field label="QID Expiry" value={formatDateValue(formData.qidExpiry)} />
             <Field label="Passport Number" value={formData.passportNumber} />
-            <Field label="Passport Expiry" value={formatDate(formData.passportExpiry)} />
-            <Field label="Health Card Expiry" value={formatDate(formData.healthCardExpiry)} />
-            <Field label="Driving License Expiry" value={formatDate(formData.drivingLicenseExpiry)} />
+            <Field label="Passport Expiry" value={formatDateValue(formData.passportExpiry)} />
+            <Field label="Health Card Expiry" value={formatDateValue(formData.healthCardExpiry)} />
+            <Field label="Driving License Expiry" value={formatDateValue(formData.drivingLicenseExpiry)} />
           </dl>
         </ReviewSection>
 

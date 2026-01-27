@@ -33,7 +33,7 @@ import {
   DepreciationCard,
   AssetStatusCard,
 } from '@/features/assets';
-import { formatDate, formatDateTime } from '@/lib/core/datetime';
+import { formatDate, formatDateTime, getQatarStartOfDay } from '@/lib/core/datetime';
 import { formatCurrency } from '@/lib/core/currency';
 import { formatNumber } from '@/lib/utils/math-utils';
 import { AssetAssignDialog } from '@/features/asset-requests';
@@ -208,8 +208,7 @@ export default async function AssetDetailPage({ params }: Props) {
 
           {/* Warranty Expiry Alert - only show for expiring soon or recently expired (within 90 days) */}
           {asset.warrantyExpiry && (() => {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
+            const today = getQatarStartOfDay();
             const expiryDate = new Date(asset.warrantyExpiry);
             expiryDate.setHours(0, 0, 0, 0);
             const daysUntilExpiry = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));

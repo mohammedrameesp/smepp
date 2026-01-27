@@ -20,6 +20,7 @@ import {
   adminDocumentExpiryAlertEmail,
   companyDocumentExpiryAlertEmail,
 } from '@/lib/email';
+import { getQatarStartOfDay } from '@/lib/core/datetime';
 
 // Document expiry window: 30 days ahead, 7 days behind (recently expired)
 const DAYS_AHEAD = 30;
@@ -43,10 +44,8 @@ interface EmployeeWithExpiringDocs {
  * Calculate days remaining until expiry (negative if already expired)
  */
 function getDaysRemaining(expiryDate: Date): number {
-  const now = new Date();
-  now.setHours(0, 0, 0, 0);
-  const expiry = new Date(expiryDate);
-  expiry.setHours(0, 0, 0, 0);
+  const now = getQatarStartOfDay();
+  const expiry = getQatarStartOfDay(expiryDate);
   return Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 }
 

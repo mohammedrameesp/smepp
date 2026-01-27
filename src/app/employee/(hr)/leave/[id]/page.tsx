@@ -19,6 +19,7 @@ import { LeaveRequestHistory, CancelLeaveDialog, ApprovalChainStatus } from '@/f
 import type { ApprovalStep, ApprovalSummary } from '@/lib/types/leave';
 import { LeaveStatus, LeaveRequestType } from '@prisma/client';
 import { PageHeader, PageContent, PageHeaderButton } from '@/components/ui/page-header';
+import { formatDate } from '@/lib/core/datetime';
 
 interface LeaveBalance {
   id: string;
@@ -184,11 +185,7 @@ export default function EmployeeLeaveRequestDetailPage() {
     <>
       <PageHeader
         title={request.requestNumber}
-        subtitle={`Submitted on ${new Date(request.createdAt).toLocaleDateString('en-GB', {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric',
-        })}`}
+        subtitle={`Submitted on ${formatDate(request.createdAt)}`}
         breadcrumbs={[
           { label: 'Dashboard', href: '/employee' },
           { label: 'My Leave', href: '/employee/leave' },

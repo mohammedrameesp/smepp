@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Building2, Check, X, Mail, AlertCircle, Clock } from 'lucide-react';
 import Link from 'next/link';
 import { useTenantBranding } from '@/hooks/use-tenant-branding';
+import { formatDate } from '@/lib/core/datetime';
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
@@ -364,11 +365,7 @@ export default function InvitePage() {
             {invitation?.expiresAt && (
               <p className="text-xs text-center text-muted-foreground">
                 This invitation expires on{' '}
-                {new Date(invitation.expiresAt).toLocaleDateString('en-US', {
-                  month: 'long',
-                  day: 'numeric',
-                  year: 'numeric',
-                })}
+                {formatDate(invitation.expiresAt)}
               </p>
             )}
           </CardContent>

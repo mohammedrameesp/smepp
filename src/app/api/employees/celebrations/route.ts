@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { getUpcomingMilestones, WorkMilestone } from '@/lib/hr/work-milestones';
+import { getQatarStartOfDay } from '@/lib/core/datetime';
 
 interface CelebrationEvent {
   employeeId: string;
@@ -35,8 +36,7 @@ async function getCelebrationsHandler(request: NextRequest, context: APIContext)
   }
 
   const db = tenantPrisma as TenantPrismaClient;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = getQatarStartOfDay();
 
   // Get all employees with HR data (tenant-scoped via extension) from TeamMember
   const employees = await db.teamMember.findMany({

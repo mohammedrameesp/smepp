@@ -6,74 +6,81 @@
  */
 
 import { QATAR_TIMEZONE, MONTH_NAMES } from './constants';
+import { getQatarNow } from './timezone';
+
+/**
+ * Internal helper to parse and format date parts in Qatar timezone
+ * @internal
+ */
+function getQatarDateParts(
+  date: Date | string | null | undefined,
+  includeTime: boolean = false
+): { day: number; month: number; year: number; hours?: string; minutes?: string } | null {
+  if (!date) return null;
+
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  if (isNaN(dateObj.getTime())) return null;
+
+  const options: Intl.DateTimeFormatOptions = {
+    timeZone: QATAR_TIMEZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  };
+
+  if (includeTime) {
+    options.hour = '2-digit';
+    options.minute = '2-digit';
+    options.hour12 = false;
+  }
+
+  const formatter = new Intl.DateTimeFormat('en-US', options);
+  const parts = formatter.formatToParts(dateObj);
+
+  const result: { day: number; month: number; year: number; hours?: string; minutes?: string } = {
+    month: parseInt(parts.find((p) => p.type === 'month')?.value || '1') - 1,
+    day: parseInt(parts.find((p) => p.type === 'day')?.value || '1'),
+    year: parseInt(parts.find((p) => p.type === 'year')?.value || '2024'),
+  };
+
+  if (includeTime) {
+    result.hours = parts.find((p) => p.type === 'hour')?.value || '00';
+    result.minutes = parts.find((p) => p.type === 'minute')?.value || '00';
+  }
+
+  return result;
+}
 
 /**
  * Format a date to "10 Aug 2025" format in Qatar timezone
  * @param date - Date object, string, or null
- * @param fallback - Fallback text if date is invalid
+ * @param fallback - Fallback text if date is invalid (default: 'N/A')
  * @returns Formatted date string or fallback text
  */
 export function formatDate(
   date: Date | string | null | undefined,
   fallback: string = 'N/A'
 ): string {
-  if (!date) return fallback;
+  const parts = getQatarDateParts(date);
+  if (!parts) return fallback;
 
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
-
-  if (isNaN(dateObj.getTime())) return fallback;
-
-  // Format in Qatar timezone
-  const formatter = new Intl.DateTimeFormat('en-US', {
-    timeZone: QATAR_TIMEZONE,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  });
-
-  const parts = formatter.formatToParts(dateObj);
-  const month = parseInt(parts.find((p) => p.type === 'month')?.value || '1') - 1;
-  const day = parseInt(parts.find((p) => p.type === 'day')?.value || '1');
-  const year = parseInt(parts.find((p) => p.type === 'year')?.value || '2024');
-
-  return `${day} ${MONTH_NAMES[month]} ${year}`;
+  return `${parts.day} ${MONTH_NAMES[parts.month]} ${parts.year}`;
 }
 
 /**
  * Format a date to "10 Aug 2025 14:30" format in Qatar timezone
  * @param date - Date object, string, or null
- * @param fallback - Fallback text if date is invalid
+ * @param fallback - Fallback text if date is invalid (default: 'N/A')
  * @returns Formatted datetime string or fallback text
  */
 export function formatDateTime(
   date: Date | string | null | undefined,
   fallback: string = 'N/A'
 ): string {
-  if (!date) return fallback;
+  const parts = getQatarDateParts(date, true);
+  if (!parts) return fallback;
 
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
-
-  if (isNaN(dateObj.getTime())) return fallback;
-
-  // Format in Qatar timezone
-  const formatter = new Intl.DateTimeFormat('en-US', {
-    timeZone: QATAR_TIMEZONE,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  });
-
-  const parts = formatter.formatToParts(dateObj);
-  const month = parseInt(parts.find((p) => p.type === 'month')?.value || '1') - 1;
-  const day = parseInt(parts.find((p) => p.type === 'day')?.value || '1');
-  const year = parseInt(parts.find((p) => p.type === 'year')?.value || '2024');
-  const hours = parts.find((p) => p.type === 'hour')?.value || '00';
-  const minutes = parts.find((p) => p.type === 'minute')?.value || '00';
-
-  return `${day} ${MONTH_NAMES[month]} ${year} ${hours}:${minutes}`;
+  return `${parts.day} ${MONTH_NAMES[parts.month]} ${parts.year} ${parts.hours}:${parts.minutes}`;
 }
 
 /**
@@ -87,7 +94,8 @@ export function formatDateForCSV(date: Date | string | null | undefined): string
 
 /**
  * Format a date to relative time (e.g., "2h ago", "3d ago", "2 Jan")
- * Shows relative time for recent dates, absolute date for older ones
+ * Shows relative time for recent dates, absolute date for older ones.
+ * Uses Qatar timezone for consistency.
  * @param date - Date object, string, or null
  * @returns Relative time string or formatted date
  */
@@ -97,7 +105,7 @@ export function formatRelativeTime(date: Date | string | null | undefined): stri
   const dateObj = typeof date === 'string' ? new Date(date) : date;
   if (isNaN(dateObj.getTime())) return '';
 
-  const now = new Date();
+  const now = getQatarNow();
   const diffMs = now.getTime() - dateObj.getTime();
   const diffMins = Math.floor(diffMs / (1000 * 60));
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
@@ -115,47 +123,46 @@ export function formatRelativeTime(date: Date | string | null | undefined): stri
   // Days (< 7 days)
   if (diffDays < 7) return `${diffDays}d ago`;
 
-  // Older: show short date (e.g., "2 Jan" or "2 Jan 24")
-  const day = dateObj.getDate();
-  const month = MONTH_NAMES[dateObj.getMonth()];
-  const year = dateObj.getFullYear();
+  // Older: show short date in Qatar timezone
+  const parts = getQatarDateParts(dateObj);
+  if (!parts) return '';
+
   const currentYear = now.getFullYear();
 
-  if (year === currentYear) {
-    return `${day} ${month}`;
+  if (parts.year === currentYear) {
+    return `${parts.day} ${MONTH_NAMES[parts.month]}`;
   }
-  return `${day} ${month} ${String(year).slice(-2)}`;
+  return `${parts.day} ${MONTH_NAMES[parts.month]} ${String(parts.year).slice(-2)}`;
 }
 
 /**
- * Format date for display in Qatar timezone
- * Uses locale-based formatting with optional time
+ * Format a date to "Jan 2025" format (month and year only) in Qatar timezone
  * @param date - Date object, string, or null
- * @param includeTime - Whether to include time in the output
- * @returns Formatted date string or 'N/A'
+ * @param fallback - Fallback text if date is invalid (default: '')
+ * @returns Formatted month/year string or fallback text
  */
-export function formatQatarDate(
+export function formatMonthYear(
   date: Date | string | null | undefined,
-  includeTime = false
+  fallback: string = ''
 ): string {
-  if (!date) return 'N/A';
+  const parts = getQatarDateParts(date);
+  if (!parts) return fallback;
 
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  return `${MONTH_NAMES[parts.month]} ${parts.year}`;
+}
 
-  if (isNaN(dateObj.getTime())) return 'N/A';
+/**
+ * Format a date to "15 Jan" format (day and month only, no year) in Qatar timezone
+ * @param date - Date object, string, or null
+ * @param fallback - Fallback text if date is invalid (default: '')
+ * @returns Formatted day/month string or fallback text
+ */
+export function formatDayMonth(
+  date: Date | string | null | undefined,
+  fallback: string = ''
+): string {
+  const parts = getQatarDateParts(date);
+  if (!parts) return fallback;
 
-  const options: Intl.DateTimeFormatOptions = {
-    timeZone: QATAR_TIMEZONE,
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  };
-
-  if (includeTime) {
-    options.hour = '2-digit';
-    options.minute = '2-digit';
-    options.hour12 = false;
-  }
-
-  return dateObj.toLocaleString('en-GB', options);
+  return `${parts.day} ${MONTH_NAMES[parts.month]}`;
 }

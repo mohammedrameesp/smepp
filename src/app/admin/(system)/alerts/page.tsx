@@ -4,6 +4,7 @@ import { prisma } from '@/lib/core/prisma';
 import { getAdminAuthContext, hasAccess } from '@/lib/auth/impersonation-check';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
+import { getQatarStartOfDay } from '@/lib/core/datetime';
 import { AlertsClient } from './client';
 
 export const metadata: Metadata = {
@@ -34,8 +35,7 @@ interface AlertCounts {
 }
 
 async function getAlerts(tenantId: string): Promise<{ alerts: Alert[]; counts: AlertCounts }> {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = getQatarStartOfDay();
   const thirtyDaysFromNow = new Date(today);
   thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
 

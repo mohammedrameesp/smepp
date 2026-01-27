@@ -22,6 +22,7 @@ import {
 import { PageHeader, PageContent, PageHeaderButton } from '@/components/ui/page-header';
 import { DetailCard } from '@/components/ui/detail-card';
 import { InfoField, InfoFieldGrid } from '@/components/ui/info-field';
+import { formatDate } from '@/lib/core/datetime';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -258,11 +259,7 @@ export default async function EmployeeSupplierDetailPage({ params }: Props) {
               <InfoFieldGrid columns={1}>
                 <InfoField
                   label="Approved On"
-                  value={new Date(supplier.approvedAt).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  })}
+                  value={formatDate(supplier.approvedAt)}
                   size="sm"
                 />
                 {supplier.approvedBy && (
@@ -282,7 +279,7 @@ export default async function EmployeeSupplierDetailPage({ params }: Props) {
                   <div key={engagement.id} className="border-l-2 border-indigo-500 pl-4 py-2">
                     <div className="flex items-start justify-between mb-1">
                       <p className="text-sm font-semibold text-slate-900">
-                        {new Date(engagement.date).toLocaleDateString()}
+                        {formatDate(engagement.date)}
                       </p>
                       {engagement.rating && (
                         <div className="flex items-center gap-0.5">

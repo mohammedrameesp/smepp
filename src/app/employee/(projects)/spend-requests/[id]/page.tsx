@@ -22,6 +22,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { PageHeader, PageContent, PageHeaderButton } from '@/components/ui/page-header';
+import { formatDate, formatDateTime } from '@/lib/core/datetime';
 
 interface SpendRequestItem {
   id: string;
@@ -166,26 +167,6 @@ export default function EmployeeSpendRequestDetailPage({ params }: { params: Pro
     }).format(num) + ' ' + currency;
   };
 
-  // Format date
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    });
-  };
-
-  // Format datetime
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
 
   if (loading) {
     return (

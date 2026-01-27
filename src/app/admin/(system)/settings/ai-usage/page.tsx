@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
 import { formatNumber } from '@/lib/utils/math-utils';
+import { formatDayMonth, formatDate, formatRelativeTime } from '@/lib/core/datetime';
 
 interface UsageData {
   overview: {
@@ -74,17 +75,10 @@ function formatLargeNumber(num: number): string {
   return num.toString();
 }
 
-function formatDate(dateStr: string | null): string {
+// formatLastUsed uses the datetime module's formatRelativeTime for recent dates
+function formatLastUsed(dateStr: string | null): string {
   if (!dateStr) return 'Never';
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffDays === 0) return 'Today';
-  if (diffDays === 1) return 'Yesterday';
-  if (diffDays < 7) return `${diffDays} days ago`;
-  return date.toLocaleDateString();
+  return formatRelativeTime(dateStr) || formatDate(dateStr);
 }
 
 export default function AIUsagePage() {
@@ -278,7 +272,7 @@ export default function AIUsagePage() {
                           />
                           {i % Math.ceil(dailyUsage.length / 7) === 0 && (
                             <span className="text-[10px] text-muted-foreground mt-1 rotate-45 origin-left">
-                              {new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                              {formatDayMonth(day.date)}
                             </span>
                           )}
                         </div>
@@ -328,7 +322,7 @@ export default function AIUsagePage() {
                               {user.requestCount}
                             </TableCell>
                             <TableCell className="text-right text-muted-foreground">
-                              {formatDate(user.lastUsed)}
+                              {formatLastUsed(user.lastUsed)}
                             </TableCell>
                           </TableRow>
                         ))
@@ -458,7 +452,7 @@ export default function AIUsagePage() {
                               </div>
                             </TableCell>
                             <TableCell className="text-muted-foreground">
-                              {formatDate(query.createdAt)}
+                              {formatLastUsed(query.createdAt)}
                             </TableCell>
                           </TableRow>
                         ))}

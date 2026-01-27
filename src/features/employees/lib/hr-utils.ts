@@ -5,6 +5,11 @@
  * @module domains/hr
  */
 
+import { getQatarStartOfDay } from '@/lib/core/datetime';
+
+// Re-export formatDateForPicker as alias for toInputDateString for backwards compatibility
+export { toInputDateString as formatDateForPicker } from '@/lib/core/datetime';
+
 // ============================================================================
 // CONSTANTS
 // ============================================================================
@@ -80,8 +85,7 @@ export function getExpiryStatus(
   if (!date) return null;
 
   const expiryDate = typeof date === 'string' ? new Date(date) : date;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = getQatarStartOfDay();
 
   const warningDate = new Date(today);
   warningDate.setDate(warningDate.getDate() + warningDays);
@@ -104,8 +108,7 @@ export function getExpiryInfo(
   if (!date) return { status: null, daysRemaining: null };
 
   const expiryDate = typeof date === 'string' ? new Date(date) : date;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = getQatarStartOfDay();
 
   const diffTime = expiryDate.getTime() - today.getTime();
   const daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -125,8 +128,7 @@ export function getDaysRemaining(date: Date | string | null | undefined): number
   if (!date) return null;
 
   const expiryDate = typeof date === 'string' ? new Date(date) : date;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = getQatarStartOfDay();
 
   const diffTime = expiryDate.getTime() - today.getTime();
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -210,21 +212,6 @@ export function calculateTeamMemberProfileCompletion<T extends Record<string, un
 // ============================================================================
 // UTILITY FUNCTIONS
 // ============================================================================
-
-/**
- * Format a date for use in date picker inputs (YYYY-MM-DD)
- * @param date - Date object, string, or null
- * @returns Formatted date string or empty string
- */
-export function formatDateForPicker(date: Date | string | null | undefined): string {
-  if (!date) return '';
-
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
-
-  if (isNaN(dateObj.getTime())) return '';
-
-  return dateObj.toISOString().split('T')[0];
-}
 
 /**
  * Calculate tenure from a joining date

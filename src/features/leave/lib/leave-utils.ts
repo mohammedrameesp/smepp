@@ -7,6 +7,7 @@
 
 import { LeaveStatus, LeaveRequestType } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
+import { formatDate, formatDayMonth } from '@/lib/core/datetime';
 
 // Type definitions for Qatar labor law fields
 export interface PayTier {
@@ -826,33 +827,29 @@ export function canEditLeaveRequest(status: LeaveStatus, startDate: Date): boole
 
 /**
  * Get date range text for display
+ * Uses the datetime module for consistent Qatar timezone formatting
  */
 export function getDateRangeText(startDate: Date, endDate: Date): string {
   const start = new Date(startDate);
   const end = new Date(endDate);
 
-  const options: Intl.DateTimeFormatOptions = {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  };
-
+  // Single day: use formatDate for full date
   if (start.toDateString() === end.toDateString()) {
-    return start.toLocaleDateString('en-GB', options);
+    return formatDate(start);
   }
 
-  // Check if same month and year
+  // Same month and year: "X - Y Mon YYYY" (e.g., "15 - 20 Aug 2025")
   if (start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear()) {
-    return `${start.getDate()} - ${end.toLocaleDateString('en-GB', options)}`;
+    return `${start.getDate()} - ${formatDate(end)}`;
   }
 
-  // Check if same year
+  // Same year but different month: "X Mon - Y Mon YYYY" (e.g., "15 Aug - 20 Sep 2025")
   if (start.getFullYear() === end.getFullYear()) {
-    const startOpts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
-    return `${start.toLocaleDateString('en-GB', startOpts)} - ${end.toLocaleDateString('en-GB', options)}`;
+    return `${formatDayMonth(start)} - ${formatDate(end)}`;
   }
 
-  return `${start.toLocaleDateString('en-GB', options)} - ${end.toLocaleDateString('en-GB', options)}`;
+  // Different years: full format for both dates
+  return `${formatDate(start)} - ${formatDate(end)}`;
 }
 
 /**

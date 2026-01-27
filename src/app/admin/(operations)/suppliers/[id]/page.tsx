@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/core/prisma';
 import { getAdminAuthContext, hasAccess } from '@/lib/auth/impersonation-check';
 import { redirect, notFound } from 'next/navigation';
+import { formatDate } from '@/lib/core/datetime';
 
 import {
   Building2,
@@ -290,11 +291,7 @@ export default async function SupplierDetailPage({ params }: Props) {
               <InfoFieldGrid columns={1}>
                 <InfoField
                   label="Approved On"
-                  value={new Date(supplier.approvedAt).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  })}
+                  value={formatDate(supplier.approvedAt)}
                 />
                 {supplier.approvedBy && (
                   <InfoField label="Approved By" value={supplier.approvedBy.name || supplier.approvedBy.email} />
@@ -334,11 +331,7 @@ export default async function SupplierDetailPage({ params }: Props) {
                   >
                     <div className="flex items-start justify-between mb-2">
                       <p className="text-xs font-medium text-slate-500">
-                        {new Date(engagement.date).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
-                        })}
+                        {formatDate(engagement.date)}
                       </p>
                       {engagement.rating && (
                         <div className="flex items-center gap-0.5">
@@ -371,21 +364,13 @@ export default async function SupplierDetailPage({ params }: Props) {
               <div className="flex items-center justify-between text-sm">
                 <span className="text-slate-500">Created</span>
                 <span className="text-slate-900">
-                  {new Date(supplier.createdAt).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric',
-                  })}
+                  {formatDate(supplier.createdAt)}
                 </span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-slate-500">Last Updated</span>
                 <span className="text-slate-900">
-                  {new Date(supplier.updatedAt).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric',
-                  })}
+                  {formatDate(supplier.updatedAt)}
                 </span>
               </div>
               <div className="flex items-center justify-between text-sm">

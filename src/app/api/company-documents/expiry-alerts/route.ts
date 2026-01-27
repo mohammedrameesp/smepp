@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { getDocumentExpiryInfo, DOCUMENT_EXPIRY_WARNING_DAYS } from '@/features/company-documents';
+import { getQatarStartOfDay } from '@/lib/core/datetime';
 
 // GET /api/company-documents/expiry-alerts - Get documents expiring soon or expired
 export const GET = withErrorHandler(async (_request: NextRequest, context: APIContext) => {
@@ -12,8 +13,7 @@ export const GET = withErrorHandler(async (_request: NextRequest, context: APICo
   const db = tenantPrisma as TenantPrismaClient;
 
   const tenantId = tenant.tenantId;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = getQatarStartOfDay();
   const warningDate = new Date(today);
   warningDate.setDate(warningDate.getDate() + DOCUMENT_EXPIRY_WARNING_DAYS);
 

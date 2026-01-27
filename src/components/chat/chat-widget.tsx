@@ -22,6 +22,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
+import { formatDate, formatMonthYear } from '@/lib/core/datetime';
 
 // Default brand color (slate)
 const DEFAULT_BRAND_COLOR = '#0f172a';
@@ -381,7 +382,7 @@ export function ChatWidget() {
     if (diffMins < 1) return 'just now';
     if (diffMins < 60) return `${diffMins}m ago`;
     if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h ago`;
-    return date.toLocaleDateString();
+    return formatDate(date);
   };
 
   const formatFullTime = (dateStr: string) => {
@@ -469,7 +470,7 @@ export function ChatWidget() {
     if (diffDays === 1) return 'Yesterday';
     if (diffDays < 7) return 'This week';
     if (diffDays < 30) return 'This month';
-    return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    return formatMonthYear(date);
   };
 
   // Filter conversations by search

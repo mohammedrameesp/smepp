@@ -5,6 +5,8 @@
  * @module domains/system/company-documents
  */
 
+import { getQatarStartOfDay } from '@/lib/core/datetime';
+
 /** Number of days before expiry to show warning */
 export const DOCUMENT_EXPIRY_WARNING_DAYS = 30;
 
@@ -26,8 +28,7 @@ export function getDocumentExpiryStatus(
   warningDays: number = DOCUMENT_EXPIRY_WARNING_DAYS
 ): DocumentExpiryStatus {
   const expiry = typeof expiryDate === 'string' ? new Date(expiryDate) : expiryDate;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = getQatarStartOfDay();
 
   const warningDate = new Date(today);
   warningDate.setDate(warningDate.getDate() + warningDays);
@@ -48,8 +49,7 @@ export function getDocumentExpiryInfo(
   warningDays: number = DOCUMENT_EXPIRY_WARNING_DAYS
 ): DocumentExpiryInfo {
   const expiry = typeof expiryDate === 'string' ? new Date(expiryDate) : expiryDate;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = getQatarStartOfDay();
 
   const diffTime = expiry.getTime() - today.getTime();
   const daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -67,8 +67,7 @@ export function getDocumentExpiryInfo(
  */
 export function getDocumentDaysRemaining(expiryDate: Date | string): number {
   const expiry = typeof expiryDate === 'string' ? new Date(expiryDate) : expiryDate;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = getQatarStartOfDay();
 
   const diffTime = expiry.getTime() - today.getTime();
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));

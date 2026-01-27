@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DatePicker } from '@/components/ui/date-picker';
 import { CountrySelect } from '@/components/ui/country-select';
 import { GENDERS, MARITAL_STATUS } from '@/lib/data/constants';
+import { toInputDateString } from '@/lib/core/datetime';
 
 // DOB constraints: must be 18-80 years old
 const getMaxDOB = (): Date => {
@@ -31,12 +32,6 @@ interface PersonalStepProps {
   updateField: (field: string, value: unknown) => void;
   errors: Record<string, string>;
 }
-
-const formatDateForPicker = (date: Date | string | null | undefined): string => {
-  if (!date) return '';
-  const d = typeof date === 'string' ? new Date(date) : date;
-  return d.toISOString().split('T')[0];
-};
 
 export function PersonalStep({ formData, updateField, errors }: PersonalStepProps) {
   return (
@@ -59,7 +54,7 @@ export function PersonalStep({ formData, updateField, errors }: PersonalStepProp
             </Label>
             <DatePicker
               id="dateOfBirth"
-              value={formatDateForPicker(formData.dateOfBirth as string)}
+              value={toInputDateString(formData.dateOfBirth as string)}
               onChange={(val) => updateField('dateOfBirth', val)}
               placeholder="DD/MM/YYYY"
               minDate={getMinDOB()}

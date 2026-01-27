@@ -10,6 +10,7 @@ import { ArrowLeft, Loader2, CheckCircle, XCircle, Clock, FileCheck, ShoppingCar
 import { StatusBadge, PriorityBadge } from '@/features/spend-requests/components';
 import { getAllowedStatusTransitions, getStatusLabel, getPurchaseTypeLabel, getCostTypeLabel, getPaymentModeLabel } from '@/features/spend-requests/lib/spend-request-utils';
 import { ApprovalChainStatus } from '@/components/approvals';
+import { formatDate, formatDateTime } from '@/lib/core/datetime';
 
 interface SpendRequestItem {
   id: string;
@@ -169,24 +170,7 @@ export default function AdminSpendRequestDetailPage({ params }: { params: Promis
     }).format(num) + ' ' + currency;
   };
 
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    });
-  };
-
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
+  // formatDate and formatDateTime are imported from @/lib/core/datetime
 
   if (loading) {
     return (

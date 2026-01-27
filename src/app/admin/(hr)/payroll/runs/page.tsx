@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/table';
 import { Plus, Eye, Users, DollarSign, CreditCard } from 'lucide-react';
 import { formatCurrency } from '@/lib/core/currency';
+import { formatDate } from '@/lib/core/datetime';
 import { getMonthName, getPayrollStatusText, getPayrollStatusColor } from '@/features/payroll/lib/utils';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
@@ -182,7 +183,7 @@ export default async function PayrollRunsPage({ searchParams }: PageProps) {
                       {formatCurrency(Number(run.totalNet))}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {new Date(run.createdAt).toLocaleDateString()}
+                      {formatDate(run.createdAt)}
                     </TableCell>
                     <TableCell>
                       <Button asChild variant="ghost" size="icon">

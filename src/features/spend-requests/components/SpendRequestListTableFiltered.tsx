@@ -20,6 +20,7 @@ import { TableFilterBar } from '@/components/ui/table-filter-bar';
 import { useClientDataTable } from '@/hooks/use-client-data-table';
 import { Eye, ShoppingCart } from 'lucide-react';
 import { StatusBadge, PriorityBadge } from './StatusBadge';
+import { formatDate } from '@/lib/core/datetime';
 
 const PAGE_SIZE = 50;
 
@@ -132,15 +133,6 @@ export function SpendRequestListTableFiltered({
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(num) + ' ' + currency;
-  };
-
-  // Format date
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    });
   };
 
   const basePath = isAdmin ? '/admin/spend-requests' : '/employee/spend-requests';

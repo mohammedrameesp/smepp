@@ -22,6 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Search, ChevronLeft, ChevronRight, Loader2, CalendarDays } from 'lucide-react';
 import Link from 'next/link';
 import { getLeaveStatusVariant, getDateRangeText, formatLeaveDays, getRequestTypeText } from '@/features/leave/lib/leave-utils';
+import { formatDate } from '@/lib/core/datetime';
 import { LeaveStatus } from '@prisma/client';
 
 // Role display names for approval status
@@ -289,11 +290,7 @@ export function LeaveRequestsTable({ showUser = true, memberId, basePath = '/adm
                     </Badge>
                   </TableCell>
                   <TableCell className="text-sm text-gray-500 hidden lg:table-cell">
-                    {new Date(request.createdAt).toLocaleDateString('en-GB', {
-                      day: 'numeric',
-                      month: 'short',
-                      year: 'numeric',
-                    })}
+                    {formatDate(request.createdAt)}
                   </TableCell>
                   <TableCell className="text-right">
                     <Button variant="outline" size="sm" asChild>

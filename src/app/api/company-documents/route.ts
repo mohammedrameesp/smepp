@@ -5,6 +5,7 @@ import { companyDocumentSchema, companyDocumentQuerySchema } from '@/features/co
 import { getDocumentExpiryInfo, DOCUMENT_EXPIRY_WARNING_DAYS } from '@/features/company-documents';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { Prisma } from '@prisma/client';
+import { getQatarStartOfDay } from '@/lib/core/datetime';
 
 // GET /api/company-documents - List documents with filtering
 export const GET = withErrorHandler(async (request: NextRequest, context: APIContext) => {
@@ -28,8 +29,7 @@ export const GET = withErrorHandler(async (request: NextRequest, context: APICon
     sortOrder: searchParams.get('sortOrder') || 'asc',
   });
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = getQatarStartOfDay();
   const warningDate = new Date(today);
   warningDate.setDate(warningDate.getDate() + DOCUMENT_EXPIRY_WARNING_DAYS);
 

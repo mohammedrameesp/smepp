@@ -29,6 +29,7 @@ import {
 import { getOrganizationCodePrefix, getEntityFormat, applyFormat } from '@/lib/utils/code-prefix';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import logger from '@/lib/core/log';
+import { getQatarStartOfDay } from '@/lib/core/datetime';
 
 async function getLeaveRequestsHandler(request: NextRequest, context: APIContext) {
     const { tenant, prisma: tenantPrisma } = context;
@@ -311,10 +312,8 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
     const endDate = new Date(data.endDate);
 
     // Validate start date is not in the past (unless admin creating backdated request)
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const startDateNormalized = new Date(startDate);
-    startDateNormalized.setHours(0, 0, 0, 0);
+    const today = getQatarStartOfDay();
+    const startDateNormalized = getQatarStartOfDay(startDate);
 
     if (startDateNormalized < today && !isAdmin) {
       return NextResponse.json(

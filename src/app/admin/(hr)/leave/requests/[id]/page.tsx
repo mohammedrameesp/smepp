@@ -14,6 +14,7 @@ import {
   getRequestTypeText,
   getAnnualLeaveDetails,
 } from '@/features/leave/lib/leave-utils';
+import { formatDate } from '@/lib/core/datetime';
 import { LeaveApprovalActions, LeaveRequestHistory } from '@/features/leave/components';
 import { ApprovalChainStatus } from '@/components/approvals';
 import { LeaveStatus, LeaveRequestType } from '@prisma/client';
@@ -279,11 +280,7 @@ export default function AdminLeaveRequestDetailPage() {
                 )}
                 <InfoField
                   label="Submitted"
-                  value={new Date(request.createdAt).toLocaleDateString('en-GB', {
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric',
-                  })}
+                  value={formatDate(request.createdAt)}
                 />
               </InfoFieldGrid>
 

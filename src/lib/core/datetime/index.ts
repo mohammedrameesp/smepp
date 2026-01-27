@@ -1,12 +1,16 @@
 /**
  * @file index.ts
  * @description Unified datetime module - consolidates all date/time utilities
- *              including constants, formatting, timezone operations, and parsing
+ *              including constants, formatting, timezone operations, and parsing.
+ *
+ * All functions display dates in Qatar timezone (Asia/Qatar, GST, UTC+3).
+ * Qatar does not observe daylight saving time.
+ *
  * @module lib/core/datetime
  */
 
 // Constants
-export { QATAR_TIMEZONE, QATAR_UTC_OFFSET, MONTH_NAMES } from './constants';
+export { QATAR_TIMEZONE, MONTH_NAMES } from './constants';
 
 // Formatting functions
 export {
@@ -14,7 +18,8 @@ export {
   formatDateTime,
   formatDateForCSV,
   formatRelativeTime,
-  formatQatarDate,
+  formatMonthYear,
+  formatDayMonth,
 } from './formatting';
 
 // Timezone operations

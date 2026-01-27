@@ -40,6 +40,7 @@ import { PhoneInput, QatarPhoneInput } from './phone-input';
 import { DocumentUpload } from './document-upload';
 import { MultiSelectTags, TagsInput } from './multi-select-tags';
 import { ExpiryBadge, ExpiryIndicator } from './expiry-badge';
+import { formatDate } from '@/lib/core/datetime';
 
 /**
  * Get the phone country code for a given nationality.
@@ -699,7 +700,7 @@ export function HRProfileForm({ initialData, isAdmin = false, userId, onSave }: 
             ) : (
               <>
                 <Input
-                  value={watch('dateOfJoining') ? new Date(watch('dateOfJoining')!).toLocaleDateString() : ''}
+                  value={watch('dateOfJoining') ? formatDate(watch('dateOfJoining')!) : ''}
                   disabled
                   className="bg-gray-50"
                 />

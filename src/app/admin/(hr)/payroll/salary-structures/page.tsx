@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/table';
 import { Plus, Pencil, FileText, DollarSign, CreditCard } from 'lucide-react';
 import { formatCurrency } from '@/lib/core/currency';
+import { formatDate } from '@/lib/core/datetime';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 
@@ -173,7 +174,7 @@ export default async function SalaryStructuresPage({ searchParams }: PageProps) 
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {new Date(salary.effectiveFrom).toLocaleDateString()}
+                        {formatDate(salary.effectiveFrom)}
                       </TableCell>
                       <TableCell>
                         <Button asChild variant="ghost" size="icon">

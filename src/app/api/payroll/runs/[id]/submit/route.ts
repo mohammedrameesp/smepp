@@ -13,6 +13,7 @@ import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { createBulkNotifications, NotificationTemplates } from '@/features/notifications/lib';
 import { sendEmail, payrollSubmittedEmail } from '@/lib/email';
 import logger from '@/lib/core/log';
+import { formatMonthYear } from '@/lib/core/datetime';
 
 async function submitPayrollHandler(request: NextRequest, context: APIContext) {
     const { tenant, params, prisma: tenantPrisma } = context;
@@ -103,7 +104,7 @@ async function submitPayrollHandler(request: NextRequest, context: APIContext) {
       }),
     ]);
 
-    const periodLabel = `${payrollRun.periodStart.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}`;
+    const periodLabel = formatMonthYear(payrollRun.periodStart);
     const currency = org?.currency || 'QAR';
     const submitterName = submitter?.name || submitter?.email || 'Admin';
 

@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, FileCheck, AlertTriangle, Clock, CheckCircle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
+import { getQatarStartOfDay } from '@/lib/core/datetime';
 import { getDocumentExpiryInfo, DOCUMENT_EXPIRY_WARNING_DAYS } from '@/features/company-documents';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
@@ -42,8 +43,7 @@ async function getCompanyDocuments(tenantId: string) {
 }
 
 async function getDocumentStats(tenantId: string) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = getQatarStartOfDay();
   const warningDate = new Date(today);
   warningDate.setDate(warningDate.getDate() + DOCUMENT_EXPIRY_WARNING_DAYS);
 

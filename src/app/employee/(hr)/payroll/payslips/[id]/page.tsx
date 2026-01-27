@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Building, TrendingUp, TrendingDown, DollarSign, CreditCard } from 'lucide-react';
 import { formatCurrency } from '@/lib/core/currency';
+import { formatDate } from '@/lib/core/datetime';
 import { getMonthName } from '@/features/payroll/lib/utils';
 import { PageHeader, PageContent, PageHeaderButton } from '@/components/ui/page-header';
 import { DetailCard } from '@/components/ui/detail-card';
@@ -211,11 +212,7 @@ export default async function EmployeePayslipDetailPage({ params }: PageProps) {
           <DetailCard icon={CreditCard} iconColor="blue" title="Payment Information" subtitle="Salary payment confirmation">
             <InfoField
               label="Payment Date"
-              value={new Date(payslip.paidAt).toLocaleDateString('en-US', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-              })}
+              value={formatDate(payslip.paidAt)}
             />
           </DetailCard>
         )}

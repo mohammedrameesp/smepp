@@ -17,6 +17,7 @@ import { createLeaveRequestSchema } from '@/features/leave/validations/leave';
 import { useState, useEffect } from 'react';
 import { calculateWorkingDays, calculateWorkingDaysWithHolidays, formatLeaveDays, calculateRemainingBalance, getHolidaysInRange, type PublicHolidayData } from '@/features/leave/lib/leave-utils';
 import { LeaveRequestType } from '@prisma/client';
+import { getQatarStartOfDay } from '@/lib/core/datetime';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -391,7 +392,7 @@ export function LeaveRequestForm({ leaveTypes, balances, onSuccess, isAdmin = fa
                   }
                 }}
                 placeholder="DD/MM/YYYY"
-                minDate={isAdmin ? undefined : (() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; })()}
+                minDate={isAdmin ? undefined : getQatarStartOfDay()}
               />
               {form.formState.errors.startDate && (
                 <p className="text-sm text-red-500">{form.formState.errors.startDate.message}</p>
@@ -412,9 +413,7 @@ export function LeaveRequestForm({ leaveTypes, balances, onSuccess, isAdmin = fa
                       const [y, m, d] = startDate.split('-').map(Number);
                       return new Date(y, m - 1, d, 0, 0, 0);
                     }
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    return today;
+                    return getQatarStartOfDay();
                   })()}
                   placeholder="DD/MM/YYYY"
                 />

@@ -9,6 +9,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { getLeaveStatusVariant, formatLeaveDays, isPublicHoliday, type PublicHolidayData } from '@/features/leave/lib/leave-utils';
 import { LeaveStatus } from '@prisma/client';
 import Link from 'next/link';
+import { formatDayMonth } from '@/lib/core/datetime';
 
 interface CalendarEvent {
   id: string;
@@ -343,9 +344,9 @@ export function LeaveCalendarClient() {
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="text-sm text-gray-500">
-                      {new Date(event.start).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                      {formatDayMonth(event.start)}
                       {event.start !== event.end && (
-                        <> - {new Date(event.end).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</>
+                        <> - {formatDayMonth(event.end)}</>
                       )}
                     </div>
                     <Badge variant={getLeaveStatusVariant(event.extendedProps.status as LeaveStatus)}>

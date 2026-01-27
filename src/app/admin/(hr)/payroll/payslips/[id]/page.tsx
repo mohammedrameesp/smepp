@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { PageHeader, PageContent, PageHeaderButton } from '@/components/ui/page-header';
 import { formatCurrency } from '@/lib/core/currency';
+import { formatDate } from '@/lib/core/datetime';
 import { getMonthName } from '@/features/payroll/lib/utils';
 import { DetailCard } from '@/components/ui/detail-card';
 import { InfoField, InfoFieldGrid } from '@/components/ui/info-field';
@@ -193,11 +194,7 @@ export default async function AdminPayslipDetailPage({ params }: PageProps) {
               <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4">
                 <p className="text-xs font-medium text-emerald-600 uppercase tracking-wide mb-1">Payment Date</p>
                 <p className="text-sm font-semibold text-emerald-700">
-                  {new Date(payslip.paidAt).toLocaleDateString('en-US', {
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric',
-                  })}
+                  {formatDate(payslip.paidAt)}
                 </p>
               </div>
             </DetailCard>
