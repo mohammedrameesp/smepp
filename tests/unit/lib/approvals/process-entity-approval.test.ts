@@ -36,11 +36,8 @@ jest.mock('@/features/notifications/lib', () => ({
   createBulkNotifications: jest.fn().mockResolvedValue(1),
 }));
 
-jest.mock('@/lib/core/email', () => ({
+jest.mock('@/lib/email', () => ({
   sendEmail: jest.fn().mockResolvedValue(undefined),
-}));
-
-jest.mock('@/lib/core/email-utils', () => ({
   emailWrapper: jest.fn((content) => content),
 }));
 
