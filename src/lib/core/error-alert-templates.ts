@@ -4,17 +4,39 @@
  * @module lib/core
  */
 
-import type { ErrorContext } from './error-logger';
+import type { ErrorContext, ErrorSeverity } from './error-logger';
 import { escapeHtml, DEFAULT_BRAND_COLOR, APP_DOMAIN } from '@/lib/email';
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TYPES
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/** Color scheme for severity badge styling */
+interface SeverityColorScheme {
+  bg: string;
+  border: string;
+  text: string;
+}
+
+/** Email template output with subject, HTML body, and plain text fallback */
+export interface EmailTemplate {
+  subject: string;
+  html: string;
+  text: string;
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CONSTANTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Brand color for email header and CTA buttons */
 const BRAND_COLOR = DEFAULT_BRAND_COLOR;
 
-// Severity colors for visual distinction
-const SEVERITY_COLORS = {
+/** Default severity level when not specified in error context */
+const DEFAULT_SEVERITY: ErrorSeverity = 'error';
+
+/** Color schemes for each severity level */
+const SEVERITY_COLORS: Record<ErrorSeverity, SeverityColorScheme> = {
   warning: { bg: '#fef9c3', border: '#eab308', text: '#854d0e' },
   error: { bg: '#fee2e2', border: '#ef4444', text: '#991b1b' },
   critical: { bg: '#fecaca', border: '#dc2626', text: '#7f1d1d' },
@@ -24,6 +46,14 @@ const SEVERITY_COLORS = {
 // EMAIL WRAPPER
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/**
+ * Wrap email content in a consistent HTML template for error alerts.
+ * This is a simplified wrapper for system alerts (no org branding needed).
+ *
+ * @param content - The main HTML content of the email body
+ * @returns Complete HTML email document
+ * @internal
+ */
 function emailWrapper(content: string): string {
   return `
 <!DOCTYPE html>
@@ -62,12 +92,8 @@ function emailWrapper(content: string): string {
 // SYSTEM ERROR ALERT TEMPLATE
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export function systemErrorAlertEmail(context: ErrorContext): {
-  subject: string;
-  html: string;
-  text: string;
-} {
-  const severity = context.severity || 'error';
+export function systemErrorAlertEmail(context: ErrorContext): EmailTemplate {
+  const severity = context.severity || DEFAULT_SEVERITY;
   const severityColors = SEVERITY_COLORS[severity];
   const severityLabel = severity.toUpperCase();
 
