@@ -5,6 +5,8 @@
  * that could manipulate AI behavior or extract sensitive data.
  */
 
+import { MAX_INPUT_LENGTH } from './config';
+
 export interface SanitizationResult {
   sanitized: string;
   flagged: boolean;
@@ -57,9 +59,6 @@ const SUSPICIOUS_CHARS: Array<{ char: string; maxCount: number; name: string }> 
   { char: '<', maxCount: 10, name: 'angle_brackets' },
   { char: '\\', maxCount: 10, name: 'backslashes' },
 ];
-
-// Maximum input length
-const MAX_INPUT_LENGTH = 4000;
 
 /**
  * Check if string contains base64 encoded content

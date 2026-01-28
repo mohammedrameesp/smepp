@@ -9,37 +9,14 @@
 
 import { prisma } from '@/lib/core/prisma';
 import { SubscriptionTier } from '@prisma/client';
+import {
+  getLimitsForTier,
+  MAX_CONCURRENT_REQUESTS,
+  GET_REQUESTS_PER_HOUR,
+} from './config';
 
-// Default limits by subscription tier
-const TIER_LIMITS: Record<SubscriptionTier, { dailyTokens: number; monthlyTokens: number; requestsPerHour: number }> = {
-  [SubscriptionTier.FREE]: {
-    dailyTokens: 10000,
-    monthlyTokens: 100000,
-    requestsPerHour: 30,
-  },
-  [SubscriptionTier.PLUS]: {
-    dailyTokens: 50000,
-    monthlyTokens: 500000,
-    requestsPerHour: 100,
-  },
-};
-
-// Environment variable overrides
-const ENV_DAILY_LIMIT = process.env.AI_TOKEN_DAILY_LIMIT
-  ? parseInt(process.env.AI_TOKEN_DAILY_LIMIT, 10)
-  : null;
-const ENV_MONTHLY_LIMIT = process.env.AI_TOKEN_MONTHLY_LIMIT
-  ? parseInt(process.env.AI_TOKEN_MONTHLY_LIMIT, 10)
-  : null;
-const ENV_REQUESTS_PER_HOUR = process.env.AI_RATE_LIMIT_REQUESTS_PER_HOUR
-  ? parseInt(process.env.AI_RATE_LIMIT_REQUESTS_PER_HOUR, 10)
-  : null;
-
-// Max concurrent requests per user (prevents batching attacks)
-const MAX_CONCURRENT_REQUESTS = 3;
-
-// Lighter rate limit for GET endpoints (read-only)
-export const GET_REQUESTS_PER_HOUR = 120;
+// Re-export for backward compatibility
+export { GET_REQUESTS_PER_HOUR, getLimitsForTier } from './config';
 
 export interface RateLimitResult {
   allowed: boolean;
@@ -50,21 +27,12 @@ export interface RateLimitResult {
   retryAfterSeconds?: number;
 }
 
-export interface UsageStats {
-  memberId: string;
-  tenantId: string;
-  dailyTokensUsed: number;
-  dailyTokenLimit: number;
-  monthlyTokensUsed: number;
-  monthlyTokenLimit: number;
-  hourlyRequestsUsed: number;
-  hourlyRequestLimit: number;
-  percentDailyUsed: number;
-  percentMonthlyUsed: number;
-}
-
 // In-memory concurrent request tracking (per user)
-// This is safe in-memory because it's short-lived (request duration only)
+// NOTE: This is a best-effort limit that only works within a single serverless instance.
+// In serverless deployments (Vercel), each cold start creates a new instance with its own Map,
+// so this won't prevent concurrent requests across instances. For stricter enforcement,
+// consider using Redis or database-backed tracking. However, for our use case this is
+// acceptable since it still provides per-instance protection against batching attacks.
 const activeRequests = new Map<string, number>();
 
 /**
@@ -90,19 +58,6 @@ export function releaseConcurrentSlot(memberId: string): void {
   } else {
     activeRequests.set(memberId, current - 1);
   }
-}
-
-/**
- * Get limits for a subscription tier
- */
-export function getLimitsForTier(tier: SubscriptionTier) {
-  const baseLimits = TIER_LIMITS[tier] || TIER_LIMITS[SubscriptionTier.FREE];
-
-  return {
-    dailyTokens: ENV_DAILY_LIMIT || baseLimits.dailyTokens,
-    monthlyTokens: ENV_MONTHLY_LIMIT || baseLimits.monthlyTokens,
-    requestsPerHour: ENV_REQUESTS_PER_HOUR || baseLimits.requestsPerHour,
-  };
 }
 
 /**
@@ -303,72 +258,6 @@ export async function checkAIRateLimit(
     allowed: true,
     current: dailyTokensUsed,
     limit: limits.dailyTokens,
-  };
-}
-
-/**
- * Get usage statistics for a member
- */
-export async function getUsageStats(
-  memberId: string,
-  tenantId: string,
-  tier: SubscriptionTier
-): Promise<UsageStats> {
-  const limits = getLimitsForTier(tier);
-  const dayStart = getStartOfDay();
-  const monthStart = getStartOfMonth();
-
-  // Get daily member usage
-  const dailyUsage = await prisma.aIChatUsage.aggregate({
-    where: {
-      memberId,
-      tenantId,
-      createdAt: { gte: dayStart },
-    },
-    _sum: { totalTokens: true },
-  });
-
-  // Get monthly org usage
-  const monthlyUsage = await prisma.aIChatUsage.aggregate({
-    where: {
-      tenantId,
-      createdAt: { gte: monthStart },
-    },
-    _sum: { totalTokens: true },
-  });
-
-  // Get organization's custom budget
-  const org = await prisma.organization.findUnique({
-    where: { id: tenantId },
-    select: { aiTokenBudgetMonthly: true },
-  });
-
-  const monthlyLimit = org?.aiTokenBudgetMonthly || limits.monthlyTokens;
-
-  // Get hourly request count from database
-  const hourStart = getStartOfHour();
-  const hourlyRequestsUsed = await prisma.aIChatUsage.count({
-    where: {
-      memberId,
-      tenantId,
-      createdAt: { gte: hourStart },
-    },
-  });
-
-  const dailyTokensUsed = dailyUsage._sum.totalTokens || 0;
-  const monthlyTokensUsed = monthlyUsage._sum.totalTokens || 0;
-
-  return {
-    memberId,
-    tenantId,
-    dailyTokensUsed,
-    dailyTokenLimit: limits.dailyTokens,
-    monthlyTokensUsed,
-    monthlyTokenLimit: monthlyLimit,
-    hourlyRequestsUsed,
-    hourlyRequestLimit: limits.requestsPerHour,
-    percentDailyUsed: Math.round((dailyTokensUsed / limits.dailyTokens) * 100),
-    percentMonthlyUsed: Math.round((monthlyTokensUsed / monthlyLimit) * 100),
   };
 }
 

@@ -1,10 +1,8 @@
 import { prisma } from '@/lib/core/prisma';
-import { ChatContext } from './chat-service';
+import type { ChatContext } from './chat-service';
 import { SubscriptionStatus, AssetStatus } from '@prisma/client';
 import { deriveOrgRole } from '@/lib/access-control';
-
-// Maximum number of records to return from any function
-const MAX_RESULT_ARRAY_LENGTH = 50;
+import { MAX_RESULT_ARRAY_LENGTH } from './config';
 
 /**
  * Sanitize function results to prevent data leakage
@@ -49,6 +47,10 @@ export interface ChatFunction {
     required?: string[];
   };
   requiresAdmin?: boolean;
+  /** Entity type for audit logging (e.g., 'Employee', 'Asset') */
+  entityType?: string;
+  /** Whether this function accesses sensitive data (salary, personal info) */
+  accessesSensitiveData?: boolean;
 }
 
 export const chatFunctions: ChatFunction[] = [
@@ -65,6 +67,7 @@ export const chatFunctions: ChatFunction[] = [
       },
       required: ['query'],
     },
+    entityType: 'Employee',
   },
   {
     name: 'getEmployeeDetails',
@@ -79,6 +82,7 @@ export const chatFunctions: ChatFunction[] = [
       },
       required: ['employeeId'],
     },
+    entityType: 'Employee',
   },
   {
     name: 'getEmployeeSalary',
@@ -94,6 +98,8 @@ export const chatFunctions: ChatFunction[] = [
       required: ['employeeId'],
     },
     requiresAdmin: true,
+    entityType: 'Employee',
+    accessesSensitiveData: true,
   },
   {
     name: 'getSubscriptionUsers',
@@ -108,6 +114,7 @@ export const chatFunctions: ChatFunction[] = [
       },
       required: ['serviceName'],
     },
+    entityType: 'Subscription',
   },
   {
     name: 'listSubscriptions',
@@ -121,6 +128,7 @@ export const chatFunctions: ChatFunction[] = [
         },
       },
     },
+    entityType: 'Subscription',
   },
   {
     name: 'getEmployeeAssets',
@@ -135,6 +143,7 @@ export const chatFunctions: ChatFunction[] = [
       },
       required: ['employeeId'],
     },
+    entityType: 'Asset',
   },
   {
     name: 'listAssets',
@@ -156,6 +165,7 @@ export const chatFunctions: ChatFunction[] = [
         },
       },
     },
+    entityType: 'Asset',
   },
   {
     name: 'getPendingLeaveRequests',
@@ -164,6 +174,7 @@ export const chatFunctions: ChatFunction[] = [
       type: 'object',
       properties: {},
     },
+    entityType: 'LeaveRequest',
   },
   {
     name: 'getEmployeeLeaveBalance',
@@ -178,6 +189,7 @@ export const chatFunctions: ChatFunction[] = [
       },
       required: ['employeeId'],
     },
+    entityType: 'LeaveRequest',
   },
   {
     name: 'getExpiringDocuments',
@@ -191,6 +203,7 @@ export const chatFunctions: ChatFunction[] = [
         },
       },
     },
+    entityType: 'Document',
   },
   {
     name: 'getTotalPayroll',
@@ -200,6 +213,8 @@ export const chatFunctions: ChatFunction[] = [
       properties: {},
     },
     requiresAdmin: true,
+    entityType: 'PayrollRun',
+    accessesSensitiveData: true,
   },
   {
     name: 'getEmployeeCount',
@@ -208,6 +223,7 @@ export const chatFunctions: ChatFunction[] = [
       type: 'object',
       properties: {},
     },
+    entityType: 'Employee',
   },
   {
     name: 'getAssetDepreciation',
@@ -221,6 +237,7 @@ export const chatFunctions: ChatFunction[] = [
         },
       },
     },
+    entityType: 'Asset',
   },
   {
     name: 'getPayrollRunStatus',
@@ -239,6 +256,8 @@ export const chatFunctions: ChatFunction[] = [
       },
     },
     requiresAdmin: true,
+    entityType: 'PayrollRun',
+    accessesSensitiveData: true,
   },
   {
     name: 'getSpendRequestSummary',
@@ -252,6 +271,7 @@ export const chatFunctions: ChatFunction[] = [
         },
       },
     },
+    entityType: 'SpendRequest',
   },
   {
     name: 'searchSuppliers',
@@ -265,8 +285,24 @@ export const chatFunctions: ChatFunction[] = [
         },
       },
     },
+    entityType: 'Supplier',
   },
 ];
+
+// ============================================================================
+// Derived Constants (for use by other modules)
+// ============================================================================
+
+/** Function metadata for audit logging */
+export const FUNCTION_METADATA = Object.fromEntries(
+  chatFunctions.map((fn) => [
+    fn.name,
+    {
+      entityType: fn.entityType,
+      accessesSensitiveData: fn.accessesSensitiveData ?? false,
+    },
+  ])
+) as Record<string, { entityType?: string; accessesSensitiveData: boolean }>;
 
 /**
  * Execute a chat function with the given arguments

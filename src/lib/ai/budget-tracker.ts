@@ -6,11 +6,7 @@
 
 import { prisma } from '@/lib/core/prisma';
 import { SubscriptionTier } from '@prisma/client';
-import { getLimitsForTier } from './rate-limiter';
-
-// Usage thresholds for notifications (percentage)
-const ALERT_THRESHOLDS = [75, 90, 100] as const;
-type AlertThreshold = typeof ALERT_THRESHOLDS[number];
+import { getLimitsForTier, ALERT_THRESHOLDS, AlertThreshold } from './config';
 
 // Key for tracking last alert sent per org/threshold
 function getAlertKey(tenantId: string, threshold: AlertThreshold, period: 'daily' | 'monthly'): string {
@@ -232,35 +228,3 @@ export async function trackTokenUsage(
   }
 }
 
-/**
- * Get usage summary for display
- */
-export async function getUsageSummary(
-  tenantId: string,
-  tier: SubscriptionTier
-): Promise<{
-  status: BudgetStatus;
-  progressColor: 'green' | 'yellow' | 'red';
-  statusText: string;
-}> {
-  const status = await getBudgetStatus(tenantId, tier);
-
-  let progressColor: 'green' | 'yellow' | 'red';
-  let statusText: string;
-
-  if (status.percentUsed >= 100) {
-    progressColor = 'red';
-    statusText = 'Budget exceeded - AI chat limited';
-  } else if (status.percentUsed >= 90) {
-    progressColor = 'red';
-    statusText = 'Critical - Consider upgrading';
-  } else if (status.percentUsed >= 75) {
-    progressColor = 'yellow';
-    statusText = 'Approaching limit';
-  } else {
-    progressColor = 'green';
-    statusText = 'Normal usage';
-  }
-
-  return { status, progressColor, statusText };
-}

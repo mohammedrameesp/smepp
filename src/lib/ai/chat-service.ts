@@ -3,6 +3,7 @@ import { prisma } from '@/lib/core/prisma';
 import { chatFunctions, executeFunction } from './functions';
 import { canAccessFunction } from './permissions';
 import { Role } from '@prisma/client';
+import { AI_MODEL, MODEL_PRICING, AI_ENV, validateOpenAIConfig } from './config';
 
 /**
  * Sanitize conversation title to prevent XSS
@@ -44,11 +45,9 @@ let openai: OpenAI | null = null;
 
 function getOpenAI(): OpenAI {
   if (!openai) {
-    if (!process.env.OPENAI_API_KEY) {
-      throw new Error('OPENAI_API_KEY environment variable is not set');
-    }
+    validateOpenAIConfig();
     openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
+      apiKey: AI_ENV.OPENAI_API_KEY,
     });
   }
   return openai;
@@ -71,23 +70,11 @@ export interface ChatResponse {
   }[];
 }
 
-// Model pricing per token (as of Dec 2024)
-const MODEL_PRICING: Record<string, { input: number; output: number }> = {
-  'gpt-4o-mini': {
-    input: 0.00000015,  // $0.15 per 1M tokens
-    output: 0.0000006,  // $0.60 per 1M tokens
-  },
-  'gpt-4o': {
-    input: 0.0000025,   // $2.50 per 1M tokens
-    output: 0.00001,    // $10 per 1M tokens
-  },
-};
-
 /**
  * Calculate cost in USD for token usage
  */
 function calculateCost(promptTokens: number, completionTokens: number, model: string): number {
-  const pricing = MODEL_PRICING[model] || MODEL_PRICING['gpt-4o-mini'];
+  const pricing = MODEL_PRICING[model] || MODEL_PRICING[AI_MODEL];
   return (promptTokens * pricing.input) + (completionTokens * pricing.output);
 }
 
@@ -195,11 +182,9 @@ export async function processChat(
     canAccessFunction(fn.name, context.userRole)
   );
 
-  const MODEL = 'gpt-4o-mini';
-
   // Call OpenAI with function calling
   const response = await getOpenAI().chat.completions.create({
-    model: MODEL,
+    model: AI_MODEL,
     messages,
     tools: availableFunctions.map((fn) => ({
       type: 'function' as const,
@@ -214,7 +199,7 @@ export async function processChat(
 
   // Record usage from initial API call
   if (response.usage) {
-    await recordUsage(context.tenantId, context.userId, response.usage, MODEL);
+    await recordUsage(context.tenantId, context.userId, response.usage, AI_MODEL);
   }
 
   const responseMessage = response.choices[0].message;
@@ -247,7 +232,7 @@ export async function processChat(
 
     // Get final response with function results
     const finalResponse = await getOpenAI().chat.completions.create({
-      model: MODEL,
+      model: AI_MODEL,
       messages: [
         ...messages,
         responseMessage,
@@ -257,7 +242,7 @@ export async function processChat(
 
     // Record usage from final API call
     if (finalResponse.usage) {
-      await recordUsage(context.tenantId, context.userId, finalResponse.usage, MODEL);
+      await recordUsage(context.tenantId, context.userId, finalResponse.usage, AI_MODEL);
     }
 
     const finalMessage = finalResponse.choices[0].message.content || 'I was unable to process that request.';
@@ -442,12 +427,10 @@ export async function* processChatStream(
     canAccessFunction(fn.name, context.userRole)
   );
 
-  const MODEL = 'gpt-4o-mini';
-
   try {
     // First, call OpenAI without streaming to check for function calls
     const initialResponse = await getOpenAI().chat.completions.create({
-      model: MODEL,
+      model: AI_MODEL,
       messages,
       tools: availableFunctions.map((fn) => ({
         type: 'function' as const,
@@ -489,7 +472,7 @@ export async function* processChatStream(
 
       // Now stream the final response
       const stream = await getOpenAI().chat.completions.create({
-        model: MODEL,
+        model: AI_MODEL,
         messages: [...messages, responseMessage, ...toolResults],
         stream: true,
       });
@@ -517,7 +500,7 @@ export async function* processChatStream(
     } else {
       // No function calls, stream the response directly
       const stream = await getOpenAI().chat.completions.create({
-        model: MODEL,
+        model: AI_MODEL,
         messages,
         stream: true,
       });
@@ -547,5 +530,3 @@ export async function* processChatStream(
   }
 }
 
-// Export constants for use in other modules
-export const CHAT_MODEL = 'gpt-4o-mini';

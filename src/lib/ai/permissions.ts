@@ -2,14 +2,6 @@ import { Role } from '@prisma/client';
 import { chatFunctions } from './functions';
 
 /**
- * Functions that require admin role to access
- */
-const ADMIN_ONLY_FUNCTIONS = [
-  'getEmployeeSalary',
-  'getTotalPayroll',
-];
-
-/**
  * Check if a user role can access a specific function
  */
 export function canAccessFunction(functionName: string, userRole: Role): boolean {
@@ -17,60 +9,11 @@ export function canAccessFunction(functionName: string, userRole: Role): boolean
   if (!fn) return false;
 
   // Admin-only functions require DIRECTOR role (Dashboard ADMINs are mapped to DIRECTOR)
-  if (fn.requiresAdmin || ADMIN_ONLY_FUNCTIONS.includes(functionName)) {
+  // The requiresAdmin flag is the single source of truth (defined in functions.ts)
+  if (fn.requiresAdmin) {
     return userRole === Role.DIRECTOR;
   }
 
   // All other functions are available to all authenticated users
   return true;
-}
-
-/**
- * Get list of functions available to a user role
- */
-export function getAvailableFunctions(userRole: Role) {
-  return chatFunctions.filter((fn) => canAccessFunction(fn.name, userRole));
-}
-
-/**
- * Check if user can view sensitive data
- */
-export function canViewSensitiveData(userRole: Role): boolean {
-  return userRole === Role.DIRECTOR;
-}
-
-/**
- * Filter sensitive fields from data based on user role
- */
-export function filterSensitiveData<T extends Record<string, unknown>>(
-  data: T,
-  userRole: Role
-): T {
-  if (canViewSensitiveData(userRole)) {
-    return data;
-  }
-
-  // Remove sensitive fields for non-admin users
-  const sensitiveFields = [
-    'salary',
-    'basicSalary',
-    'grossSalary',
-    'housingAllowance',
-    'transportAllowance',
-    'foodAllowance',
-    'otherAllowances',
-    'qidNumber',
-    'passportNumber',
-    'iban',
-    'bankName',
-  ];
-
-  const filtered = { ...data };
-  for (const field of sensitiveFields) {
-    if (field in filtered) {
-      delete filtered[field];
-    }
-  }
-
-  return filtered;
 }

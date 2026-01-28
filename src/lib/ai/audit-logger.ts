@@ -9,6 +9,7 @@ import { createHash } from 'crypto';
 import { prisma } from '@/lib/core/prisma';
 import type { SanitizationResult } from './input-sanitizer';
 import { getRiskScore } from './input-sanitizer';
+import { FUNCTION_METADATA } from './functions';
 
 /**
  * Anonymize IP address for GDPR compliance
@@ -82,36 +83,13 @@ function extractDataAccessSummary(
   let recordCount = 0;
   let sensitiveData = false;
 
-  // Map function names to entity types
-  const functionToEntity: Record<string, string> = {
-    getEmployees: 'Employee',
-    getEmployeeCount: 'Employee',
-    getAssets: 'Asset',
-    getAssetCount: 'Asset',
-    getSubscriptions: 'Subscription',
-    getExpiringDocuments: 'Document',
-    getLeaveSummary: 'LeaveRequest',
-    getPendingLeaveRequests: 'LeaveRequest',
-    getAssetDepreciation: 'Asset',
-    getPayrollRunStatus: 'PayrollRun',
-    getSpendRequestSummary: 'SpendRequest',
-    searchSuppliers: 'Supplier',
-    getProjectProgress: 'Project',
-  };
-
-  // Sensitive data functions
-  const sensitiveFunctions = [
-    'getEmployees', // Contains salary info
-    'getPayrollRunStatus',
-    'getLeaveSummary',
-  ];
-
+  // Use centralized function metadata from functions.ts
   for (const funcName of functionsCalled) {
-    if (functionToEntity[funcName]) {
-      entityTypes.add(functionToEntity[funcName]);
+    const metadata = FUNCTION_METADATA[funcName];
+    if (metadata?.entityType) {
+      entityTypes.add(metadata.entityType);
     }
-
-    if (sensitiveFunctions.includes(funcName)) {
+    if (metadata?.accessesSensitiveData) {
       sensitiveData = true;
     }
   }
