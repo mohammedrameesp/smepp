@@ -72,36 +72,3 @@ export async function resetToDefaultPermissions(tenantId: string): Promise<void>
     }
   });
 }
-
-/**
- * Copy permissions from one organization to another.
- * Useful for creating new orgs based on a template.
- *
- * @security Caller must have access to both source and target organizations.
- * Typically used during organization cloning by super admins.
- *
- * @param sourceOrgId - The source organization ID to copy from
- * @param targetOrgId - The target organization ID to copy to
- * @throws {Error} If database operation fails
- */
-export async function copyPermissions(sourceOrgId: string, targetOrgId: string): Promise<void> {
-  const sourcePermissions = await prisma.rolePermission.findMany({
-    where: { tenantId: sourceOrgId },
-    select: { role: true, permission: true },
-  });
-
-  if (sourcePermissions.length === 0) {
-    // Fall back to defaults if source has no permissions
-    await seedDefaultPermissions(targetOrgId);
-    return;
-  }
-
-  await prisma.rolePermission.createMany({
-    data: sourcePermissions.map(({ role, permission }) => ({
-      tenantId: targetOrgId,
-      role,
-      permission,
-    })),
-    skipDuplicates: true,
-  });
-}

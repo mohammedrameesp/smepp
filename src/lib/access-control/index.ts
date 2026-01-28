@@ -78,7 +78,6 @@ export {
 export {
   seedDefaultPermissions,
   resetToDefaultPermissions,
-  copyPermissions,
 } from './seed-permissions';
 
 // Manager access filter
