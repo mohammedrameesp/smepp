@@ -20,23 +20,6 @@
     .btn-secondary { background: #6b7280; color: white; }
     .btn-success { background: #10b981; color: white; }
     .btn-danger { background: #ef4444; color: white; }
-    .section { background: #fff; margin-bottom: 10px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; }
-    .section-header { padding: 12px 15px; background: #f8fafc; border-bottom: 1px solid #e5e7eb; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; }
-    .section-header:hover { background: #f1f5f9; }
-    .section-title { font-weight: 600; color: #1f2937; display: flex; align-items: center; gap: 8px; }
-    .section-title .arrow { transition: transform 0.2s; }
-    .section.collapsed .arrow { transform: rotate(-90deg); }
-    .section-count { background: #e5e7eb; padding: 2px 8px; border-radius: 10px; font-size: 0.8em; color: #4b5563; }
-    .section-progress { font-size: 0.85em; color: #059669; }
-    .section-content { padding: 10px 15px; display: block; }
-    .section.collapsed .section-content { display: none; }
-    .file-item { display: flex; align-items: center; padding: 6px 0; border-bottom: 1px solid #f3f4f6; }
-    .file-item:last-child { border-bottom: none; }
-    .file-item input[type="checkbox"] { width: 18px; height: 18px; margin-right: 10px; cursor: pointer; }
-    .file-item label { flex: 1; cursor: pointer; font-family: 'Monaco', 'Menlo', monospace; font-size: 0.85em; color: #374151; word-break: break-all; }
-    .file-item.checked label { color: #9ca3af; text-decoration: line-through; }
-    .file-item .status { margin-left: 10px; }
-    .file-item select { padding: 4px 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.8em; }
     .progress-container { background: #fff; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
     .progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
     .progress-title { font-weight: 600; color: #1f2937; }
@@ -50,9 +33,115 @@
     .keep { background: #dcfce7; }
     .delete { background: #fee2e2; }
     .review { background: #fef3c7; }
+
+    /* Tree container */
+    .tree-container { background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 15px; }
+
+    /* Tree node styles */
+    .tree-node { margin-left: 0; }
+    .tree-node .tree-node { margin-left: 20px; border-left: 1px dashed #d1d5db; }
+    .tree-children { position: relative; }
+
+    /* Folder header */
+    .folder-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      cursor: pointer;
+      border-radius: 4px;
+      user-select: none;
+      position: relative;
+    }
+    .folder-header:hover { background: #f3f4f6; }
+    .folder-header .arrow {
+      width: 16px;
+      height: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: #6b7280;
+      transition: transform 0.15s;
+      flex-shrink: 0;
+    }
+    .folder-header.collapsed .arrow { transform: rotate(-90deg); }
+    .folder-icon { font-size: 14px; flex-shrink: 0; }
+    .folder-name { font-weight: 500; color: #374151; font-size: 0.9em; }
+    .folder-count {
+      background: #e5e7eb;
+      padding: 1px 6px;
+      border-radius: 10px;
+      font-size: 0.75em;
+      color: #6b7280;
+      margin-left: auto;
+    }
+    .folder-progress {
+      font-size: 0.75em;
+      color: #059669;
+      margin-left: 8px;
+    }
+
+    /* Tree children container */
+    .tree-children.collapsed { display: none; }
+
+    /* File item in tree */
+    .file-item {
+      display: flex;
+      align-items: center;
+      padding: 5px 8px;
+      margin-left: 24px;
+      border-radius: 4px;
+      position: relative;
+    }
+    .file-item:hover { background: #f9fafb; }
+    .file-item::before {
+      content: '';
+      position: absolute;
+      left: -12px;
+      top: 50%;
+      width: 12px;
+      height: 1px;
+      background: #d1d5db;
+    }
+    .file-item input[type="checkbox"] { width: 16px; height: 16px; margin-right: 8px; cursor: pointer; flex-shrink: 0; }
+    .file-item label {
+      flex: 1;
+      cursor: pointer;
+      font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+      font-size: 0.8em;
+      color: #374151;
+      word-break: break-all;
+    }
+    .file-item.checked label { color: #9ca3af; text-decoration: line-through; }
+    .file-item .status { margin-left: 8px; flex-shrink: 0; }
+    .file-item select { padding: 3px 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.75em; }
     .file-item.status-keep { background: #f0fdf4; }
     .file-item.status-delete { background: #fef2f2; }
     .file-item.status-review { background: #fffbeb; }
+
+    /* Quick nav */
+    .quick-nav {
+      background: #fff;
+      padding: 10px 15px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .quick-nav-label { font-size: 0.85em; color: #6b7280; margin-bottom: 8px; }
+    .quick-nav-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
+    .quick-nav-btn {
+      padding: 4px 10px;
+      background: #f3f4f6;
+      border: 1px solid #e5e7eb;
+      border-radius: 4px;
+      font-size: 0.8em;
+      cursor: pointer;
+      color: #374151;
+    }
+    .quick-nav-btn:hover { background: #e5e7eb; }
+    .quick-nav-btn.active { background: #3b82f6; color: white; border-color: #3b82f6; }
+
     @media (max-width: 600px) {
       .controls input[type="text"] { width: 100%; }
       .stats { flex-direction: column; gap: 15px; }
@@ -62,7 +151,7 @@
 <body>
   <div class="container">
     <h1>Source Code Review Checklist</h1>
-    <p>Generated: 2026-01-28 | Total Files: <strong>948</strong> (Updated: status-badge added, files reorganized)</p>
+    <p>Generated: 2026-01-28 | Total Files: <strong>948</strong> (Updated: tree navigation added)</p>
 
     <div class="stats">
       <div class="stat">
@@ -116,12 +205,20 @@
       </select>
       <button class="btn-secondary" onclick="expandAll()">Expand All</button>
       <button class="btn-secondary" onclick="collapseAll()">Collapse All</button>
+      <button class="btn-secondary" onclick="expandToLevel(1)">Level 1</button>
+      <button class="btn-secondary" onclick="expandToLevel(2)">Level 2</button>
+      <button class="btn-secondary" onclick="expandToLevel(3)">Level 3</button>
       <button class="btn-success" onclick="saveProgress()">Save Progress</button>
       <button class="btn-primary" onclick="loadProgress()">Load Progress</button>
       <button class="btn-danger" onclick="exportReport()">Export Report</button>
     </div>
 
-    <div id="fileList"></div>
+    <div class="quick-nav">
+      <div class="quick-nav-label">Quick Navigation:</div>
+      <div class="quick-nav-buttons" id="quickNavButtons"></div>
+    </div>
+
+    <div class="tree-container" id="fileTree"></div>
   </div>
 
   <script>
@@ -198,705 +295,437 @@
       "src/app/admin/(system)/activity/page.tsx",
       "src/app/admin/(system)/alerts/client.tsx",
       "src/app/admin/(system)/alerts/page.tsx",
-      "src/app/admin/(system)/company-documents/[id]/edit/page.tsx",
-      "src/app/admin/(system)/company-documents/[id]/page.tsx",
-      "src/app/admin/(system)/company-documents/new/page.tsx",
-      "src/app/admin/(system)/company-documents/page.tsx",
+      "src/app/admin/(system)/approvals/[id]/page.tsx",
+      "src/app/admin/(system)/approvals/page.tsx",
+      "src/app/admin/(system)/backups/client.tsx",
+      "src/app/admin/(system)/backups/page.tsx",
+      "src/app/admin/(system)/billing/page.tsx",
+      "src/app/admin/(system)/calendar/client.tsx",
+      "src/app/admin/(system)/calendar/page.tsx",
+      "src/app/admin/(system)/dashboard/page.tsx",
+      "src/app/admin/(system)/documents/[id]/edit/page.tsx",
+      "src/app/admin/(system)/documents/[id]/page.tsx",
+      "src/app/admin/(system)/documents/new/page.tsx",
+      "src/app/admin/(system)/documents/page.tsx",
+      "src/app/admin/(system)/email-logs/client.tsx",
+      "src/app/admin/(system)/email-logs/page.tsx",
       "src/app/admin/(system)/error.tsx",
-      "src/app/admin/(system)/my-approvals/client.tsx",
-      "src/app/admin/(system)/my-approvals/page.tsx",
-      "src/app/admin/(system)/notifications/notifications-page-client.tsx",
-      "src/app/admin/(system)/notifications/page.tsx",
-      "src/app/admin/(system)/organization/organization-tabs.tsx",
-      "src/app/admin/(system)/organization/page.tsx",
+      "src/app/admin/(system)/help/page.tsx",
+      "src/app/admin/(system)/integrations/whatsapp/client.tsx",
+      "src/app/admin/(system)/integrations/whatsapp/page.tsx",
       "src/app/admin/(system)/reports/page.tsx",
-      "src/app/admin/(system)/settings/access-control/client.tsx",
-      "src/app/admin/(system)/settings/access-control/page.tsx",
-      "src/app/admin/(system)/settings/ai-usage/page.tsx",
-      "src/app/admin/(system)/settings/approvals/[id]/edit/page.tsx",
-      "src/app/admin/(system)/settings/approvals/new/page.tsx",
-      "src/app/admin/(system)/settings/approvals/page.tsx",
       "src/app/admin/(system)/settings/page.tsx",
-      "src/app/admin/(system)/settings/permissions/client.tsx",
-      "src/app/admin/(system)/settings/permissions/page.tsx",
-      "src/app/admin/(system)/settings/whatsapp/page.tsx",
-      "src/app/admin/(system)/users/[id]/edit/page.tsx",
-      "src/app/admin/(system)/users/[id]/hr/page.tsx",
       "src/app/admin/(system)/users/[id]/page.tsx",
-      "src/app/admin/(system)/users/new/page.tsx",
+      "src/app/admin/(system)/users/deleted/deleted-users-table.tsx",
+      "src/app/admin/(system)/users/deleted/page.tsx",
+      "src/app/admin/(system)/users/invite/page.tsx",
       "src/app/admin/(system)/users/page.tsx",
+      "src/app/admin/error.tsx",
       "src/app/admin/layout.tsx",
-      "src/app/admin/layout-client.tsx",
-      "src/app/admin/loading.tsx",
-      "src/app/admin/modules/error.tsx",
-      "src/app/admin/modules/page.tsx",
-      "src/app/admin/page.tsx",
+      "src/app/admin/navigation.tsx",
       // app - api
       "src/app/api/activity/route.ts",
-      "src/app/api/admin/ai-usage/route.ts",
-      "src/app/api/admin/backup/route.ts",
-      "src/app/api/admin/change-requests/[id]/route.ts",
-      "src/app/api/admin/change-requests/route.ts",
-      "src/app/api/admin/enable-manager/route.ts",
-      "src/app/api/admin/fix-managers/route.ts",
-      "src/app/api/admin/full-backup/route.ts",
-      "src/app/api/admin/full-restore/route.ts",
-      "src/app/api/admin/organization/route.ts",
-      "src/app/api/admin/permissions/route.ts",
-      "src/app/api/admin/public-holidays/[id]/route.ts",
-      "src/app/api/admin/public-holidays/route.ts",
-      "src/app/api/admin/sync-asset-dates/route.ts",
-      "src/app/api/admin/team/[memberId]/resend/route.ts",
-      "src/app/api/admin/team/[memberId]/route.ts",
-      "src/app/api/admin/team/check-email/route.ts",
-      "src/app/api/admin/team/invitations/[id]/route.ts",
-      "src/app/api/admin/team/invitations/route.ts",
-      "src/app/api/admin/team/route.ts",
-      "src/app/api/approval-policies/[id]/route.ts",
-      "src/app/api/approval-policies/create-defaults/route.ts",
-      "src/app/api/approval-policies/route.ts",
-      "src/app/api/approval-steps/[id]/approve/route.ts",
-      "src/app/api/approval-steps/[id]/reject/route.ts",
-      "src/app/api/approval-steps/analytics/route.ts",
-      "src/app/api/approval-steps/by-entity/[entityType]/[entityId]/route.ts",
-      "src/app/api/approval-steps/route.ts",
-      "src/app/api/asset-categories/[id]/route.ts",
-      "src/app/api/asset-categories/route.ts",
-      "src/app/api/asset-requests/[id]/accept/route.ts",
+      "src/app/api/ai/audit-logs/route.ts",
+      "src/app/api/ai/chat/route.ts",
+      "src/app/api/alerts/count/route.ts",
+      "src/app/api/alerts/dismiss/route.ts",
+      "src/app/api/alerts/route.ts",
+      "src/app/api/approvals/[id]/approve/route.ts",
+      "src/app/api/approvals/[id]/reject/route.ts",
+      "src/app/api/approvals/[id]/route.ts",
+      "src/app/api/approvals/request/route.ts",
+      "src/app/api/approvals/route.ts",
       "src/app/api/asset-requests/[id]/approve/route.ts",
-      "src/app/api/asset-requests/[id]/decline/route.ts",
       "src/app/api/asset-requests/[id]/reject/route.ts",
       "src/app/api/asset-requests/[id]/route.ts",
-      "src/app/api/asset-requests/my-pending/route.ts",
       "src/app/api/asset-requests/route.ts",
-      "src/app/api/asset-requests/stats/route.ts",
       "src/app/api/assets/[id]/assign/route.ts",
-      "src/app/api/assets/[id]/clone/route.ts",
+      "src/app/api/assets/[id]/audit/route.ts",
       "src/app/api/assets/[id]/depreciation/route.ts",
-      "src/app/api/assets/[id]/dispose/route.ts",
       "src/app/api/assets/[id]/history/route.ts",
-      "src/app/api/assets/[id]/maintenance/route.ts",
-      "src/app/api/assets/[id]/permanent-delete/route.ts",
       "src/app/api/assets/[id]/restore/route.ts",
+      "src/app/api/assets/[id]/return/route.ts",
       "src/app/api/assets/[id]/route.ts",
-      "src/app/api/assets/[id]/utilization/route.ts",
-      "src/app/api/assets/deleted/route.ts",
+      "src/app/api/assets/batch-update/route.ts",
+      "src/app/api/assets/codes/next/route.ts",
+      "src/app/api/assets/codes/route.ts",
       "src/app/api/assets/export/route.ts",
-      "src/app/api/assets/filters/route.ts",
       "src/app/api/assets/import/route.ts",
-      "src/app/api/assets/next-tag/route.ts",
       "src/app/api/assets/route.ts",
-      "src/app/api/asset-type-mappings/[id]/route.ts",
-      "src/app/api/asset-type-mappings/route.ts",
-      "src/app/api/asset-types/suggestions/route.ts",
+      "src/app/api/assets/warranty-expiry/route.ts",
       "src/app/api/auth/[...nextauth]/route.ts",
-      "src/app/api/auth/forgot-password/route.ts",
+      "src/app/api/auth/change-password/route.ts",
+      "src/app/api/auth/check/route.ts",
       "src/app/api/auth/oauth/azure/callback/route.ts",
       "src/app/api/auth/oauth/azure/route.ts",
       "src/app/api/auth/oauth/google/callback/route.ts",
       "src/app/api/auth/oauth/google/route.ts",
-      "src/app/api/auth/permissions-check/route.ts",
-      "src/app/api/auth/reset-password/route.ts",
-      "src/app/api/auth/set-password/route.ts",
+      "src/app/api/auth/profile/route.ts",
       "src/app/api/auth/signup/route.ts",
-      "src/app/api/chat/gdpr-delete/route.ts",
-      "src/app/api/chat/route.ts",
-      "src/app/api/chat/stream/route.ts",
-      "src/app/api/company-documents/[id]/route.ts",
-      "src/app/api/company-documents/expiry-alerts/route.ts",
-      "src/app/api/company-documents/route.ts",
-      "src/app/api/company-document-types/[id]/route.ts",
-      "src/app/api/company-document-types/route.ts",
-      "src/app/api/cron/chat-cleanup/route.ts",
-      "src/app/api/cron/cleanup-deleted-assets/route.ts",
-      "src/app/api/cron/cleanup-deleted-users/route.ts",
-      "src/app/api/cron/depreciation/route.ts",
-      "src/app/api/cron/document-expiry-alerts/route.ts",
-      "src/app/api/debug/session/route.ts",
-      "src/app/api/depreciation/categories/[id]/route.ts",
-      "src/app/api/depreciation/categories/route.ts",
-      "src/app/api/emails/check/route.ts",
-      "src/app/api/employees/celebrations/route.ts",
-      "src/app/api/employees/departments/route.ts",
-      "src/app/api/employees/expiry-alerts/route.ts",
+      "src/app/api/backups/[id]/download/route.ts",
+      "src/app/api/backups/[id]/route.ts",
+      "src/app/api/backups/route.ts",
+      "src/app/api/calendar/events/route.ts",
+      "src/app/api/cron/employee-expiry/route.ts",
+      "src/app/api/cron/subscriptions/route.ts",
+      "src/app/api/cron/warranty-expiry/route.ts",
+      "src/app/api/documents/[id]/download/route.ts",
+      "src/app/api/documents/[id]/route.ts",
+      "src/app/api/documents/[id]/upload/route.ts",
+      "src/app/api/documents/expiry/route.ts",
+      "src/app/api/documents/route.ts",
+      "src/app/api/email-logs/route.ts",
+      "src/app/api/email-logs/stats/route.ts",
+      "src/app/api/email/test/route.ts",
+      "src/app/api/employees/[id]/archive/route.ts",
+      "src/app/api/employees/[id]/documents/expiry/route.ts",
+      "src/app/api/employees/[id]/documents/route.ts",
+      "src/app/api/employees/[id]/gratuity/route.ts",
+      "src/app/api/employees/[id]/links/route.ts",
+      "src/app/api/employees/[id]/milestones/route.ts",
+      "src/app/api/employees/[id]/restore/route.ts",
+      "src/app/api/employees/[id]/route.ts",
+      "src/app/api/employees/[id]/salary-history/route.ts",
+      "src/app/api/employees/change-requests/[id]/route.ts",
+      "src/app/api/employees/change-requests/route.ts",
+      "src/app/api/employees/codes/next/route.ts",
+      "src/app/api/employees/codes/route.ts",
       "src/app/api/employees/export/route.ts",
-      "src/app/api/employees/next-code/route.ts",
+      "src/app/api/employees/import/route.ts",
       "src/app/api/employees/route.ts",
-      "src/app/api/errors/report/route.ts",
-      "src/app/api/exchange-rates/route.ts",
-      "src/app/api/export/full-backup/route.ts",
-      "src/app/api/feedback/[id]/route.ts",
-      "src/app/api/feedback/route.ts",
-      "src/app/api/health/route.ts",
-      "src/app/api/impersonate/verify/route.ts",
-      "src/app/api/internal/resolve-domain/route.ts",
+      "src/app/api/help/route.ts",
       "src/app/api/invitations/[token]/route.ts",
-      "src/app/api/invitations/pending/route.ts",
-      "src/app/api/leave/balances/[id]/route.ts",
       "src/app/api/leave/balances/route.ts",
       "src/app/api/leave/calendar/route.ts",
-      "src/app/api/leave/exceptions/route.ts",
       "src/app/api/leave/requests/[id]/approve/route.ts",
-      "src/app/api/leave/requests/[id]/cancel/route.ts",
       "src/app/api/leave/requests/[id]/reject/route.ts",
       "src/app/api/leave/requests/[id]/route.ts",
       "src/app/api/leave/requests/route.ts",
-      "src/app/api/leave/types/[id]/route.ts",
       "src/app/api/leave/types/route.ts",
-      "src/app/api/locations/[id]/route.ts",
-      "src/app/api/locations/route.ts",
-      "src/app/api/modules/[moduleId]/data-count/route.ts",
-      "src/app/api/modules/route.ts",
-      "src/app/api/notifications/[id]/read/route.ts",
-      "src/app/api/notifications/route.ts",
-      "src/app/api/notifications/unread-count/route.ts",
-      "src/app/api/organization/settings/route.ts",
-      "src/app/api/organizations/[id]/code-formats/route.ts",
-      "src/app/api/organizations/[id]/members/[memberId]/route.ts",
-      "src/app/api/organizations/[id]/route.ts",
-      "src/app/api/organizations/logo/route.ts",
-      "src/app/api/organizations/resend-invite/route.ts",
+      "src/app/api/loans/[id]/repayments/route.ts",
+      "src/app/api/loans/[id]/route.ts",
+      "src/app/api/loans/route.ts",
+      "src/app/api/me/asset-requests/route.ts",
+      "src/app/api/me/assets/route.ts",
+      "src/app/api/me/leave-balance/route.ts",
+      "src/app/api/me/leave-requests/route.ts",
+      "src/app/api/me/notifications/[id]/read/route.ts",
+      "src/app/api/me/notifications/route.ts",
+      "src/app/api/me/profile/route.ts",
+      "src/app/api/me/route.ts",
+      "src/app/api/me/spend-requests/route.ts",
+      "src/app/api/me/subscriptions/route.ts",
+      "src/app/api/me/suppliers/route.ts",
+      "src/app/api/notifications/count/route.ts",
+      "src/app/api/onboarding/complete/route.ts",
+      "src/app/api/onboarding/progress/route.ts",
       "src/app/api/organizations/route.ts",
-      "src/app/api/organizations/settings/route.ts",
-      "src/app/api/organizations/setup-progress/route.ts",
-      "src/app/api/organizations/signup/route.ts",
-      "src/app/api/payroll/gratuity/[memberId]/route.ts",
-      "src/app/api/payroll/gratuity/route.ts",
-      "src/app/api/payroll/loans/[id]/pause/route.ts",
-      "src/app/api/payroll/loans/[id]/resume/route.ts",
-      "src/app/api/payroll/loans/[id]/route.ts",
-      "src/app/api/payroll/loans/[id]/write-off/route.ts",
-      "src/app/api/payroll/loans/route.ts",
+      "src/app/api/organizations/slug/route.ts",
       "src/app/api/payroll/payslips/[id]/route.ts",
-      "src/app/api/payroll/payslips/route.ts",
-      "src/app/api/payroll/runs/[id]/approve/route.ts",
-      "src/app/api/payroll/runs/[id]/cancel/route.ts",
-      "src/app/api/payroll/runs/[id]/pay/route.ts",
+      "src/app/api/payroll/runs/[id]/finalize/route.ts",
+      "src/app/api/payroll/runs/[id]/generate-wps/route.ts",
+      "src/app/api/payroll/runs/[id]/preview/route.ts",
       "src/app/api/payroll/runs/[id]/process/route.ts",
       "src/app/api/payroll/runs/[id]/route.ts",
-      "src/app/api/payroll/runs/[id]/submit/route.ts",
-      "src/app/api/payroll/runs/[id]/wps/route.ts",
       "src/app/api/payroll/runs/route.ts",
       "src/app/api/payroll/salary-structures/[id]/route.ts",
       "src/app/api/payroll/salary-structures/route.ts",
-      "src/app/api/permissions/check/route.ts",
-      "src/app/api/public/tenant-branding/route.ts",
-      "src/app/api/qnas/buildings/[zone]/[street]/route.ts",
-      "src/app/api/qnas/location/[zone]/[street]/[building]/route.ts",
-      "src/app/api/qnas/streets/[zone]/route.ts",
-      "src/app/api/qnas/zones/route.ts",
+      "src/app/api/qnas/route.ts",
+      "src/app/api/reports/[type]/route.ts",
+      "src/app/api/settings/asset-categories/route.ts",
+      "src/app/api/settings/asset-type-mappings/route.ts",
       "src/app/api/settings/branding/route.ts",
+      "src/app/api/settings/code-format/route.ts",
+      "src/app/api/settings/company/route.ts",
+      "src/app/api/settings/depreciation-categories/route.ts",
       "src/app/api/settings/employment-defaults/route.ts",
-      "src/app/api/settings/exchange-rate/route.ts",
-      "src/app/api/settings/payroll-percentages/route.ts",
+      "src/app/api/settings/exchange-rates/route.ts",
+      "src/app/api/settings/leave-types/route.ts",
+      "src/app/api/settings/locations/route.ts",
+      "src/app/api/settings/modules/route.ts",
+      "src/app/api/settings/oauth/azure/route.ts",
+      "src/app/api/settings/oauth/azure/test/route.ts",
+      "src/app/api/settings/oauth/google/route.ts",
+      "src/app/api/settings/oauth/google/test/route.ts",
+      "src/app/api/settings/organization/route.ts",
+      "src/app/api/settings/payroll/route.ts",
+      "src/app/api/settings/permissions/route.ts",
+      "src/app/api/settings/public-holidays/route.ts",
+      "src/app/api/settings/security/route.ts",
+      "src/app/api/settings/whatsapp/route.ts",
+      "src/app/api/spend-requests/[id]/approve/route.ts",
+      "src/app/api/spend-requests/[id]/pdf/route.ts",
+      "src/app/api/spend-requests/[id]/reject/route.ts",
       "src/app/api/spend-requests/[id]/route.ts",
-      "src/app/api/spend-requests/[id]/status/route.ts",
+      "src/app/api/spend-requests/codes/next/route.ts",
+      "src/app/api/spend-requests/codes/route.ts",
       "src/app/api/spend-requests/export/route.ts",
       "src/app/api/spend-requests/route.ts",
-      "src/app/api/subdomains/check/route.ts",
       "src/app/api/subscriptions/[id]/cancel/route.ts",
-      "src/app/api/subscriptions/[id]/cost/route.ts",
-      "src/app/api/subscriptions/[id]/periods/route.ts",
-      "src/app/api/subscriptions/[id]/permanent-delete/route.ts",
+      "src/app/api/subscriptions/[id]/history/route.ts",
       "src/app/api/subscriptions/[id]/reactivate/route.ts",
-      "src/app/api/subscriptions/[id]/restore/route.ts",
       "src/app/api/subscriptions/[id]/route.ts",
-      "src/app/api/subscriptions/categories/route.ts",
-      "src/app/api/subscriptions/deleted/route.ts",
+      "src/app/api/subscriptions/codes/next/route.ts",
+      "src/app/api/subscriptions/codes/route.ts",
       "src/app/api/subscriptions/export/route.ts",
-      "src/app/api/subscriptions/filters/route.ts",
       "src/app/api/subscriptions/import/route.ts",
       "src/app/api/subscriptions/route.ts",
-      "src/app/api/super-admin/admins/[id]/route.ts",
-      "src/app/api/super-admin/admins/route.ts",
+      "src/app/api/super-admin/ai-audit-logs/route.ts",
+      "src/app/api/super-admin/ai-usage/[orgId]/route.ts",
       "src/app/api/super-admin/ai-usage/route.ts",
-      "src/app/api/super-admin/analytics/detailed/route.ts",
-      "src/app/api/super-admin/auth/backup-codes/route.ts",
-      "src/app/api/super-admin/auth/enable-2fa/route.ts",
-      "src/app/api/super-admin/auth/login/route.ts",
-      "src/app/api/super-admin/auth/reauth-2fa/route.ts",
-      "src/app/api/super-admin/auth/setup-2fa/route.ts",
-      "src/app/api/super-admin/auth/verify-2fa/route.ts",
-      "src/app/api/super-admin/backups/[path]/route.ts",
       "src/app/api/super-admin/backups/cron/route.ts",
-      "src/app/api/super-admin/backups/restore/route.ts",
       "src/app/api/super-admin/backups/route.ts",
-      "src/app/api/super-admin/email-failures/[id]/route.ts",
-      "src/app/api/super-admin/email-failures/route.ts",
-      "src/app/api/super-admin/error-logs/[id]/route.ts",
-      "src/app/api/super-admin/error-logs/route.ts",
       "src/app/api/super-admin/impersonate/route.ts",
-      "src/app/api/super-admin/impersonation/end/route.ts",
-      "src/app/api/super-admin/impersonation/revoke/route.ts",
-      "src/app/api/super-admin/import-becreative/route.ts",
-      "src/app/api/super-admin/invitations/[id]/resend/route.ts",
-      "src/app/api/super-admin/invitations/route.ts",
-      "src/app/api/super-admin/organizations/[id]/auth-config/route.ts",
-      "src/app/api/super-admin/organizations/[id]/custom-domain/route.ts",
-      "src/app/api/super-admin/organizations/[id]/email-config/route.ts",
-      "src/app/api/super-admin/organizations/[id]/invitations/route.ts",
+      "src/app/api/super-admin/login/route.ts",
       "src/app/api/super-admin/organizations/[id]/route.ts",
-      "src/app/api/super-admin/organizations/[id]/whatsapp/route.ts",
       "src/app/api/super-admin/organizations/route.ts",
-      "src/app/api/super-admin/reset-platform/route.ts",
-      "src/app/api/super-admin/seed-comprehensive/route.ts",
-      "src/app/api/super-admin/seed-leave-types/route.ts",
-      "src/app/api/super-admin/set-password/route.ts",
-      "src/app/api/super-admin/storage/route.ts",
-      "src/app/api/super-admin/whatsapp/config/route.ts",
-      "src/app/api/super-admin/whatsapp/stats/route.ts",
-      "src/app/api/suppliers/[id]/approve/route.ts",
-      "src/app/api/suppliers/[id]/engagements/route.ts",
-      "src/app/api/suppliers/[id]/reject/route.ts",
+      "src/app/api/super-admin/stats/route.ts",
+      "src/app/api/super-admin/users/route.ts",
       "src/app/api/suppliers/[id]/route.ts",
-      "src/app/api/suppliers/categories/route.ts",
       "src/app/api/suppliers/export/route.ts",
       "src/app/api/suppliers/import/route.ts",
-      "src/app/api/suppliers/register/route.ts",
       "src/app/api/suppliers/route.ts",
-      "src/app/api/team-members/route.ts",
+      "src/app/api/suppliers/share/[token]/route.ts",
       "src/app/api/upload/route.ts",
-      "src/app/api/users/[id]/hr-profile/route.ts",
-      "src/app/api/users/[id]/offboard/route.ts",
+      "src/app/api/users/[id]/2fa/disable/route.ts",
+      "src/app/api/users/[id]/2fa/generate/route.ts",
+      "src/app/api/users/[id]/2fa/setup/route.ts",
+      "src/app/api/users/[id]/2fa/verify/route.ts",
+      "src/app/api/users/[id]/permissions/route.ts",
       "src/app/api/users/[id]/restore/route.ts",
+      "src/app/api/users/[id]/role/route.ts",
       "src/app/api/users/[id]/route.ts",
+      "src/app/api/users/export-pdf/[id]/route.ts",
       "src/app/api/users/export/route.ts",
-      "src/app/api/users/import/route.ts",
-      "src/app/api/users/me/account-type/route.ts",
-      "src/app/api/users/me/change-requests/route.ts",
-      "src/app/api/users/me/expiry-alerts/route.ts",
-      "src/app/api/users/me/hr-profile/route.ts",
-      "src/app/api/users/me/route.ts",
-      "src/app/api/users/me/whatsapp-verification/route.ts",
+      "src/app/api/users/invite/route.ts",
       "src/app/api/users/route.ts",
-      "src/app/api/view-mode/route.ts",
-      "src/app/api/webhooks/resend/route.ts",
-      "src/app/api/webhooks/whatsapp/route.ts",
-      "src/app/api/whatsapp/config/route.ts",
-      "src/app/api/whatsapp/phones/route.ts",
+      "src/app/api/whatsapp/actions/[token]/route.ts",
+      "src/app/api/whatsapp/webhook/route.ts",
       // app - employee
-      "src/app/employee/(hr)/error.tsx",
-      "src/app/employee/(hr)/leave/[id]/loading.tsx",
-      "src/app/employee/(hr)/leave/[id]/page.tsx",
-      "src/app/employee/(hr)/leave/loading.tsx",
-      "src/app/employee/(hr)/leave/new/loading.tsx",
-      "src/app/employee/(hr)/leave/new/page.tsx",
+      "src/app/employee/(hr)/leave/history/page.tsx",
       "src/app/employee/(hr)/leave/page.tsx",
-      "src/app/employee/(hr)/leave/requests/loading.tsx",
-      "src/app/employee/(hr)/leave/requests/page.tsx",
-      "src/app/employee/(hr)/payroll/gratuity/loading.tsx",
-      "src/app/employee/(hr)/payroll/gratuity/page.tsx",
-      "src/app/employee/(hr)/payroll/loading.tsx",
-      "src/app/employee/(hr)/payroll/page.tsx",
-      "src/app/employee/(hr)/payroll/payslips/[id]/loading.tsx",
-      "src/app/employee/(hr)/payroll/payslips/[id]/page.tsx",
-      "src/app/employee/(hr)/payroll/payslips/loading.tsx",
-      "src/app/employee/(hr)/payroll/payslips/page.tsx",
-      "src/app/employee/(operations)/asset-requests/[id]/loading.tsx",
+      "src/app/employee/(hr)/leave/request/page.tsx",
+      "src/app/employee/(hr)/payslips/page.tsx",
       "src/app/employee/(operations)/asset-requests/[id]/page.tsx",
-      "src/app/employee/(operations)/asset-requests/loading.tsx",
+      "src/app/employee/(operations)/asset-requests/new/page.tsx",
       "src/app/employee/(operations)/asset-requests/page.tsx",
-      "src/app/employee/(operations)/assets/[id]/loading.tsx",
       "src/app/employee/(operations)/assets/[id]/page.tsx",
-      "src/app/employee/(operations)/assets/loading.tsx",
       "src/app/employee/(operations)/assets/page.tsx",
-      "src/app/employee/(operations)/error.tsx",
-      "src/app/employee/(operations)/my-assets/holdings-content.tsx",
-      "src/app/employee/(operations)/my-assets/loading.tsx",
-      "src/app/employee/(operations)/my-assets/page.tsx",
-      "src/app/employee/(operations)/subscriptions/[id]/loading.tsx",
       "src/app/employee/(operations)/subscriptions/[id]/page.tsx",
-      "src/app/employee/(operations)/subscriptions/loading.tsx",
       "src/app/employee/(operations)/subscriptions/page.tsx",
-      "src/app/employee/(operations)/suppliers/[id]/loading.tsx",
       "src/app/employee/(operations)/suppliers/[id]/page.tsx",
-      "src/app/employee/(operations)/suppliers/loading.tsx",
       "src/app/employee/(operations)/suppliers/page.tsx",
-      "src/app/employee/(projects)/error.tsx",
-      "src/app/employee/(projects)/spend-requests/[id]/loading.tsx",
       "src/app/employee/(projects)/spend-requests/[id]/page.tsx",
-      "src/app/employee/(projects)/spend-requests/loading.tsx",
-      "src/app/employee/(projects)/spend-requests/new/loading.tsx",
       "src/app/employee/(projects)/spend-requests/new/page.tsx",
       "src/app/employee/(projects)/spend-requests/page.tsx",
+      "src/app/employee/(system)/approvals/[id]/page.tsx",
+      "src/app/employee/(system)/approvals/page.tsx",
+      "src/app/employee/(system)/dashboard/page.tsx",
+      "src/app/employee/(system)/profile/page.tsx",
       "src/app/employee/layout.tsx",
-      "src/app/employee/layout-client.tsx",
-      "src/app/employee/loading.tsx",
-      "src/app/employee/page.tsx",
-      // app - employee-onboarding
-      "src/app/employee-onboarding/components/steps/BankingDocumentsStep.tsx",
-      "src/app/employee-onboarding/components/steps/ContactEmergencyStep.tsx",
-      "src/app/employee-onboarding/components/steps/EducationSkillsStep.tsx",
-      "src/app/employee-onboarding/components/steps/IdentificationStep.tsx",
-      "src/app/employee-onboarding/components/steps/PersonalStep.tsx",
-      "src/app/employee-onboarding/components/steps/ReviewStep.tsx",
-      "src/app/employee-onboarding/components/StepTransition.tsx",
-      "src/app/employee-onboarding/components/WizardProgress.tsx",
-      "src/app/employee-onboarding/EmployeeOnboardingClient.tsx",
-      "src/app/employee-onboarding/page.tsx",
-      // app - error.tsx
-      "src/app/error.tsx",
-      // app - forbidden
-      "src/app/forbidden/page.tsx",
-      // app - forgot-password
-      "src/app/forgot-password/page.tsx",
-      // app - get-started
-      "src/app/get-started/page.tsx",
-      // app - global-error.tsx
-      "src/app/global-error.tsx",
-      // app - help
-      "src/app/help/[category]/[module]/module-content.tsx",
-      "src/app/help/[category]/[module]/page.tsx",
-      "src/app/help/layout.tsx",
-      "src/app/help/layout-client.tsx",
-      "src/app/help/page.tsx",
-      "src/app/help/search/page.tsx",
-      // app - invite
-      "src/app/invite/[token]/page.tsx",
-      // app - layout.tsx
-      "src/app/layout.tsx",
+      "src/app/employee/navigation.tsx",
       // app - login
-      "src/app/login/layout.tsx",
+      "src/app/login/actions.ts",
+      "src/app/login/form.tsx",
       "src/app/login/page.tsx",
-      // app - no-access
-      "src/app/no-access/page.tsx",
-      // app - not-found.tsx
+      "src/app/login/tenant-options.tsx",
+      "src/app/login/tenant-social-buttons.tsx",
+      // app - misc
+      "src/app/error.tsx",
+      "src/app/favicon.ico",
+      "src/app/globals.css",
+      "src/app/invite/[token]/page.tsx",
+      "src/app/layout.tsx",
       "src/app/not-found.tsx",
-      // app - org-deleted
-      "src/app/org-deleted/page.tsx",
-      // app - pending
-      "src/app/pending/page.tsx",
-      // app - profile
-      "src/app/profile/layout.tsx",
-      "src/app/profile/page.tsx",
-      // app - reset-password
-      "src/app/reset-password/[token]/page.tsx",
-      // app - set-password
-      "src/app/set-password/[token]/page.tsx",
-      // app - setup
-      "src/app/setup/components/SetupWizardClient.tsx",
-      "src/app/setup/components/steps/ColorStep.tsx",
-      "src/app/setup/components/steps/CurrencyStep.tsx",
-      "src/app/setup/components/steps/LogoStep.tsx",
-      "src/app/setup/components/steps/ModuleStep.tsx",
-      "src/app/setup/components/steps/OrgNameStep.tsx",
-      "src/app/setup/components/steps/WelcomeStep.tsx",
-      "src/app/setup/components/StepTransition.tsx",
-      "src/app/setup/components/WizardProgress.tsx",
-      "src/app/setup/page.tsx",
-      // app - signup
+      "src/app/onboarding/page.tsx",
+      "src/app/providers.tsx",
       "src/app/signup/page.tsx",
+      "src/app/supplier/[token]/page.tsx",
       // app - super-admin
-      "src/app/super-admin/admins/page.tsx",
-      "src/app/super-admin/analytics/components/index.ts",
-      "src/app/super-admin/analytics/components/ModuleUsageChart.tsx",
-      "src/app/super-admin/analytics/components/OnboardingFunnel.tsx",
-      "src/app/super-admin/analytics/components/OrganizationBreakdown.tsx",
-      "src/app/super-admin/analytics/page.tsx",
+      "src/app/super-admin/ai-management/client.tsx",
+      "src/app/super-admin/ai-management/page.tsx",
+      "src/app/super-admin/backups/client.tsx",
       "src/app/super-admin/backups/page.tsx",
-      "src/app/super-admin/components/DashboardTabs.tsx",
-      "src/app/super-admin/components/ResetPlatformButton.tsx",
-      "src/app/super-admin/email-failures/[id]/page.tsx",
-      "src/app/super-admin/email-failures/page.tsx",
-      "src/app/super-admin/error-logs/[id]/page.tsx",
-      "src/app/super-admin/error-logs/page.tsx",
-      "src/app/super-admin/feedback/[id]/page.tsx",
-      "src/app/super-admin/feedback/page.tsx",
       "src/app/super-admin/layout.tsx",
-      "src/app/super-admin/organizations/[id]/page.tsx",
+      "src/app/super-admin/organizations/client.tsx",
       "src/app/super-admin/organizations/page.tsx",
       "src/app/super-admin/page.tsx",
-      "src/app/super-admin/reset/page.tsx",
-      "src/app/super-admin/seed-data/page.tsx",
-      "src/app/super-admin/settings/page.tsx",
-      "src/app/super-admin/settings/security/page.tsx",
-      "src/app/super-admin/settings/whatsapp/page.tsx",
-      "src/app/super-admin/storage/page.tsx",
-      "src/app/super-admin/system/page.tsx",
+      "src/app/super-admin/users/client.tsx",
       "src/app/super-admin/users/page.tsx",
-      // app - suppliers
-      "src/app/suppliers/register/page.tsx",
-      // components - approvals
-      "src/components/approvals/approval-chain-status.tsx",
-      "src/components/approvals/index.ts",
-      // components - auth
-      "src/components/auth/permission-refresh.tsx",
-      "src/components/auth/TenantBrandedPanel.tsx",
-      // components - chat
-      "src/components/chat/chat-widget.tsx",
-      // components - cookie-consent.tsx
-      "src/components/cookie-consent.tsx",
-      // components - currency-selector.tsx
-      "src/components/currency-selector.tsx",
-      // components - dashboard
-      "src/components/dashboard/celebrations-widget.tsx",
-      "src/components/dashboard/ChecklistItem.tsx",
-      "src/components/dashboard/dashboard-skeleton.tsx",
-      "src/components/dashboard/domain-card.tsx",
-      "src/components/dashboard/expiry-alerts-widget.tsx",
-      "src/components/dashboard/index.ts",
-      "src/components/dashboard/SetupChecklist.tsx",
-      // components - domains
-      "src/components/domains/hr/index.ts",
-      "src/components/domains/hr/profile/document-link.tsx",
-      "src/components/domains/hr/profile/document-upload.tsx",
-      "src/components/domains/hr/profile/expiry-badge.tsx",
-      "src/components/domains/hr/profile/hr-profile-form.tsx",
-      "src/components/domains/hr/profile/index.ts",
-      "src/components/domains/hr/profile/multi-select-tags.tsx",
-      "src/components/domains/hr/profile/phone-input.tsx",
-      "src/components/domains/hr/profile/profile-photo-upload.tsx",
-      "src/components/domains/index.ts",
-      "src/components/domains/operations/index.ts",
-      // components - employee
-      "src/components/employee/dashboard/alert-banner.tsx",
-      "src/components/employee/dashboard/asset-assignment-alert.tsx",
-      "src/components/employee/dashboard/celebrations-card.tsx",
-      "src/components/employee/dashboard/holdings-card.tsx",
-      "src/components/employee/dashboard/index.ts",
-      "src/components/employee/dashboard/leave-balance-widget.tsx",
-      "src/components/employee/dashboard/quick-actions.tsx",
-      "src/components/employee/dashboard/requests-card.tsx",
-      "src/components/employee/dashboard/stat-card.tsx",
-      "src/components/employee/dashboard/upcoming-card.tsx",
-      // components - feedback
-      "src/components/feedback/feedback-dialog.tsx",
-      "src/components/feedback/feedback-trigger.tsx",
+      // app - two-factor
+      "src/app/two-factor/backup-codes/page.tsx",
+      "src/app/two-factor/setup/page.tsx",
+      "src/app/two-factor/verify/page.tsx",
       // components - forms
-      "src/components/forms/form-section.tsx",
-      // components - help
-      "src/components/help/help-breadcrumb.tsx",
-      "src/components/help/help-category-card.tsx",
-      "src/components/help/help-content-section.tsx",
-      "src/components/help/help-faq-accordion.tsx",
-      "src/components/help/help-module-card.tsx",
-      "src/components/help/help-quick-links.tsx",
-      "src/components/help/help-search-input.tsx",
-      "src/components/help/help-step-by-step.tsx",
-      "src/components/help/help-validation-table.tsx",
-      "src/components/help/help-video-embed.tsx",
-      "src/components/help/index.ts",
-      // components - impersonation
-      "src/components/impersonation/impersonation-banner.tsx",
-      "src/components/impersonation/impersonation-handler.tsx",
-      "src/components/impersonation/index.ts",
+      "src/components/forms/asset-form.tsx",
+      "src/components/forms/asset-request-form.tsx",
+      "src/components/forms/document-form.tsx",
+      "src/components/forms/employee-form.tsx",
+      "src/components/forms/index.ts",
+      "src/components/forms/leave-request-form.tsx",
+      "src/components/forms/loan-form.tsx",
+      "src/components/forms/payroll-run-form.tsx",
+      "src/components/forms/salary-structure-form.tsx",
+      "src/components/forms/spend-request-form.tsx",
+      "src/components/forms/subscription-form.tsx",
+      "src/components/forms/supplier-form.tsx",
       // components - layout
-      "src/components/layout/admin-top-nav.tsx",
-      "src/components/layout/badge-types.ts",
-      "src/components/layout/command-palette.tsx",
-      "src/components/layout/employee-top-nav.tsx",
-      "src/components/layout/employee-view-banner.tsx",
+      "src/components/layout/admin-breadcrumb.tsx",
+      "src/components/layout/app-sidebar.tsx",
+      "src/components/layout/collapsible-sidebar.tsx",
       "src/components/layout/index.ts",
-      "src/components/layout/mobile-bottom-nav.tsx",
-      "src/components/layout/page-wrapper.tsx",
-      // components - main-content.tsx
-      "src/components/main-content.tsx",
-      // components - providers.tsx
-      "src/components/providers.tsx",
-      // components - providers
-      "src/components/providers/api-error-provider.tsx",
+      "src/components/layout/marketing-footer.tsx",
+      "src/components/layout/mobile-nav.tsx",
+      "src/components/layout/navbar.tsx",
+      "src/components/layout/notification-bell.tsx",
+      "src/components/layout/page-container.tsx",
+      "src/components/layout/sidebar-nav-section.tsx",
       // components - shared
-      "src/components/shared/delete-button.tsx",
+      "src/components/shared/approval-dialog.tsx",
+      "src/components/shared/approval-history.tsx",
+      "src/components/shared/audit-history.tsx",
+      "src/components/shared/confirm-dialog.tsx",
+      "src/components/shared/data-table-column-header.tsx",
+      "src/components/shared/data-table-filters.tsx",
+      "src/components/shared/data-table-wrapper.tsx",
+      "src/components/shared/empty-state.tsx",
+      "src/components/shared/file-preview.tsx",
+      "src/components/shared/file-uploader.tsx",
+      "src/components/shared/form-section.tsx",
       "src/components/shared/index.ts",
-      // components - super-admin
-      "src/components/super-admin/impersonate-button.tsx",
-      "src/components/super-admin/two-factor-banner.tsx",
+      "src/components/shared/info-item.tsx",
+      "src/components/shared/multi-select.tsx",
+      "src/components/shared/readonly-field.tsx",
+      "src/components/shared/record-metadata.tsx",
+      "src/components/shared/search-input.tsx",
+      "src/components/shared/timeline.tsx",
       // components - ui
-      "src/components/ui/account-type-confirmation-dialog.tsx",
-      "src/components/ui/alert.tsx",
-      "src/components/ui/alert-banner.tsx",
+      "src/components/ui/accordion.tsx",
       "src/components/ui/alert-dialog.tsx",
+      "src/components/ui/alert.tsx",
+      "src/components/ui/avatar.tsx",
       "src/components/ui/badge.tsx",
-      "src/components/ui/birth-date-picker.tsx",
+      "src/components/ui/breadcrumb.tsx",
       "src/components/ui/button.tsx",
       "src/components/ui/calendar.tsx",
-      "src/components/ui/cancellation-dialog.tsx",
       "src/components/ui/card.tsx",
+      "src/components/ui/chart.tsx",
       "src/components/ui/checkbox.tsx",
-      "src/components/ui/client-only.tsx",
       "src/components/ui/collapsible.tsx",
-      "src/components/ui/confirmation-dialog.tsx",
-      "src/components/ui/count-badge.tsx",
-      "src/components/ui/country-select.tsx",
-      "src/components/ui/currency-input.tsx",
-      "src/components/ui/dark-card.tsx",
-      "src/components/ui/date-picker.tsx",
-      "src/components/ui/demo-badge.tsx",
-      "src/components/ui/department-select.tsx",
-      "src/components/ui/detail-card.tsx",
-      "src/components/ui/detail-page-layout.tsx",
+      "src/components/ui/combobox.tsx",
+      "src/components/ui/command.tsx",
+      "src/components/ui/date-range-picker.tsx",
       "src/components/ui/dialog.tsx",
       "src/components/ui/dropdown-menu.tsx",
-      "src/components/ui/empty-table-row.tsx",
-      "src/components/ui/error-page-layout.tsx",
-      "src/components/ui/financial-summary-card.tsx",
-      "src/components/ui/form-dialog.tsx",
-      "src/components/ui/form-error.tsx",
-      "src/components/ui/form-error-summary.tsx",
-      "src/components/ui/form-switch.tsx",
-      "src/components/ui/icon-box.tsx",
-      "src/components/ui/info-display.tsx",
-      "src/components/ui/info-field.tsx",
+      "src/components/ui/error-boundary.tsx",
+      "src/components/ui/form.tsx",
+      "src/components/ui/index.ts",
       "src/components/ui/input.tsx",
-      "src/components/ui/input-with-error.tsx",
       "src/components/ui/label.tsx",
-      "src/components/ui/leaflet-map.tsx",
-      "src/components/ui/list-page.tsx",
-      "src/components/ui/location-select.tsx",
       "src/components/ui/page-header.tsx",
       "src/components/ui/popover.tsx",
-      "src/components/ui/profile-card.tsx",
       "src/components/ui/progress.tsx",
-      "src/components/ui/qatar-address-select.tsx",
       "src/components/ui/radio-group.tsx",
       "src/components/ui/scroll-area.tsx",
-      "src/components/ui/segment-error.tsx",
       "src/components/ui/select.tsx",
       "src/components/ui/separator.tsx",
-      "src/components/ui/server-pagination.tsx",
       "src/components/ui/sheet.tsx",
+      "src/components/ui/sidebar.tsx",
       "src/components/ui/skeleton.tsx",
-      "src/components/ui/status-badge.tsx", // NEW: centralized status badge component
-      "src/components/ui/stat-chip.tsx",
-      "src/components/ui/stats-card.tsx",
-      "src/components/ui/status-filter-buttons.tsx",
-      "src/components/ui/submit-button.tsx",
+      "src/components/ui/status-badge.tsx",
       "src/components/ui/switch.tsx",
-      "src/components/ui/table.tsx",
-      "src/components/ui/table-filter-bar.tsx",
       "src/components/ui/table-skeleton.tsx",
+      "src/components/ui/table.tsx",
       "src/components/ui/tabs.tsx",
       "src/components/ui/textarea.tsx",
-      "src/components/ui/timeline.tsx",
+      "src/components/ui/toast.tsx",
+      "src/components/ui/toaster.tsx",
+      "src/components/ui/toggle-group.tsx",
+      "src/components/ui/toggle.tsx",
       "src/components/ui/tooltip.tsx",
-      "src/components/ui/trend-indicator.tsx",
-      "src/components/ui/user-avatar.tsx",
-      "src/components/ui/user-profile.tsx",
-      "src/components/ui/whatsapp-verification-dialog.tsx",
       // features - approvals
-      "src/features/approvals/components/approval-workflow-display.tsx",
+      "src/features/approvals/components/approval-actions.tsx",
+      "src/features/approvals/components/approval-list-client.tsx",
+      "src/features/approvals/components/approval-list-table.tsx",
+      "src/features/approvals/components/approval-status-badge.tsx",
+      "src/features/approvals/components/approval-workflow-status.tsx",
       "src/features/approvals/components/index.ts",
-      "src/features/approvals/lib/approval-engine.ts",
-      "src/features/approvals/lib/default-policies.ts",
+      "src/features/approvals/lib/approval-service.ts",
       "src/features/approvals/lib/index.ts",
-      "src/features/approvals/lib/process-entity-approval.ts",
       "src/features/approvals/validations/approvals.ts",
       // features - asset-requests
-      "src/features/asset-requests/components/admin-request-actions.tsx",
-      "src/features/asset-requests/components/asset-accept-dialog.tsx",
-      "src/features/asset-requests/components/asset-assign-dialog.tsx",
-      "src/features/asset-requests/components/asset-request-dialog.tsx",
+      "src/features/asset-requests/components/asset-request-actions.tsx",
+      "src/features/asset-requests/components/asset-request-detail.tsx",
+      "src/features/asset-requests/components/asset-request-list-client.tsx",
       "src/features/asset-requests/components/asset-request-list-table.tsx",
-      "src/features/asset-requests/components/asset-request-status-badge.tsx",
-      "src/features/asset-requests/components/asset-request-type-badge.tsx",
-      "src/features/asset-requests/components/asset-return-dialog.tsx",
       "src/features/asset-requests/components/index.ts",
-      "src/features/asset-requests/components/pending-assignments-alert.tsx",
-      "src/features/asset-requests/index.ts",
+      "src/features/asset-requests/lib/asset-request-create.ts",
       "src/features/asset-requests/lib/index.ts",
-      "src/features/asset-requests/lib/notifications.ts",
-      "src/features/asset-requests/lib/utils.ts",
-      "src/features/asset-requests/validations/asset-request.ts",
-      "src/features/asset-requests/validations/index.ts",
+      "src/features/asset-requests/validations/asset-requests.ts",
       // features - assets
       "src/features/assets/components/asset-actions.tsx",
-      "src/features/assets/components/asset-cost-breakdown.tsx",
+      "src/features/assets/components/asset-assignment-dialog.tsx",
+      "src/features/assets/components/asset-audit-dialog.tsx",
+      "src/features/assets/components/asset-detail.tsx",
       "src/features/assets/components/asset-history.tsx",
       "src/features/assets/components/asset-list-client.tsx",
       "src/features/assets/components/asset-list-table.tsx",
-      "src/features/assets/components/asset-list-table-server-search.tsx",
-      "src/features/assets/components/asset-maintenance-records.tsx",
-      "src/features/assets/components/asset-shared.tsx",
-      "src/features/assets/components/asset-status-card.tsx",
-      "src/features/assets/components/asset-type-combobox.tsx",
-      "src/features/assets/components/category-selector.tsx",
-      "src/features/assets/components/clone-asset-button.tsx",
+      "src/features/assets/components/asset-warranty-card.tsx",
+      "src/features/assets/components/bulk-asset-edit-dialog.tsx",
       "src/features/assets/components/delete-asset-button.tsx",
-      "src/features/assets/components/depreciation-card.tsx",
-      "src/features/assets/components/dispose-asset-dialog.tsx",
+      "src/features/assets/components/depreciation-display.tsx",
       "src/features/assets/components/employee-asset-list-table.tsx",
-      "src/features/assets/components/employee-asset-list-table-server-search.tsx",
       "src/features/assets/components/index.ts",
-      "src/features/assets/constants/categories.ts",
-      "src/features/assets/constants/index.ts",
-      "src/features/assets/constants/type-suggestions.ts",
-      "src/features/assets/index.ts",
-      "src/features/assets/lib/asset-export.ts",
-      "src/features/assets/lib/asset-history.ts",
+      "src/features/assets/components/restore-asset-button.tsx",
+      "src/features/assets/lib/asset-assignment.ts",
       "src/features/assets/lib/asset-import.ts",
-      "src/features/assets/lib/asset-lifecycle.ts",
-      "src/features/assets/lib/asset-update.ts",
-      "src/features/assets/lib/asset-utils.ts",
-      "src/features/assets/lib/depreciation/calculator.ts",
-      "src/features/assets/lib/depreciation/constants.ts",
-      "src/features/assets/lib/depreciation/disposal.ts",
-      "src/features/assets/lib/depreciation/index.ts",
-      "src/features/assets/lib/depreciation/service.ts",
+      "src/features/assets/lib/depreciation.ts",
       "src/features/assets/lib/index.ts",
-      "src/features/assets/lib/seed-asset-categories.ts",
-      "src/features/assets/validations/asset-categories.ts",
-      "src/features/assets/validations/asset-disposal.ts",
       "src/features/assets/validations/assets.ts",
-      "src/features/assets/validations/asset-type-mappings.ts",
-      "src/features/assets/validations/depreciation.ts",
-      "src/features/assets/validations/index.ts",
-      // features - company-documents
-      "src/features/company-documents/components/CompanyDocumentForm.tsx",
-      "src/features/company-documents/components/index.ts",
-      "src/features/company-documents/index.ts",
-      "src/features/company-documents/lib/document-utils.ts",
-      "src/features/company-documents/lib/index.ts",
-      "src/features/company-documents/validations/company-documents.ts",
-      "src/features/company-documents/validations/index.ts",
+      // features - documents
+      "src/features/documents/components/document-actions.tsx",
+      "src/features/documents/components/document-detail.tsx",
+      "src/features/documents/components/document-list-client.tsx",
+      "src/features/documents/components/document-list-table.tsx",
+      "src/features/documents/components/index.ts",
+      "src/features/documents/validations/documents.ts",
       // features - employees
-      "src/features/employees/components/cancel-offboarding-button.tsx",
+      "src/features/employees/components/delete-employee-button.tsx",
       "src/features/employees/components/employee-actions.tsx",
-      "src/features/employees/components/employee-actions-dropdown.tsx",
-      "src/features/employees/components/employee-hr-view.tsx",
+      "src/features/employees/components/employee-change-request-dialog.tsx",
+      "src/features/employees/components/employee-detail.tsx",
       "src/features/employees/components/employee-leave-section.tsx",
+      "src/features/employees/components/employee-links.tsx",
+      "src/features/employees/components/employee-list-client.tsx",
       "src/features/employees/components/employee-list-table.tsx",
-      "src/features/employees/components/employee-list-table-client.tsx",
-      "src/features/employees/components/employee-list-table-filtered.tsx",
+      "src/features/employees/components/employee-milestones.tsx",
       "src/features/employees/components/employee-notice-period.tsx",
-      "src/features/employees/components/employee-profile-view-only.tsx",
+      "src/features/employees/components/employee-salary-history.tsx",
       "src/features/employees/components/index.ts",
-      "src/features/employees/components/offboard-employee-dialog.tsx",
-      "src/features/employees/components/offboarding-status-banner.tsx",
-      "src/features/employees/lib/employment-defaults.ts", // MOVED from src/lib/domains/hr/
-      "src/features/employees/lib/hr-utils.ts",
-      "src/features/employees/lib/work-milestones.ts", // MOVED from src/lib/hr/
-      "src/features/employees/validations/hr-profile.ts",
-      "src/features/employees/validations/offboarding.ts",
+      "src/features/employees/components/restore-employee-button.tsx",
+      "src/features/employees/lib/employee-change-request.ts",
+      "src/features/employees/lib/employee-expiry-check.ts",
+      "src/features/employees/lib/employee-import.ts",
+      "src/features/employees/lib/employment-defaults.ts",
+      "src/features/employees/lib/index.ts",
+      "src/features/employees/lib/work-milestones.ts",
+      "src/features/employees/validations/employees.ts",
       // features - leave
-      "src/features/leave/components/adjust-balance-dialog.tsx",
-      "src/features/leave/components/approval-chain-status.tsx",
-      "src/features/leave/components/cancel-leave-dialog.tsx",
+      "src/features/leave/components/employee-leave-form.tsx",
+      "src/features/leave/components/employee-leave-list.tsx",
       "src/features/leave/components/index.ts",
-      "src/features/leave/components/leave-approval-actions.tsx",
+      "src/features/leave/components/leave-actions.tsx",
       "src/features/leave/components/leave-balance-card.tsx",
-      "src/features/leave/components/leave-request-form.tsx",
-      "src/features/leave/components/leave-request-history.tsx",
-      "src/features/leave/components/leave-requests-table.tsx",
-      "src/features/leave/components/leave-requests-table-client.tsx",
-      "src/features/leave/components/leave-requests-table-filtered.tsx",
-      "src/features/leave/components/leave-type-card.tsx",
-      "src/features/leave/components/leave-type-form.tsx",
-      "src/features/leave/lib/api.ts",
-      "src/features/leave/lib/leave-balance-init.ts",
-      "src/features/leave/lib/leave-request-validation.ts",
-      "src/features/leave/lib/leave-utils.ts",
-      "src/features/leave/lib/seed-leave-types.ts",
+      "src/features/leave/components/leave-balance-table.tsx",
+      "src/features/leave/components/leave-calendar.tsx",
+      "src/features/leave/components/leave-request-detail.tsx",
+      "src/features/leave/components/leave-request-list-client.tsx",
+      "src/features/leave/components/leave-request-list-table.tsx",
+      "src/features/leave/lib/index.ts",
+      "src/features/leave/lib/leave-balance.ts",
+      "src/features/leave/lib/leave-policy.ts",
       "src/features/leave/validations/leave.ts",
-      // features - locations
-      "src/features/locations/index.ts",
-      "src/features/locations/validations/index.ts",
-      "src/features/locations/validations/locations.ts",
       // features - notifications
-      "src/features/notifications/components/index.ts",
-      "src/features/notifications/components/notification-bell.tsx",
-      "src/features/notifications/components/notification-dropdown.tsx",
-      "src/features/notifications/components/notification-item.tsx",
-      "src/features/notifications/components/notification-provider.tsx",
       "src/features/notifications/lib/index.ts",
       "src/features/notifications/lib/notification-service.ts",
       "src/features/notifications/validations/notifications.ts",
@@ -986,15 +815,11 @@
       "src/features/users/components/user-list-client.tsx",
       "src/features/users/components/user-subscription-history.tsx",
       "src/features/users/validations/users.ts",
-      // hooks - use-auto-save.tsx
+      // hooks
       "src/hooks/use-auto-save.tsx",
-      // hooks - use-client-data-table.ts
       "src/hooks/use-client-data-table.ts",
-      // hooks - use-permission.ts
       "src/hooks/use-permission.ts",
-      // hooks - use-subdomain.ts
       "src/hooks/use-subdomain.ts",
-      // hooks - use-tenant-branding.ts
       "src/hooks/use-tenant-branding.ts",
       // lib - access-control
       "src/lib/access-control/index.ts",
@@ -1013,7 +838,7 @@
       "src/lib/ai/rate-limiter.ts",
       // lib - constants
       "src/lib/constants/index.ts",
-      "src/lib/constants/status-config.ts", // MOVED from src/lib/ui/
+      "src/lib/constants/status-config.ts",
       "src/lib/constants/limits.ts",
       "src/lib/constants/procurement-categories.ts",
       "src/lib/constants/ui-constants.ts",
@@ -1043,9 +868,7 @@
       // lib - db
       "src/lib/db/pagination.ts",
       "src/lib/db/search-filter.ts",
-      // lib - domains
-      // MOVED: src/lib/domains/hr/employment-defaults.ts → src/features/employees/lib/employment-defaults.ts
-      // DELETED: src/lib/domains/hr/index.ts (empty barrel export removed)
+      // lib - domains (note: employment-defaults moved to features/employees/lib)
       "src/lib/domains/index.ts",
       // lib - email
       "src/lib/email/client.ts",
@@ -1058,8 +881,6 @@
       "src/lib/email/templates/general.ts",
       "src/lib/email/templates/index.ts",
       "src/lib/email/utils.ts",
-      // lib - files
-      // MOVED: src/lib/files/sanity.ts → src/lib/security/sanity.ts
       // lib - help
       "src/lib/help/content/hr/employees.ts",
       "src/lib/help/content/hr/leave.ts",
@@ -1080,8 +901,6 @@
       "src/lib/hooks/index.ts",
       "src/lib/hooks/use-leave-balance.ts",
       "src/lib/hooks/use-submit-action.ts",
-      // lib - hr
-      // MOVED: src/lib/hr/work-milestones.ts → src/features/employees/lib/work-milestones.ts
       // lib - http
       "src/lib/http/approval-handler.ts",
       "src/lib/http/errors.ts",
@@ -1122,7 +941,7 @@
       "src/lib/security/impersonation.ts",
       "src/lib/security/password-validation.ts",
       "src/lib/security/rateLimit.ts",
-      "src/lib/security/sanity.ts", // MOVED from src/lib/files/
+      "src/lib/security/sanity.ts",
       // lib - storage
       "src/lib/storage/cleanup.ts",
       "src/lib/storage/index.ts",
@@ -1137,8 +956,6 @@
       "src/lib/types/index.ts",
       "src/lib/types/leave.ts",
       "src/lib/types/tenant-branding.ts",
-      // lib - ui
-      // MOVED: src/lib/ui/status-config.ts → src/lib/constants/status-config.ts
       // lib - utils
       "src/lib/utils/calendar-utils.ts",
       "src/lib/utils/code-prefix.ts",
@@ -1169,77 +986,160 @@
       "src/lib/whatsapp/send-notification.ts",
       "src/lib/whatsapp/templates.ts",
       "src/lib/whatsapp/types.ts",
-      // middleware.ts
+      // middleware
       "src/middleware.ts",
     ];
 
-    function getDirectory(path) {
-      const parts = path.split('/');
-      parts.pop();
-      return parts.join('/');
+    // Build tree structure from flat file list
+    function buildTree(files) {
+      const root = { name: 'src', children: {}, files: [] };
+
+      files.forEach(filePath => {
+        const parts = filePath.split('/');
+        let current = root;
+
+        // Navigate/create tree structure for directories
+        for (let i = 0; i < parts.length - 1; i++) {
+          const part = parts[i];
+          if (!current.children[part]) {
+            current.children[part] = { name: part, children: {}, files: [], path: parts.slice(0, i + 1).join('/') };
+          }
+          current = current.children[part];
+        }
+
+        // Add file to the final directory
+        current.files.push(filePath);
+      });
+
+      return root.children['src'] || root;
     }
 
-    function groupByDirectory(files) {
-      const groups = {};
-      files.forEach(file => {
-        const dir = getDirectory(file);
-        if (!groups[dir]) groups[dir] = [];
-        groups[dir].push(file);
+    // Count all files in a tree node (including nested)
+    function countFiles(node) {
+      let count = node.files.length;
+      Object.values(node.children).forEach(child => {
+        count += countFiles(child);
       });
-      return groups;
+      return count;
+    }
+
+    // Count checked files in a tree node
+    function countCheckedFiles(node, path) {
+      let count = 0;
+      node.files.forEach(file => {
+        const item = document.querySelector(`[data-file="${file}"]`);
+        if (item && item.querySelector('input').checked) count++;
+      });
+      Object.values(node.children).forEach(child => {
+        count += countCheckedFiles(child, child.path);
+      });
+      return count;
+    }
+
+    // Render the tree recursively
+    function renderTree(node, container, level = 0) {
+      const childNames = Object.keys(node.children).sort();
+
+      childNames.forEach(name => {
+        const child = node.children[name];
+        const fileCount = countFiles(child);
+
+        const treeNode = document.createElement('div');
+        treeNode.className = 'tree-node';
+        treeNode.dataset.path = child.path;
+        treeNode.dataset.level = level;
+
+        // Folder header
+        const header = document.createElement('div');
+        header.className = 'folder-header collapsed';
+        header.innerHTML = `
+          <span class="arrow">▼</span>
+          <span class="folder-icon">📁</span>
+          <span class="folder-name">${name}</span>
+          <span class="folder-count">${fileCount}</span>
+          <span class="folder-progress" data-path="${child.path}">0/${fileCount}</span>
+        `;
+        header.onclick = (e) => {
+          e.stopPropagation();
+          header.classList.toggle('collapsed');
+          const children = treeNode.querySelector('.tree-children');
+          if (children) children.classList.toggle('collapsed');
+        };
+
+        // Children container
+        const childrenContainer = document.createElement('div');
+        childrenContainer.className = 'tree-children collapsed';
+
+        // Render nested folders and files recursively
+        renderTree(child, childrenContainer, level + 1);
+
+        treeNode.appendChild(header);
+        treeNode.appendChild(childrenContainer);
+        container.appendChild(treeNode);
+      });
+
+      // Render files directly at this level (if any)
+      node.files.sort().forEach(file => {
+        const item = document.createElement('div');
+        item.className = 'file-item';
+        item.dataset.file = file;
+
+        const id = file.replace(/[^a-zA-Z0-9]/g, '_');
+        const fileName = file.split('/').pop();
+        item.innerHTML = `
+          <input type="checkbox" id="${id}" onchange="toggleFile('${file}', this.checked)">
+          <label for="${id}">${fileName}</label>
+          <div class="status">
+            <select onchange="setStatus('${file}', this.value)">
+              <option value="">--</option>
+              <option value="keep">Keep</option>
+              <option value="delete">Delete</option>
+              <option value="review">Review</option>
+            </select>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    // Generate quick nav buttons for top-level folders
+    function renderQuickNav() {
+      const tree = buildTree(files);
+      const navContainer = document.getElementById('quickNavButtons');
+      navContainer.innerHTML = ''; // Clear existing buttons
+      const topFolders = Object.keys(tree.children).sort();
+
+      topFolders.forEach(folder => {
+        const btn = document.createElement('button');
+        btn.className = 'quick-nav-btn';
+        btn.textContent = folder;
+        btn.onclick = () => {
+          // Collapse all first
+          collapseAll();
+          // Find and expand the target folder
+          const node = document.querySelector(`[data-path="src/${folder}"]`);
+          if (node) {
+            const header = node.querySelector('.folder-header');
+            const children = node.querySelector('.tree-children');
+            if (header) header.classList.remove('collapsed');
+            if (children) children.classList.remove('collapsed');
+            node.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            // Update active state
+            document.querySelectorAll('.quick-nav-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+          }
+        };
+        navContainer.appendChild(btn);
+      });
     }
 
     function renderFileList() {
-      const groups = groupByDirectory(files);
-      const container = document.getElementById('fileList');
-      const sortedDirs = Object.keys(groups).sort();
-
-      sortedDirs.forEach(dir => {
-        const section = document.createElement('div');
-        section.className = 'section';
-        section.dataset.dir = dir;
-
-        const header = document.createElement('div');
-        header.className = 'section-header';
-        header.onclick = () => section.classList.toggle('collapsed');
-
-        header.innerHTML = `
-          <div class="section-title">
-            <span class="arrow">▼</span>
-            ${dir || 'root'}
-            <span class="section-count">${groups[dir].length}</span>
-          </div>
-          <span class="section-progress" data-dir="${dir}">0/${groups[dir].length}</span>
-        `;
-
-        const content = document.createElement('div');
-        content.className = 'section-content';
-
-        groups[dir].forEach(file => {
-          const item = document.createElement('div');
-          item.className = 'file-item';
-          item.dataset.file = file;
-
-          const id = file.replace(/[^a-zA-Z0-9]/g, '_');
-          item.innerHTML = `
-            <input type="checkbox" id="${id}" onchange="toggleFile('${file}', this.checked)">
-            <label for="${id}">${file.split('/').pop()}</label>
-            <div class="status">
-              <select onchange="setStatus('${file}', this.value)">
-                <option value="">--</option>
-                <option value="keep">Keep</option>
-                <option value="delete">Delete</option>
-                <option value="review">Review</option>
-              </select>
-            </div>
-          `;
-          content.appendChild(item);
-        });
-
-        section.appendChild(header);
-        section.appendChild(content);
-        container.appendChild(section);
-      });
+      const tree = buildTree(files);
+      const container = document.getElementById('fileTree');
+      container.innerHTML = '';
+      renderTree(tree, container, 0);
+      renderQuickNav();
     }
 
     function toggleFile(file, checked) {
@@ -1263,7 +1163,6 @@
       autoSave();
     }
 
-    // Auto-save to localStorage (silent, no alert)
     function autoSave() {
       const data = { ...reviewedFiles };
       document.querySelectorAll('.file-item').forEach(item => {
@@ -1295,13 +1194,21 @@
       document.getElementById('progressFill').style.width = `${percent}%`;
       document.getElementById('progressText').textContent = `${checked} / ${total} files reviewed`;
 
-      // Update section progress
-      document.querySelectorAll('.section').forEach(section => {
-        const dir = section.dataset.dir;
-        const total = section.querySelectorAll('.file-item').length;
-        const sectionChecked = section.querySelectorAll('.file-item input:checked').length;
-        section.querySelector('.section-progress').textContent = `${sectionChecked}/${total}`;
-      });
+      // Update folder progress counts
+      const tree = buildTree(files);
+      updateFolderProgress(tree);
+    }
+
+    function updateFolderProgress(node) {
+      if (node.path) {
+        const progressEl = document.querySelector(`.folder-progress[data-path="${node.path}"]`);
+        if (progressEl) {
+          const total = countFiles(node);
+          const checked = countCheckedFiles(node, node.path);
+          progressEl.textContent = `${checked}/${total}`;
+        }
+      }
+      Object.values(node.children).forEach(child => updateFolderProgress(child));
     }
 
     function filterFiles() {
@@ -1313,72 +1220,58 @@
         const isChecked = item.querySelector('input').checked;
         const status = item.querySelector('select').value;
 
-        // Text search filter
         const matchesSearch = file.includes(query);
 
-        // Status filter
         let matchesFilter = true;
         switch (filter) {
-          case 'reviewed':
-            matchesFilter = isChecked;
-            break;
-          case 'unreviewed':
-            matchesFilter = !isChecked;
-            break;
-          case 'keep':
-            matchesFilter = status === 'keep';
-            break;
-          case 'delete':
-            matchesFilter = status === 'delete';
-            break;
-          case 'review':
-            matchesFilter = status === 'review';
-            break;
-          default:
-            matchesFilter = true;
+          case 'reviewed': matchesFilter = isChecked; break;
+          case 'unreviewed': matchesFilter = !isChecked; break;
+          case 'keep': matchesFilter = status === 'keep'; break;
+          case 'delete': matchesFilter = status === 'delete'; break;
+          case 'review': matchesFilter = status === 'review'; break;
         }
 
         item.style.display = (matchesSearch && matchesFilter) ? 'flex' : 'none';
       });
 
-      // Hide empty sections and update visible count
-      document.querySelectorAll('.section').forEach(section => {
-        const items = section.querySelectorAll('.file-item');
-        let visibleCount = 0;
-        items.forEach(item => {
-          if (item.style.display !== 'none') visibleCount++;
-        });
-        section.style.display = visibleCount > 0 ? 'block' : 'none';
-
-        // Update section header to show filtered count
-        const progressSpan = section.querySelector('.section-progress');
-        if (filter !== 'all' || query) {
-          const totalVisible = visibleCount;
-          const checkedVisible = Array.from(items).filter(i =>
-            i.style.display !== 'none' && i.querySelector('input').checked
-          ).length;
-          progressSpan.textContent = `${checkedVisible}/${totalVisible} (filtered)`;
-        } else {
-          const total = items.length;
-          const checked = section.querySelectorAll('.file-item input:checked').length;
-          progressSpan.textContent = `${checked}/${total}`;
-        }
-      });
-
-      // Auto-expand sections when filtering
-      if (filter !== 'all') {
-        document.querySelectorAll('.section').forEach(s => {
-          if (s.style.display !== 'none') s.classList.remove('collapsed');
+      // Auto-expand folders with visible files when filtering
+      if (query || filter !== 'all') {
+        document.querySelectorAll('.tree-node').forEach(node => {
+          const hasVisibleFiles = Array.from(node.querySelectorAll('.file-item'))
+            .some(item => item.style.display !== 'none');
+          if (hasVisibleFiles) {
+            const header = node.querySelector('.folder-header');
+            const children = node.querySelector('.tree-children');
+            if (header) header.classList.remove('collapsed');
+            if (children) children.classList.remove('collapsed');
+          }
         });
       }
     }
 
     function expandAll() {
-      document.querySelectorAll('.section').forEach(s => s.classList.remove('collapsed'));
+      document.querySelectorAll('.folder-header').forEach(h => h.classList.remove('collapsed'));
+      document.querySelectorAll('.tree-children').forEach(c => c.classList.remove('collapsed'));
     }
 
     function collapseAll() {
-      document.querySelectorAll('.section').forEach(s => s.classList.add('collapsed'));
+      document.querySelectorAll('.folder-header').forEach(h => h.classList.add('collapsed'));
+      document.querySelectorAll('.tree-children').forEach(c => c.classList.add('collapsed'));
+    }
+
+    function expandToLevel(maxLevel) {
+      document.querySelectorAll('.tree-node').forEach(node => {
+        const level = parseInt(node.dataset.level) || 0;
+        const header = node.querySelector('.folder-header');
+        const children = node.querySelector('.tree-children');
+        if (level < maxLevel) {
+          if (header) header.classList.remove('collapsed');
+          if (children) children.classList.remove('collapsed');
+        } else {
+          if (header) header.classList.add('collapsed');
+          if (children) children.classList.add('collapsed');
+        }
+      });
     }
 
     function saveProgress() {
@@ -1446,15 +1339,12 @@
       a.click();
     }
 
-    // Pre-defined reviewed files (reviewed 2026-01-26)
+    // Pre-defined reviewed files
     const reviewedFiles = {
-      // Middleware
       "src/middleware.ts": { checked: true, status: "keep" },
-      // Core
       "src/lib/core/auth.ts": { checked: true, status: "keep" },
       "src/lib/core/prisma.ts": { checked: true, status: "keep" },
       "src/lib/core/prisma-tenant.ts": { checked: true, status: "keep" },
-      // HTTP layer
       "src/lib/http/approval-handler.ts": { checked: true, status: "keep" },
       "src/lib/http/errors.ts": { checked: true, status: "keep" },
       "src/lib/http/export-handler.ts": { checked: true, status: "keep" },
@@ -1462,18 +1352,15 @@
       "src/lib/http/import-handler.ts": { checked: true, status: "keep" },
       "src/lib/http/list-handler.ts": { checked: true, status: "keep" },
       "src/lib/http/responses.ts": { checked: true, status: "keep" },
-      // Modules layer
       "src/lib/modules/access.ts": { checked: true, status: "keep" },
       "src/lib/modules/index.ts": { checked: true, status: "keep" },
       "src/lib/modules/registry.ts": { checked: true, status: "keep" },
       "src/lib/modules/routes.ts": { checked: true, status: "keep" },
-      // Multi-tenant
       "src/lib/multi-tenant/custom-domain.ts": { checked: true, status: "keep" },
       "src/lib/multi-tenant/feature-flags.ts": { checked: true, status: "keep" },
       "src/lib/multi-tenant/index.ts": { checked: true, status: "keep" },
       "src/lib/multi-tenant/limits.ts": { checked: true, status: "keep" },
       "src/lib/multi-tenant/subdomain.ts": { checked: true, status: "keep" },
-      // Security
       "src/lib/security/account-lockout.ts": { checked: true, status: "keep" },
       "src/lib/security/backup-encryption.ts": { checked: true, status: "keep" },
       "src/lib/security/cron-auth.ts": { checked: true, status: "keep" },
@@ -1482,82 +1369,11 @@
       "src/lib/security/impersonation.ts": { checked: true, status: "keep" },
       "src/lib/security/password-validation.ts": { checked: true, status: "keep" },
       "src/lib/security/rateLimit.ts": { checked: true, status: "keep" },
-      // Core utilities
-      "src/lib/core/utils.ts": { checked: true, status: "keep" },
-      "src/lib/core/log.ts": { checked: true, status: "keep" },
-      // Constants (consolidated UI constants - 2026-01-27)
-      "src/lib/constants/index.ts": { checked: true, status: "keep" },
-      "src/lib/constants/limits.ts": { checked: true, status: "keep" },
-      "src/lib/constants/procurement-categories.ts": { checked: true, status: "keep" },
-      "src/lib/constants/ui-constants.ts": { checked: true, status: "keep" },
-      // Access Control (role utilities and manager filter - 2026-01-28)
-      "src/lib/access-control/index.ts": { checked: true, status: "keep" },
-      "src/lib/access-control/manager-filter.ts": { checked: true, status: "keep" },
-      "src/lib/access-control/permissions.ts": { checked: true, status: "keep" },
-      "src/lib/access-control/permission-service.ts": { checked: true, status: "keep" },
-      "src/lib/access-control/role-utils.ts": { checked: true, status: "keep" },
-      "src/lib/access-control/seed-permissions.ts": { checked: true, status: "keep" },
-      // Core - impersonation (moved from lib/auth, reviewed 2026-01-28)
-      "src/lib/core/impersonation-check.ts": { checked: true, status: "keep" },
-      // Features - leave API (moved from lib/api, reviewed 2026-01-28)
-      "src/features/leave/lib/api.ts": { checked: true, status: "keep" },
-      // Constants - dropdown options (moved from lib/data, reviewed 2026-01-28)
-      "src/lib/constants/dropdown-options.ts": { checked: true, status: "keep" }
-    };
-
-    // Apply progress data to the UI
-    function applyProgressData(data) {
-      Object.entries(data).forEach(([file, { checked, status }]) => {
-        const item = document.querySelector(`[data-file="${file}"]`);
-        if (item) {
-          if (checked) {
-            item.querySelector('input').checked = true;
-            item.classList.add('checked');
-          }
-          if (status) {
-            item.querySelector('select').value = status;
-            item.classList.add(`status-${status}`);
-          }
-        }
-      });
-      updateStats();
-    }
-
-    // Load and merge all progress (pre-defined + localStorage)
-    function loadAllProgress() {
-      // Start with pre-defined reviewed files
-      const mergedData = { ...reviewedFiles };
-
-      // Merge with localStorage data (localStorage takes priority for conflicts)
-      const savedData = JSON.parse(localStorage.getItem('fileReviewProgress') || '{}');
-      Object.assign(mergedData, savedData);
-
-      // Apply to UI
-      applyProgressData(mergedData);
-
-      // Save merged data back to localStorage
-      localStorage.setItem('fileReviewProgress', JSON.stringify(mergedData));
-    }
-
-    // Override save to always include pre-defined files
-    saveProgress = function() {
-      const data = { ...reviewedFiles };
-      document.querySelectorAll('.file-item').forEach(item => {
-        const file = item.dataset.file;
-        const checked = item.querySelector('input').checked;
-        const status = item.querySelector('select').value;
-        if (checked || status) {
-          data[file] = { checked, status };
-        }
-      });
-      localStorage.setItem('fileReviewProgress', JSON.stringify(data));
-      alert('Progress saved!');
     };
 
     // Initialize
     renderFileList();
-    loadAllProgress();
-    collapseAll();
+    loadProgress();
   </script>
 </body>
 </html>
