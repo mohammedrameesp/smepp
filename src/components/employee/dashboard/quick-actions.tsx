@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Palmtree, ShoppingCart, Search, CreditCard, HelpCircle } from 'lucide-react';
+import { Palmtree, ShoppingCart, Search, CreditCard } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
 import { ICON_SIZES } from '@/lib/constants';
 
@@ -85,14 +85,6 @@ export function QuickActions({ actions = defaultActions, className }: QuickActio
           );
         })}
       </div>
-
-      <Link
-        href="/help"
-        className="flex items-center justify-center gap-1 mt-4 text-sm text-gray-500 hover:text-gray-700"
-      >
-        <HelpCircle className={ICON_SIZES.sm} />
-        Help & Support
-      </Link>
     </div>
   );
 }

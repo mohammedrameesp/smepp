@@ -13,7 +13,6 @@ import { useSession, signOut } from 'next-auth/react';
 import {
   User,
   LogOut,
-  HelpCircle,
   PalmtreeIcon,
   ShoppingCart,
   Package,
@@ -226,13 +225,6 @@ export function EmployeeTopNav({
                       </Link>
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href="/help" className="flex items-center gap-2 cursor-pointer">
-                      <HelpCircle className={cn(ICON_SIZES.sm, 'text-slate-400')} />
-                      Help & Support
-                    </Link>
-                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={() => signOut({ callbackUrl: '/login?signedOut=true' })}

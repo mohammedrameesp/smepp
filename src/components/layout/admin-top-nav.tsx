@@ -15,7 +15,6 @@ import {
   Search,
   User,
   LogOut,
-  HelpCircle,
   BarChart3,
   Building2,
   Activity,
@@ -336,12 +335,6 @@ export function AdminTopNav({
                       <Link href="/admin/activity" className="flex items-center gap-2 cursor-pointer">
                         <Activity className={cn(ICON_SIZES.sm, 'text-slate-400')} />
                         Activity Log
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href="/help" className="flex items-center gap-2 cursor-pointer">
-                        <HelpCircle className={cn(ICON_SIZES.sm, 'text-slate-400')} />
-                        Help & Support
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
