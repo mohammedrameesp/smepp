@@ -153,48 +153,6 @@ export async function getPermissionsForUser(
 }
 
 /**
- * Grant a permission to non-admin users in an organization.
- *
- * @security This modifies access control. Caller must verify authorization
- * (typically OWNER or ADMIN with settings:permissions access).
- *
- * @param tenantId - The organization ID
- * @param permission - The permission to grant
- * @throws {Error} If database operation fails
- */
-export async function grantMemberPermission(
-  tenantId: string,
-  permission: string
-): Promise<void> {
-  await prisma.rolePermission.upsert({
-    where: {
-      tenantId_role_permission: { tenantId, role: 'MEMBER', permission },
-    },
-    create: { tenantId, role: 'MEMBER', permission },
-    update: {}, // No-op if already exists
-  });
-}
-
-/**
- * Revoke a permission from non-admin users in an organization.
- *
- * @security This modifies access control. Caller must verify authorization
- * (typically OWNER or ADMIN with settings:permissions access).
- *
- * @param tenantId - The organization ID
- * @param permission - The permission to revoke
- * @throws {Error} If database operation fails
- */
-export async function revokeMemberPermission(
-  tenantId: string,
-  permission: string
-): Promise<void> {
-  await prisma.rolePermission.deleteMany({
-    where: { tenantId, role: 'MEMBER', permission },
-  });
-}
-
-/**
  * Set all permissions for non-admin users (replaces existing).
  *
  * @security This is a destructive operation that replaces all existing

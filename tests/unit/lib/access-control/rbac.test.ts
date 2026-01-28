@@ -36,8 +36,6 @@ import {
 import {
   hasPermission,
   hasPermissions,
-  grantMemberPermission,
-  revokeMemberPermission,
   isValidPermission,
 } from '@/lib/access-control/permission-service';
 import { prisma } from '@/lib/core/prisma';
@@ -385,30 +383,6 @@ describe('RBAC Permissions System', () => {
         expect(result['assets:view']).toBe(true);
         expect(result['assets:edit']).toBe(true);
         expect(result['assets:delete']).toBe(true);
-      });
-    });
-
-    describe('grantMemberPermission', () => {
-      it('should upsert permission for MEMBER role', async () => {
-        await grantMemberPermission(tenantId, 'assets:delete');
-
-        expect(mockRolePermission.upsert).toHaveBeenCalledWith({
-          where: {
-            tenantId_role_permission: { tenantId, role: 'MEMBER', permission: 'assets:delete' },
-          },
-          create: { tenantId, role: 'MEMBER', permission: 'assets:delete' },
-          update: {},
-        });
-      });
-    });
-
-    describe('revokeMemberPermission', () => {
-      it('should delete permission from database', async () => {
-        await revokeMemberPermission(tenantId, 'assets:delete');
-
-        expect(mockRolePermission.deleteMany).toHaveBeenCalledWith({
-          where: { tenantId, role: 'MEMBER', permission: 'assets:delete' },
-        });
       });
     });
 

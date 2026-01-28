@@ -68,8 +68,6 @@ export {
   hasPermissions,
   getPermissionsForUser,
   getPermissionsForRole,
-  grantMemberPermission,
-  revokeMemberPermission,
   setMemberPermissions,
   isValidPermission,
 } from './permission-service';
