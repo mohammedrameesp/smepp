@@ -20,7 +20,7 @@ import { cn } from '@/lib/core/utils';
 import { createUserSchema, type CreateUserInput, USER_ROLES, ROLE_CONFIG, type UserRole } from '@/features/users/validations/users';
 import { VALIDATION_PATTERNS } from '@/lib/validations/patterns';
 import { DatePicker } from '@/components/ui/date-picker';
-import { SPONSORSHIP_TYPES } from '@/lib/data/constants';
+import { SPONSORSHIP_TYPES } from '@/lib/constants';
 import { LocationSelect } from '@/components/ui/location-select';
 
 // Debounce hook

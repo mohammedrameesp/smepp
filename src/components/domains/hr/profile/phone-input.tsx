@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { COUNTRY_CODES } from '@/lib/data/constants';
+import { COUNTRY_CODES } from '@/lib/constants';
 import { ChevronDown, Search } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
 import { ICON_SIZES } from '@/lib/constants';

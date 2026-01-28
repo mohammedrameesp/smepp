@@ -25,7 +25,7 @@ import { useClientDataTable } from '@/hooks/use-client-data-table';
 import { Download, User, Package, Clock, CheckCircle2, Circle, ShieldCheck, Briefcase, UserCog, CircleDollarSign, Users, Crown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { EmployeeActions } from './employee-actions';
-import { SPONSORSHIP_TYPES } from '@/lib/data/constants';
+import { SPONSORSHIP_TYPES } from '@/lib/constants';
 import { calculateTenure } from '@/features/employees/lib/hr-utils';
 import { getDisplayEmail } from '@/lib/utils/user-display';
 import { ICON_SIZES } from '@/lib/constants';

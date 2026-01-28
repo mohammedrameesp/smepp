@@ -35,7 +35,7 @@ import {
   GENDERS,
   MARITAL_STATUS,
   LANGUAGES,
-} from '@/lib/data/constants';
+} from '@/lib/constants';
 import { LocationSelect } from '@/components/ui/location-select';
 import { PhoneInput, QatarPhoneInput } from './phone-input';
 import { DocumentUpload } from './document-upload';

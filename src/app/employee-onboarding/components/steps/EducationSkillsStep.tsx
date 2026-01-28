@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { MultiSelectTags, TagsInput } from '@/components/domains/hr/profile/multi-select-tags';
-import { QUALIFICATIONS, LANGUAGES } from '@/lib/data/constants';
+import { QUALIFICATIONS, LANGUAGES } from '@/lib/constants';
 
 // Graduation year validation constants
 const MIN_GRAD_YEAR = new Date().getFullYear() - 50;

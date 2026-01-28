@@ -24,7 +24,7 @@ import { IdentificationStep } from './components/steps/IdentificationStep';
 import { BankingDocumentsStep } from './components/steps/BankingDocumentsStep';
 import { EducationSkillsStep } from './components/steps/EducationSkillsStep';
 import { ReviewStep } from './components/steps/ReviewStep';
-import { COUNTRY_CODES } from '@/lib/data/constants';
+import { COUNTRY_CODES } from '@/lib/constants';
 import { VALIDATION_PATTERNS, PATTERN_MESSAGES } from '@/lib/validations/patterns';
 
 /**

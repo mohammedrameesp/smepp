@@ -16,7 +16,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, AlertTriangle, Download, User, Package, Clock, RefreshCw, CheckCircle2, Circle, ShieldCheck, Briefcase, UserCog, CircleDollarSign } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { EmployeeActions } from './employee-actions';
-import { SPONSORSHIP_TYPES } from '@/lib/data/constants';
+import { SPONSORSHIP_TYPES } from '@/lib/constants';
 import { calculateTenure } from '@/features/employees/lib/hr-utils';
 import { getDisplayEmail } from '@/lib/utils/user-display';
 import { getRoleClasses, ICON_SIZES } from '@/lib/constants';

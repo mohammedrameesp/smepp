@@ -16,7 +16,7 @@ import { createSupplierSchema, type CreateSupplierRequest } from '@/features/sup
 import { useSubdomain } from '@/hooks/use-subdomain';
 import { useTenantBranding } from '@/hooks/use-tenant-branding';
 import { ICON_SIZES } from '@/lib/constants';
-import { COUNTRY_CODES } from '@/lib/data/constants';
+import { COUNTRY_CODES } from '@/lib/constants';
 
 export default function SupplierRegistrationPage() {
   const { subdomain, isLoading: subdomainLoading } = useSubdomain();

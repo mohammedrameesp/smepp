@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { CountrySelect } from '@/components/ui/country-select';
 import { Loader2 } from 'lucide-react';
 import { ICON_SIZES } from '@/lib/constants';
-import { COUNTRY_CODES } from '@/lib/data/constants';
+import { COUNTRY_CODES } from '@/lib/constants';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { z } from 'zod';

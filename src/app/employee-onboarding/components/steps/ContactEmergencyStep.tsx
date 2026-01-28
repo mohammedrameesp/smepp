@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PhoneInput, QatarPhoneInput } from '@/components/domains/hr/profile';
-import { RELATIONSHIPS } from '@/lib/data/constants';
+import { RELATIONSHIPS } from '@/lib/constants';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { QatarAddressSelect, type QatarAddressValue } from '@/components/ui/qatar-address-select';
 

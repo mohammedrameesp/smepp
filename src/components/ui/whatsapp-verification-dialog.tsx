@@ -29,7 +29,7 @@ import {
 import { Loader2, MessageCircle, Check, AlertCircle } from 'lucide-react';
 import { ICON_SIZES } from '@/lib/constants';
 import { cn } from '@/lib/core/utils';
-import { COUNTRY_CODES } from '@/lib/data/constants';
+import { COUNTRY_CODES } from '@/lib/constants';
 
 type DialogState = 'phone-entry' | 'verifying' | 'success' | 'error';
 

@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DocumentUpload, ProfilePhotoUpload } from '@/components/domains/hr/profile';
-import { QATAR_BANKS } from '@/lib/data/constants';
+import { QATAR_BANKS } from '@/lib/constants';
 
 // IBAN validation hint component
 function IbanValidationHint({ iban }: { iban: string }) {

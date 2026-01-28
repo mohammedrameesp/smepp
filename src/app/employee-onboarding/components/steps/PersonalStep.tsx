@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DatePicker } from '@/components/ui/date-picker';
 import { CountrySelect } from '@/components/ui/country-select';
-import { GENDERS, MARITAL_STATUS } from '@/lib/data/constants';
+import { GENDERS, MARITAL_STATUS } from '@/lib/constants';
 import { toInputDateString } from '@/lib/core/datetime';
 
 // DOB constraints: must be 18-80 years old

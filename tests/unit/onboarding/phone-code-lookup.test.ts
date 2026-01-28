@@ -6,7 +6,7 @@
  * to auto-set phone country codes when a user selects their nationality.
  */
 
-import { COUNTRY_CODES } from '@/lib/data/constants';
+import { COUNTRY_CODES } from '@/lib/constants';
 
 // Replicate the helper function from onboarding-wizard.tsx for testing
 function getPhoneCodeByCountry(countryName: string): string {
