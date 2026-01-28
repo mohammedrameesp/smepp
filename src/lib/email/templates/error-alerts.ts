@@ -5,25 +5,18 @@
  */
 
 import type { ErrorContext, ErrorSeverity } from '@/lib/core/error-logger';
-import { escapeHtml, DEFAULT_BRAND_COLOR, APP_DOMAIN } from '../utils';
+import type { EmailTemplateResult, AlertColorScheme } from '../types';
+import { escapeHtml, DEFAULT_BRAND_COLOR, APP_DOMAIN, systemEmailWrapper } from '../utils';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-/** Color scheme for severity badge styling */
-interface SeverityColorScheme {
-  bg: string;
-  border: string;
-  text: string;
-}
-
-/** Email template output with subject, HTML body, and plain text fallback */
-export interface EmailTemplate {
-  subject: string;
-  html: string;
-  text: string;
-}
+/**
+ * Email template output with subject, HTML body, and plain text fallback.
+ * @deprecated Use EmailTemplateResult from '../types' instead
+ */
+export type EmailTemplate = EmailTemplateResult;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CONSTANTS
@@ -36,63 +29,17 @@ const BRAND_COLOR = DEFAULT_BRAND_COLOR;
 const DEFAULT_SEVERITY: ErrorSeverity = 'error';
 
 /** Color schemes for each severity level */
-const SEVERITY_COLORS: Record<ErrorSeverity, SeverityColorScheme> = {
+const SEVERITY_COLORS: Record<ErrorSeverity, AlertColorScheme> = {
   warning: { bg: '#fef9c3', border: '#eab308', text: '#854d0e' },
   error: { bg: '#fee2e2', border: '#ef4444', text: '#991b1b' },
   critical: { bg: '#fecaca', border: '#dc2626', text: '#7f1d1d' },
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// EMAIL WRAPPER
-// ═══════════════════════════════════════════════════════════════════════════════
-
-/**
- * Wrap email content in a consistent HTML template for error alerts.
- * This is a simplified wrapper for system alerts (no org branding needed).
- *
- * @param content - The main HTML content of the email body
- * @returns Complete HTML email document
- * @internal
- */
-function emailWrapper(content: string): string {
-  return `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f4f4f4;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f4f4f4; padding: 40px 0;">
-    <tr>
-      <td align="center">
-        <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
-          <tr>
-            <td style="padding: 40px;">
-              ${content}
-            </td>
-          </tr>
-          <tr>
-            <td style="padding: 20px 40px; background-color: #f8f9fa; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;">
-              <p style="margin: 0; color: #666666; font-size: 12px; text-align: center;">
-                &copy; 2026 Durj Platform. Error Monitoring System.
-              </p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-  `;
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
 // SYSTEM ERROR ALERT TEMPLATE
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export function systemErrorAlertEmail(context: ErrorContext): EmailTemplate {
+export function systemErrorAlertEmail(context: ErrorContext): EmailTemplateResult {
   const severity = context.severity || DEFAULT_SEVERITY;
   const severityColors = SEVERITY_COLORS[severity];
   const severityLabel = severity.toUpperCase();
@@ -103,7 +50,7 @@ export function systemErrorAlertEmail(context: ErrorContext): EmailTemplate {
   const protocol = isLocalhost ? 'http' : 'https';
   const superAdminUrl = `${protocol}://${APP_DOMAIN}/super-admin/error-logs`;
 
-  const html = emailWrapper(`
+  const html = systemEmailWrapper(`
     <!-- Alert Banner -->
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: ${severityColors.bg}; border-left: 4px solid ${severityColors.border}; border-radius: 4px; margin: 0 0 25px 0;">
       <tr>

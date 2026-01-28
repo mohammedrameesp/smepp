@@ -5,18 +5,18 @@
  */
 
 import type { EmailFailureContext } from '../failure-handler';
-import { escapeHtml, DEFAULT_BRAND_COLOR, APP_DOMAIN } from '../utils';
+import type { EmailTemplateResult } from '../types';
+import { escapeHtml, DEFAULT_BRAND_COLOR, APP_DOMAIN, systemEmailWrapper } from '../utils';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-/** Email template output with subject, HTML body, and plain text fallback */
-export interface EmailFailureTemplate {
-  subject: string;
-  html: string;
-  text: string;
-}
+/**
+ * Email template output with subject, HTML body, and plain text fallback.
+ * @deprecated Use EmailTemplateResult from '../types' instead
+ */
+export type EmailFailureTemplate = EmailTemplateResult;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CONSTANTS
@@ -29,53 +29,6 @@ const BRAND_COLOR = DEFAULT_BRAND_COLOR;
 const DEFAULT_ORG_NAME = 'Durj Platform';
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// EMAIL WRAPPER
-// ═══════════════════════════════════════════════════════════════════════════════
-
-/**
- * Wrap email content in a consistent HTML template for failure alerts.
- * This is a simplified wrapper for system alerts.
- *
- * @param content - The main HTML content of the email body
- * @param orgName - Organization name for footer (defaults to 'Durj Platform')
- * @returns Complete HTML email document
- * @internal
- */
-function emailWrapper(content: string, orgName: string = DEFAULT_ORG_NAME): string {
-  return `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f4f4f4;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f4f4f4; padding: 40px 0;">
-    <tr>
-      <td align="center">
-        <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
-          <tr>
-            <td style="padding: 40px;">
-              ${content}
-            </td>
-          </tr>
-          <tr>
-            <td style="padding: 20px 40px; background-color: #f8f9fa; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;">
-              <p style="margin: 0; color: #666666; font-size: 12px; text-align: center;">
-                &copy; 2026 ${orgName}. Platform Alert System.
-              </p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-  `;
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
 // EMAIL FAILURE ALERT TEMPLATE
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -86,7 +39,7 @@ function emailWrapper(content: string, orgName: string = DEFAULT_ORG_NAME): stri
  * @param context - Email failure context with organization and error details
  * @returns Email template with subject, HTML, and plain text versions
  */
-export function emailFailureAlertEmail(context: EmailFailureContext): EmailFailureTemplate {
+export function emailFailureAlertEmail(context: EmailFailureContext): EmailTemplateResult {
   const subject = `Email Delivery Failure: ${context.organizationName} - ${context.module}`;
 
   const isLocalhost = APP_DOMAIN.includes('localhost');
@@ -95,7 +48,7 @@ export function emailFailureAlertEmail(context: EmailFailureContext): EmailFailu
   const tenantPortalUrl = `${protocol}://${context.organizationSlug}.${APP_DOMAIN}`;
   const superAdminUrl = `${protocol}://${APP_DOMAIN}/super-admin/email-failures`;
 
-  const html = emailWrapper(`
+  const html = systemEmailWrapper(`
     <!-- Alert Banner -->
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #fef2f2; border-left: 4px solid #ef4444; border-radius: 4px; margin: 0 0 25px 0;">
       <tr>

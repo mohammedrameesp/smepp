@@ -13,7 +13,33 @@ export { sendEmailWithFailureHandling, sendBulkEmailsWithFailureHandling } from 
 export type { SendEmailWithFailureHandlingOptions } from './sender';
 
 // Utilities
-export { escapeHtml, getTenantPortalUrl, formatTimestamp, emailWrapper, DEFAULT_BRAND_COLOR, APP_DOMAIN, QATAR_TIMEZONE } from './utils';
+export {
+  escapeHtml,
+  getTenantPortalUrl,
+  formatTimestamp,
+  emailWrapper,
+  systemEmailWrapper,
+  DEFAULT_BRAND_COLOR,
+  APP_DOMAIN,
+  QATAR_TIMEZONE,
+} from './utils';
+
+// Types
+export type { EmailTemplateResult, AlertType, AlertColorScheme, EmailWrapperOptions } from './types';
+
+// Components (shared HTML builders)
+export {
+  ALERT_STYLES,
+  alertBanner,
+  detailsTable,
+  infoBlock,
+  actionButton,
+  greeting,
+  signature,
+  paragraph,
+  heading,
+  formatAsset,
+} from './components';
 
 // Failure handling
 export { handleEmailFailure, getOrganizationContext } from './failure-handler';

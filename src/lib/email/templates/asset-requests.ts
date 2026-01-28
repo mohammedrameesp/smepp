@@ -25,7 +25,19 @@
  * ```
  */
 
+import type { EmailTemplateResult } from '../types';
 import { escapeHtml, getTenantPortalUrl, emailWrapper } from '../utils';
+import {
+  alertBanner,
+  detailsTable,
+  infoBlock,
+  actionButton,
+  greeting,
+  signature,
+  paragraph,
+  heading,
+  formatAsset,
+} from '../components';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CONSTANTS
@@ -36,31 +48,6 @@ import { escapeHtml, getTenantPortalUrl, emailWrapper } from '../utils';
  * Organization's primaryColor can override this.
  */
 const DEFAULT_BRAND_COLOR = '#73c5d1' as const;
-
-/**
- * Semantic alert color palette for different notification types.
- */
-const ALERT_STYLES = {
-  info: { bg: '#e8f4fd', border: '#73c5d1', text: '#0c5460' },
-  success: { bg: '#dcfce7', border: '#22c55e', text: '#15803d' },
-  warning: { bg: '#fff3cd', border: '#ffc107', text: '#856404' },
-  error: { bg: '#fee2e2', border: '#dc2626', text: '#dc2626' },
-} as const;
-
-type AlertType = keyof typeof ALERT_STYLES;
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// EMAIL RESULT TYPE
-// ═══════════════════════════════════════════════════════════════════════════════
-
-/**
- * Standard email output format with HTML and plain text versions.
- */
-interface EmailResult {
-  readonly subject: string;
-  readonly html: string;
-  readonly text: string;
-}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // DATA INTERFACES
@@ -183,150 +170,6 @@ interface AssetUnassignedData {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// HTML COMPONENT HELPERS
-// ═══════════════════════════════════════════════════════════════════════════════
-
-/**
- * Generate an alert banner for the top of emails.
- * @param type - Alert type (info, success, warning, error)
- * @param message - Alert message text
- * @param brandColor - Optional brand color for info type border
- */
-function alertBanner(type: AlertType, message: string, brandColor?: string): string {
-  const style = ALERT_STYLES[type];
-  // For info alerts, allow brand color override; others use their semantic color
-  const borderColor = type === 'info' ? (brandColor || style.border) : style.border;
-
-  return `
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: ${style.bg}; border-left: 4px solid ${borderColor}; border-radius: 4px; margin: 0 0 25px 0;">
-      <tr>
-        <td style="padding: 15px 20px;">
-          <p style="color: ${style.text}; font-size: 14px; margin: 0; font-weight: bold;">${message}</p>
-        </td>
-      </tr>
-    </table>`;
-}
-
-/**
- * Generate a details table with key-value rows.
- * @param title - Table heading
- * @param rows - Array of [label, value] pairs
- * @param brandColor - Brand color for title
- */
-function detailsTable(
-  title: string,
-  rows: ReadonlyArray<readonly [string, string]>,
-  brandColor: string
-): string {
-  const rowsHtml = rows
-    .map(
-      ([label, value]) => `
-            <tr>
-              <td style="padding: 8px 0; color: #666666; font-size: 14px; width: 40%;">${label}:</td>
-              <td style="padding: 8px 0; color: #333333; font-size: 14px;${label === 'Request Number' ? ' font-weight: bold;' : ''}">${value}</td>
-            </tr>`
-    )
-    .join('');
-
-  return `
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f8f9fa; border-radius: 8px; margin: 25px 0;">
-      <tr>
-        <td style="padding: 25px;">
-          <h3 style="color: ${brandColor}; margin: 0 0 15px 0; font-size: 16px;">${title}</h3>
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
-            ${rowsHtml}
-          </table>
-        </td>
-      </tr>
-    </table>`;
-}
-
-/**
- * Generate a highlighted info block for reasons/notes.
- * @param title - Block heading
- * @param content - Block content (will be escaped)
- * @param type - Visual style (info or error)
- * @param brandColor - Brand color for info type
- */
-function infoBlock(
-  title: string,
-  content: string,
-  type: 'info' | 'error' = 'info',
-  brandColor?: string
-): string {
-  const style = ALERT_STYLES[type];
-  const titleColor = type === 'info' ? (brandColor || DEFAULT_BRAND_COLOR) : style.text;
-
-  return `
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: ${style.bg}; border-radius: 8px; margin: 0 0 25px 0;">
-      <tr>
-        <td style="padding: 20px;">
-          <h4 style="color: ${titleColor}; margin: 0 0 10px 0; font-size: 14px;">${title}:</h4>
-          <p style="color: #555555; font-size: 14px; line-height: 1.6; margin: 0;">${escapeHtml(content)}</p>
-        </td>
-      </tr>
-    </table>`;
-}
-
-/**
- * Generate a call-to-action button.
- * @param text - Button label
- * @param url - Button link URL
- * @param brandColor - Button background color
- */
-function actionButton(text: string, url: string, brandColor: string): string {
-  return `
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin: 25px 0;">
-      <tr>
-        <td align="center">
-          <a href="${url}" style="display: inline-block; padding: 14px 30px; background-color: ${brandColor}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">${text}</a>
-        </td>
-      </tr>
-    </table>`;
-}
-
-/**
- * Generate the email closing signature.
- * @param orgName - Organization name
- */
-function signature(orgName: string): string {
-  return `<p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">Best regards,<br><strong>${orgName}</strong></p>`;
-}
-
-/**
- * Generate greeting paragraph for user-facing emails.
- * @param userName - User's display name
- */
-function greeting(userName: string): string {
-  return `<p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">Dear <strong>${escapeHtml(userName)}</strong>,</p>`;
-}
-
-/**
- * Generate a paragraph element.
- * @param text - Paragraph content (not escaped - may contain HTML)
- */
-function paragraph(text: string): string {
-  return `<p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">${text}</p>`;
-}
-
-/**
- * Generate heading element.
- * @param text - Heading content
- */
-function heading(text: string): string {
-  return `<h2 style="color: #333333; margin: 0 0 20px 0; font-size: 20px;">${text}</h2>`;
-}
-
-/**
- * Format asset display string.
- * @param brand - Asset brand (optional)
- * @param model - Asset model
- */
-function formatAsset(brand: string | null, model: string): string {
-  return `${brand || ''} ${model}`.trim();
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
 // EMAIL TEMPLATES
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -336,7 +179,7 @@ function formatAsset(brand: string | null, model: string): string {
  * @param data - Request submission data
  * @returns Email with subject, HTML, and plain text
  */
-export function assetRequestSubmittedEmail(data: AssetRequestSubmittedData): EmailResult {
+export function assetRequestSubmittedEmail(data: AssetRequestSubmittedData): EmailTemplateResult {
   const brandColor = data.primaryColor || DEFAULT_BRAND_COLOR;
   const asset = formatAsset(data.assetBrand, data.assetModel);
 
@@ -390,7 +233,7 @@ Review at: ${getTenantPortalUrl(data.orgSlug, '/admin/asset-requests')}`.trim();
  * @param data - Assignment pending data
  * @returns Email with subject, HTML, and plain text
  */
-export function assetAssignmentPendingEmail(data: AssetAssignmentPendingData): EmailResult {
+export function assetAssignmentPendingEmail(data: AssetAssignmentPendingData): EmailTemplateResult {
   const brandColor = data.primaryColor || DEFAULT_BRAND_COLOR;
   const asset = formatAsset(data.assetBrand, data.assetModel);
 
@@ -444,7 +287,7 @@ Review at: ${getTenantPortalUrl(data.orgSlug, '/employee/asset-requests')}`.trim
  * @param data - Assignment accepted data
  * @returns Email with subject, HTML, and plain text
  */
-export function assetAssignmentAcceptedEmail(data: AssetAssignmentAcceptedData): EmailResult {
+export function assetAssignmentAcceptedEmail(data: AssetAssignmentAcceptedData): EmailTemplateResult {
   const brandColor = data.primaryColor || DEFAULT_BRAND_COLOR;
   const asset = formatAsset(data.assetBrand, data.assetModel);
 
@@ -489,7 +332,7 @@ Details:
  * @param data - Assignment declined data
  * @returns Email with subject, HTML, and plain text
  */
-export function assetAssignmentDeclinedEmail(data: AssetAssignmentDeclinedData): EmailResult {
+export function assetAssignmentDeclinedEmail(data: AssetAssignmentDeclinedData): EmailTemplateResult {
   const brandColor = data.primaryColor || DEFAULT_BRAND_COLOR;
   const asset = formatAsset(data.assetBrand, data.assetModel);
 
@@ -537,7 +380,7 @@ Reason: ${data.reason}`.trim();
  * @param data - Return request data
  * @returns Email with subject, HTML, and plain text
  */
-export function assetReturnRequestEmail(data: AssetReturnRequestData): EmailResult {
+export function assetReturnRequestEmail(data: AssetReturnRequestData): EmailTemplateResult {
   const brandColor = data.primaryColor || DEFAULT_BRAND_COLOR;
   const asset = formatAsset(data.assetBrand, data.assetModel);
 
@@ -588,7 +431,7 @@ Review at: ${getTenantPortalUrl(data.orgSlug, '/admin/asset-requests')}`.trim();
  * @param data - Request approved data
  * @returns Email with subject, HTML, and plain text
  */
-export function assetRequestApprovedEmail(data: AssetRequestApprovedData): EmailResult {
+export function assetRequestApprovedEmail(data: AssetRequestApprovedData): EmailTemplateResult {
   const brandColor = data.primaryColor || DEFAULT_BRAND_COLOR;
   const asset = formatAsset(data.assetBrand, data.assetModel);
 
@@ -644,7 +487,7 @@ View at: ${getTenantPortalUrl(data.orgSlug, '/employee/asset-requests')}`.trim()
  * @param data - Request rejected data
  * @returns Email with subject, HTML, and plain text
  */
-export function assetRequestRejectedEmail(data: AssetRequestRejectedData): EmailResult {
+export function assetRequestRejectedEmail(data: AssetRequestRejectedData): EmailTemplateResult {
   const brandColor = data.primaryColor || DEFAULT_BRAND_COLOR;
   const asset = formatAsset(data.assetBrand, data.assetModel);
 
@@ -698,7 +541,7 @@ If you have questions, please contact IT support.`.trim();
  * @param data - Return approved data
  * @returns Email with subject, HTML, and plain text
  */
-export function assetReturnApprovedEmail(data: AssetReturnApprovedData): EmailResult {
+export function assetReturnApprovedEmail(data: AssetReturnApprovedData): EmailTemplateResult {
   const brandColor = data.primaryColor || DEFAULT_BRAND_COLOR;
   const asset = formatAsset(data.assetBrand, data.assetModel);
 
@@ -746,7 +589,7 @@ Details:
  * @param data - Return rejected data
  * @returns Email with subject, HTML, and plain text
  */
-export function assetReturnRejectedEmail(data: AssetReturnRejectedData): EmailResult {
+export function assetReturnRejectedEmail(data: AssetReturnRejectedData): EmailTemplateResult {
   const brandColor = data.primaryColor || DEFAULT_BRAND_COLOR;
   const asset = formatAsset(data.assetBrand, data.assetModel);
 
@@ -800,7 +643,7 @@ If you have questions, please contact IT support.`.trim();
  * @param data - Unassignment data
  * @returns Email with subject, HTML, and plain text
  */
-export function assetUnassignedEmail(data: AssetUnassignedData): EmailResult {
+export function assetUnassignedEmail(data: AssetUnassignedData): EmailTemplateResult {
   const brandColor = data.primaryColor || DEFAULT_BRAND_COLOR;
   const asset = formatAsset(data.assetBrand, data.assetModel);
 

@@ -71,11 +71,12 @@ export function formatTimestamp(timezone: string = QATAR_TIMEZONE): string {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// EMAIL WRAPPER
+// EMAIL WRAPPERS
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
  * Wrap email content in a consistent HTML template with header and footer.
+ * Used for branded tenant emails with organization header.
  *
  * @param content - The main HTML content of the email body
  * @param orgName - Organization name to display in header
@@ -128,4 +129,46 @@ export function emailWrapper(
 </body>
 </html>
 `.trim();
+}
+
+/**
+ * Wrap email content in a simplified HTML template for system alerts.
+ * Used for super admin notifications without organization branding.
+ *
+ * @param content - The main HTML content of the email body
+ * @param footerText - Optional footer text (defaults to 'Durj Platform')
+ * @returns Complete HTML email document
+ */
+export function systemEmailWrapper(content: string, footerText: string = 'Durj Platform'): string {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f4f4f4;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f4f4f4; padding: 40px 0;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
+          <tr>
+            <td style="padding: 40px;">
+              ${content}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 20px 40px; background-color: #f8f9fa; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;">
+              <p style="margin: 0; color: #666666; font-size: 12px; text-align: center;">
+                &copy; 2026 ${footerText}. Platform Alert System.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `.trim();
 }
