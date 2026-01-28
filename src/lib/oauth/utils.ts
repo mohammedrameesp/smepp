@@ -94,7 +94,7 @@ export function decrypt(encryptedText: string): string {
 
 interface OAuthState {
   subdomain: string;
-  orgId: string | null;
+  orgId: string;
   provider: 'google' | 'azure';
   timestamp: number;
   nonce: string;
@@ -331,81 +331,77 @@ export interface OAuthSecurityCheckResult {
  * Validate OAuth login security checks
  * This mirrors the security checks in NextAuth's signIn callback
  *
- * For org users: Checks TeamMember first (primary)
- * For super admins: Falls back to User table
+ * OAuth flows always have an orgId (from tenant subdomain).
+ * Checks TeamMember first, then falls back to User table for new signups.
  */
 export async function validateOAuthSecurity(
   email: string,
-  orgId: string | null,
+  orgId: string,
   authMethod: 'google' | 'azure-ad'
 ): Promise<OAuthSecurityCheckResult> {
   const normalizedEmail = email.toLowerCase().trim();
 
   // ═══════════════════════════════════════════════════════════════════════════════
-  // STEP 1: Check TeamMember first (org users) - PRIMARY PATH
+  // STEP 1: Check TeamMember first (existing org users)
   // ═══════════════════════════════════════════════════════════════════════════════
-  if (orgId) {
-    const teamMember = await prisma.teamMember.findFirst({
-      where: {
-        email: normalizedEmail,
-        tenantId: orgId,
-      },
-      select: {
-        id: true,
-        isDeleted: true,
-        canLogin: true,
-        tenant: {
-          select: {
-            allowedAuthMethods: true,
-          },
+  const teamMember = await prisma.teamMember.findFirst({
+    where: {
+      email: normalizedEmail,
+      tenantId: orgId,
+    },
+    select: {
+      id: true,
+      isDeleted: true,
+      canLogin: true,
+      tenant: {
+        select: {
+          allowedAuthMethods: true,
         },
       },
-    });
+    },
+  });
 
-    if (teamMember) {
-      // Block soft-deleted members
-      if (teamMember.isDeleted) {
-        return { allowed: false, error: 'AccountDeactivated' };
-      }
-
-      // Block members who cannot login
-      if (!teamMember.canLogin) {
-        return { allowed: false, error: 'LoginDisabled' };
-      }
-
-      // Check account lockout on User table (single source of truth for auth)
-      const user = await prisma.user.findUnique({
-        where: { email: normalizedEmail },
-        select: { id: true },
-      });
-      if (user) {
-        const lockoutCheck = await isAccountLocked(user.id);
-        if (lockoutCheck.locked) {
-          return { allowed: false, error: 'AccountLocked', lockedUntil: lockoutCheck.lockedUntil };
-        }
-      }
-
-      // Check org-level auth method restrictions
-      if (teamMember.tenant.allowedAuthMethods.length > 0) {
-        if (!teamMember.tenant.allowedAuthMethods.includes(authMethod)) {
-          return { allowed: false, error: 'AuthMethodNotAllowed' };
-        }
-      }
-
-      return { allowed: true };
+  if (teamMember) {
+    // Block soft-deleted members
+    if (teamMember.isDeleted) {
+      return { allowed: false, error: 'AccountDeactivated' };
     }
-    // TeamMember not found for this org - check if they can be created (new user flow)
+
+    // Block members who cannot login
+    if (!teamMember.canLogin) {
+      return { allowed: false, error: 'LoginDisabled' };
+    }
+
+    // Check account lockout on User table (single source of truth for auth)
+    const user = await prisma.user.findUnique({
+      where: { email: normalizedEmail },
+      select: { id: true },
+    });
+    if (user) {
+      const lockoutCheck = await isAccountLocked(user.id);
+      if (lockoutCheck.locked) {
+        return { allowed: false, error: 'AccountLocked', lockedUntil: lockoutCheck.lockedUntil };
+      }
+    }
+
+    // Check org-level auth method restrictions
+    if (teamMember.tenant.allowedAuthMethods.length > 0) {
+      if (!teamMember.tenant.allowedAuthMethods.includes(authMethod)) {
+        return { allowed: false, error: 'AuthMethodNotAllowed' };
+      }
+    }
+
+    return { allowed: true };
   }
 
   // ═══════════════════════════════════════════════════════════════════════════════
-  // STEP 2: Check User table (super admins only)
+  // STEP 2: Check User table (new users signing up via OAuth)
   // ═══════════════════════════════════════════════════════════════════════════════
   const existingUser = await prisma.user.findUnique({
     where: { email: normalizedEmail },
     select: {
       id: true,
       isDeleted: true,
-      isSuperAdmin: true,
     },
   });
 
@@ -419,161 +415,37 @@ export async function validateOAuthSecurity(
     return { allowed: false, error: 'AccountDeactivated' };
   }
 
-  // Note: canLogin is now on TeamMember, not User
-  // Super admins can always login if not deleted
-
   // Check account lockout
   const lockoutCheck = await isAccountLocked(existingUser.id);
   if (lockoutCheck.locked) {
     return { allowed: false, error: 'AccountLocked', lockedUntil: lockoutCheck.lockedUntil };
   }
 
-  // Super admins bypass org-level restrictions
-  if (existingUser.isSuperAdmin) {
-    return { allowed: true };
-  }
+  // Check org auth restrictions for new signups
+  const org = await prisma.organization.findUnique({
+    where: { id: orgId },
+    select: { allowedAuthMethods: true },
+  });
 
-  // For non-super-admin Users with org context, check org auth restrictions
-  if (orgId) {
-    const org = await prisma.organization.findUnique({
-      where: { id: orgId },
-      select: { allowedAuthMethods: true },
-    });
-
-    if (org?.allowedAuthMethods.length && !org.allowedAuthMethods.includes(authMethod)) {
-      return { allowed: false, error: 'AuthMethodNotAllowed' };
-    }
+  if (org?.allowedAuthMethods.length && !org.allowedAuthMethods.includes(authMethod)) {
+    return { allowed: false, error: 'AuthMethodNotAllowed' };
   }
 
   return { allowed: true };
 }
 
 /**
- * Create or update a user/team member from OAuth info
+ * Create or update a TeamMember from OAuth info
  *
- * For org users: Creates/updates TeamMember (primary)
- * For super admins/no-org: Creates/updates User (fallback)
- *
- * Returns: { type: 'teamMember' | 'user', id: string, ... }
+ * OAuth flows always have an orgId (from tenant subdomain).
+ * Creates User record for auth tracking, then creates/updates TeamMember.
  */
-export async function upsertOAuthUser(userInfo: OAuthUserInfo, orgId: string | null) {
+export async function upsertOAuthUser(userInfo: OAuthUserInfo, orgId: string) {
   const normalizedEmail = userInfo.email.toLowerCase().trim();
 
-  // ═══════════════════════════════════════════════════════════════════════════════
-  // ORG USERS: Create/update TeamMember (PRIMARY PATH)
-  // ═══════════════════════════════════════════════════════════════════════════════
-  if (orgId) {
-    // First, create or find User (single source of truth for auth)
-    let user = await prisma.user.findUnique({
-      where: { email: normalizedEmail },
-    });
-
-    if (!user) {
-      user = await prisma.user.create({
-        data: {
-          email: normalizedEmail,
-          name: userInfo.name,
-          image: userInfo.image,
-          emailVerified: userInfo.emailVerified ? new Date() : null,
-        },
-      });
-    } else {
-      // Update User email verification if needed
-      if (userInfo.emailVerified && !user.emailVerified) {
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { emailVerified: new Date() },
-        });
-      }
-    }
-
-    // Now find or create TeamMember with userId FK
-    let teamMember = await prisma.teamMember.findFirst({
-      where: {
-        userId: user.id,
-        tenantId: orgId,
-      },
-    });
-
-    if (!teamMember) {
-      // Create new TeamMember for this org
-      // SSO logins without invitation default to employee (admin can change later)
-      teamMember = await prisma.teamMember.create({
-        data: {
-          userId: user.id,
-          email: normalizedEmail, // Denormalized for queries
-          name: userInfo.name,
-          image: userInfo.image,
-          tenantId: orgId,
-          isAdmin: false,
-          isOwner: false,
-          isEmployee: true, // Default to employee for SSO self-signup
-          canLogin: true,
-        },
-      });
-
-      // Determine provider from OAuth image URL
-      const provider = userInfo.image?.includes('google') ? 'google' : 'azure';
-
-      // AUDIT: Log new OAuth account creation
-      logger.info({
-        event: 'OAUTH_ACCOUNT_CREATED',
-        teamMemberId: teamMember.id,
-        userId: user.id,
-        email: normalizedEmail,
-        orgId,
-        provider,
-      }, 'New OAuth account created for TeamMember');
-
-      // Notify HR/admins about new SSO signup (non-blocking)
-      notifyHROfNewMember(
-        { id: teamMember.id, name: teamMember.name, email: teamMember.email },
-        orgId,
-        provider as 'google' | 'azure'
-      ).catch(() => {}); // Fire and forget
-    } else {
-      // SECURITY AUDIT: Log OAuth login to existing account
-      // This helps detect potential account takeover attempts
-      const isFirstOAuthLogin = !teamMember.image && userInfo.image;
-      if (isFirstOAuthLogin) {
-        logger.info({
-          event: 'OAUTH_ACCOUNT_LINKED',
-          teamMemberId: teamMember.id,
-          email: normalizedEmail,
-          orgId,
-          provider: userInfo.image?.includes('google') ? 'google' : 'azure',
-        }, 'OAuth linked to existing TeamMember account');
-      }
-
-      // Update TeamMember info if changed
-      teamMember = await prisma.teamMember.update({
-        where: { id: teamMember.id },
-        data: {
-          name: userInfo.name || teamMember.name,
-          image: userInfo.image || teamMember.image,
-        },
-      });
-    }
-
-    // Clear any failed login attempts on successful OAuth login (on User table)
-    await clearFailedLogins(user.id);
-
-    return { type: 'teamMember' as const, ...teamMember };
-  }
-
-  // ═══════════════════════════════════════════════════════════════════════════════
-  // NO ORG: Create/update User (super admins, platform-level users)
-  // ═══════════════════════════════════════════════════════════════════════════════
+  // First, create or find User (single source of truth for auth)
   let user = await prisma.user.findUnique({
     where: { email: normalizedEmail },
-    select: {
-      id: true,
-      email: true,
-      name: true,
-      image: true,
-      emailVerified: true,
-      passwordHash: true,
-    },
   });
 
   if (!user) {
@@ -585,42 +457,88 @@ export async function upsertOAuthUser(userInfo: OAuthUserInfo, orgId: string | n
         emailVerified: userInfo.emailVerified ? new Date() : null,
       },
     });
+  } else {
+    // Update User email verification if needed
+    if (userInfo.emailVerified && !user.emailVerified) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { emailVerified: new Date() },
+      });
+    }
+  }
 
-    // AUDIT: Log new OAuth user creation
+  // Now find or create TeamMember with userId FK
+  let teamMember = await prisma.teamMember.findFirst({
+    where: {
+      userId: user.id,
+      tenantId: orgId,
+    },
+  });
+
+  if (!teamMember) {
+    // Create new TeamMember for this org
+    // SSO logins without invitation default to employee (admin can change later)
+    teamMember = await prisma.teamMember.create({
+      data: {
+        userId: user.id,
+        email: normalizedEmail, // Denormalized for queries
+        name: userInfo.name,
+        image: userInfo.image,
+        tenantId: orgId,
+        isAdmin: false,
+        isOwner: false,
+        isEmployee: true, // Default to employee for SSO self-signup
+        canLogin: true,
+      },
+    });
+
+    // Determine provider from OAuth image URL
+    const provider = userInfo.image?.includes('google') ? 'google' : 'azure';
+
+    // AUDIT: Log new OAuth account creation
     logger.info({
-      event: 'OAUTH_USER_CREATED',
+      event: 'OAUTH_ACCOUNT_CREATED',
+      teamMemberId: teamMember.id,
       userId: user.id,
       email: normalizedEmail,
-      provider: userInfo.image?.includes('google') ? 'google' : 'azure',
-    }, 'New OAuth user account created');
+      orgId,
+      provider,
+    }, 'New OAuth account created for TeamMember');
+
+    // Notify HR/admins about new SSO signup (non-blocking)
+    notifyHROfNewMember(
+      { id: teamMember.id, name: teamMember.name, email: teamMember.email },
+      orgId,
+      provider as 'google' | 'azure'
+    ).catch(() => {}); // Fire and forget
   } else {
     // SECURITY AUDIT: Log OAuth login to existing account
-    const isFirstOAuthLogin = !user.image && userInfo.image;
+    // This helps detect potential account takeover attempts
+    const isFirstOAuthLogin = !teamMember.image && userInfo.image;
     if (isFirstOAuthLogin) {
       logger.info({
-        event: 'OAUTH_USER_LINKED',
-        userId: user.id,
+        event: 'OAUTH_ACCOUNT_LINKED',
+        teamMemberId: teamMember.id,
         email: normalizedEmail,
-        hasPassword: !!user.passwordHash,
+        orgId,
         provider: userInfo.image?.includes('google') ? 'google' : 'azure',
-      }, 'OAuth linked to existing user account');
+      }, 'OAuth linked to existing TeamMember account');
     }
 
-    // Update user info if changed
-    user = await prisma.user.update({
-      where: { id: user.id },
+    // Update TeamMember info if changed
+    teamMember = await prisma.teamMember.update({
+      where: { id: teamMember.id },
       data: {
-        name: userInfo.name || user.name,
-        image: userInfo.image || user.image,
-        emailVerified: userInfo.emailVerified ? new Date() : user.emailVerified,
+        name: userInfo.name || teamMember.name,
+        image: userInfo.image || teamMember.image,
       },
     });
   }
 
-  // Clear any failed login attempts on successful OAuth login
+  // Clear any failed login attempts on successful OAuth login (on User table)
   await clearFailedLogins(user.id);
 
-  return { type: 'user' as const, ...user };
+  return { ...teamMember };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -678,71 +596,6 @@ export async function createTeamMemberSessionToken(memberId: string): Promise<st
     iat: Math.floor(Date.now() / 1000),
     exp: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60, // 30 days
   };
-
-  // Encode as JWT using NextAuth's encode function
-  const token = await encode({
-    token: tokenPayload,
-    secret: process.env.NEXTAUTH_SECRET!,
-    maxAge: 30 * 24 * 60 * 60, // 30 days
-  });
-
-  return token;
-}
-
-/**
- * Create a NextAuth-compatible session token for User (super admins only)
- * NOTE: This is only used for super admins who don't have org memberships
- */
-export async function createSessionToken(userId: string, orgId: string | null): Promise<string> {
-  // Get user (super admin)
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      id: true,
-      email: true,
-      name: true,
-      image: true,
-      role: true,
-      isSuperAdmin: true,
-    },
-  });
-
-  if (!user) {
-    throw new Error('User not found');
-  }
-
-  // Build token payload for super admin
-  const tokenPayload: Record<string, unknown> = {
-    sub: user.id,
-    email: user.email,
-    name: user.name,
-    picture: user.image,
-    role: user.role,
-    isSuperAdmin: user.isSuperAdmin,
-    isEmployee: false, // Super admins are not employees
-    isTeamMember: false, // Super admins are not org team members
-    iat: Math.floor(Date.now() / 1000),
-    exp: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60, // 30 days
-  };
-
-  // If orgId is provided, get org details for super admin impersonation
-  if (orgId) {
-    const org = await prisma.organization.findUnique({
-      where: { id: orgId },
-      select: {
-        id: true,
-        slug: true,
-        subscriptionTier: true,
-        enabledModules: true,
-      },
-    });
-    if (org) {
-      tokenPayload.organizationId = org.id;
-      tokenPayload.organizationSlug = org.slug;
-      tokenPayload.subscriptionTier = org.subscriptionTier;
-      tokenPayload.enabledModules = org.enabledModules;
-    }
-  }
 
   // Encode as JWT using NextAuth's encode function
   const token = await encode({

@@ -8,7 +8,6 @@
  * - OAuth state management with CSRF protection
  * - State expiration (10 minutes)
  * - User security validation
- * - Session token creation
  * - URL utility functions
  */
 
@@ -59,14 +58,12 @@ import {
   decryptState,
   validateOAuthSecurity,
   upsertOAuthUser,
-  createSessionToken,
   getBaseUrl,
   getAppDomain,
   getTenantUrl,
 } from '@/lib/oauth/utils';
 import { prisma } from '@/lib/core/prisma';
 import { isAccountLocked, clearFailedLogins } from '@/lib/security/account-lockout';
-import { encode } from 'next-auth/jwt';
 
 const mockPrisma = prisma as jest.Mocked<typeof prisma>;
 
@@ -164,19 +161,6 @@ describe('OAuth Utilities', () => {
       expect(decrypted!.inviteToken).toBe('invite-abc-123');
     });
 
-    it('should handle null orgId', () => {
-      const stateData = {
-        subdomain: 'main',
-        orgId: null,
-        provider: 'google' as const,
-      };
-
-      const encrypted = encryptState(stateData);
-      const decrypted = decryptState(encrypted);
-
-      expect(decrypted!.orgId).toBeNull();
-    });
-
     it('should return null for expired state (>10 minutes)', () => {
       const stateData = {
         subdomain: 'acme',
@@ -241,8 +225,6 @@ describe('OAuth Utilities', () => {
       (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue({
         id: 'user-123',
         isDeleted: true,
-        canLogin: true,
-        isSuperAdmin: false,
       });
 
       const result = await validateOAuthSecurity('deleted@example.com', 'org-123', 'google');
@@ -272,8 +254,6 @@ describe('OAuth Utilities', () => {
       (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue({
         id: 'user-123',
         isDeleted: false,
-        canLogin: true,
-        isSuperAdmin: false,
       });
 
       const lockoutTime = new Date(Date.now() + 30 * 60 * 1000);
@@ -289,29 +269,10 @@ describe('OAuth Utilities', () => {
       expect(result.lockedUntil).toEqual(lockoutTime);
     });
 
-    it('should allow super admins regardless of org restrictions', async () => {
-      (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue({
-        id: 'user-123',
-        isDeleted: false,
-        canLogin: true,
-        isSuperAdmin: true,
-      });
-
-      (isAccountLocked as jest.Mock).mockResolvedValue({ locked: false });
-      // Super admins may not have TeamMember records, which is fine
-      (mockPrisma.teamMember.findFirst as jest.Mock).mockResolvedValue(null);
-
-      const result = await validateOAuthSecurity('admin@example.com', 'org-123', 'google');
-
-      expect(result.allowed).toBe(true);
-    });
-
     it('should block when auth method not allowed by organization', async () => {
       (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue({
         id: 'user-123',
         isDeleted: false,
-        canLogin: true,
-        isSuperAdmin: false,
       });
 
       (isAccountLocked as jest.Mock).mockResolvedValue({ locked: false });
@@ -331,8 +292,6 @@ describe('OAuth Utilities', () => {
       (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue({
         id: 'user-123',
         isDeleted: false,
-        canLogin: true,
-        isSuperAdmin: false,
       });
 
       (isAccountLocked as jest.Mock).mockResolvedValue({ locked: false });
@@ -350,8 +309,6 @@ describe('OAuth Utilities', () => {
       (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue({
         id: 'user-123',
         isDeleted: false,
-        canLogin: true,
-        isSuperAdmin: false,
       });
 
       (isAccountLocked as jest.Mock).mockResolvedValue({ locked: false });
@@ -382,64 +339,7 @@ describe('OAuth Utilities', () => {
   // ═══════════════════════════════════════════════════════════════════════════════
 
   describe('upsertOAuthUser', () => {
-    it('should create new user when not exists', async () => {
-      (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue(null);
-      (mockPrisma.user.create as jest.Mock).mockResolvedValue({
-        id: 'new-user-123',
-        email: 'new@example.com',
-        name: 'New User',
-      });
-
-      const result = await upsertOAuthUser(
-        {
-          email: 'new@example.com',
-          name: 'New User',
-          image: 'https://example.com/avatar.jpg',
-          emailVerified: true,
-        },
-        null
-      );
-
-      expect(mockPrisma.user.create).toHaveBeenCalledWith({
-        data: {
-          email: 'new@example.com',
-          name: 'New User',
-          image: 'https://example.com/avatar.jpg',
-          emailVerified: expect.any(Date),
-        },
-      });
-      expect(result.id).toBe('new-user-123');
-    });
-
-    it('should update existing user', async () => {
-      (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue({
-        id: 'existing-user',
-        email: 'existing@example.com',
-        name: 'Old Name',
-        image: null,
-      });
-
-      (mockPrisma.user.update as jest.Mock).mockResolvedValue({
-        id: 'existing-user',
-        email: 'existing@example.com',
-        name: 'New Name',
-        image: 'https://example.com/new-avatar.jpg',
-      });
-
-      await upsertOAuthUser(
-        {
-          email: 'existing@example.com',
-          name: 'New Name',
-          image: 'https://example.com/new-avatar.jpg',
-          emailVerified: false,
-        },
-        null
-      );
-
-      expect(mockPrisma.user.update).toHaveBeenCalled();
-    });
-
-    it('should create TeamMember if org specified and not exists', async () => {
+    it('should create TeamMember if not exists', async () => {
       // No existing TeamMember
       (mockPrisma.teamMember.findFirst as jest.Mock).mockResolvedValue(null);
       // User must be created first (new auth model)
@@ -471,10 +371,10 @@ describe('OAuth Utilities', () => {
           isOwner: false,
         }),
       });
-      expect(result.type).toBe('teamMember');
+      expect(result.id).toBe('new-team-member');
     });
 
-    it('should update TeamMember if org specified and already exists', async () => {
+    it('should update TeamMember if already exists', async () => {
       // Existing TeamMember with linked User
       (mockPrisma.teamMember.findFirst as jest.Mock).mockResolvedValue({
         id: 'existing-member',
@@ -504,133 +404,56 @@ describe('OAuth Utilities', () => {
 
       expect(mockPrisma.teamMember.create).not.toHaveBeenCalled();
       expect(mockPrisma.teamMember.update).toHaveBeenCalled();
-      expect(result.type).toBe('teamMember');
+      expect(result.id).toBe('existing-member');
     });
 
     it('should clear failed login attempts on successful login', async () => {
+      (mockPrisma.teamMember.findFirst as jest.Mock).mockResolvedValue(null);
       (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue(null);
       (mockPrisma.user.create as jest.Mock).mockResolvedValue({
         id: 'new-user',
         email: 'new@example.com',
       });
+      (mockPrisma.teamMember.create as jest.Mock).mockResolvedValue({
+        id: 'new-member',
+        email: 'new@example.com',
+        tenantId: 'org-123',
+        userId: 'new-user',
+      });
+      (clearFailedLogins as jest.Mock).mockResolvedValue(undefined);
 
       await upsertOAuthUser(
         { email: 'new@example.com', name: 'New', image: null },
-        null
+        'org-123'
       );
 
       expect(clearFailedLogins).toHaveBeenCalledWith('new-user');
     });
 
     it('should normalize email to lowercase and trim', async () => {
+      (mockPrisma.teamMember.findFirst as jest.Mock).mockResolvedValue(null);
       (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue(null);
       (mockPrisma.user.create as jest.Mock).mockResolvedValue({
         id: 'user',
         email: 'test@example.com',
       });
+      (mockPrisma.teamMember.create as jest.Mock).mockResolvedValue({
+        id: 'member',
+        email: 'test@example.com',
+        tenantId: 'org-123',
+        userId: 'user',
+      });
+      (clearFailedLogins as jest.Mock).mockResolvedValue(undefined);
 
       await upsertOAuthUser(
         { email: '  TEST@EXAMPLE.COM  ', name: 'Test', image: null },
-        null
+        'org-123'
       );
 
       expect(mockPrisma.user.findUnique).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { email: 'test@example.com' },
         })
-      );
-    });
-  });
-
-  // ═══════════════════════════════════════════════════════════════════════════════
-  // SESSION TOKEN CREATION
-  // ═══════════════════════════════════════════════════════════════════════════════
-
-  describe('createSessionToken', () => {
-    it('should create JWT token for super admin with organization', async () => {
-      // createSessionToken is now for super admins only - it queries user and org separately
-      (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue({
-        id: 'user-123',
-        email: 'user@example.com',
-        name: 'Test User',
-        image: 'https://example.com/avatar.jpg',
-        role: 'USER',
-        isSuperAdmin: true,
-      });
-      (mockPrisma.organization.findUnique as jest.Mock).mockResolvedValue({
-        id: 'org-123',
-        slug: 'acme',
-        subscriptionTier: 'PROFESSIONAL',
-        enabledModules: ['assets', 'employees'],
-      });
-
-      const token = await createSessionToken('user-123', 'org-123');
-
-      expect(encode).toHaveBeenCalledWith({
-        token: expect.objectContaining({
-          sub: 'user-123',
-          email: 'user@example.com',
-          name: 'Test User',
-          organizationId: 'org-123',
-          organizationSlug: 'acme',
-          subscriptionTier: 'PROFESSIONAL',
-        }),
-        secret: process.env.NEXTAUTH_SECRET,
-        maxAge: 30 * 24 * 60 * 60,
-      });
-      expect(token).toBe('mock-jwt-token');
-    });
-
-    it('should not include org data if org not found', async () => {
-      (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue({
-        id: 'user-123',
-        email: 'user@example.com',
-        name: 'Test User',
-        image: null,
-        role: 'USER',
-        isSuperAdmin: true,
-      });
-      (mockPrisma.organization.findUnique as jest.Mock).mockResolvedValue(null);
-
-      await createSessionToken('user-123', 'org-999'); // Non-existent org
-
-      expect(encode).toHaveBeenCalledWith({
-        token: expect.not.objectContaining({
-          organizationId: expect.anything(),
-        }),
-        secret: expect.any(String),
-        maxAge: expect.any(Number),
-      });
-    });
-
-    it('should create token without org data when orgId is null', async () => {
-      (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue({
-        id: 'user-123',
-        email: 'user@example.com',
-        name: 'Test User',
-        image: null,
-        role: 'USER',
-        isSuperAdmin: true,
-      });
-
-      await createSessionToken('user-123', null);
-
-      expect(encode).toHaveBeenCalledWith({
-        token: expect.not.objectContaining({
-          organizationId: expect.anything(),
-        }),
-        secret: expect.any(String),
-        maxAge: expect.any(Number),
-      });
-      // Org query should not be made when orgId is null
-      expect(mockPrisma.organization.findUnique).not.toHaveBeenCalled();
-    });
-
-    it('should throw error for non-existent user', async () => {
-      (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue(null);
-
-      await expect(createSessionToken('non-existent', null)).rejects.toThrow(
-        'User not found'
       );
     });
   });

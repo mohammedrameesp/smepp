@@ -5,7 +5,6 @@ import {
   decrypt,
   decryptState,
   upsertOAuthUser,
-  createSessionToken,
   createTeamMemberSessionToken,
   getTenantUrl,
   validateOAuthSecurity,
@@ -57,7 +56,7 @@ export async function GET(request: NextRequest) {
 
     // Get organization and its credentials
     const org = await prisma.organization.findUnique({
-      where: { id: orgId || '' },
+      where: { id: orgId },
       select: {
         id: true,
         slug: true,
@@ -134,7 +133,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Create or update user
-    const result = await upsertOAuthUser(
+    const teamMember = await upsertOAuthUser(
       {
         email,
         name: azureUser.displayName,
@@ -145,9 +144,7 @@ export async function GET(request: NextRequest) {
     );
 
     // Create session token
-    const sessionToken = result.type === 'teamMember'
-      ? await createTeamMemberSessionToken(result.id)
-      : await createSessionToken(result.id, org.id);
+    const sessionToken = await createTeamMemberSessionToken(teamMember.id);
 
     // Set the session cookie
     const cookieStore = await cookies();
