@@ -39,6 +39,7 @@ import {
 import { generateRequestNumber } from '@/features/asset-requests';
 import { createNotification, NotificationTemplates } from '@/features/notifications/lib';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
+import { buildManagerAccessFilter, canAccessMember } from '@/lib/access-control/manager-filter';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GET /api/assets/[id] - Get Single Asset (Most Used)
@@ -108,25 +109,15 @@ async function getAssetHandler(request: NextRequest, context: APIContext) {
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
-    // STEP 2: Authorization check
+    // STEP 2: Authorization check using centralized helper
     // Admin/Operations access can view any asset, managers can view their direct reports' assets
     // ─────────────────────────────────────────────────────────────────────────────
-    const hasFullAccess = tenant?.isOwner || tenant?.isAdmin || tenant?.hasOperationsAccess;
-    if (!hasFullAccess) {
-      // Check if user is assigned this asset
-      if (asset.assignedMemberId === tenant.userId) {
-        // OK - user's own asset
-      } else if (tenant?.canApprove) {
-        // Manager: can view direct reports' assets
-        const directReports = await db.teamMember.findMany({
-          where: { reportingToId: tenant.userId },
-          select: { id: true },
-        });
-        const directReportIds = directReports.map(r => r.id);
-        if (!asset.assignedMemberId || !directReportIds.includes(asset.assignedMemberId)) {
-          return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-        }
-      } else {
+    const accessFilter = await buildManagerAccessFilter(db, tenant, { domain: 'operations' });
+
+    // Non-admin users can only view their own assigned assets or direct reports' assets
+    if (!accessFilter.hasFullAccess) {
+      // Unassigned assets can only be viewed by users with full access
+      if (!asset.assignedMemberId || !canAccessMember(accessFilter, asset.assignedMemberId)) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       }
     }

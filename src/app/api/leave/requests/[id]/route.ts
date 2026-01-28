@@ -15,6 +15,7 @@ import {
 import { validateNoOverlap } from '@/features/leave/lib/leave-request-validation';
 import { cleanupStorageFile } from '@/lib/storage/cleanup';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { buildManagerAccessFilter, canAccessMember } from '@/lib/access-control/manager-filter';
 import {
   getApprovalChain,
   getApprovalChainSummary,
@@ -84,24 +85,10 @@ async function getLeaveRequestHandler(request: NextRequest, context: APIContext)
       return NextResponse.json({ error: 'Leave request not found' }, { status: 404 });
     }
 
-    // Check access permissions
-    const hasFullAccess = tenant?.isOwner || tenant?.isAdmin || tenant?.hasHRAccess;
-    const isOwnRequest = leaveRequest.memberId === tenant.userId;
-
-    if (!hasFullAccess && !isOwnRequest) {
-      // Check if manager viewing direct report's request
-      if (tenant?.canApprove) {
-        const directReports = await db.teamMember.findMany({
-          where: { reportingToId: tenant.userId },
-          select: { id: true },
-        });
-        const directReportIds = directReports.map(r => r.id);
-        if (!directReportIds.includes(leaveRequest.memberId)) {
-          return NextResponse.json({ error: 'Access denied' }, { status: 403 });
-        }
-      } else {
-        return NextResponse.json({ error: 'Access denied' }, { status: 403 });
-      }
+    // Check access permissions using centralized helper
+    const accessFilter = await buildManagerAccessFilter(db, tenant, { domain: 'hr' });
+    if (!canAccessMember(accessFilter, leaveRequest.memberId)) {
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
     // Include approval chain if it exists

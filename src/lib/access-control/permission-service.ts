@@ -1,13 +1,25 @@
 /**
- * Permission Check Service
+ * @file permission-service.ts
+ * @module access-control
+ * @description Permission Check Service for the multi-tenant platform.
  *
- * Provides functions to check if a user has specific permissions
- * based on their boolean flags (isOwner, isAdmin) and the organization's
- * custom permission settings stored in RolePermission table.
+ * Provides functions to check if a user has specific permissions based on:
+ * - Boolean flags (isOwner, isAdmin) from session/tenant context
+ * - Custom permission settings stored in RolePermission table
+ * - Module enablement for the organization
+ *
+ * @security Permission checks are tenant-scoped. OWNER and ADMIN roles have
+ * implicit access to all permissions within enabled modules.
  */
 
 import { prisma } from '@/lib/core/prisma';
-import { MODULE_PERMISSION_MAP, getAllPermissions } from './permissions';
+import { MODULE_PERMISSION_MAP, getAllPermissions, Permission } from './permissions';
+
+/**
+ * Core modules that are always enabled (no module restriction).
+ * These are system-level modules that every organization has access to.
+ */
+const CORE_MODULES = ['users', 'settings', 'reports', 'activity', 'approvals', 'documents'] as const;
 
 /**
  * Check if a user has a specific permission
@@ -141,10 +153,14 @@ export async function getPermissionsForUser(
 }
 
 /**
- * Grant a permission to non-admin users in an organization
+ * Grant a permission to non-admin users in an organization.
+ *
+ * @security This modifies access control. Caller must verify authorization
+ * (typically OWNER or ADMIN with settings:permissions access).
  *
  * @param tenantId - The organization ID
  * @param permission - The permission to grant
+ * @throws {Error} If database operation fails
  */
 export async function grantMemberPermission(
   tenantId: string,
@@ -160,10 +176,14 @@ export async function grantMemberPermission(
 }
 
 /**
- * Revoke a permission from non-admin users in an organization
+ * Revoke a permission from non-admin users in an organization.
+ *
+ * @security This modifies access control. Caller must verify authorization
+ * (typically OWNER or ADMIN with settings:permissions access).
  *
  * @param tenantId - The organization ID
  * @param permission - The permission to revoke
+ * @throws {Error} If database operation fails
  */
 export async function revokeMemberPermission(
   tenantId: string,
@@ -175,16 +195,21 @@ export async function revokeMemberPermission(
 }
 
 /**
- * Set all permissions for non-admin users (replaces existing)
+ * Set all permissions for non-admin users (replaces existing).
+ *
+ * @security This is a destructive operation that replaces all existing
+ * MEMBER permissions. Caller must verify authorization (typically OWNER
+ * or ADMIN with settings:permissions access).
  *
  * @param tenantId - The organization ID
  * @param permissions - Array of permissions to grant
+ * @throws {Error} If database transaction fails
  */
 export async function setMemberPermissions(
   tenantId: string,
   permissions: string[]
 ): Promise<void> {
-  // Use a transaction to delete old and create new
+  // Use a transaction to delete old and create new atomically
   await prisma.$transaction(async (tx) => {
     // Delete all existing permissions for MEMBER role
     await tx.rolePermission.deleteMany({
@@ -206,14 +231,20 @@ export async function setMemberPermissions(
 }
 
 /**
- * Check if a permission's module is enabled
+ * Check if a permission's module is enabled for the organization.
+ *
+ * Core modules (users, settings, reports, activity, approvals, documents)
+ * are always enabled. Feature modules require explicit enablement.
+ *
+ * @param permission - The permission string to check (e.g., "assets:view")
+ * @param enabledModules - Array of enabled module slugs for the organization
+ * @returns True if the module for this permission is enabled
  */
 function isModuleEnabledForPermission(permission: string, enabledModules: string[]): boolean {
   const permissionPrefix = permission.split(':')[0];
 
   // Core modules are always enabled (no module restriction)
-  const coreModules = ['users', 'settings', 'reports', 'activity', 'approvals', 'documents'];
-  if (coreModules.includes(permissionPrefix)) {
+  if ((CORE_MODULES as readonly string[]).includes(permissionPrefix)) {
     return true;
   }
 
@@ -224,7 +255,7 @@ function isModuleEnabledForPermission(permission: string, enabledModules: string
     }
   }
 
-  // Unknown permission prefix - allow by default
+  // Unknown permission prefix - allow by default (fail-open for extensibility)
   return true;
 }
 
@@ -266,8 +297,11 @@ export async function getPermissionsForRole(
 }
 
 /**
- * Check if a permission is valid
+ * Check if a permission string is a valid defined permission.
+ *
+ * @param permission - The permission string to validate
+ * @returns True if the permission is defined in PERMISSIONS constant
  */
-export function isValidPermission(permission: string): boolean {
-  return getAllPermissions().includes(permission);
+export function isValidPermission(permission: string): permission is Permission {
+  return (getAllPermissions() as string[]).includes(permission);
 }

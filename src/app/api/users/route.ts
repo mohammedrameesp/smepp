@@ -16,6 +16,7 @@ import { randomBytes } from 'crypto';
 import { updateSetupProgress } from '@/features/onboarding/lib';
 import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
 import logger from '@/lib/core/log';
+import { deriveOrgRole } from '@/lib/access-control';
 
 async function getUsersHandler(request: NextRequest, context: APIContext) {
   const { tenant, prisma: tenantPrisma } = context;
@@ -71,7 +72,7 @@ async function getUsersHandler(request: NextRequest, context: APIContext) {
       name: member.name,
       email: member.email,
       image: member.image,
-      role: member.isAdmin ? 'ADMIN' : 'MEMBER',
+      role: deriveOrgRole(member),
       isEmployee: member.isEmployee,
       isOnWps: member.isOnWps,
       isDeleted: member.isDeleted,
@@ -252,7 +253,7 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
     id: member.id,
     name: member.name,
     email: member.email,
-    role: member.isAdmin ? 'ADMIN' : 'MEMBER',
+    role: deriveOrgRole(member),
     hrProfile: isEmployee ? {
       employeeId: member.employeeCode,
       designation: member.designation,
@@ -318,7 +319,7 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
             organizationId: tenantId,
             email: finalEmail,
             name: name,
-            role: isAdmin ? 'ADMIN' : 'MEMBER', // Role string for invitation
+            role: deriveOrgRole({ isAdmin }), // Role string for invitation
             token: inviteToken,
             isEmployee,
             isOnWps: isEmployee ? isOnWps : null,

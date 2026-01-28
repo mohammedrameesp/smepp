@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { withErrorHandler } from '@/lib/http/handler';
 import { arrayToCSV, formatDateForCSV } from '@/lib/core/import-export';
+import { deriveOrgRole } from '@/lib/access-control';
 
 export const maxDuration = 60; // Set max duration to 60 seconds for large exports
 
@@ -253,7 +254,7 @@ export const GET = withErrorHandler(async (_request, { tenant }) => {
     id: m.id,
     name: m.name || '',
     email: m.email,
-    role: m.isAdmin ? 'ADMIN' : 'MEMBER',
+    role: deriveOrgRole(m),
     isEmployee: m.isEmployee ? 'Yes' : 'No',
     isOnWps: m.isOnWps ? 'Yes' : 'No',
     employeeCode: m.employeeCode || '',

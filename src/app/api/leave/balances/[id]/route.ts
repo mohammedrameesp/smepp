@@ -9,6 +9,7 @@ import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { updateLeaveBalanceSchema } from '@/features/leave/validations/leave';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { buildManagerAccessFilter, canAccessMember } from '@/lib/access-control/manager-filter';
 
 async function getLeaveBalanceHandler(request: NextRequest, context: APIContext) {
     const { tenant, params, prisma: tenantPrisma } = context;
@@ -47,24 +48,10 @@ async function getLeaveBalanceHandler(request: NextRequest, context: APIContext)
       return NextResponse.json({ error: 'Leave balance not found' }, { status: 404 });
     }
 
-    // Check access permissions
-    const hasFullAccess = tenant?.isOwner || tenant?.isAdmin || tenant?.hasHRAccess;
-    const isOwnBalance = balance.memberId === tenant.userId;
-
-    if (!hasFullAccess && !isOwnBalance) {
-      // Check if manager viewing direct report's balance
-      if (tenant?.canApprove) {
-        const directReports = await db.teamMember.findMany({
-          where: { reportingToId: tenant.userId },
-          select: { id: true },
-        });
-        const directReportIds = directReports.map(r => r.id);
-        if (!directReportIds.includes(balance.memberId)) {
-          return NextResponse.json({ error: 'Access denied' }, { status: 403 });
-        }
-      } else {
-        return NextResponse.json({ error: 'Access denied' }, { status: 403 });
-      }
+    // Check access permissions using centralized helper
+    const accessFilter = await buildManagerAccessFilter(db, tenant, { domain: 'hr' });
+    if (!canAccessMember(accessFilter, balance.memberId)) {
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
     return NextResponse.json(balance);

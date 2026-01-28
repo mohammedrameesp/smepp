@@ -13,6 +13,7 @@ import {
 } from '@/features/employees/lib/hr-utils';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
+import { deriveOrgRole } from '@/lib/access-control';
 
 // GET /api/employees/export - Export all employees to Excel
 async function exportEmployeesHandler(request: NextRequest, context: APIContext) {
@@ -120,7 +121,7 @@ async function exportEmployeesHandler(request: NextRequest, context: APIContext)
       employeeId: emp.employeeCode || '',
       name: emp.name || '',
       email: emp.email,
-      role: emp.isAdmin ? 'ADMIN' : 'MEMBER',
+      role: deriveOrgRole(emp),
       designation: emp.designation || '',
       dateOfBirth: formatDate(emp.dateOfBirth || null),
       gender: emp.gender || '',

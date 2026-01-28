@@ -9,12 +9,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ShieldCheck, Users, Search, Loader2, Crown, UserCheck } from 'lucide-react';
 import { ICON_SIZES } from '@/lib/constants';
 import { toast } from 'sonner';
+import { DISPLAY_ROLES, deriveDisplayRole, type DisplayRole } from '@/lib/access-control';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES & CONSTANTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-type Role = 'OWNER' | 'ADMIN' | 'MANAGER' | 'HR' | 'FINANCE' | 'OPERATIONS' | 'EMPLOYEE';
+type Role = DisplayRole;
 
 interface TeamMember {
   id: string;
@@ -37,27 +38,16 @@ interface RoleStats {
   employees: number;
 }
 
-// Role display configuration
+// Role display configuration using DISPLAY_ROLES constants
 const ROLE_CONFIG: Record<Role, { label: string; color: string; description: string }> = {
-  OWNER: { label: 'Owner', color: 'bg-amber-500', description: 'Organization owner with full access' },
-  ADMIN: { label: 'Admin', color: 'bg-red-500', description: 'Full access to all modules' },
-  MANAGER: { label: 'Manager', color: 'bg-purple-500', description: 'Can approve direct reports' },
-  HR: { label: 'HR', color: 'bg-green-500', description: 'HR module access' },
-  FINANCE: { label: 'Finance', color: 'bg-yellow-500', description: 'Finance module access' },
-  OPERATIONS: { label: 'Operations', color: 'bg-blue-500', description: 'Operations module access' },
-  EMPLOYEE: { label: 'Employee', color: 'bg-gray-400', description: 'Basic self-service access' },
+  [DISPLAY_ROLES.OWNER]: { label: 'Owner', color: 'bg-amber-500', description: 'Organization owner with full access' },
+  [DISPLAY_ROLES.ADMIN]: { label: 'Admin', color: 'bg-red-500', description: 'Full access to all modules' },
+  [DISPLAY_ROLES.MANAGER]: { label: 'Manager', color: 'bg-purple-500', description: 'Can approve direct reports' },
+  [DISPLAY_ROLES.HR]: { label: 'HR', color: 'bg-green-500', description: 'HR module access' },
+  [DISPLAY_ROLES.FINANCE]: { label: 'Finance', color: 'bg-yellow-500', description: 'Finance module access' },
+  [DISPLAY_ROLES.OPERATIONS]: { label: 'Operations', color: 'bg-blue-500', description: 'Operations module access' },
+  [DISPLAY_ROLES.EMPLOYEE]: { label: 'Employee', color: 'bg-gray-400', description: 'Basic self-service access' },
 };
-
-// Derive role from permission flags
-function deriveRole(member: TeamMember): Role {
-  if (member.isOwner) return 'OWNER';
-  if (member.isAdmin) return 'ADMIN';
-  if (member.isManager) return 'MANAGER';
-  if (member.hasHRAccess) return 'HR';
-  if (member.hasFinanceAccess) return 'FINANCE';
-  if (member.hasOperationsAccess) return 'OPERATIONS';
-  return 'EMPLOYEE';
-}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // COMPONENT
@@ -298,7 +288,7 @@ export function AccessControlClient() {
                   </TableRow>
                 ) : (
                   filteredMembers.map((member) => {
-                    const currentRole = deriveRole(member);
+                    const currentRole = deriveDisplayRole(member);
                     const isOwner = member.isOwner;
 
                     return (

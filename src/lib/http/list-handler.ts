@@ -16,6 +16,7 @@ import { z, ZodSchema } from 'zod';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { withErrorHandler, APIContext, HandlerOptions } from './handler';
 import { paginatedResponse } from './responses';
+import { deriveOrgRole } from '@/lib/access-control';
 
 /**
  * Maximum page size to prevent DoS via large result sets.
@@ -164,7 +165,7 @@ export function createListHandler<TEntity, TQuery extends BasePaginationParams>(
       tenantId: tenant.tenantId,
       userId: tenant.userId,
       // Derive legacy orgRole for backwards compatibility
-      orgRole: tenant.isOwner ? 'OWNER' : tenant.isAdmin ? 'ADMIN' : 'MEMBER',
+      orgRole: deriveOrgRole(tenant),
     };
 
     // Build where clause

@@ -5,6 +5,7 @@ import { prisma } from '@/lib/core/prisma';
 import logger from '@/lib/core/log';
 import { clearPrefixCache, isCodePrefixAvailable } from '@/lib/utils/code-prefix';
 import { z } from 'zod';
+import { deriveOrgRole } from '@/lib/access-control';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // VALIDATION
@@ -75,7 +76,7 @@ export async function GET(
     return NextResponse.json({
       organization,
       membership: {
-        role: membership.isAdmin ? 'ADMIN' : 'MEMBER',
+        role: deriveOrgRole(membership),
         isOwner: membership.isOwner,
       },
     });

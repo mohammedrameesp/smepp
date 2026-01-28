@@ -12,6 +12,7 @@ import { logAction, ActivityActions } from '@/lib/core/activity';
 import { calculateSpendRequestItems, CalculatedItem } from '@/features/spend-requests/lib/spend-request-creation';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { invalidBodyResponse } from '@/lib/http/responses';
+import { buildManagerAccessFilter, canAccessMember } from '@/lib/access-control/manager-filter';
 import {
   getApprovalChain,
   getApprovalChainSummary,
@@ -71,24 +72,10 @@ async function getSpendRequestHandler(request: NextRequest, context: APIContext)
       return NextResponse.json({ error: 'Spend request not found' }, { status: 404 });
     }
 
-    // Check access permissions
-    const hasFullAccess = tenant?.isOwner || tenant?.isAdmin || tenant?.hasFinanceAccess;
-    const isOwnRequest = spendRequest.requesterId === userId;
-
-    if (!hasFullAccess && !isOwnRequest) {
-      // Check if manager viewing direct report's request
-      if (tenant?.canApprove) {
-        const directReports = await db.teamMember.findMany({
-          where: { reportingToId: userId },
-          select: { id: true },
-        });
-        const directReportIds = directReports.map(r => r.id);
-        if (!directReportIds.includes(spendRequest.requesterId)) {
-          return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-        }
-      } else {
-        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-      }
+    // Check access permissions using centralized helper
+    const accessFilter = await buildManagerAccessFilter(db, tenant, { domain: 'finance' });
+    if (!canAccessMember(accessFilter, spendRequest.requesterId)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     // Include approval chain if it exists

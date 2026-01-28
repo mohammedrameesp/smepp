@@ -4,6 +4,7 @@ import { sendEmail, welcomeUserWithPasswordSetupEmail, organizationInvitationEma
 import { randomBytes } from 'crypto';
 import { withErrorHandler } from '@/lib/http/handler';
 import { notFoundResponse, badRequestResponse } from '@/lib/http/errors';
+import { deriveOrgRole } from '@/lib/access-control';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // POST /api/admin/team/[memberId]/resend - Resend invitation/setup email
@@ -80,7 +81,7 @@ export const POST = withErrorHandler(async (request: NextRequest, { tenant, para
     const emailContent = welcomeUserWithPasswordSetupEmail({
       userName: member.name || member.email,
       userEmail: member.email,
-      userRole: member.isAdmin ? 'ADMIN' : 'MEMBER',
+      userRole: deriveOrgRole(member),
       orgSlug: org.slug,
       orgName: org.name,
       setupToken,
@@ -117,7 +118,7 @@ export const POST = withErrorHandler(async (request: NextRequest, { tenant, para
         organizationId: tenantId,
         email: member.email,
         name: member.name,
-        role: member.isAdmin ? 'ADMIN' : 'MEMBER',
+        role: deriveOrgRole(member),
         token: inviteToken,
         isEmployee: member.isEmployee,
         isOnWps: member.isEmployee ? member.isOnWps : null,
@@ -130,7 +131,7 @@ export const POST = withErrorHandler(async (request: NextRequest, { tenant, para
     const emailContent = organizationInvitationEmail({
       userName: member.name || member.email,
       userEmail: member.email,
-      userRole: member.isAdmin ? 'ADMIN' : 'MEMBER',
+      userRole: deriveOrgRole(member),
       orgSlug: org.slug,
       orgName: org.name,
       inviteToken,

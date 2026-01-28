@@ -11,6 +11,7 @@ import {
   getOverallExpiryStatus,
   calculateTeamMemberProfileCompletion,
 } from '@/features/employees/lib/hr-utils';
+import { deriveOrgRole } from '@/lib/access-control';
 
 // GET /api/employees - Get all employees with HR profile data
 export const GET = withErrorHandler(
@@ -119,7 +120,7 @@ export const GET = withErrorHandler(
         name: emp.name,
         email: emp.email,
         image: emp.image,
-        role: emp.isAdmin ? 'ADMIN' : 'MEMBER',
+        role: deriveOrgRole(emp),
         canLogin: emp.canLogin,
         isEmployee: emp.isEmployee,
         isOnWps: emp.isOnWps,

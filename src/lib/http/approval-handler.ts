@@ -59,6 +59,7 @@ import { logAction } from '@/lib/core/activity';
 import { invalidateTokensForEntity, type ApprovalEntityType } from '@/lib/whatsapp';
 import { prisma } from '@/lib/core/prisma';
 import logger from '@/lib/core/log';
+import { deriveOrgRole } from '@/lib/access-control';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -337,7 +338,7 @@ export function createApprovalHandler<TEntity, TBody = unknown, TResult = TEntit
     const tenantId = tenant.tenantId;
     const userId = tenant.userId;
     // Derive legacy orgRole for backwards compatibility
-    const orgRole = tenant.isOwner ? 'OWNER' : tenant.isAdmin ? 'ADMIN' : 'MEMBER';
+    const orgRole = deriveOrgRole(tenant);
 
     // ─────────────────────────────────────────────────────────────────────────────
     // STEP 2: Validate ID parameter

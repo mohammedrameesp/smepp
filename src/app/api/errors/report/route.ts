@@ -12,6 +12,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { handleSystemError } from '@/lib/core/error-logger';
 import logger from '@/lib/core/log';
+import { deriveOrgRole } from '@/lib/access-control';
 
 interface ClientErrorReport {
   message: string;
@@ -88,7 +89,7 @@ export async function POST(request: NextRequest) {
       tenantId: session?.user?.organizationId,
       userId: session?.user?.id,
       userEmail: session?.user?.email,
-      userRole: session?.user?.isAdmin ? 'ADMIN' : session?.user?.isOwner ? 'OWNER' : 'MEMBER',
+      userRole: deriveOrgRole(session?.user ?? {}),
       message: body.message,
       stack: body.stack,
       errorCode: body.digest,

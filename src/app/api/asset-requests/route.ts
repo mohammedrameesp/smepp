@@ -49,6 +49,7 @@ import {
 } from '@/features/asset-requests';
 import { sendAssetRequestNotifications } from '@/features/asset-requests/lib/notifications';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { buildManagerAccessFilter } from '@/lib/access-control/manager-filter';
 import logger from '@/lib/core/log';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -115,38 +116,17 @@ async function getAssetRequestsHandler(request: NextRequest, context: APIContext
     const { q, type, status, memberId: filterMemberId, assetId, p, ps, sort, order } = validation.data;
 
     // ─────────────────────────────────────────────────────────────────────────────
-    // STEP 2: Apply role-based access control
+    // STEP 2: Apply role-based access control using centralized helper
     // Admin/Operations access can see all requests, managers can see direct reports
     // ─────────────────────────────────────────────────────────────────────────────
-    const hasFullAccess = tenant?.isOwner || tenant?.isAdmin || tenant?.hasOperationsAccess;
-    let effectiveMemberId: string | undefined = undefined;
-    let memberIdFilter: { in: string[] } | undefined = undefined;
+    const accessFilter = await buildManagerAccessFilter(db, tenant, {
+      domain: 'operations',
+      requestedMemberId: filterMemberId,
+    });
 
-    if (hasFullAccess) {
-      // Full access: can see all or filter by specific member
-      effectiveMemberId = filterMemberId;
-    } else if (tenant?.canApprove) {
-      // Manager: can see own requests + direct reports' requests
-      const directReports = await db.teamMember.findMany({
-        where: { reportingToId: currentUserId },
-        select: { id: true },
-      });
-      const directReportIds = directReports.map(r => r.id);
-      const allowedMemberIds = [currentUserId, ...directReportIds];
-
-      if (filterMemberId) {
-        if (allowedMemberIds.includes(filterMemberId)) {
-          effectiveMemberId = filterMemberId;
-        } else {
-          effectiveMemberId = currentUserId;
-        }
-      } else {
-        memberIdFilter = { in: allowedMemberIds };
-      }
-    } else {
-      // Regular user: only their own requests
-      effectiveMemberId = currentUserId;
-    }
+    // Extract filter constraints from the access filter
+    const effectiveMemberId = accessFilter.memberId;
+    const memberIdFilter = accessFilter.memberIdIn ? { in: accessFilter.memberIdIn } : undefined;
 
     // ─────────────────────────────────────────────────────────────────────────────
     // STEP 3: Build where clause with filters

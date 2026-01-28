@@ -16,6 +16,7 @@ import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { AlertCircle } from 'lucide-react';
 import { ICON_SIZES } from '@/lib/constants';
 import type { CodeFormatConfig } from '@/lib/utils/code-prefix';
+import { deriveOrgRole, ORG_ROLES } from '@/lib/access-control';
 
 export default async function OrganizationPage() {
   const auth = await getAdminAuthContext();
@@ -82,8 +83,8 @@ export default async function OrganizationPage() {
 
   // When impersonating, grant full owner access
   const currentUserRole = auth.isImpersonating
-    ? 'OWNER'
-    : (currentMembership!.isOwner ? 'OWNER' : currentMembership!.isAdmin ? 'ADMIN' : 'MEMBER');
+    ? ORG_ROLES.OWNER
+    : deriveOrgRole(currentMembership!);
   const isOwner = auth.isImpersonating || currentMembership!.isOwner;
 
   const orgData = {

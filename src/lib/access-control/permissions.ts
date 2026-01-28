@@ -1,12 +1,63 @@
 /**
- * Permission Constants for Access Control System
+ * @file permissions.ts
+ * @module access-control
+ * @description Permission and Role Constants for Access Control System.
  *
- * Permissions follow the pattern: module:action
- * e.g., "assets:view", "payroll:run", "leave:approve"
+ * Defines the complete permission system for Durj including:
+ * - Role constants (4-tier OrgRole, 7-tier DisplayRole)
+ * - Permission constants (module:action pattern)
+ * - Permission groups for UI organization
+ * - Default role permissions for new organizations
  *
- * OWNER and ADMIN roles have ALL permissions by default.
- * MANAGER and MEMBER roles get custom permissions per organization.
+ * Permissions follow the pattern: module:action (e.g., "assets:view", "payroll:run")
+ *
+ * @security OWNER and ADMIN roles have ALL permissions by default.
+ * MANAGER and MEMBER roles get custom permissions per organization via RolePermission table.
  */
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ROLE CONSTANTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Organization Roles for authorization (4-tier)
+ *
+ * Used for:
+ * - API authorization checks
+ * - Error logging
+ * - Session context
+ * - Database OrgRole enum mapping
+ */
+export const ORG_ROLES = {
+  OWNER: 'OWNER',
+  ADMIN: 'ADMIN',
+  MANAGER: 'MANAGER',
+  MEMBER: 'MEMBER',
+} as const;
+
+export type OrgRole = (typeof ORG_ROLES)[keyof typeof ORG_ROLES];
+
+/**
+ * Display Roles for UI (7-tier)
+ *
+ * Used only for access-control UI display.
+ * Includes domain access flags to show user's functional access.
+ */
+export const DISPLAY_ROLES = {
+  OWNER: 'OWNER',
+  ADMIN: 'ADMIN',
+  MANAGER: 'MANAGER',
+  HR: 'HR',
+  FINANCE: 'FINANCE',
+  OPERATIONS: 'OPERATIONS',
+  EMPLOYEE: 'EMPLOYEE',
+} as const;
+
+export type DisplayRole = (typeof DISPLAY_ROLES)[keyof typeof DISPLAY_ROLES];
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PERMISSION CONSTANTS
+// ═══════════════════════════════════════════════════════════════════════════════
 
 export const PERMISSIONS = {
   // Assets Module
@@ -241,9 +292,16 @@ export const PERMISSION_GROUPS: Record<string, { label: string; permissions: { k
 };
 
 /**
- * Get all permission keys as a flat array
+ * Get all permission keys as a flat array.
+ *
+ * @returns Array of all permission strings defined in PERMISSIONS constant
+ * @example
+ * ```typescript
+ * const allPermissions = getAllPermissions();
+ * // => ['assets:view', 'assets:create', 'assets:edit', ...]
+ * ```
  */
-export function getAllPermissions(): string[] {
+export function getAllPermissions(): Permission[] {
   return Object.values(PERMISSIONS);
 }
 

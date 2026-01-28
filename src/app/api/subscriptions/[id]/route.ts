@@ -29,6 +29,7 @@ import { parseInputDateString } from '@/lib/core/datetime';
 import { convertToQAR } from '@/lib/core/currency';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
+import { buildManagerAccessFilter, canAccessMember } from '@/lib/access-control/manager-filter';
 
 /**
  * Maximum number of history entries to return in GET response.
@@ -91,22 +92,13 @@ async function getSubscriptionHandler(request: NextRequest, context: APIContext)
       return NextResponse.json({ error: 'Subscription not found' }, { status: 404 });
     }
 
-    // Check access permissions
-    const hasFullAccess = tenant?.isOwner || tenant?.isAdmin || tenant?.hasOperationsAccess;
-    const isAssignedToUser = subscription.assignedMemberId === tenant.userId;
+    // Check access permissions using centralized helper
+    const accessFilter = await buildManagerAccessFilter(db, tenant, { domain: 'operations' });
 
-    if (!hasFullAccess && !isAssignedToUser) {
-      // Check if manager viewing direct report's assigned subscription
-      if (tenant?.canApprove && subscription.assignedMemberId) {
-        const directReports = await db.teamMember.findMany({
-          where: { reportingToId: tenant.userId },
-          select: { id: true },
-        });
-        const directReportIds = directReports.map(r => r.id);
-        if (!directReportIds.includes(subscription.assignedMemberId)) {
-          return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-        }
-      } else {
+    // Non-admin users can only view their own assigned subscriptions or direct reports' subscriptions
+    if (!accessFilter.hasFullAccess) {
+      // Unassigned subscriptions can only be viewed by users with full access
+      if (!subscription.assignedMemberId || !canAccessMember(accessFilter, subscription.assignedMemberId)) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       }
     }

@@ -1,25 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { withErrorHandler } from '@/lib/http/handler';
-
-/**
- * Derive display role from permission flags
- * Priority: ADMIN > HR > FINANCE > OPERATIONS > MANAGER > EMPLOYEE
- */
-function deriveRole(member: {
-  isAdmin: boolean;
-  hasHRAccess: boolean;
-  hasFinanceAccess: boolean;
-  hasOperationsAccess: boolean;
-  canApprove: boolean;
-}): string {
-  if (member.isAdmin) return 'ADMIN';
-  if (member.hasHRAccess) return 'HR';
-  if (member.hasFinanceAccess) return 'FINANCE';
-  if (member.hasOperationsAccess) return 'OPERATIONS';
-  if (member.canApprove) return 'MANAGER';
-  return 'EMPLOYEE';
-}
+import { deriveDisplayRole } from '@/lib/access-control';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GET /api/admin/team - Get organization members
@@ -166,7 +148,7 @@ export const GET = withErrorHandler(async (_request, { tenant }) => {
       hasFinanceAccess: m.hasFinanceAccess,
       canApprove: m.canApprove,
       // Derived role from permission flags
-      role: deriveRole(m),
+      role: deriveDisplayRole(m),
       isOwner: m.isOwner,
       joinedAt: m.joinedAt,
       isEmployee: m.isEmployee,

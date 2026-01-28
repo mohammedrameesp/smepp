@@ -5,6 +5,7 @@ import { TeamMemberStatus } from '@prisma/client';
 import { clearWhatsAppPromptSnooze } from '@/lib/utils/whatsapp-verification-check';
 import { withErrorHandler } from '@/lib/http/handler';
 import { validationErrorResponse, notFoundResponse, forbiddenResponse, badRequestResponse } from '@/lib/http/errors';
+import { deriveOrgRole } from '@/lib/access-control';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // PATCH /api/admin/team/[memberId] - Update member permissions
@@ -140,7 +141,7 @@ export const PATCH = withErrorHandler(async (
     member: {
       ...updated,
       // Legacy role field for backwards compatibility
-      role: updated.isAdmin ? 'ADMIN' : 'MEMBER',
+      role: deriveOrgRole(updated),
     },
   });
 }, { requireAuth: true });

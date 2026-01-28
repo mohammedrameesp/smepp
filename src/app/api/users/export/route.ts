@@ -9,6 +9,7 @@ import { prisma } from '@/lib/core/prisma';
 import { arrayToCSV } from '@/lib/core/import-export';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
+import { deriveOrgRole } from '@/lib/access-control';
 
 async function exportUsersHandler(request: NextRequest, context: APIContext) {
   const { tenant, prisma: tenantPrisma } = context;
@@ -42,7 +43,7 @@ async function exportUsersHandler(request: NextRequest, context: APIContext) {
       id: member.id,
       name: member.name || '',
       email: member.email,
-      role: member.isAdmin ? 'ADMIN' : 'MEMBER',
+      role: deriveOrgRole(member),
       isEmployee: member.isEmployee ? 'Yes' : 'No',
       emailVerified: user?.emailVerified ? 'Yes' : 'No',
       image: member.image || '',

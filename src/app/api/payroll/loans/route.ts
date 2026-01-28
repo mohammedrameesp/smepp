@@ -11,6 +11,7 @@ import { logAction, ActivityActions } from '@/lib/core/activity';
 import { generateLoanNumberWithPrefix, calculateLoanEndDate, parseDecimal } from '@/features/payroll/lib/utils';
 import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { buildManagerAccessFilter, applyManagerFilter } from '@/lib/access-control/manager-filter';
 
 async function getLoansHandler(request: NextRequest, context: APIContext) {
     const { tenant, prisma: tenantPrisma } = context;
@@ -34,39 +35,15 @@ async function getLoansHandler(request: NextRequest, context: APIContext) {
     const { userId, status, type, p, ps } = validation.data;
     const page = p;
     const pageSize = ps;
-    // Users with admin or Finance access can see all loans
-    const hasFullAccess = tenant?.isOwner || tenant?.isAdmin || tenant?.hasFinanceAccess;
 
-    // Build where clause with tenant filter
-    const where: Record<string, unknown> = { tenantId };
+    // Build access filter using centralized helper (handles admin/finance, manager, and regular user access)
+    const accessFilter = await buildManagerAccessFilter(db, tenant, {
+      domain: 'finance',
+      requestedMemberId: userId,
+    });
 
-    if (hasFullAccess) {
-      // Full access: can see all or filter by specific user
-      if (userId) {
-        where.memberId = userId;
-      }
-    } else if (tenant?.canApprove) {
-      // Manager: can see own loans + direct reports' loans
-      const directReports = await db.teamMember.findMany({
-        where: { reportingToId: tenant.userId },
-        select: { id: true },
-      });
-      const directReportIds = directReports.map(r => r.id);
-      const allowedMemberIds = [tenant.userId, ...directReportIds];
-
-      if (userId) {
-        if (allowedMemberIds.includes(userId)) {
-          where.memberId = userId;
-        } else {
-          where.memberId = tenant.userId;
-        }
-      } else {
-        where.memberId = { in: allowedMemberIds };
-      }
-    } else {
-      // Regular user: only their own loans
-      where.memberId = tenant.userId;
-    }
+    // Build where clause with tenant filter and access filter
+    const where: Record<string, unknown> = applyManagerFilter(accessFilter, { tenantId });
 
     if (status) {
       where.status = status;

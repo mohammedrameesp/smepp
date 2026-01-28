@@ -8,6 +8,7 @@ import {
   validateSlug,
   getOrganizationUrl,
 } from '@/lib/multi-tenant/subdomain';
+import { deriveOrgRole } from '@/lib/access-control';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // VALIDATION
@@ -50,7 +51,7 @@ export async function GET() {
 
     const organizations = memberships.map((m) => ({
       ...m.tenant,
-      role: m.isAdmin ? 'ADMIN' : 'MEMBER',
+      role: deriveOrgRole(m),
       isOwner: m.isOwner,
     }));
 

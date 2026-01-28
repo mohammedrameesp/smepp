@@ -141,7 +141,7 @@ import {
 import { prisma } from '@/lib/core/prisma';
 import { hasModuleAccess, moduleNotInstalledResponse } from '@/lib/modules/access';
 import { MODULE_REGISTRY } from '@/lib/modules/registry';
-import { hasPermission as checkPermission } from '@/lib/access-control';
+import { hasPermission as checkPermission, deriveOrgRole } from '@/lib/access-control';
 import { MAX_BODY_SIZE_BYTES } from '@/lib/constants/limits';
 import { isTokenRevoked } from '@/lib/security/impersonation';
 import { logAction, ActivityActions } from '@/lib/core/activity';
@@ -1024,7 +1024,7 @@ export function withErrorHandler(
           path: new URL(request.url).pathname,
           userId: session?.user?.id,
           userEmail: session?.user?.email,
-          userRole: session?.user?.isAdmin ? 'ADMIN' : session?.user?.isOwner ? 'OWNER' : 'MEMBER',
+          userRole: deriveOrgRole(session?.user ?? {}),
           message: error instanceof Error ? error.message : String(error),
           stack: error instanceof Error ? error.stack : undefined,
           statusCode,

@@ -12,6 +12,7 @@ import { isAccountLocked, clearFailedLogins } from '@/lib/security/account-locko
 import logger from '@/lib/core/log';
 import { createBulkNotifications } from '@/features/notifications/lib/notification-service';
 import { sendEmail, emailWrapper, getTenantPortalUrl, escapeHtml } from '@/lib/email';
+import { deriveOrgRole } from '@/lib/access-control';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ENCRYPTION CONFIGURATION
@@ -652,7 +653,7 @@ export async function createTeamMemberSessionToken(memberId: string): Promise<st
 
   // Build token payload for TeamMember
   // Compute role from isAdmin boolean for backward compatibility with session
-  const computedRole = teamMember.isAdmin ? 'ADMIN' : 'MEMBER';
+  const computedRole = deriveOrgRole({ isAdmin: teamMember.isAdmin });
   const tokenPayload: Record<string, unknown> = {
     sub: teamMember.id,
     id: teamMember.id,
@@ -673,7 +674,7 @@ export async function createTeamMemberSessionToken(memberId: string): Promise<st
     organizationLogoUrl: teamMember.tenant.logoUrl,
     subscriptionTier: teamMember.tenant.subscriptionTier,
     enabledModules: teamMember.tenant.enabledModules,
-    orgRole: teamMember.isOwner ? 'OWNER' : teamMember.isAdmin ? 'ADMIN' : 'MEMBER',
+    orgRole: deriveOrgRole(teamMember),
     iat: Math.floor(Date.now() / 1000),
     exp: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60, // 30 days
   };

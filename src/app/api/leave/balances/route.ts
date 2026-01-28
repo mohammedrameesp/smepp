@@ -10,6 +10,7 @@ import { leaveBalanceQuerySchema, initializeLeaveBalanceSchema } from '@/feature
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { getCurrentYear } from '@/features/leave/lib/leave-utils';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { buildManagerAccessFilter, applyManagerFilter } from '@/lib/access-control/manager-filter';
 
 async function getLeaveBalancesHandler(request: NextRequest, context: APIContext) {
     const { tenant, prisma: tenantPrisma } = context;
@@ -31,39 +32,14 @@ async function getLeaveBalancesHandler(request: NextRequest, context: APIContext
 
     const { memberId, leaveTypeId, year, p, ps } = validation.data;
 
-    // Users with admin or HR access can see all balances
-    const hasFullAccess = tenant?.isOwner || tenant?.isAdmin || tenant?.hasHRAccess;
+    // Build access filter using centralized helper (handles admin/HR, manager, and regular user access)
+    const accessFilter = await buildManagerAccessFilter(db, tenant, {
+      domain: 'hr',
+      requestedMemberId: memberId,
+    });
 
-    // Build where clause (tenant filtering is automatic via db)
-    const where: Record<string, unknown> = {};
-
-    if (hasFullAccess) {
-      // Full access: can see all or filter by specific member
-      if (memberId) {
-        where.memberId = memberId;
-      }
-    } else if (tenant?.canApprove) {
-      // Manager: can see own balances + direct reports' balances
-      const directReports = await db.teamMember.findMany({
-        where: { reportingToId: tenant.userId },
-        select: { id: true },
-      });
-      const directReportIds = directReports.map(r => r.id);
-      const allowedMemberIds = [tenant.userId, ...directReportIds];
-
-      if (memberId) {
-        if (allowedMemberIds.includes(memberId)) {
-          where.memberId = memberId;
-        } else {
-          where.memberId = tenant.userId;
-        }
-      } else {
-        where.memberId = { in: allowedMemberIds };
-      }
-    } else {
-      // Regular user: only their own balances
-      where.memberId = tenant.userId;
-    }
+    // Build where clause with access filter (tenant filtering is automatic via db)
+    const where: Record<string, unknown> = applyManagerFilter(accessFilter);
     if (leaveTypeId) {
       where.leaveTypeId = leaveTypeId;
     }

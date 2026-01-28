@@ -1,12 +1,15 @@
 /**
  * @file manager-filter.ts
- * @description Helper for building manager-based access filters in API routes
  * @module access-control
+ * @description Helper for building manager-based access filters in API routes.
  *
  * This helper encapsulates the common pattern of filtering data based on:
- * - Full access users (admins/owners) see all data
- * - Managers see their own data + direct reports' data
+ * - Full access users (admins/owners/domain-access) see all data
+ * - Managers (canApprove=true) see their own data + direct reports' data
  * - Regular users see only their own data
+ *
+ * @security All filtering is tenant-scoped through TenantPrismaClient.
+ * Access decisions are based on the tenant context from session/middleware.
  */
 
 import { TenantPrismaClient, TenantContext } from '@/lib/core/prisma-tenant';
@@ -30,7 +33,7 @@ export interface ManagerAccessFilter {
  */
 export interface ManagerFilterOptions {
   /** The domain to check access for (determines which access flag to check) */
-  domain?: 'hr' | 'operations';
+  domain?: 'hr' | 'operations' | 'finance';
   /** Optional specific member ID to filter to (from query params) */
   requestedMemberId?: string;
 }
@@ -42,6 +45,11 @@ export interface ManagerFilterOptions {
  * 1. Admins/owners/domain-access users can see all data
  * 2. Managers (canApprove=true) can see their own + direct reports' data
  * 3. Regular users can only see their own data
+ *
+ * @param db - Tenant-scoped Prisma client
+ * @param tenant - Tenant context with user role flags
+ * @param options - Filter options (domain and optional member ID filter)
+ * @returns ManagerAccessFilter with member ID constraints
  *
  * @example
  * ```ts
@@ -71,7 +79,8 @@ export async function buildManagerAccessFilter(
     tenant.isOwner ||
     tenant.isAdmin ||
     (domain === 'hr' && tenant.hasHRAccess) ||
-    (domain === 'operations' && tenant.hasOperationsAccess)
+    (domain === 'operations' && tenant.hasOperationsAccess) ||
+    (domain === 'finance' && tenant.hasFinanceAccess)
   );
 
   // Full access: can see all or filter by specific member
@@ -129,6 +138,10 @@ export async function buildManagerAccessFilter(
  * Apply manager access filter to a Prisma where clause.
  * Convenience wrapper that applies the filter result directly.
  *
+ * @param filter - The ManagerAccessFilter from buildManagerAccessFilter
+ * @param baseWhere - Base where clause to extend with member ID filter
+ * @returns Extended where clause with memberId constraint
+ *
  * @example
  * ```ts
  * const where = applyManagerFilter(
@@ -152,7 +165,11 @@ export function applyManagerFilter<T extends Record<string, unknown>>(
 }
 
 /**
- * Check if the user can access a specific member's data
+ * Check if the user can access a specific member's data.
+ *
+ * @param filter - The ManagerAccessFilter from buildManagerAccessFilter
+ * @param memberId - The member ID to check access for
+ * @returns True if the user can access this member's data
  */
 export function canAccessMember(
   filter: ManagerAccessFilter,

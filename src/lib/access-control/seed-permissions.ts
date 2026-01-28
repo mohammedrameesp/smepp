@@ -1,17 +1,29 @@
 /**
- * Permission Seeding Utilities
+ * @file seed-permissions.ts
+ * @module access-control
+ * @description Permission Seeding Utilities for new organizations.
  *
- * Functions to seed default permissions for new organizations.
- * Uses 'MEMBER' role string for non-admin users (owners and admins have all permissions automatically).
+ * Functions to seed default permissions when creating new organizations.
+ * Uses 'MEMBER' role for non-admin users - owners and admins have all
+ * permissions automatically via boolean flags.
+ *
+ * @security These functions modify access control data. They should only
+ * be called during organization creation or by authorized admins.
  */
 
 import { prisma } from '@/lib/core/prisma';
 import { DEFAULT_MEMBER_PERMISSIONS } from './permissions';
 
 /**
- * Seed default permissions for a new organization
+ * Seed default permissions for a new organization.
+ *
+ * Creates the default MEMBER role permissions. This should be called
+ * when a new organization is created.
+ *
+ * @security Only call during organization creation workflow.
  *
  * @param tenantId - The organization ID
+ * @throws {Error} If database operation fails
  */
 export async function seedDefaultPermissions(tenantId: string): Promise<void> {
   // Create default MEMBER permissions (for non-admin users)
@@ -29,9 +41,14 @@ export async function seedDefaultPermissions(tenantId: string): Promise<void> {
 }
 
 /**
- * Reset permissions to defaults for an organization
+ * Reset permissions to defaults for an organization.
+ *
+ * @security This is a destructive operation that removes all custom
+ * permissions. Caller must verify authorization (typically OWNER or
+ * ADMIN with settings:permissions access).
  *
  * @param tenantId - The organization ID
+ * @throws {Error} If database transaction fails
  */
 export async function resetToDefaultPermissions(tenantId: string): Promise<void> {
   await prisma.$transaction(async (tx) => {
@@ -57,11 +74,15 @@ export async function resetToDefaultPermissions(tenantId: string): Promise<void>
 }
 
 /**
- * Copy permissions from one organization to another
- * Useful for creating new orgs based on a template
+ * Copy permissions from one organization to another.
+ * Useful for creating new orgs based on a template.
  *
- * @param sourceOrgId - The source organization ID
- * @param targetOrgId - The target organization ID
+ * @security Caller must have access to both source and target organizations.
+ * Typically used during organization cloning by super admins.
+ *
+ * @param sourceOrgId - The source organization ID to copy from
+ * @param targetOrgId - The target organization ID to copy to
+ * @throws {Error} If database operation fails
  */
 export async function copyPermissions(sourceOrgId: string, targetOrgId: string): Promise<void> {
   const sourcePermissions = await prisma.rolePermission.findMany({

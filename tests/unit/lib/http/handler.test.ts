@@ -96,6 +96,7 @@ jest.mock('@/lib/modules/registry', () => ({
 
 jest.mock('@/lib/access-control', () => ({
   hasPermission: jest.fn().mockResolvedValue(true),
+  deriveOrgRole: jest.fn().mockReturnValue('MEMBER'),
 }));
 
 jest.mock('@/lib/security/impersonation', () => ({

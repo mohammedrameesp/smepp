@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/core/prisma';
 import { ChatContext } from './chat-service';
 import { SubscriptionStatus, AssetStatus } from '@prisma/client';
+import { deriveOrgRole } from '@/lib/access-control';
 
 // Maximum number of records to return from any function
 const MAX_RESULT_ARRAY_LENGTH = 50;
@@ -318,7 +319,7 @@ async function executeFunctionInternal(
         id: m.id,
         name: m.name,
         email: m.email,
-        role: m.isAdmin ? 'ADMIN' : 'MEMBER',
+        role: deriveOrgRole(m),
         employeeId: m.employeeCode,
         designation: m.designation,
         dateOfJoining: m.dateOfJoining,
@@ -362,7 +363,7 @@ async function executeFunctionInternal(
         id: member.id,
         name: member.name,
         email: member.email,
-        role: member.isAdmin ? 'ADMIN' : 'MEMBER',
+        role: deriveOrgRole(member),
         employeeId: member.employeeCode,
         designation: member.designation,
         dateOfJoining: member.dateOfJoining,

@@ -62,7 +62,7 @@
 <body>
   <div class="container">
     <h1>Source Code Review Checklist</h1>
-    <p>Generated: 2026-01-27 | Total Files: <strong>951</strong></p>
+    <p>Generated: 2026-01-28 | Total Files: <strong>951</strong></p>
 
     <div class="stats">
       <div class="stat">
@@ -997,6 +997,7 @@
       "src/lib/access-control/manager-filter.ts",
       "src/lib/access-control/permissions.ts",
       "src/lib/access-control/permission-service.ts",
+      "src/lib/access-control/role-utils.ts",
       "src/lib/access-control/seed-permissions.ts",
       // lib - ai
       "src/lib/ai/audit-logger.ts",
@@ -1019,6 +1020,7 @@
       "src/lib/constants/index.ts",
       "src/lib/constants/limits.ts",
       "src/lib/constants/procurement-categories.ts",
+      "src/lib/constants/ui-constants.ts",
       // lib - core
       "src/lib/core/activity.ts",
       "src/lib/core/api-error-interceptor.ts",
@@ -1138,8 +1140,6 @@
       "src/lib/types/tenant-branding.ts",
       // lib - ui
       "src/lib/ui/status-config.ts",
-      // lib - ui-constants.ts
-      "src/lib/ui-constants.ts",
       // lib - utils
       "src/lib/utils/calendar-utils.ts",
       "src/lib/utils/code-prefix.ts",
@@ -1485,7 +1485,19 @@
       "src/lib/security/rateLimit.ts": { checked: true, status: "keep" },
       // Core utilities
       "src/lib/core/utils.ts": { checked: true, status: "keep" },
-      "src/lib/core/log.ts": { checked: true, status: "keep" }
+      "src/lib/core/log.ts": { checked: true, status: "keep" },
+      // Constants (consolidated UI constants - 2026-01-27)
+      "src/lib/constants/index.ts": { checked: true, status: "keep" },
+      "src/lib/constants/limits.ts": { checked: true, status: "keep" },
+      "src/lib/constants/procurement-categories.ts": { checked: true, status: "keep" },
+      "src/lib/constants/ui-constants.ts": { checked: true, status: "keep" },
+      // Access Control (role utilities and manager filter - 2026-01-28)
+      "src/lib/access-control/index.ts": { checked: true, status: "keep" },
+      "src/lib/access-control/manager-filter.ts": { checked: true, status: "keep" },
+      "src/lib/access-control/permissions.ts": { checked: true, status: "keep" },
+      "src/lib/access-control/permission-service.ts": { checked: true, status: "keep" },
+      "src/lib/access-control/role-utils.ts": { checked: true, status: "keep" },
+      "src/lib/access-control/seed-permissions.ts": { checked: true, status: "keep" }
     };
 
     // Apply progress data to the UI

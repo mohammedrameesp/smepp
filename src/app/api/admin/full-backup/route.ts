@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import ExcelJS from 'exceljs';
 import { withErrorHandler } from '@/lib/http/handler';
+import { deriveOrgRole } from '@/lib/access-control';
 
 export const GET = withErrorHandler(async (_request, { tenant }) => {
   const tenantId = tenant!.tenantId;
@@ -152,7 +153,7 @@ export const GET = withErrorHandler(async (_request, { tenant }) => {
         id: member.id,
         name: member.name || '',
         email: member.email,
-        role: member.isAdmin ? 'ADMIN' : 'MEMBER',
+        role: deriveOrgRole(member),
         isEmployee: member.isEmployee ? 'Yes' : 'No',
         isOnWps: member.isOnWps ? 'Yes' : 'No',
         employeeCode: member.employeeCode || '',

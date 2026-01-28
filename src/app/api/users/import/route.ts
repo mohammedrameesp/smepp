@@ -11,6 +11,7 @@ import { csvToArray } from '@/lib/core/import-export';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
+import { deriveOrgRole } from '@/lib/access-control';
 
 interface ImportRow {
   [key: string]: string | undefined;
@@ -191,7 +192,7 @@ async function importUsersHandler(request: NextRequest, context: APIContext) {
           results.created.push({
             email: user.email,
             name: user.name,
-            role: isAdmin ? 'ADMIN' : 'MEMBER', // For backwards compatibility in response
+            role: deriveOrgRole({ isAdmin }), // For backwards compatibility in response
           });
           results.success++;
         }
@@ -283,7 +284,7 @@ async function importUsersHandler(request: NextRequest, context: APIContext) {
       results.created.push({
         email: user.email,
         name: user.name,
-        role: isAdmin ? 'ADMIN' : 'MEMBER', // For backwards compatibility in response
+        role: deriveOrgRole({ isAdmin }), // For backwards compatibility in response
       });
       results.success++;
     } catch (error) {

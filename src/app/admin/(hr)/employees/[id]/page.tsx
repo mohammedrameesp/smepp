@@ -27,6 +27,7 @@ import {
 } from '@/features/employees/components';
 import type { UserAssetHistoryItem, UserSubscriptionHistoryItem } from '@/features/users/components';
 import { EmployeeLeaveSection } from '@/features/employees/components';
+import { deriveOrgRole } from '@/lib/access-control';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -92,7 +93,7 @@ export default async function AdminEmployeeDetailPage({ params }: Props) {
   const completionPercentage = Math.round((filledFields / requiredFields.length) * 100);
 
   const isSelf = session.user.id === employee.id;
-  const employeeRole = employee.isAdmin ? 'ADMIN' : 'MEMBER';
+  const employeeRole = deriveOrgRole(employee);
   const roleBadgeVariant = employeeRole === 'ADMIN' ? 'error' : 'info';
 
   // Hide auto-generated internal emails from UI display
