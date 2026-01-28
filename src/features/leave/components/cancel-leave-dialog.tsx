@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/dialog';
 import { Ban } from 'lucide-react';
 import { cancelLeaveRequest } from '@/features/leave/lib/api';
-import { useSubmitAction } from '@/lib/hooks';
+import { useSubmitAction } from '@/hooks/use-submit-action';
 import { ICON_SIZES } from '@/lib/constants';
 import type { CancelLeaveDialogProps } from '@/features/leave/types';
 

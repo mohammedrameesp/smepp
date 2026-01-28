@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/dialog';
 import { CheckCircle, XCircle, AlertTriangle, Info } from 'lucide-react';
 import { approveLeaveRequest, rejectLeaveRequest } from '@/features/leave/lib/api';
-import { useSubmitAction } from '@/lib/hooks';
+import { useSubmitAction } from '@/hooks/use-submit-action';
 import { ICON_SIZES } from '@/lib/constants';
 import type { LeaveApprovalActionsProps, ApprovalStep } from '@/features/leave/types';
 
