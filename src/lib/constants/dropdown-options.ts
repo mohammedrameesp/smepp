@@ -385,13 +385,6 @@ export const MARITAL_STATUS = [
   'Widowed',
 ] as const;
 
-// Work location options
-export const WORK_LOCATIONS = [
-  'Office',
-  'Remote',
-  'Hybrid',
-] as const;
-
 // Common languages
 export const LANGUAGES = [
   'Arabic',
