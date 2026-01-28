@@ -166,11 +166,11 @@
 <body>
   <div class="container">
     <h1>Source Code Review Checklist</h1>
-    <p>Generated: 2026-01-28 | Total Files: <strong>946</strong> (Updated: tree navigation added)</p>
+    <p>Generated: 2026-01-28 | Total Files: <strong>941</strong> (Updated: dead code cleanup)</p>
 
     <div class="stats">
       <div class="stat">
-        <div class="stat-value" id="totalFiles">946</div>
+        <div class="stat-value" id="totalFiles">941</div>
         <div class="stat-label">Total Files</div>
       </div>
       <div class="stat">
@@ -198,7 +198,7 @@
       </div>
       <div class="progress-bar">
         <div class="progress-fill" id="progressFill" style="width: 0%"></div>
-        <span class="progress-text" id="progressText">0 / 946 files reviewed</span>
+        <span class="progress-text" id="progressText">0 / 941 files reviewed</span>
       </div>
     </div>
 
@@ -659,14 +659,14 @@
       "src/components/ui/toggle.tsx",
       "src/components/ui/tooltip.tsx",
       // features - approvals
-      "src/features/approvals/components/approval-actions.tsx",
-      "src/features/approvals/components/approval-list-client.tsx",
-      "src/features/approvals/components/approval-list-table.tsx",
-      "src/features/approvals/components/approval-status-badge.tsx",
-      "src/features/approvals/components/approval-workflow-status.tsx",
+      "src/features/approvals/components/approval-workflow-display.tsx",
       "src/features/approvals/components/index.ts",
-      "src/features/approvals/lib/approval-service.ts",
+      "src/features/approvals/constants.ts",
+      "src/features/approvals/index.ts",
+      "src/features/approvals/lib/approval-engine.ts",
+      "src/features/approvals/lib/default-policies.ts",
       "src/features/approvals/lib/index.ts",
+      "src/features/approvals/lib/process-entity-approval.ts",
       "src/features/approvals/validations/approvals.ts",
       // features - asset-requests
       "src/features/asset-requests/components/asset-request-actions.tsx",
@@ -944,8 +944,6 @@
       "src/lib/security/account-lockout.ts",
       "src/lib/security/backup-encryption.ts",
       "src/lib/security/cron-auth.ts",
-      "src/lib/security/csrf.ts",
-      "src/lib/security/headers.ts",
       "src/lib/security/impersonation.ts",
       "src/lib/security/password-validation.ts",
       "src/lib/security/rateLimit.ts",
@@ -977,13 +975,10 @@
       "src/lib/validations/core/upload.ts",
       "src/lib/validations/core/users.ts",
       "src/lib/validations/field-schemas.ts",
-      "src/lib/validations/hr/index.ts",
-      "src/lib/validations/operations/index.ts",
       "src/lib/validations/pagination-schema.ts",
       "src/lib/validations/patterns.ts",
       "src/lib/validations/projects/index.ts",
       "src/lib/validations/projects/spend-request.ts",
-      "src/lib/validations/system/index.ts",
       "src/lib/validations/workflow-schemas.ts",
       // lib - whatsapp
       "src/lib/whatsapp/action-tokens.ts",
@@ -1381,8 +1376,6 @@
       "src/lib/security/account-lockout.ts": { checked: true, status: "keep" },
       "src/lib/security/backup-encryption.ts": { checked: true, status: "keep" },
       "src/lib/security/cron-auth.ts": { checked: true, status: "keep" },
-      "src/lib/security/csrf.ts": { checked: true, status: "keep" },
-      "src/lib/security/headers.ts": { checked: true, status: "keep" },
       "src/lib/security/impersonation.ts": { checked: true, status: "keep" },
       "src/lib/security/password-validation.ts": { checked: true, status: "keep" },
       "src/lib/security/rateLimit.ts": { checked: true, status: "keep" },
