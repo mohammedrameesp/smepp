@@ -7,7 +7,7 @@ import {
   getMilestoneByDays,
   isMilestoneDay,
   getMilestoneTierColor,
-} from '@/lib/hr/work-milestones';
+} from '@/features/employees/lib/work-milestones';
 
 describe('Work Milestones', () => {
   describe('WORK_MILESTONES constant', () => {

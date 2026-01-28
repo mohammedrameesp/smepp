@@ -26,7 +26,7 @@ import { Loader2, Save, RefreshCw, Plus, Trash2, Info } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
 import { ICON_SIZES } from '@/lib/constants';
 import { toast } from 'sonner';
-import { type NoticePeriodTier, QATAR_EMPLOYMENT_DEFAULTS } from '@/lib/domains/hr';
+import { type NoticePeriodTier, QATAR_EMPLOYMENT_DEFAULTS } from '@/features/employees/lib/employment-defaults';
 
 interface EmploymentSettings {
   probationDurationMonths: number;

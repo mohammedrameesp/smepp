@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { validateUploadedFile } from '@/lib/files/sanity';
+import { validateUploadedFile } from '@/lib/security/sanity';
 import { storageUpload, storagePublicUrl } from '@/lib/storage';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import logger from '@/lib/core/log';

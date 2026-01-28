@@ -22,7 +22,7 @@ import {
   getNoticePeriodDescription,
   QATAR_EMPLOYMENT_DEFAULTS,
   type EmploymentSettings,
-} from '@/lib/domains/hr';
+} from '@/features/employees/lib/employment-defaults';
 
 interface EmployeeNoticePeriodProps {
   dateOfJoining: Date | null;

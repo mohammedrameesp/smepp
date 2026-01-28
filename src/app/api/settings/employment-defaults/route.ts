@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/core/prisma';
-import { QATAR_EMPLOYMENT_DEFAULTS, type EmploymentSettings } from '@/lib/domains/hr';
+import { QATAR_EMPLOYMENT_DEFAULTS, type EmploymentSettings } from '@/features/employees/lib/employment-defaults';
 import { withErrorHandler } from '@/lib/http/handler';
 import { badRequestResponse } from '@/lib/http/errors';
 

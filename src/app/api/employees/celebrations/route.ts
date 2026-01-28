@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
-import { getUpcomingMilestones, WorkMilestone } from '@/lib/hr/work-milestones';
+import { getUpcomingMilestones, WorkMilestone } from '@/features/employees/lib/work-milestones';
 import { getQatarStartOfDay } from '@/lib/core/datetime';
 
 interface CelebrationEvent {
