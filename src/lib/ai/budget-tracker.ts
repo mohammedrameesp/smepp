@@ -264,17 +264,3 @@ export async function getUsageSummary(
 
   return { status, progressColor, statusText };
 }
-
-/**
- * Reset budget alerts at the start of a new month
- * Can be called from a cron job
- */
-export async function resetMonthlyAlerts(tenantId: string): Promise<void> {
-  // Delete all monthly alert keys for this tenant
-  await prisma.systemSettings.deleteMany({
-    where: {
-      tenantId,
-      key: { startsWith: 'ai_budget_alert:' },
-    },
-  });
-}
