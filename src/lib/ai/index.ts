@@ -48,13 +48,19 @@ export {
   FUNCTION_METADATA,
 } from './functions';
 
-export type { ChatFunction } from './functions';
+export type { ChatFunction, FunctionDomain } from './functions';
 
 // ============================================================================
 // Permissions
 // ============================================================================
 
-export { canAccessFunction } from './permissions';
+export {
+  canAccessFunction,
+  canAccessDomain,
+  getAccessibleFunctions,
+  getAccessibleFunctionsByDomain,
+  DOMAIN_ACCESS,
+} from './permissions';
 
 // ============================================================================
 // Rate Limiting

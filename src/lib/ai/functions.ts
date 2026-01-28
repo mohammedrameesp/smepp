@@ -1,8 +1,11 @@
 import { prisma } from '@/lib/core/prisma';
 import type { ChatContext } from './chat-service';
-import { SubscriptionStatus, AssetStatus } from '@prisma/client';
+import { SubscriptionStatus, AssetStatus, LoanStatus, TeamMemberStatus } from '@prisma/client';
 import { deriveOrgRole } from '@/lib/access-control';
 import { MAX_RESULT_ARRAY_LENGTH } from './config';
+
+/** Domain categories for access control */
+export type FunctionDomain = 'HR' | 'FINANCE' | 'OPERATIONS' | 'SYSTEM';
 
 /**
  * Sanitize function results to prevent data leakage
@@ -51,12 +54,14 @@ export interface ChatFunction {
   entityType?: string;
   /** Whether this function accesses sensitive data (salary, personal info) */
   accessesSensitiveData?: boolean;
+  /** Domain category for future granular access control */
+  requiresDomain?: FunctionDomain;
 }
 
 export const chatFunctions: ChatFunction[] = [
   {
     name: 'searchEmployees',
-    description: 'Search for employees by name, email, or employee ID',
+    description: 'Search for employees by name, email, employee ID, department, or status',
     parameters: {
       type: 'object',
       properties: {
@@ -64,14 +69,22 @@ export const chatFunctions: ChatFunction[] = [
           type: 'string',
           description: 'Search query (name, email, or employee ID)',
         },
+        department: {
+          type: 'string',
+          description: 'Filter by department name',
+        },
+        status: {
+          type: 'string',
+          description: 'Filter by status: ACTIVE, ON_LEAVE, PROBATION, RESIGNED, TERMINATED',
+        },
       },
-      required: ['query'],
     },
     entityType: 'Employee',
+    requiresDomain: 'HR',
   },
   {
     name: 'getEmployeeDetails',
-    description: 'Get detailed information about a specific employee',
+    description: 'Get detailed information about a specific employee including manager and team size',
     parameters: {
       type: 'object',
       properties: {
@@ -83,6 +96,7 @@ export const chatFunctions: ChatFunction[] = [
       required: ['employeeId'],
     },
     entityType: 'Employee',
+    requiresDomain: 'HR',
   },
   {
     name: 'getEmployeeSalary',
@@ -100,6 +114,7 @@ export const chatFunctions: ChatFunction[] = [
     requiresAdmin: true,
     entityType: 'Employee',
     accessesSensitiveData: true,
+    requiresDomain: 'FINANCE',
   },
   {
     name: 'getSubscriptionUsers',
@@ -115,6 +130,7 @@ export const chatFunctions: ChatFunction[] = [
       required: ['serviceName'],
     },
     entityType: 'Subscription',
+    requiresDomain: 'OPERATIONS',
   },
   {
     name: 'listSubscriptions',
@@ -129,6 +145,7 @@ export const chatFunctions: ChatFunction[] = [
       },
     },
     entityType: 'Subscription',
+    requiresDomain: 'OPERATIONS',
   },
   {
     name: 'getEmployeeAssets',
@@ -144,10 +161,11 @@ export const chatFunctions: ChatFunction[] = [
       required: ['employeeId'],
     },
     entityType: 'Asset',
+    requiresDomain: 'OPERATIONS',
   },
   {
     name: 'listAssets',
-    description: 'List or search assets in the organization by model, brand, type, or status',
+    description: 'List or search assets in the organization by model, brand, type, status, or location',
     parameters: {
       type: 'object',
       properties: {
@@ -163,9 +181,14 @@ export const chatFunctions: ChatFunction[] = [
           type: 'string',
           description: 'Filter by status (IN_USE, SPARE, REPAIR, DISPOSED)',
         },
+        location: {
+          type: 'string',
+          description: 'Filter by location name (e.g., Head Office, Warehouse)',
+        },
       },
     },
     entityType: 'Asset',
+    requiresDomain: 'OPERATIONS',
   },
   {
     name: 'getPendingLeaveRequests',
@@ -175,6 +198,7 @@ export const chatFunctions: ChatFunction[] = [
       properties: {},
     },
     entityType: 'LeaveRequest',
+    requiresDomain: 'HR',
   },
   {
     name: 'getEmployeeLeaveBalance',
@@ -190,6 +214,7 @@ export const chatFunctions: ChatFunction[] = [
       required: ['employeeId'],
     },
     entityType: 'LeaveRequest',
+    requiresDomain: 'HR',
   },
   {
     name: 'getExpiringDocuments',
@@ -204,6 +229,7 @@ export const chatFunctions: ChatFunction[] = [
       },
     },
     entityType: 'Document',
+    requiresDomain: 'HR',
   },
   {
     name: 'getTotalPayroll',
@@ -215,6 +241,7 @@ export const chatFunctions: ChatFunction[] = [
     requiresAdmin: true,
     entityType: 'PayrollRun',
     accessesSensitiveData: true,
+    requiresDomain: 'FINANCE',
   },
   {
     name: 'getEmployeeCount',
@@ -224,6 +251,7 @@ export const chatFunctions: ChatFunction[] = [
       properties: {},
     },
     entityType: 'Employee',
+    requiresDomain: 'HR',
   },
   {
     name: 'getAssetDepreciation',
@@ -238,6 +266,7 @@ export const chatFunctions: ChatFunction[] = [
       },
     },
     entityType: 'Asset',
+    requiresDomain: 'FINANCE',
   },
   {
     name: 'getPayrollRunStatus',
@@ -258,20 +287,30 @@ export const chatFunctions: ChatFunction[] = [
     requiresAdmin: true,
     entityType: 'PayrollRun',
     accessesSensitiveData: true,
+    requiresDomain: 'FINANCE',
   },
   {
     name: 'getSpendRequestSummary',
-    description: 'Get summary of spend requests by status',
+    description: 'Get summary of spend requests by status with optional date range',
     parameters: {
       type: 'object',
       properties: {
         status: {
           type: 'string',
-          description: 'Filter by status (DRAFT, PENDING, APPROVED, REJECTED, ORDERED, RECEIVED)',
+          description: 'Filter by status (PENDING, UNDER_REVIEW, APPROVED, REJECTED, COMPLETED)',
+        },
+        fromDate: {
+          type: 'string',
+          description: 'Start date for filtering (YYYY-MM-DD format)',
+        },
+        toDate: {
+          type: 'string',
+          description: 'End date for filtering (YYYY-MM-DD format)',
         },
       },
     },
     entityType: 'SpendRequest',
+    requiresDomain: 'OPERATIONS',
   },
   {
     name: 'searchSuppliers',
@@ -286,6 +325,64 @@ export const chatFunctions: ChatFunction[] = [
       },
     },
     entityType: 'Supplier',
+    requiresDomain: 'OPERATIONS',
+  },
+  {
+    name: 'getOrganizationInfo',
+    description: 'Get organization settings like timezone, currency, and enabled modules',
+    parameters: {
+      type: 'object',
+      properties: {},
+    },
+    entityType: 'Organization',
+    requiresDomain: 'SYSTEM',
+  },
+  {
+    name: 'getLeaveTypes',
+    description: 'Get available leave types and their policies (entitlements, approval requirements)',
+    parameters: {
+      type: 'object',
+      properties: {},
+    },
+    entityType: 'LeaveType',
+    requiresDomain: 'HR',
+  },
+  {
+    name: 'getEmployeeLoans',
+    description: 'Get employee loans and advances (admin only)',
+    parameters: {
+      type: 'object',
+      properties: {
+        employeeId: {
+          type: 'string',
+          description: 'Employee ID or name to filter by (optional)',
+        },
+        status: {
+          type: 'string',
+          description: 'Filter by status: ACTIVE, PAUSED, COMPLETED, or WRITTEN_OFF',
+        },
+      },
+    },
+    requiresAdmin: true,
+    entityType: 'EmployeeLoan',
+    accessesSensitiveData: true,
+    requiresDomain: 'FINANCE',
+  },
+  {
+    name: 'getAssetMaintenanceHistory',
+    description: 'Get maintenance records for an asset',
+    parameters: {
+      type: 'object',
+      properties: {
+        assetId: {
+          type: 'string',
+          description: 'Asset ID, tag, or model name',
+        },
+      },
+      required: ['assetId'],
+    },
+    entityType: 'MaintenanceRecord',
+    requiresDomain: 'OPERATIONS',
   },
 ];
 
@@ -329,16 +426,30 @@ async function executeFunctionInternal(
 ): Promise<unknown> {
   switch (name) {
     case 'searchEmployees': {
-      const query = (args.query as string).toLowerCase();
+      const query = args.query as string | undefined;
+      const department = args.department as string | undefined;
+      const statusArg = args.status as string | undefined;
+
+      // Validate status if provided
+      const validStatus = statusArg && Object.values(TeamMemberStatus).includes(statusArg as TeamMemberStatus)
+        ? (statusArg as TeamMemberStatus)
+        : undefined;
+
       const members = await prisma.teamMember.findMany({
         where: {
           tenantId,
-          status: 'ACTIVE',
-          OR: [
-            { name: { contains: query, mode: 'insensitive' } },
-            { email: { contains: query, mode: 'insensitive' } },
-            { employeeCode: { contains: query, mode: 'insensitive' } },
-          ],
+          // Default to ACTIVE if no status filter provided
+          status: validStatus || 'ACTIVE',
+          ...(query && {
+            OR: [
+              { name: { contains: query, mode: 'insensitive' } },
+              { email: { contains: query, mode: 'insensitive' } },
+              { employeeCode: { contains: query, mode: 'insensitive' } },
+            ],
+          }),
+          ...(department && {
+            department: { contains: department, mode: 'insensitive' },
+          }),
         },
         select: {
           id: true,
@@ -347,9 +458,11 @@ async function executeFunctionInternal(
           isAdmin: true,
           employeeCode: true,
           designation: true,
+          department: true,
           dateOfJoining: true,
+          status: true,
         },
-        take: 10,
+        take: 15,
       });
       return members.map((m) => ({
         id: m.id,
@@ -358,7 +471,9 @@ async function executeFunctionInternal(
         role: deriveOrgRole(m),
         employeeId: m.employeeCode,
         designation: m.designation,
+        department: m.department,
         dateOfJoining: m.dateOfJoining,
+        status: m.status,
       }));
     }
 
@@ -381,15 +496,20 @@ async function executeFunctionInternal(
           isAdmin: true,
           employeeCode: true,
           designation: true,
+          department: true,
           dateOfJoining: true,
           qidNumber: true,
           qidExpiry: true,
           passportExpiry: true,
           nationality: true,
+          reportingTo: {
+            select: { name: true, employeeCode: true },
+          },
           _count: {
             select: {
               assets: true,
               subscriptions: true,
+              directReports: true,
             },
           },
         },
@@ -402,12 +522,18 @@ async function executeFunctionInternal(
         role: deriveOrgRole(member),
         employeeId: member.employeeCode,
         designation: member.designation,
+        department: member.department,
         dateOfJoining: member.dateOfJoining,
         nationality: member.nationality,
         qidExpiry: member.qidExpiry,
         passportExpiry: member.passportExpiry,
+        manager: member.reportingTo ? {
+          name: member.reportingTo.name,
+          employeeCode: member.reportingTo.employeeCode,
+        } : null,
         assetCount: member._count.assets,
         subscriptionCount: member._count.subscriptions,
+        directReportsCount: member._count.directReports,
       };
     }
 
@@ -551,9 +677,26 @@ async function executeFunctionInternal(
       const query = args.query as string | undefined;
       const type = args.type as string | undefined;
       const status = args.status as string | undefined;
+      const location = args.location as string | undefined;
       const validAssetStatus = status && Object.values(AssetStatus).includes(status as AssetStatus)
         ? (status as AssetStatus)
         : undefined;
+
+      // Build location filter if provided
+      let locationFilter = {};
+      if (location) {
+        const locationRecord = await prisma.location.findFirst({
+          where: {
+            tenantId,
+            name: { contains: location, mode: 'insensitive' },
+          },
+          select: { id: true },
+        });
+        if (locationRecord) {
+          locationFilter = { locationId: locationRecord.id };
+        }
+      }
+
       const assets = await prisma.asset.findMany({
         where: {
           tenantId,
@@ -565,6 +708,7 @@ async function executeFunctionInternal(
           }),
           ...(type && { type: { contains: type, mode: 'insensitive' } }),
           ...(validAssetStatus && { status: validAssetStatus }),
+          ...locationFilter,
         },
         select: {
           id: true,
@@ -576,6 +720,9 @@ async function executeFunctionInternal(
           assignedMember: {
             select: { name: true },
           },
+          location: {
+            select: { name: true },
+          },
         },
         take: 20,
       });
@@ -585,6 +732,7 @@ async function executeFunctionInternal(
         type: a.type,
         status: a.status,
         assignedTo: a.assignedMember?.name || 'Unassigned',
+        location: a.location?.name || null,
       }));
     }
 
@@ -815,11 +963,33 @@ async function executeFunctionInternal(
 
     case 'getSpendRequestSummary': {
       const status = args.status as string | undefined;
+      const fromDate = args.fromDate as string | undefined;
+      const toDate = args.toDate as string | undefined;
 
-      // Get counts by status
+      // Build date filter
+      const dateFilter: { requestDate?: { gte?: Date; lte?: Date } } = {};
+      if (fromDate || toDate) {
+        dateFilter.requestDate = {};
+        if (fromDate) {
+          const parsedFrom = new Date(fromDate);
+          if (!isNaN(parsedFrom.getTime())) {
+            dateFilter.requestDate.gte = parsedFrom;
+          }
+        }
+        if (toDate) {
+          const parsedTo = new Date(toDate);
+          if (!isNaN(parsedTo.getTime())) {
+            // Set to end of day
+            parsedTo.setHours(23, 59, 59, 999);
+            dateFilter.requestDate.lte = parsedTo;
+          }
+        }
+      }
+
+      // Get counts by status (with date filter if provided)
       const statusCounts = await prisma.spendRequest.groupBy({
         by: ['status'],
-        where: { tenantId },
+        where: { tenantId, ...dateFilter },
         _count: { id: true },
         _sum: { totalAmount: true },
       });
@@ -833,6 +1003,7 @@ async function executeFunctionInternal(
             where: {
               tenantId,
               status: status.toUpperCase() as 'PENDING' | 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED' | 'COMPLETED',
+              ...dateFilter,
             },
             select: {
               id: true,
@@ -856,6 +1027,7 @@ async function executeFunctionInternal(
           totalAmount: Number(s._sum.totalAmount || 0),
         })),
         recentRequests: status ? recentRequests : undefined,
+        dateRange: (fromDate || toDate) ? { from: fromDate, to: toDate } : undefined,
       };
     }
 
@@ -893,6 +1065,205 @@ async function executeFunctionInternal(
         contactEmail: s.primaryContactEmail,
         contactPhone: s.primaryContactMobile,
       }));
+    }
+
+    case 'getOrganizationInfo': {
+      const org = await prisma.organization.findUnique({
+        where: { id: tenantId },
+        select: {
+          name: true,
+          timezone: true,
+          currency: true,
+          enabledModules: true,
+          subscriptionTier: true,
+          weekendDays: true,
+          codePrefix: true,
+          depreciationEnabled: true,
+          hasMultipleLocations: true,
+        },
+      });
+      if (!org) return { error: 'Organization not found' };
+
+      const weekendDayNames = org.weekendDays.map(d => {
+        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        return days[d] || `Day ${d}`;
+      });
+
+      return {
+        name: org.name,
+        timezone: org.timezone,
+        currency: org.currency,
+        enabledModules: org.enabledModules,
+        subscriptionTier: org.subscriptionTier,
+        weekendDays: weekendDayNames,
+        codePrefix: org.codePrefix,
+        depreciationEnabled: org.depreciationEnabled,
+        hasMultipleLocations: org.hasMultipleLocations,
+      };
+    }
+
+    case 'getLeaveTypes': {
+      const types = await prisma.leaveType.findMany({
+        where: { tenantId, isActive: true },
+        select: {
+          name: true,
+          description: true,
+          defaultDays: true,
+          requiresApproval: true,
+          requiresDocument: true,
+          isPaid: true,
+          maxConsecutiveDays: true,
+          minNoticeDays: true,
+          allowCarryForward: true,
+          maxCarryForwardDays: true,
+          minimumServiceMonths: true,
+        },
+        orderBy: { name: 'asc' },
+      });
+
+      return types.map(t => ({
+        name: t.name,
+        description: t.description,
+        defaultEntitlementDays: t.defaultDays,
+        requiresApproval: t.requiresApproval,
+        requiresDocument: t.requiresDocument,
+        isPaid: t.isPaid,
+        maxConsecutiveDays: t.maxConsecutiveDays,
+        minNoticeDays: t.minNoticeDays,
+        allowCarryForward: t.allowCarryForward,
+        maxCarryForwardDays: t.maxCarryForwardDays,
+        minimumServiceMonths: t.minimumServiceMonths,
+      }));
+    }
+
+    case 'getEmployeeLoans': {
+      const employeeId = args.employeeId as string | undefined;
+      const status = args.status as string | undefined;
+
+      // Build employee filter
+      let memberFilter = {};
+      if (employeeId) {
+        const member = await prisma.teamMember.findFirst({
+          where: {
+            tenantId,
+            OR: [
+              { id: employeeId },
+              { name: { contains: employeeId, mode: 'insensitive' } },
+              { employeeCode: { contains: employeeId, mode: 'insensitive' } },
+            ],
+          },
+          select: { id: true },
+        });
+        if (!member) return { error: 'Employee not found' };
+        memberFilter = { memberId: member.id };
+      }
+
+      // Validate status
+      const validStatus = status && Object.values(LoanStatus).includes(status as LoanStatus)
+        ? (status as LoanStatus)
+        : undefined;
+
+      const loans = await prisma.employeeLoan.findMany({
+        where: {
+          tenantId,
+          ...memberFilter,
+          ...(validStatus && { status: validStatus }),
+        },
+        select: {
+          loanNumber: true,
+          type: true,
+          description: true,
+          principalAmount: true,
+          totalAmount: true,
+          monthlyDeduction: true,
+          totalPaid: true,
+          remainingAmount: true,
+          installments: true,
+          installmentsPaid: true,
+          status: true,
+          startDate: true,
+          endDate: true,
+          member: {
+            select: { name: true, employeeCode: true },
+          },
+        },
+        orderBy: { startDate: 'desc' },
+        take: 20,
+      });
+
+      return loans.map(l => ({
+        loanNumber: l.loanNumber,
+        employeeName: l.member.name,
+        employeeCode: l.member.employeeCode,
+        type: l.type,
+        description: l.description,
+        principalAmount: Number(l.principalAmount),
+        totalAmount: Number(l.totalAmount),
+        monthlyDeduction: Number(l.monthlyDeduction),
+        totalPaid: Number(l.totalPaid),
+        remainingAmount: Number(l.remainingAmount),
+        installments: l.installments,
+        installmentsPaid: l.installmentsPaid,
+        status: l.status,
+        startDate: l.startDate,
+        expectedEndDate: l.endDate,
+      }));
+    }
+
+    case 'getAssetMaintenanceHistory': {
+      const assetId = args.assetId as string;
+
+      // Find the asset first
+      const asset = await prisma.asset.findFirst({
+        where: {
+          tenantId,
+          OR: [
+            { id: assetId },
+            { assetTag: { contains: assetId, mode: 'insensitive' } },
+            { model: { contains: assetId, mode: 'insensitive' } },
+          ],
+        },
+        select: {
+          id: true,
+          model: true,
+          brand: true,
+          assetTag: true,
+        },
+      });
+
+      if (!asset) return { error: 'Asset not found' };
+
+      const records = await prisma.maintenanceRecord.findMany({
+        where: {
+          tenantId,
+          assetId: asset.id,
+        },
+        select: {
+          maintenanceDate: true,
+          notes: true,
+          performedBy: {
+            select: { name: true },
+          },
+          createdAt: true,
+        },
+        orderBy: { maintenanceDate: 'desc' },
+        take: 20,
+      });
+
+      return {
+        asset: {
+          model: asset.model,
+          brand: asset.brand,
+          assetTag: asset.assetTag,
+        },
+        maintenanceRecords: records.map(r => ({
+          date: r.maintenanceDate,
+          notes: r.notes,
+          performedBy: r.performedBy?.name || 'Unknown',
+          recordedAt: r.createdAt,
+        })),
+        totalRecords: records.length,
+      };
     }
 
     default:
