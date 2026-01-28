@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/core/prisma';
-import { getAdminAuthContext, hasAccess } from '@/lib/auth/impersonation-check';
+import { getAdminAuthContext, hasAccess } from '@/lib/core/impersonation-check';
 import { ClipboardList, AlertTriangle, Calendar, FileText, Trash2 } from 'lucide-react';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 import { ICON_SIZES } from '@/lib/constants';

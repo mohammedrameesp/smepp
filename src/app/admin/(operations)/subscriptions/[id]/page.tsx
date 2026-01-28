@@ -32,7 +32,7 @@
  * - DeleteButton: Subscription deletion with confirmation
  */
 import { prisma } from '@/lib/core/prisma';
-import { getAdminAuthContext, hasAccess } from '@/lib/auth/impersonation-check';
+import { getAdminAuthContext, hasAccess } from '@/lib/core/impersonation-check';
 import { Button } from '@/components/ui/button';
 import { redirect, notFound } from 'next/navigation';
 

@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { redirect } from 'next/navigation';
-import { getAdminAuthContext, hasAccess } from '@/lib/auth/impersonation-check';
+import { getAdminAuthContext, hasAccess } from '@/lib/core/impersonation-check';
 
 import { formatDate } from '@/lib/core/datetime';
 import { PageHeader, PageContent } from '@/components/ui/page-header';

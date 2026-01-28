@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/core/prisma';
 import { redirect } from 'next/navigation';
-import { getAdminAuthContext, hasAccess } from '@/lib/auth/impersonation-check';
+import { getAdminAuthContext, hasAccess } from '@/lib/core/impersonation-check';
 
 import { SupplierListClient, ShareSupplierLinkButton } from '@/features/suppliers';
 import { Plus } from 'lucide-react';

@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/core/prisma';
-import { getAdminAuthContext, hasAccess } from '@/lib/auth/impersonation-check';
+import { getAdminAuthContext, hasAccess } from '@/lib/core/impersonation-check';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 import { getQatarStartOfDay } from '@/lib/core/datetime';

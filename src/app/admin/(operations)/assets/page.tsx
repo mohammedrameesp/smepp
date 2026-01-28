@@ -21,7 +21,7 @@ import { Plus, Inbox, Trash2 } from 'lucide-react';
 import { ICON_SIZES } from '@/lib/constants';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
-import { getAdminAuthContext, hasAccess } from '@/lib/auth/impersonation-check';
+import { getAdminAuthContext, hasAccess } from '@/lib/core/impersonation-check';
 
 /**
  * Admin assets list page component

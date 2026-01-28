@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/core/prisma';
 import { redirect } from 'next/navigation';
-import { getAdminAuthContext, hasAccess } from '@/lib/auth/impersonation-check';
+import { getAdminAuthContext, hasAccess } from '@/lib/core/impersonation-check';
 
 import { SpendRequestListClient } from '@/features/spend-requests/components';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
