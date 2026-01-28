@@ -29,24 +29,7 @@ import {
 import { Loader2, MessageCircle, Check, AlertCircle } from 'lucide-react';
 import { ICON_SIZES } from '@/lib/constants';
 import { cn } from '@/lib/core/utils';
-
-// Common country codes
-const COUNTRY_CODES = [
-  { code: '+974', country: 'Qatar', flag: '🇶🇦' },
-  { code: '+971', country: 'UAE', flag: '🇦🇪' },
-  { code: '+966', country: 'Saudi Arabia', flag: '🇸🇦' },
-  { code: '+91', country: 'India', flag: '🇮🇳' },
-  { code: '+92', country: 'Pakistan', flag: '🇵🇰' },
-  { code: '+63', country: 'Philippines', flag: '🇵🇭' },
-  { code: '+977', country: 'Nepal', flag: '🇳🇵' },
-  { code: '+94', country: 'Sri Lanka', flag: '🇱🇰' },
-  { code: '+880', country: 'Bangladesh', flag: '🇧🇩' },
-  { code: '+20', country: 'Egypt', flag: '🇪🇬' },
-  { code: '+962', country: 'Jordan', flag: '🇯🇴' },
-  { code: '+961', country: 'Lebanon', flag: '🇱🇧' },
-  { code: '+1', country: 'USA/Canada', flag: '🇺🇸' },
-  { code: '+44', country: 'UK', flag: '🇬🇧' },
-];
+import { COUNTRY_CODES } from '@/lib/data/constants';
 
 type DialogState = 'phone-entry' | 'verifying' | 'success' | 'error';
 

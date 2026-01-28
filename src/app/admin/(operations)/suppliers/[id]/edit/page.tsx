@@ -15,30 +15,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { CountrySelect } from '@/components/ui/country-select';
 import { Loader2 } from 'lucide-react';
 import { ICON_SIZES } from '@/lib/constants';
+import { COUNTRY_CODES } from '@/lib/data/constants';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { z } from 'zod';
-
-// Country codes
-const COUNTRY_CODES = [
-  { code: '+974', country: 'Qatar', flag: '🇶🇦' },
-  { code: '+966', country: 'Saudi Arabia', flag: '🇸🇦' },
-  { code: '+971', country: 'UAE', flag: '🇦🇪' },
-  { code: '+965', country: 'Kuwait', flag: '🇰🇼' },
-  { code: '+973', country: 'Bahrain', flag: '🇧🇭' },
-  { code: '+968', country: 'Oman', flag: '🇴🇲' },
-  { code: '+962', country: 'Jordan', flag: '🇯🇴' },
-  { code: '+20', country: 'Egypt', flag: '🇪🇬' },
-  { code: '+961', country: 'Lebanon', flag: '🇱🇧' },
-  { code: '+91', country: 'India', flag: '🇮🇳' },
-  { code: '+92', country: 'Pakistan', flag: '🇵🇰' },
-  { code: '+1', country: 'USA/Canada', flag: '🇺🇸' },
-  { code: '+44', country: 'UK', flag: '🇬🇧' },
-  { code: '+49', country: 'Germany', flag: '🇩🇪' },
-  { code: '+33', country: 'France', flag: '🇫🇷' },
-  { code: '+86', country: 'China', flag: '🇨🇳' },
-  { code: '+81', country: 'Japan', flag: '🇯🇵' },
-];
 
 const updateSupplierSchema = z.object({
   name: z.string().min(1, 'Company name is required'),
