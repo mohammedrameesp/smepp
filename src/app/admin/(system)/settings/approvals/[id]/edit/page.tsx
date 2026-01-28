@@ -24,18 +24,12 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { ICON_SIZES } from '@/lib/constants';
+import { APPROVER_ROLES } from '@/features/approvals';
 
 const MODULES = [
   { value: 'LEAVE_REQUEST', label: 'Leave Requests' },
   { value: 'SPEND_REQUEST', label: 'Spend Requests' },
   { value: 'ASSET_REQUEST', label: 'Asset Requests' },
-];
-
-const APPROVER_ROLES = [
-  { value: 'MANAGER', label: 'Manager' },
-  { value: 'HR_MANAGER', label: 'HR Manager' },
-  { value: 'FINANCE_MANAGER', label: 'Finance Manager' },
-  { value: 'DIRECTOR', label: 'Director' },
 ];
 
 interface ApprovalLevel {

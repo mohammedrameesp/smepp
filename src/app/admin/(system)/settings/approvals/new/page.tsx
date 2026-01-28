@@ -12,6 +12,7 @@ import { Switch } from '@/components/ui/switch';
 import { Plus, X, GripVertical } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
 import { ICON_SIZES } from '@/lib/constants';
+import { APPROVER_ROLES } from '@/features/approvals';
 import Link from 'next/link';
 import { toast } from 'sonner';
 
@@ -19,13 +20,6 @@ const MODULES = [
   { value: 'LEAVE_REQUEST', label: 'Leave Requests' },
   { value: 'SPEND_REQUEST', label: 'Spend Requests' },
   { value: 'ASSET_REQUEST', label: 'Asset Requests' },
-];
-
-const APPROVER_ROLES = [
-  { value: 'MANAGER', label: 'Manager' },
-  { value: 'HR_MANAGER', label: 'HR Manager' },
-  { value: 'FINANCE_MANAGER', label: 'Finance Manager' },
-  { value: 'DIRECTOR', label: 'Director' },
 ];
 
 interface ApprovalLevel {

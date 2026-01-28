@@ -66,9 +66,6 @@ interface AdminTopNavProps {
   canApprove?: boolean;
 }
 
-// Roles that can access approval workflows
-const APPROVER_ROLES = ['ADMIN', 'MANAGER', 'HR_MANAGER', 'FINANCE_MANAGER', 'DIRECTOR'];
-
 // Access role derivation for display in user menu
 type AccessRole = 'Admin' | 'HR' | 'Finance' | 'Operations' | 'Manager' | 'Member';
 
