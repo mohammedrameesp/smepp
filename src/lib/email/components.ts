@@ -1,7 +1,19 @@
 /**
  * @file components.ts
  * @description Shared HTML component builders for email templates.
+ *              These components generate email-safe HTML with inline styles.
  * @module lib/email
+ *
+ * @example
+ * ```ts
+ * import { alertBanner, detailsTable, actionButton } from '@/lib/email';
+ *
+ * const html = [
+ *   alertBanner('info', 'New Request'),
+ *   detailsTable('Details', [['Name', 'John'], ['Email', 'john@example.com']], '#0f172a'),
+ *   actionButton('View', 'https://example.com', '#0f172a'),
+ * ].join('');
+ * ```
  */
 
 import type { AlertType, AlertColorScheme } from './types';
@@ -28,9 +40,11 @@ export const ALERT_STYLES: Record<AlertType, AlertColorScheme> = {
 
 /**
  * Generate an alert banner for the top of emails.
+ *
  * @param type - Alert type (info, success, warning, error)
  * @param message - Alert message text
  * @param brandColor - Optional brand color for info type border
+ * @returns HTML string for the alert banner
  */
 export function alertBanner(type: AlertType, message: string, brandColor?: string): string {
   const style = ALERT_STYLES[type];
@@ -49,9 +63,11 @@ export function alertBanner(type: AlertType, message: string, brandColor?: strin
 
 /**
  * Generate a details table with key-value rows.
+ *
  * @param title - Table heading
  * @param rows - Array of [label, value] pairs
  * @param brandColor - Brand color for title
+ * @returns HTML string for the details table
  */
 export function detailsTable(
   title: string,
@@ -83,10 +99,12 @@ export function detailsTable(
 
 /**
  * Generate a highlighted info block for reasons/notes.
+ *
  * @param title - Block heading
  * @param content - Block content (will be escaped)
  * @param type - Visual style (info or error)
  * @param brandColor - Brand color for info type
+ * @returns HTML string for the info block
  */
 export function infoBlock(
   title: string,
@@ -110,9 +128,11 @@ export function infoBlock(
 
 /**
  * Generate a call-to-action button.
+ *
  * @param text - Button label
  * @param url - Button link URL
  * @param brandColor - Button background color
+ * @returns HTML string for the CTA button
  */
 export function actionButton(text: string, url: string, brandColor: string): string {
   return `
@@ -127,7 +147,9 @@ export function actionButton(text: string, url: string, brandColor: string): str
 
 /**
  * Generate greeting paragraph for user-facing emails.
+ *
  * @param userName - User's display name
+ * @returns HTML string for the greeting paragraph
  */
 export function greeting(userName: string): string {
   return `<p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">Dear <strong>${escapeHtml(userName)}</strong>,</p>`;
@@ -135,7 +157,9 @@ export function greeting(userName: string): string {
 
 /**
  * Generate the email closing signature.
+ *
  * @param orgName - Organization name
+ * @returns HTML string for the signature
  */
 export function signature(orgName: string): string {
   return `<p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">Best regards,<br><strong>${orgName}</strong></p>`;
@@ -143,7 +167,9 @@ export function signature(orgName: string): string {
 
 /**
  * Generate a paragraph element.
+ *
  * @param text - Paragraph content (not escaped - may contain HTML)
+ * @returns HTML string for the paragraph
  */
 export function paragraph(text: string): string {
   return `<p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">${text}</p>`;
@@ -151,16 +177,20 @@ export function paragraph(text: string): string {
 
 /**
  * Generate heading element.
+ *
  * @param text - Heading content
+ * @returns HTML string for the heading
  */
 export function heading(text: string): string {
   return `<h2 style="color: #333333; margin: 0 0 20px 0; font-size: 20px;">${text}</h2>`;
 }
 
 /**
- * Format asset display string.
+ * Format asset display string combining brand and model.
+ *
  * @param brand - Asset brand (optional)
  * @param model - Asset model
+ * @returns Formatted asset string (e.g., "Apple MacBook Pro" or "MacBook Pro")
  */
 export function formatAsset(brand: string | null, model: string): string {
   return `${brand || ''} ${model}`.trim();

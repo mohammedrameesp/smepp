@@ -39,6 +39,25 @@ const SEVERITY_COLORS: Record<ErrorSeverity, AlertColorScheme> = {
 // SYSTEM ERROR ALERT TEMPLATE
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/**
+ * Generate email template for system error alerts sent to super admin.
+ * Includes error classification, request details, user context, and stack trace.
+ *
+ * @param context - Error context with type, source, message, and optional metadata
+ * @returns Email template with subject, HTML, and plain text versions
+ *
+ * @example
+ * ```ts
+ * const email = systemErrorAlertEmail({
+ *   type: 'API_ERROR',
+ *   source: 'assets',
+ *   action: 'create',
+ *   message: 'Database connection failed',
+ *   severity: 'error',
+ *   tenantId: 'org_123',
+ * });
+ * ```
+ */
 export function systemErrorAlertEmail(context: ErrorContext): EmailTemplateResult {
   const severity = context.severity || DEFAULT_SEVERITY;
   const severityColors = SEVERITY_COLORS[severity];

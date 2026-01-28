@@ -1,7 +1,21 @@
 /**
  * @file utils.ts
  * @description Shared email utility functions used across email template files.
+ *              Includes HTML escaping, URL generation, and email wrappers.
  * @module lib/email
+ *
+ * @example
+ * ```ts
+ * import { emailWrapper, escapeHtml, getTenantPortalUrl } from '@/lib/email';
+ *
+ * const html = emailWrapper(
+ *   `<p>Hello, ${escapeHtml(userName)}</p>`,
+ *   'Acme Corp',
+ *   '#3B82F6'
+ * );
+ *
+ * const url = getTenantPortalUrl('acme', '/admin/dashboard');
+ * ```
  */
 
 import { QATAR_TIMEZONE } from '@/lib/core/datetime';
@@ -160,7 +174,7 @@ export function systemEmailWrapper(content: string, footerText: string = 'Durj P
           <tr>
             <td style="padding: 20px 40px; background-color: #f8f9fa; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;">
               <p style="margin: 0; color: #666666; font-size: 12px; text-align: center;">
-                &copy; 2026 ${footerText}. Platform Alert System.
+                &copy; ${new Date().getFullYear()} ${footerText}. Platform Alert System.
               </p>
             </td>
           </tr>

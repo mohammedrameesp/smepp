@@ -2,6 +2,19 @@
  * @file types.ts
  * @description Unified type definitions for the email module.
  * @module lib/email
+ *
+ * @example
+ * ```ts
+ * import type { EmailTemplateResult, AlertType } from '@/lib/email';
+ *
+ * function myTemplate(): EmailTemplateResult {
+ *   return {
+ *     subject: 'Welcome',
+ *     html: '<p>Hello</p>',
+ *     text: 'Hello',
+ *   };
+ * }
+ * ```
  */
 
 // ═══════════════════════════════════════════════════════════════════════════════

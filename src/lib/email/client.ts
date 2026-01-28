@@ -1,7 +1,26 @@
 /**
  * @file client.ts
- * @description Email sending service using Resend or custom SMTP - handles single and batch email sending
+ * @description Email sending service using Resend or custom SMTP.
+ *              Handles single and batch email sending with automatic fallback.
  * @module lib/email
+ *
+ * @example
+ * ```ts
+ * import { sendEmail, sendBatchEmails } from '@/lib/email';
+ *
+ * // Single email
+ * await sendEmail({
+ *   to: 'user@example.com',
+ *   subject: 'Hello',
+ *   html: '<p>World</p>',
+ * });
+ *
+ * // Batch emails
+ * await sendBatchEmails([
+ *   { to: 'user1@example.com', subject: 'Hi', html: '<p>1</p>' },
+ *   { to: 'user2@example.com', subject: 'Hi', html: '<p>2</p>' },
+ * ]);
+ * ```
  */
 
 import { Resend } from 'resend';
@@ -39,8 +58,14 @@ export interface EmailOptions {
 }
 
 /**
- * Get custom SMTP transporter for an organization if configured
- * Uses dynamic import for nodemailer to avoid Edge Runtime bundling issues
+ * Get custom SMTP transporter for an organization if configured.
+ * Uses dynamic import for nodemailer to avoid Edge Runtime bundling issues.
+ *
+ * @param tenantId - Organization ID to check for custom SMTP configuration
+ * @returns Transporter and from address if configured, null otherwise
+ * @internal
+ *
+ * @security SMTP password is stored encrypted and decrypted at runtime
  */
 async function getCustomSmtpTransporter(tenantId: string): Promise<{ transporter: Transporter; from: string } | null> {
   try {
@@ -92,7 +117,38 @@ async function getCustomSmtpTransporter(tenantId: string): Promise<{ transporter
   }
 }
 
-export async function sendEmail({ to, subject, text, html, from, tenantId }: EmailOptions) {
+/**
+ * Send an email using organization's custom SMTP (if configured) or platform Resend.
+ *
+ * Checks for custom SMTP configuration first when tenantId is provided.
+ * Falls back to Resend API for platform-wide email delivery.
+ * In development mode (no RESEND_API_KEY), emails are silently skipped.
+ *
+ * @param options - Email options including recipients, subject, and content
+ * @returns Result object with success status and optional messageId or error
+ *
+ * @example
+ * ```ts
+ * const result = await sendEmail({
+ *   to: 'user@example.com',
+ *   subject: 'Welcome',
+ *   html: '<p>Hello!</p>',
+ *   tenantId: 'org_123', // Optional: checks for custom SMTP
+ * });
+ *
+ * if (result.success) {
+ *   console.log('Email sent:', result.messageId);
+ * }
+ * ```
+ *
+ * @security Uses encrypted SMTP passwords for custom configurations
+ */
+export async function sendEmail({ to, subject, text, html, from, tenantId }: EmailOptions): Promise<{
+  success: boolean;
+  messageId?: string;
+  error?: string;
+  skipped?: boolean;
+}> {
   const toAddresses = Array.isArray(to) ? to : [to];
 
   // Skip placeholder emails for non-login users (nologin-xxx@org.internal)
@@ -162,21 +218,45 @@ export async function sendEmail({ to, subject, text, html, from, tenantId }: Ema
     });
 
     if (error) {
-      console.error('[Email] Resend API error:', JSON.stringify(error));
+      logger.error({ error: error.message, to: realAddresses }, 'Resend API error');
       return { success: false, error: error.message };
     }
 
     return { success: true, messageId: data?.id };
   } catch (error) {
-    console.error('[Email] Exception during send:', error instanceof Error ? error.message : error);
+    logger.error(
+      { error: error instanceof Error ? error.message : 'Unknown error', to: realAddresses },
+      'Exception during email send'
+    );
     return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }
 }
 
-// Batch send emails (more efficient for multiple recipients)
-export async function sendBatchEmails(emails: EmailOptions[]) {
+/** Result from batch email sending */
+interface BatchEmailResult {
+  success: boolean;
+  results: Array<{ success: boolean; messageId?: string; error?: string }>;
+}
+
+/**
+ * Send multiple emails in batch using Promise.allSettled for resilient delivery.
+ * More efficient than calling sendEmail in a loop when sending to multiple recipients.
+ *
+ * @param emails - Array of email options to send
+ * @returns Batch result with overall success status and individual results
+ *
+ * @example
+ * ```ts
+ * const result = await sendBatchEmails([
+ *   { to: 'user1@example.com', subject: 'Hello', html: '<p>Hi</p>' },
+ *   { to: 'user2@example.com', subject: 'Hello', html: '<p>Hi</p>' },
+ * ]);
+ * console.log(`${result.results.filter(r => r.success).length} emails sent`);
+ * ```
+ */
+export async function sendBatchEmails(emails: EmailOptions[]): Promise<BatchEmailResult> {
   if (!process.env.RESEND_API_KEY) {
-    return { success: true, results: emails.map(() => ({ messageId: 'dev-mode-skipped' })) };
+    return { success: true, results: emails.map(() => ({ success: true, messageId: 'dev-mode-skipped' })) };
   }
 
   const results = await Promise.allSettled(
