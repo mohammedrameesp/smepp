@@ -3,6 +3,26 @@
  * @description OAuth utility functions including encryption, state management, user management,
  *              and session creation for custom per-organization OAuth flows.
  * @module oauth
+ *
+ * @example
+ * ```typescript
+ * // Encrypt OAuth state for CSRF protection
+ * const state = encryptState({ subdomain: 'acme', orgId: 'org-123', provider: 'google' });
+ *
+ * // In callback, decrypt and validate
+ * const decoded = decryptState(state);
+ *
+ * // Validate security and create user
+ * const securityCheck = await validateOAuthSecurity(email, orgId, 'google');
+ * const teamMember = await upsertOAuthUser(userInfo, orgId);
+ * const token = await createTeamMemberSessionToken(teamMember.id);
+ * ```
+ *
+ * @security
+ * - Uses AES-256-GCM for encryption with authenticated encryption
+ * - Implements nonce tracking to prevent replay attacks
+ * - Requires separate OAUTH_ENCRYPTION_KEY in production
+ * - Audit logs all OAuth account creation and linking events
  */
 
 import crypto from 'crypto';
@@ -18,7 +38,19 @@ import { deriveOrgRole } from '@/lib/access-control';
 // ENCRYPTION CONFIGURATION
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// SEC-007: Require separate encryption key in production
+/** AES-256-GCM provides authenticated encryption */
+const ALGORITHM = 'aes-256-gcm';
+
+/** Unique salt for OAuth encryption (prevents cross-application key reuse) */
+const OAUTH_SALT = crypto.createHash('sha256').update('durj-oauth-encryption-v1').digest();
+
+/**
+ * Get the OAuth encryption key from environment
+ *
+ * @security SEC-007: Requires separate encryption key in production
+ * @returns Encryption key string
+ * @throws Error if no encryption key is configured
+ */
 function getOAuthEncryptionKey(): string {
   const key = process.env.OAUTH_ENCRYPTION_KEY;
 
@@ -42,18 +74,28 @@ function getOAuthEncryptionKey(): string {
 
   return key;
 }
-const ALGORITHM = 'aes-256-gcm';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CREDENTIAL ENCRYPTION/DECRYPTION
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Encrypt a string (for storing OAuth secrets)
+ * Encrypt a string using AES-256-GCM
+ *
+ * Used for storing OAuth client secrets in the database.
+ * Output format: `iv:authTag:ciphertext` (all hex-encoded)
+ *
+ * @param text - Plain text to encrypt
+ * @returns Encrypted string in format `iv:authTag:ciphertext`, or empty string if input is empty
+ *
+ * @security Uses AES-256-GCM with random IV for each encryption
+ *
+ * @example
+ * ```typescript
+ * const encrypted = encrypt('client-secret-123');
+ * // Returns: "a1b2c3...:d4e5f6...:789abc..."
+ * ```
  */
-// Derive a unique salt for OAuth encryption (prevents cross-application key reuse)
-const OAUTH_SALT = crypto.createHash('sha256').update('durj-oauth-encryption-v1').digest();
-
 export function encrypt(text: string): string {
   if (!text) return '';
   const iv = crypto.randomBytes(16);
@@ -67,7 +109,12 @@ export function encrypt(text: string): string {
 }
 
 /**
- * Decrypt a string (for reading OAuth secrets)
+ * Decrypt a string encrypted with the encrypt() function
+ *
+ * @param encryptedText - Encrypted string in format `iv:authTag:ciphertext`
+ * @returns Decrypted plain text, or empty string if decryption fails
+ *
+ * @security Validates authentication tag to detect tampering
  */
 export function decrypt(encryptedText: string): string {
   if (!encryptedText || !encryptedText.includes(':')) return '';
@@ -92,31 +139,57 @@ export function decrypt(encryptedText: string): string {
 // OAUTH STATE MANAGEMENT (CSRF Protection)
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/**
+ * OAuth state payload structure
+ * Encrypted and passed through the OAuth flow for CSRF protection
+ */
 interface OAuthState {
+  /** Organization subdomain (e.g., 'acme') */
   subdomain: string;
+  /** Organization ID */
   orgId: string;
+  /** OAuth provider identifier */
   provider: 'google' | 'azure';
+  /** Unix timestamp when state was created */
   timestamp: number;
+  /** Random nonce for replay attack prevention */
   nonce: string;
-  inviteToken?: string; // For invite signup flow
-  redirectUri?: string; // For custom domains
+  /** Optional invite token for signup via invitation */
+  inviteToken?: string;
+  /** Custom redirect URI for organizations with custom domains */
+  redirectUri?: string;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // NONCE TRACKING (Replay Attack Prevention)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// In-memory store for used nonces (prevents replay attacks)
-// In production, consider using Redis for distributed deployments
+/**
+ * In-memory store for used nonces (prevents replay attacks)
+ *
+ * @security
+ * - Each nonce can only be used once
+ * - Nonces expire after 10 minutes (matching state expiry)
+ * - For distributed deployments, consider using Redis instead
+ */
 const usedNonces = new Map<string, number>();
 
-// Clean up expired nonces every 5 minutes
-const NONCE_CLEANUP_INTERVAL = 5 * 60 * 1000;
-const NONCE_EXPIRY_MS = 10 * 60 * 1000; // 10 minutes (matches state expiry)
+/** Cleanup interval for expired nonces (5 minutes) */
+const NONCE_CLEANUP_INTERVAL_MS = 5 * 60 * 1000;
+
+/** Nonce expiry time (10 minutes, matches state expiry) */
+const NONCE_EXPIRY_MS = 10 * 60 * 1000;
+
+/** State expiry time (10 minutes) */
+const STATE_EXPIRY_MS = 10 * 60 * 1000;
 
 let cleanupIntervalId: NodeJS.Timeout | null = null;
 
-function startNonceCleanup() {
+/**
+ * Start the nonce cleanup interval
+ * Automatically removes expired nonces to prevent memory growth
+ */
+function startNonceCleanup(): void {
   if (cleanupIntervalId) return;
   cleanupIntervalId = setInterval(() => {
     const now = Date.now();
@@ -125,7 +198,7 @@ function startNonceCleanup() {
         usedNonces.delete(nonce);
       }
     }
-  }, NONCE_CLEANUP_INTERVAL);
+  }, NONCE_CLEANUP_INTERVAL_MS);
   // Don't prevent Node.js from exiting
   if (cleanupIntervalId.unref) {
     cleanupIntervalId.unref();
@@ -136,8 +209,10 @@ function startNonceCleanup() {
 startNonceCleanup();
 
 /**
- * Check if a nonce has been used (and mark it as used if not)
- * Returns true if the nonce is valid (not previously used), false if it's a replay
+ * Check if a nonce has been used and mark it as used if not
+ *
+ * @param nonce - Nonce string to check
+ * @returns true if nonce is valid (not previously used), false if replay detected
  */
 function consumeNonce(nonce: string): boolean {
   if (usedNonces.has(nonce)) {
@@ -149,6 +224,22 @@ function consumeNonce(nonce: string): boolean {
 
 /**
  * Encrypt OAuth state for the state parameter
+ *
+ * Creates an encrypted state payload containing subdomain, orgId, provider,
+ * timestamp, and a random nonce for CSRF and replay protection.
+ *
+ * @param data - State data (without timestamp and nonce, which are auto-generated)
+ * @returns Encrypted state string for use as OAuth state parameter
+ *
+ * @example
+ * ```typescript
+ * const state = encryptState({
+ *   subdomain: 'acme',
+ *   orgId: 'org-123',
+ *   provider: 'google',
+ *   inviteToken: 'invite-abc', // optional
+ * });
+ * ```
  */
 export function encryptState(data: Omit<OAuthState, 'timestamp' | 'nonce'>): string {
   const state: OAuthState = {
@@ -162,8 +253,20 @@ export function encryptState(data: Omit<OAuthState, 'timestamp' | 'nonce'>): str
 
 /**
  * Decrypt and validate OAuth state
- * @param encrypted - The encrypted state string
- * @param consumeOnSuccess - If true, marks the nonce as used (default: true for callbacks)
+ *
+ * Validates:
+ * - State can be decrypted (not tampered)
+ * - State has not expired (10 minute limit)
+ * - Nonce has not been used before (replay prevention)
+ *
+ * @param encrypted - Encrypted state string from OAuth callback
+ * @param consumeOnSuccess - If true, marks the nonce as used (default: true)
+ *                           Set to false when reading state for error handling
+ * @returns Decoded state object, or null if validation fails
+ *
+ * @security
+ * - Validates timestamp to prevent old states from being reused
+ * - Tracks nonces to prevent replay attacks
  */
 export function decryptState(encrypted: string, consumeOnSuccess: boolean = true): OAuthState | null {
   try {
@@ -173,13 +276,12 @@ export function decryptState(encrypted: string, consumeOnSuccess: boolean = true
     const state: OAuthState = JSON.parse(json);
 
     // Validate timestamp (state expires after 10 minutes)
-    const TEN_MINUTES = 10 * 60 * 1000;
-    if (Date.now() - state.timestamp > TEN_MINUTES) {
+    if (Date.now() - state.timestamp > STATE_EXPIRY_MS) {
       logger.warn('OAuth state expired');
       return null;
     }
 
-    // SECURITY FIX: Prevent replay attacks by tracking used nonces
+    // Prevent replay attacks by tracking used nonces
     // Each OAuth state can only be used once
     if (consumeOnSuccess && !consumeNonce(state.nonce)) {
       logger.warn('OAuth state replay detected - nonce already used');
@@ -197,6 +299,9 @@ export function decryptState(encrypted: string, consumeOnSuccess: boolean = true
 // USER MANAGEMENT
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/**
+ * OAuth user info from provider
+ */
 interface OAuthUserInfo {
   email: string;
   name: string | null;
@@ -206,7 +311,13 @@ interface OAuthUserInfo {
 
 /**
  * Notify HR users (or admins as fallback) when a new team member joins via SSO
- * This is non-blocking - failures are logged but don't break the login flow
+ *
+ * This is non-blocking - failures are logged but don't break the login flow.
+ * Sends both in-app notifications and email notifications.
+ *
+ * @param newMember - New team member info
+ * @param orgId - Organization ID
+ * @param provider - OAuth provider used for signup
  */
 async function notifyHROfNewMember(
   newMember: { id: string; name: string | null; email: string },
@@ -272,7 +383,7 @@ async function notifyHROfNewMember(
     const emailContent = `
       <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 20px;">New Team Member Joined</h2>
       <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
-        <strong>${memberName}</strong> (${newMember.email}) has joined your organization via ${providerName} SSO.
+        <strong>${memberName}</strong> (${escapeHtml(newMember.email)}) has joined your organization via ${providerName} SSO.
       </p>
       <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
         Please review their profile and:
@@ -318,21 +429,42 @@ async function notifyHROfNewMember(
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// SECURITY VALIDATION
+// ═══════════════════════════════════════════════════════════════════════════════
+
 /**
- * OAuth security validation result
+ * Result of OAuth security validation
  */
 export interface OAuthSecurityCheckResult {
+  /** Whether the login is allowed */
   allowed: boolean;
+  /** Error code if not allowed */
   error?: 'AccountDeactivated' | 'AccountLocked' | 'LoginDisabled' | 'AuthMethodNotAllowed';
+  /** When the account lockout expires (if applicable) */
   lockedUntil?: Date;
 }
 
 /**
  * Validate OAuth login security checks
- * This mirrors the security checks in NextAuth's signIn callback
  *
- * OAuth flows always have an orgId (from tenant subdomain).
- * Checks TeamMember first, then falls back to User table for new signups.
+ * Mirrors the security checks in NextAuth's signIn callback to ensure
+ * consistent security enforcement for custom OAuth flows.
+ *
+ * Checks (in order):
+ * 1. TeamMember exists → check isDeleted, canLogin, lockout, auth method
+ * 2. User exists (new signup) → check isDeleted, lockout, org auth restrictions
+ * 3. New user → allow (no restrictions yet)
+ *
+ * @param email - User's email address
+ * @param orgId - Organization ID (from tenant subdomain)
+ * @param authMethod - OAuth provider being used
+ * @returns Security check result with allowed status and error details
+ *
+ * @security
+ * - Blocks soft-deleted accounts
+ * - Blocks locked accounts (brute-force protection)
+ * - Enforces organization auth method restrictions
  */
 export async function validateOAuthSecurity(
   email: string,
@@ -367,7 +499,7 @@ export async function validateOAuthSecurity(
       return { allowed: false, error: 'AccountDeactivated' };
     }
 
-    // Block members who cannot login
+    // Block members who cannot login (e.g., drivers, field workers)
     if (!teamMember.canLogin) {
       return { allowed: false, error: 'LoginDisabled' };
     }
@@ -434,13 +566,50 @@ export async function validateOAuthSecurity(
   return { allowed: true };
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// USER UPSERT
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * TeamMember data returned from upsert operation
+ */
+export interface UpsertOAuthUserResult {
+  id: string;
+  userId: string | null;
+  email: string;
+  name: string | null;
+  image: string | null;
+  tenantId: string;
+  isAdmin: boolean;
+  isOwner: boolean;
+  isEmployee: boolean;
+  canLogin: boolean;
+}
+
 /**
  * Create or update a TeamMember from OAuth info
  *
  * OAuth flows always have an orgId (from tenant subdomain).
- * Creates User record for auth tracking, then creates/updates TeamMember.
+ * Creates a User record for auth tracking, then creates/updates TeamMember.
+ *
+ * For new SSO signups without invitation:
+ * - Creates User for auth/security tracking
+ * - Creates TeamMember with isEmployee=true, isAdmin=false
+ * - Notifies HR users about the new signup
+ *
+ * @param userInfo - User profile from OAuth provider
+ * @param orgId - Organization ID
+ * @returns TeamMember record (created or updated)
+ *
+ * @security
+ * - Audit logs all new account creations
+ * - Audit logs first-time OAuth linking to existing accounts
+ * - Clears failed login attempts on successful OAuth login
  */
-export async function upsertOAuthUser(userInfo: OAuthUserInfo, orgId: string) {
+export async function upsertOAuthUser(
+  userInfo: OAuthUserInfo,
+  orgId: string
+): Promise<UpsertOAuthUserResult> {
   const normalizedEmail = userInfo.email.toLowerCase().trim();
 
   // First, create or find User (single source of truth for auth)
@@ -493,9 +662,10 @@ export async function upsertOAuthUser(userInfo: OAuthUserInfo, orgId: string) {
     });
 
     // Determine provider from OAuth image URL
+    // Note: This is a heuristic - Google images contain 'google' in URL
     const provider = userInfo.image?.includes('google') ? 'google' : 'azure';
 
-    // AUDIT: Log new OAuth account creation
+    // Audit log: New OAuth account creation
     logger.info({
       event: 'OAUTH_ACCOUNT_CREATED',
       teamMemberId: teamMember.id,
@@ -512,8 +682,7 @@ export async function upsertOAuthUser(userInfo: OAuthUserInfo, orgId: string) {
       provider as 'google' | 'azure'
     ).catch(() => {}); // Fire and forget
   } else {
-    // SECURITY AUDIT: Log OAuth login to existing account
-    // This helps detect potential account takeover attempts
+    // Audit log: First-time OAuth linking (security monitoring)
     const isFirstOAuthLogin = !teamMember.image && userInfo.image;
     if (isFirstOAuthLogin) {
       logger.info({
@@ -547,6 +716,15 @@ export async function upsertOAuthUser(userInfo: OAuthUserInfo, orgId: string) {
 
 /**
  * Create a NextAuth-compatible session token for TeamMember
+ *
+ * Builds a JWT token containing all session data needed by the application,
+ * including user info, organization context, and permissions.
+ *
+ * @param memberId - TeamMember ID to create session for
+ * @returns Encoded JWT session token
+ * @throws Error if TeamMember not found
+ *
+ * @security Token is signed with NEXTAUTH_SECRET
  */
 export async function createTeamMemberSessionToken(memberId: string): Promise<string> {
   const teamMember = await prisma.teamMember.findUnique({
@@ -597,10 +775,16 @@ export async function createTeamMemberSessionToken(memberId: string): Promise<st
     exp: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60, // 30 days
   };
 
+  // Validate NEXTAUTH_SECRET exists
+  const secret = process.env.NEXTAUTH_SECRET;
+  if (!secret) {
+    throw new Error('NEXTAUTH_SECRET environment variable is required');
+  }
+
   // Encode as JWT using NextAuth's encode function
   const token = await encode({
     token: tokenPayload,
-    secret: process.env.NEXTAUTH_SECRET!,
+    secret,
     maxAge: 30 * 24 * 60 * 60, // 30 days
   });
 
@@ -613,6 +797,13 @@ export async function createTeamMemberSessionToken(memberId: string): Promise<st
 
 /**
  * Get the base URL for OAuth callbacks
+ *
+ * Priority:
+ * 1. NEXTAUTH_URL environment variable
+ * 2. VERCEL_URL (with https://)
+ * 3. localhost:3000 fallback
+ *
+ * @returns Base URL string
  */
 export function getBaseUrl(): string {
   if (process.env.NEXTAUTH_URL) {
@@ -625,7 +816,9 @@ export function getBaseUrl(): string {
 }
 
 /**
- * Get the app domain (for redirecting to tenant subdomain)
+ * Get the app domain for tenant subdomain URLs
+ *
+ * @returns App domain (e.g., 'durj.com' or 'localhost:3000')
  */
 export function getAppDomain(): string {
   return process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
@@ -633,6 +826,10 @@ export function getAppDomain(): string {
 
 /**
  * Build the tenant URL for redirects
+ *
+ * @param subdomain - Organization subdomain (e.g., 'acme')
+ * @param path - Path to append (defaults to '/admin')
+ * @returns Full tenant URL (e.g., 'https://acme.durj.com/admin')
  */
 export function getTenantUrl(subdomain: string, path: string = '/admin'): string {
   const domain = getAppDomain();
@@ -642,6 +839,22 @@ export function getTenantUrl(subdomain: string, path: string = '/admin'): string
 
 /**
  * Validate that the user's email domain is allowed for the organization
+ *
+ * Used to enforce domain restrictions (e.g., only allow @company.com emails).
+ *
+ * @param email - User's email address
+ * @param allowedDomains - List of allowed email domains
+ * @param enforceDomainRestriction - Whether domain restriction is enabled
+ * @returns true if email domain is allowed, false otherwise
+ *
+ * @example
+ * ```typescript
+ * const allowed = validateEmailDomain('user@acme.com', ['acme.com'], true);
+ * // Returns: true
+ *
+ * const notAllowed = validateEmailDomain('user@gmail.com', ['acme.com'], true);
+ * // Returns: false
+ * ```
  */
 export function validateEmailDomain(
   email: string,
