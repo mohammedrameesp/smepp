@@ -23,28 +23,6 @@ export function formatNumber(value: number, decimals: number = 2): string {
 }
 
 /**
- * Format a number as a percentage value with decimal places.
- *
- * @param value - Number to format (e.g., 0.156 or 15.6)
- * @param decimals - Number of decimal places (default: 2)
- * @param multiply - Whether to multiply by 100 first (default: false)
- * @returns Formatted percentage string without % symbol
- *
- * @example
- * formatPercent(15.678) // "15.68"
- * formatPercent(0.156, 2, true) // "15.60"
- */
-export function formatPercent(
-  value: number,
-  decimals: number = 2,
-  multiply: boolean = false
-): string {
-  if (!Number.isFinite(value)) return '0.00';
-  const percentValue = multiply ? value * 100 : value;
-  return percentValue.toFixed(decimals);
-}
-
-/**
  * Calculate a percentage of a total value.
  *
  * @param total - The total amount
@@ -64,27 +42,6 @@ export function calculatePercentage(
 ): number {
   if (!Number.isFinite(total) || !Number.isFinite(percentage)) return 0;
   return parseFloat(((total * percentage) / 100).toFixed(decimals));
-}
-
-/**
- * Calculate what percentage one value is of another.
- *
- * @param part - The partial amount
- * @param total - The total amount
- * @param decimals - Decimal places for result (default: 2)
- * @returns The percentage (e.g., 25 for 25%)
- *
- * @example
- * calculatePercentageOf(250, 1000) // 25
- * calculatePercentageOf(333, 1000) // 33.3
- */
-export function calculatePercentageOf(
-  part: number,
-  total: number,
-  decimals: number = 2
-): number {
-  if (!Number.isFinite(part) || !Number.isFinite(total) || total === 0) return 0;
-  return parseFloat(((part / total) * 100).toFixed(decimals));
 }
 
 /**
@@ -124,59 +81,3 @@ export function roundTo(value: number, decimals: number = 2): number {
   return Math.round(value * factor) / factor;
 }
 
-/**
- * Clamp a value between a minimum and maximum.
- *
- * @param value - Value to clamp
- * @param min - Minimum value
- * @param max - Maximum value
- * @returns Clamped value
- *
- * @example
- * clamp(150, 0, 100) // 100
- * clamp(-50, 0, 100) // 0
- * clamp(50, 0, 100) // 50
- */
-export function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
-}
-
-/**
- * Calculate salary component based on gross salary and percentage.
- * Commonly used in payroll calculations.
- *
- * @param grossSalary - Total gross salary
- * @param percentage - Component percentage
- * @returns Component amount rounded to 2 decimals
- *
- * @example
- * calculateSalaryComponent(10000, 40) // 4000 (basic salary at 40%)
- * calculateSalaryComponent(10000, 25) // 2500 (housing at 25%)
- */
-export function calculateSalaryComponent(
-  grossSalary: number,
-  percentage: number
-): number {
-  return calculatePercentage(grossSalary, percentage, 2);
-}
-
-/**
- * Convert amount between currencies using exchange rate.
- *
- * @param amount - Amount to convert
- * @param rate - Exchange rate (target per source)
- * @param decimals - Decimal places (default: 2)
- * @returns Converted amount
- *
- * @example
- * convertCurrency(100, 3.64) // 364 (USD to QAR at 3.64)
- * convertCurrency(364, 1/3.64) // 100 (QAR to USD)
- */
-export function convertCurrency(
-  amount: number,
-  rate: number,
-  decimals: number = 2
-): number {
-  if (!Number.isFinite(amount) || !Number.isFinite(rate) || rate === 0) return 0;
-  return roundTo(amount * rate, decimals);
-}

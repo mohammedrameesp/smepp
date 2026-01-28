@@ -56,28 +56,3 @@ export function parseJsonObject<T extends Record<string, unknown>>(
   }
 }
 
-/**
- * Stringify a value to JSON, handling special cases
- * Returns null for empty arrays/objects to avoid storing empty data
- * @param value - Value to stringify
- * @param options - Options for stringification
- * @returns JSON string or null
- */
-export function safeStringify(
-  value: unknown,
-  options?: { nullOnEmpty?: boolean }
-): string | null {
-  if (value === null || value === undefined) return null;
-
-  // Option to return null for empty arrays/objects
-  if (options?.nullOnEmpty) {
-    if (Array.isArray(value) && value.length === 0) return null;
-    if (typeof value === 'object' && Object.keys(value).length === 0) return null;
-  }
-
-  try {
-    return JSON.stringify(value);
-  } catch {
-    return null;
-  }
-}
