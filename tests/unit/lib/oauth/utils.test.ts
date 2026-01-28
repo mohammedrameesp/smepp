@@ -9,6 +9,7 @@
  * - State expiration (10 minutes)
  * - User security validation
  * - URL utility functions
+ * - Email domain validation (allowed domains, edge cases)
  */
 
 // Unmock the OAuth utils module so we can test the real implementation
@@ -61,6 +62,7 @@ import {
   getBaseUrl,
   getAppDomain,
   getTenantUrl,
+  validateEmailDomain,
 } from '@/lib/oauth/utils';
 import { prisma } from '@/lib/core/prisma';
 import { isAccountLocked, clearFailedLogins } from '@/lib/security/account-lockout';
@@ -520,6 +522,51 @@ describe('OAuth Utilities', () => {
       expect(getTenantUrl('acme', '/dashboard')).toBe('http://acme.localhost:3000/dashboard');
 
       process.env.NEXT_PUBLIC_APP_DOMAIN = appDomain;
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // EMAIL DOMAIN VALIDATION
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  describe('validateEmailDomain', () => {
+    it('should return true when domain restriction is disabled', () => {
+      expect(validateEmailDomain('user@gmail.com', ['acme.com'], false)).toBe(true);
+    });
+
+    it('should return true when allowedDomains is empty', () => {
+      expect(validateEmailDomain('user@gmail.com', [], true)).toBe(true);
+    });
+
+    it('should return true when email domain is in allowed list', () => {
+      expect(validateEmailDomain('user@acme.com', ['acme.com'], true)).toBe(true);
+    });
+
+    it('should return true when email domain matches case-insensitively', () => {
+      expect(validateEmailDomain('user@ACME.COM', ['acme.com'], true)).toBe(true);
+      expect(validateEmailDomain('user@acme.com', ['ACME.COM'], true)).toBe(true);
+    });
+
+    it('should return false when email domain is not in allowed list', () => {
+      expect(validateEmailDomain('user@gmail.com', ['acme.com'], true)).toBe(false);
+    });
+
+    it('should return true when email domain is one of multiple allowed', () => {
+      expect(validateEmailDomain('user@partner.com', ['acme.com', 'partner.com'], true)).toBe(true);
+    });
+
+    it('should handle email without @ symbol gracefully', () => {
+      // Invalid email format - should return false when restriction is enabled
+      expect(validateEmailDomain('invalid-email', ['acme.com'], true)).toBe(false);
+    });
+
+    it('should handle email with multiple @ symbols', () => {
+      // Takes the part after the first @, so this would be 'weird@acme.com'
+      expect(validateEmailDomain('user@weird@acme.com', ['acme.com'], true)).toBe(false);
+    });
+
+    it('should handle empty email string', () => {
+      expect(validateEmailDomain('', ['acme.com'], true)).toBe(false);
     });
   });
 });
