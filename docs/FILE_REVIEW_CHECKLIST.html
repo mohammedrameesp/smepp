@@ -62,11 +62,11 @@
 <body>
   <div class="container">
     <h1>Source Code Review Checklist</h1>
-    <p>Generated: 2026-01-28 | Total Files: <strong>947</strong></p>
+    <p>Generated: 2026-01-28 | Total Files: <strong>948</strong> (Updated: status-badge added, files reorganized)</p>
 
     <div class="stats">
       <div class="stat">
-        <div class="stat-value" id="totalFiles">947</div>
+        <div class="stat-value" id="totalFiles">948</div>
         <div class="stat-label">Total Files</div>
       </div>
       <div class="stat">
@@ -94,7 +94,7 @@
       </div>
       <div class="progress-bar">
         <div class="progress-fill" id="progressFill" style="width: 0%"></div>
-        <span class="progress-text" id="progressText">0 / 947 files reviewed</span>
+        <span class="progress-text" id="progressText">0 / 948 files reviewed</span>
       </div>
     </div>
 
@@ -756,6 +756,7 @@
       "src/components/ui/server-pagination.tsx",
       "src/components/ui/sheet.tsx",
       "src/components/ui/skeleton.tsx",
+      "src/components/ui/status-badge.tsx", // NEW: centralized status badge component
       "src/components/ui/stat-chip.tsx",
       "src/components/ui/stats-card.tsx",
       "src/components/ui/status-filter-buttons.tsx",
@@ -861,7 +862,9 @@
       "src/features/employees/components/index.ts",
       "src/features/employees/components/offboard-employee-dialog.tsx",
       "src/features/employees/components/offboarding-status-banner.tsx",
+      "src/features/employees/lib/employment-defaults.ts", // MOVED from src/lib/domains/hr/
       "src/features/employees/lib/hr-utils.ts",
+      "src/features/employees/lib/work-milestones.ts", // MOVED from src/lib/hr/
       "src/features/employees/validations/hr-profile.ts",
       "src/features/employees/validations/offboarding.ts",
       // features - leave
@@ -1010,6 +1013,7 @@
       "src/lib/ai/rate-limiter.ts",
       // lib - constants
       "src/lib/constants/index.ts",
+      "src/lib/constants/status-config.ts", // MOVED from src/lib/ui/
       "src/lib/constants/limits.ts",
       "src/lib/constants/procurement-categories.ts",
       "src/lib/constants/ui-constants.ts",
@@ -1040,8 +1044,8 @@
       "src/lib/db/pagination.ts",
       "src/lib/db/search-filter.ts",
       // lib - domains
-      "src/lib/domains/hr/employment-defaults.ts",
-      "src/lib/domains/hr/index.ts",
+      // MOVED: src/lib/domains/hr/employment-defaults.ts → src/features/employees/lib/employment-defaults.ts
+      // DELETED: src/lib/domains/hr/index.ts (empty barrel export removed)
       "src/lib/domains/index.ts",
       // lib - email
       "src/lib/email/client.ts",
@@ -1055,7 +1059,7 @@
       "src/lib/email/templates/index.ts",
       "src/lib/email/utils.ts",
       // lib - files
-      "src/lib/files/sanity.ts",
+      // MOVED: src/lib/files/sanity.ts → src/lib/security/sanity.ts
       // lib - help
       "src/lib/help/content/hr/employees.ts",
       "src/lib/help/content/hr/leave.ts",
@@ -1077,7 +1081,7 @@
       "src/lib/hooks/use-leave-balance.ts",
       "src/lib/hooks/use-submit-action.ts",
       // lib - hr
-      "src/lib/hr/work-milestones.ts",
+      // MOVED: src/lib/hr/work-milestones.ts → src/features/employees/lib/work-milestones.ts
       // lib - http
       "src/lib/http/approval-handler.ts",
       "src/lib/http/errors.ts",
@@ -1118,6 +1122,7 @@
       "src/lib/security/impersonation.ts",
       "src/lib/security/password-validation.ts",
       "src/lib/security/rateLimit.ts",
+      "src/lib/security/sanity.ts", // MOVED from src/lib/files/
       // lib - storage
       "src/lib/storage/cleanup.ts",
       "src/lib/storage/index.ts",
@@ -1133,7 +1138,7 @@
       "src/lib/types/leave.ts",
       "src/lib/types/tenant-branding.ts",
       // lib - ui
-      "src/lib/ui/status-config.ts",
+      // MOVED: src/lib/ui/status-config.ts → src/lib/constants/status-config.ts
       // lib - utils
       "src/lib/utils/calendar-utils.ts",
       "src/lib/utils/code-prefix.ts",
