@@ -18,7 +18,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Ban } from 'lucide-react';
-import { cancelLeaveRequest } from '@/lib/api/leave';
+import { cancelLeaveRequest } from '@/features/leave/lib/api';
 import { useSubmitAction } from '@/lib/hooks';
 import { ICON_SIZES } from '@/lib/constants';
 import type { CancelLeaveDialogProps } from '@/lib/types/leave';

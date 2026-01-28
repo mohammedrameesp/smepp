@@ -18,7 +18,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { CheckCircle, XCircle, AlertTriangle, Info } from 'lucide-react';
-import { approveLeaveRequest, rejectLeaveRequest } from '@/lib/api/leave';
+import { approveLeaveRequest, rejectLeaveRequest } from '@/features/leave/lib/api';
 import { useSubmitAction } from '@/lib/hooks';
 import { ICON_SIZES } from '@/lib/constants';
 import type { LeaveApprovalActionsProps, ApprovalStep } from '@/lib/types/leave';

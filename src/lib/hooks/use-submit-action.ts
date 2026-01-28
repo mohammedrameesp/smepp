@@ -2,7 +2,6 @@
 
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
-import { LeaveApiError } from '@/lib/api/leave';
 
 interface UseSubmitActionOptions<T, R> {
   /** The async action to perform */
@@ -65,11 +64,9 @@ export function useSubmitAction<T = void, R = unknown>({
       onSuccess?.(res);
       return res;
     } catch (err) {
-      const errorMessage = err instanceof LeaveApiError
+      const errorMessage = err instanceof Error
         ? err.message
-        : err instanceof Error
-          ? err.message
-          : 'An unexpected error occurred';
+        : 'An unexpected error occurred';
 
       setError(errorMessage);
 
