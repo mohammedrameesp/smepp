@@ -15,6 +15,7 @@ import {
   calculateSpendRequestItems,
   sendSpendRequestNotifications,
 } from '@/features/spend-requests/lib/spend-request-creation';
+import { buildFilterWithSearch } from '@/lib/core/search-filter';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import logger from '@/lib/core/log';
 
@@ -34,31 +35,29 @@ async function getSpendRequestsHandler(request: NextRequest, context: APIContext
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
 
-    // Build where clause (tenant filtering is handled by db extension)
-    const where: Prisma.SpendRequestWhereInput = {};
+    // Build filters for where clause
+    const filters: Record<string, unknown> = {};
 
     // Non-admin users can only see their own requests
-    // Note: orgRole contains ADMIN/MEMBER based on TeamMemberRole
     const isOwnerOrAdmin = tenant?.isOwner || tenant?.isAdmin;
     if (!isOwnerOrAdmin) {
-      where.requesterId = userId;
+      filters.requesterId = userId;
     }
 
     if (status) {
-      where.status = status as SpendRequestStatus;
+      filters.status = status as SpendRequestStatus;
     }
 
     if (priority) {
-      where.priority = priority as SpendRequestPriority;
+      filters.priority = priority as SpendRequestPriority;
     }
 
-    if (search) {
-      where.OR = [
-        { referenceNumber: { contains: search, mode: 'insensitive' } },
-        { title: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } },
-      ];
-    }
+    // Build where clause with search filter
+    const where = buildFilterWithSearch({
+      searchTerm: search,
+      searchFields: ['referenceNumber', 'title', 'description'],
+      filters,
+    }) as Prisma.SpendRequestWhereInput;
 
     // Get total count and requests
     const [total, requests] = await Promise.all([

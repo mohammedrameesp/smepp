@@ -12,6 +12,7 @@ import {
   calculateTeamMemberProfileCompletion,
 } from '@/features/employees/lib/hr-utils';
 import { deriveOrgRole } from '@/lib/access-control';
+import { buildSearchFilter } from '@/lib/core/search-filter';
 
 // GET /api/employees - Get all employees with HR profile data
 export const GET = withErrorHandler(
@@ -47,16 +48,13 @@ export const GET = withErrorHandler(
       });
     }
 
-    // Search by name, email, employee code, or QID
-    if (search) {
-      andConditions.push({
-        OR: [
-          { name: { contains: search, mode: 'insensitive' } },
-          { email: { contains: search, mode: 'insensitive' } },
-          { employeeCode: { contains: search, mode: 'insensitive' } },
-          { qidNumber: { contains: search, mode: 'insensitive' } },
-        ],
-      });
+    // Search by name, email, employee code, or QID using search filter utility
+    const searchFilter = buildSearchFilter({
+      searchTerm: search,
+      searchFields: ['name', 'email', 'employeeCode', 'qidNumber'],
+    });
+    if (Object.keys(searchFilter).length > 0) {
+      andConditions.push(searchFilter);
     }
 
     // Apply AND conditions if any

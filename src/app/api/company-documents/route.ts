@@ -4,6 +4,7 @@ import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { companyDocumentSchema, companyDocumentQuerySchema } from '@/features/company-documents';
 import { getDocumentExpiryInfo, DOCUMENT_EXPIRY_WARNING_DAYS } from '@/features/company-documents';
 import { logAction, ActivityActions } from '@/lib/core/activity';
+import { buildFilterWithSearch } from '@/lib/core/search-filter';
 import { Prisma } from '@prisma/client';
 import { getQatarStartOfDay } from '@/lib/core/datetime';
 
@@ -33,39 +34,37 @@ export const GET = withErrorHandler(async (request: NextRequest, context: APICon
   const warningDate = new Date(today);
   warningDate.setDate(warningDate.getDate() + DOCUMENT_EXPIRY_WARNING_DAYS);
 
-  // Build where clause with tenant filter
-  const where: Prisma.CompanyDocumentWhereInput = { tenantId };
+  // Build filters for where clause
+  const filters: Record<string, unknown> = { tenantId };
 
   if (query.documentTypeName) {
-    where.documentTypeName = query.documentTypeName;
+    filters.documentTypeName = query.documentTypeName;
   }
 
   if (query.assetId) {
-    where.assetId = query.assetId;
+    filters.assetId = query.assetId;
   }
 
   if (query.expiryStatus && query.expiryStatus !== 'all') {
     switch (query.expiryStatus) {
       case 'expired':
-        where.expiryDate = { lt: today };
+        filters.expiryDate = { lt: today };
         break;
       case 'expiring':
-        where.expiryDate = { gte: today, lte: warningDate };
+        filters.expiryDate = { gte: today, lte: warningDate };
         break;
       case 'valid':
-        where.expiryDate = { gt: warningDate };
+        filters.expiryDate = { gt: warningDate };
         break;
     }
   }
 
-  if (query.search) {
-    where.OR = [
-      { documentTypeName: { contains: query.search, mode: 'insensitive' } },
-      { referenceNumber: { contains: query.search, mode: 'insensitive' } },
-      { issuedBy: { contains: query.search, mode: 'insensitive' } },
-      { notes: { contains: query.search, mode: 'insensitive' } },
-    ];
-  }
+  // Build where clause with search filter
+  const where = buildFilterWithSearch({
+    searchTerm: query.search,
+    searchFields: ['documentTypeName', 'referenceNumber', 'issuedBy', 'notes'],
+    filters,
+  }) as Prisma.CompanyDocumentWhereInput;
 
   // Build order by
   const orderBy: Prisma.CompanyDocumentOrderByWithRelationInput = {};
