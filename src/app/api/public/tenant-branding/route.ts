@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { RESERVED_SUBDOMAINS } from '@/lib/multi-tenant/subdomain';
-import type { TenantBranding, TenantBrandingResponse } from '@/lib/types/tenant-branding';
+import type { TenantBranding, TenantBrandingResponse } from '@/lib/multi-tenant/tenant-branding';
 import logger from '@/lib/core/log';
 
 /**

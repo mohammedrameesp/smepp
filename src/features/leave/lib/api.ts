@@ -9,7 +9,7 @@ import type {
   CreateLeaveRequestData,
   UpdateLeaveRequestData,
   LeaveBalanceAdjustment,
-} from '@/lib/types/leave';
+} from '@/features/leave/types';
 
 /**
  * API Error class for leave module

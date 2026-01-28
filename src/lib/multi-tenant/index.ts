@@ -47,3 +47,6 @@ export * from './feature-flags';
 // Usage limits
 export * from './limits';
 
+// Tenant branding
+export * from './tenant-branding';
+

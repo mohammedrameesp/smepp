@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import type { LeaveBalance } from '@/lib/types/leave';
+import type { LeaveBalance } from '@/features/leave/types';
 
 interface UseLeaveBalanceOptions {
   balance: LeaveBalance | null;

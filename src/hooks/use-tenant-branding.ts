@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import type { TenantBranding, TenantBrandingResponse } from '@/lib/types/tenant-branding';
-import { DEFAULT_TENANT_BRANDING } from '@/lib/types/tenant-branding';
+import type { TenantBranding, TenantBrandingResponse } from '@/lib/multi-tenant/tenant-branding';
+import { DEFAULT_TENANT_BRANDING } from '@/lib/multi-tenant/tenant-branding';
 
 export interface TenantBrandingState {
   branding: TenantBranding | null;

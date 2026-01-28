@@ -17,7 +17,7 @@ import {
   canEditLeaveRequest,
 } from '@/features/leave/lib/leave-utils';
 import { LeaveRequestHistory, CancelLeaveDialog, ApprovalChainStatus } from '@/features/leave/components';
-import type { ApprovalStep, ApprovalSummary } from '@/lib/types/leave';
+import type { ApprovalStep, ApprovalSummary } from '@/features/leave/types';
 import { LeaveStatus, LeaveRequestType } from '@prisma/client';
 import { PageHeader, PageContent, PageHeaderButton } from '@/components/ui/page-header';
 import { formatDate } from '@/lib/core/datetime';

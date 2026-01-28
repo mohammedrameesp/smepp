@@ -7,7 +7,7 @@
  * underlying logic directly without needing React testing infrastructure.
  */
 
-import type { LeaveBalance } from '@/lib/types/leave';
+import type { LeaveBalance } from '@/features/leave/types';
 
 // Re-implement the hook logic for testing (mirrors use-leave-balance.ts)
 interface UseLeaveBalanceOptions {

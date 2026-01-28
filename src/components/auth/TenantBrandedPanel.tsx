@@ -1,6 +1,6 @@
 'use client';
 
-import type { TenantBranding } from '@/lib/types/tenant-branding';
+import type { TenantBranding } from '@/lib/multi-tenant/tenant-branding';
 
 interface TenantBrandedPanelProps {
   branding: TenantBranding | null;
