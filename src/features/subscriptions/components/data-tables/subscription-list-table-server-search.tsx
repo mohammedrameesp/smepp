@@ -46,10 +46,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+import { SubscriptionStatusBadge } from '@/components/ui/status-badge';
 import { SubscriptionActions } from '../subscription-actions';
 import { formatDate } from '@/lib/core/datetime';
 import { formatBillingCycle, getNextRenewalDate, getDaysUntilRenewal } from '@/features/subscriptions';
@@ -324,18 +324,6 @@ export function SubscriptionListTableServerSearch() {
                   }
                 }
 
-                // Status badge styling
-                const getStatusBadge = () => {
-                  switch (subscription.status) {
-                    case 'ACTIVE':
-                      return <Badge className="bg-green-100 text-green-800 border-green-300 text-xs">Active</Badge>;
-                    case 'CANCELLED':
-                      return <Badge className="bg-red-100 text-red-800 border-red-300 text-xs">Cancelled</Badge>;
-                    default:
-                      return <Badge variant="secondary" className="text-xs">{subscription.status}</Badge>;
-                  }
-                };
-
                 return (
                   <TableRow key={subscription.id}>
                     {/* Column 1: Service + Tag + Category */}
@@ -361,7 +349,7 @@ export function SubscriptionListTableServerSearch() {
 
                     {/* Column 3: Status + Billing */}
                     <TableCell>
-                      {getStatusBadge()}
+                      <SubscriptionStatusBadge status={subscription.status} />
                       <div className="text-xs text-gray-500 mt-1">
                         {formatBillingCycle(subscription.billingCycle)}
                       </div>

@@ -61,6 +61,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { Badge } from '@/components/ui/badge';
+import { SubscriptionStatusBadge } from '@/components/ui/status-badge';
 import { Button } from '@/components/ui/button';
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
@@ -144,17 +145,6 @@ export default async function EmployeeSubscriptionDetailPage({ params }: Props) 
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'ACTIVE':
-        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300">Active</Badge>;
-      case 'CANCELLED':
-        return <Badge variant="destructive">Cancelled</Badge>;
-      default:
-        return <Badge variant="secondary">{status}</Badge>;
-    }
-  };
-
   const isRenewalSoon = (renewalDate: Date | null) => {
     if (!renewalDate) return false;
     const now = new Date();
@@ -181,7 +171,7 @@ export default async function EmployeeSubscriptionDetailPage({ params }: Props) 
         }
       >
         <div className="flex flex-wrap items-center gap-3 mt-4">
-          {getStatusBadge(subscription.status)}
+          <SubscriptionStatusBadge status={subscription.status} />
           <Badge variant={getBillingCycleBadgeVariant(subscription.billingCycle)}>
             {formatBillingCycle(subscription.billingCycle)}
           </Badge>

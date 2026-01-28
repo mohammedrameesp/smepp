@@ -16,7 +16,7 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
+import { SubscriptionStatusBadge } from '@/components/ui/status-badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { TableFilterBar } from '@/components/ui/table-filter-bar';
@@ -151,18 +151,6 @@ export function SubscriptionListTable({ subscriptions }: SubscriptionListTablePr
   };
 
   const hasActiveFilters = searchTerm !== '' || filters.status !== 'all' || filters.category !== 'all' || filters.billingCycle !== 'all';
-
-  // Status badge styling
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'ACTIVE':
-        return <Badge className="bg-green-100 text-green-800 border-green-300 text-xs">Active</Badge>;
-      case 'CANCELLED':
-        return <Badge className="bg-red-100 text-red-800 border-red-300 text-xs">Cancelled</Badge>;
-      default:
-        return <Badge variant="secondary" className="text-xs">{status}</Badge>;
-    }
-  };
 
   return (
     <div className="space-y-4">
@@ -329,7 +317,7 @@ export function SubscriptionListTable({ subscriptions }: SubscriptionListTablePr
 
                     {/* Column 3: Status + Billing */}
                     <TableCell>
-                      {getStatusBadge(subscription.status)}
+                      <SubscriptionStatusBadge status={subscription.status} />
                       <div className="text-xs text-gray-500 mt-1">
                         {formatBillingCycle(subscription.billingCycle)}
                       </div>

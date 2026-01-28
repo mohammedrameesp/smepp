@@ -6,7 +6,7 @@
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { SubscriptionStatusBadge } from '@/components/ui/status-badge';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Clock } from 'lucide-react';
@@ -43,17 +43,6 @@ interface UserSubscriptionHistoryProps {
 }
 
 export function UserSubscriptionHistory({ subscriptions, viewMode = 'admin' }: UserSubscriptionHistoryProps) {
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'ACTIVE':
-        return <Badge className="bg-green-100 text-green-800 border-green-300">Active</Badge>;
-      case 'CANCELLED':
-        return <Badge className="bg-red-100 text-red-800 border-red-300">Cancelled</Badge>;
-      default:
-        return <Badge variant="secondary">{status}</Badge>;
-    }
-  };
-
   const formatDate = (date: Date) => {
     return formatDateUtil(date);
   };
@@ -80,7 +69,7 @@ export function UserSubscriptionHistory({ subscriptions, viewMode = 'admin' }: U
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="font-semibold text-lg">{subscription.serviceName}</h3>
-                        {getStatusBadge(subscription.status)}
+                        <SubscriptionStatusBadge status={subscription.status} />
                       </div>
                       <div className="text-sm text-gray-600">
                         {subscription.vendor && <span>{subscription.vendor} • </span>}
@@ -161,7 +150,7 @@ export function UserSubscriptionHistory({ subscriptions, viewMode = 'admin' }: U
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="font-semibold">{subscription.serviceName}</h3>
-                        {getStatusBadge(subscription.status)}
+                        <SubscriptionStatusBadge status={subscription.status} />
                       </div>
                       <div className="text-sm text-gray-600">
                         {subscription.vendor && <span>{subscription.vendor} • </span>}

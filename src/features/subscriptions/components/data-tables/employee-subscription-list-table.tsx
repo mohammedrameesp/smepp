@@ -50,6 +50,7 @@ import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { SubscriptionStatusBadge } from '@/components/ui/status-badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -189,17 +190,6 @@ export function EmployeeSubscriptionListTable({ subscriptions, currentUserId }: 
 
     return sorted;
   }, [subscriptions, searchTerm, statusFilter, categoryFilter, assignmentFilter, sortBy, sortOrder, currentUserId]);
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'ACTIVE':
-        return <Badge className="bg-green-100 text-green-800 border-green-300">Active</Badge>;
-      case 'CANCELLED':
-        return <Badge className="bg-red-100 text-red-800 border-red-300">Cancelled</Badge>;
-      default:
-        return <Badge variant="secondary">{status}</Badge>;
-    }
-  };
 
   const getRenewalBadge = (subscription: Subscription) => {
     if (subscription.status === 'CANCELLED') {
@@ -382,7 +372,7 @@ export function EmployeeSubscriptionListTable({ subscriptions, currentUserId }: 
                   <TableCell>{formatBillingCycle(subscription.billingCycle)}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      {getStatusBadge(subscription.status)}
+                      <SubscriptionStatusBadge status={subscription.status} />
                       {getRenewalBadge(subscription)}
                     </div>
                   </TableCell>

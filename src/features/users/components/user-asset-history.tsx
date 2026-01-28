@@ -6,7 +6,7 @@
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { AssetStatusBadge } from '@/components/ui/status-badge';
 import Link from 'next/link';
 import { Clock, Calendar } from 'lucide-react';
 import { formatDate as formatDateUtil } from '@/lib/core/datetime';
@@ -40,21 +40,6 @@ interface UserAssetHistoryProps {
 }
 
 export function UserAssetHistory({ assets, viewMode = 'admin' }: UserAssetHistoryProps) {
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'IN_USE':
-        return <Badge className="bg-green-100 text-green-800 border-green-300">In Use</Badge>;
-      case 'SPARE':
-        return <Badge className="bg-blue-100 text-blue-800 border-blue-300">Spare</Badge>;
-      case 'REPAIR':
-        return <Badge className="bg-red-100 text-red-800 border-red-300">Repair</Badge>;
-      case 'DISPOSED':
-        return <Badge className="bg-gray-100 text-gray-800 border-gray-300">Disposed</Badge>;
-      default:
-        return <Badge variant="secondary">{status}</Badge>;
-    }
-  };
-
   const formatDate = (date: Date) => {
     return formatDateUtil(date);
   };
@@ -101,7 +86,7 @@ export function UserAssetHistory({ assets, viewMode = 'admin' }: UserAssetHistor
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="font-semibold text-lg">{asset.model}</h3>
-                        {getStatusBadge(asset.status)}
+                        <AssetStatusBadge status={asset.status} />
                       </div>
                       <div className="text-sm text-gray-600">
                         {asset.assetTag && <span className="font-mono mr-2">{asset.assetTag}</span>}
@@ -169,7 +154,7 @@ export function UserAssetHistory({ assets, viewMode = 'admin' }: UserAssetHistor
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="font-semibold">{asset.model}</h3>
-                        {getStatusBadge(asset.status)}
+                        <AssetStatusBadge status={asset.status} />
                       </div>
                       <div className="text-sm text-gray-600">
                         {asset.assetTag && <span className="font-mono mr-2">{asset.assetTag}</span>}

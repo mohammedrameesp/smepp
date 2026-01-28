@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { SupplierStatusBadge } from '@/components/ui/status-badge';
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -69,20 +70,6 @@ export default async function EmployeeSupplierDetailPage({ params }: Props) {
     notFound();
   }
 
-  const getStatusBadge = (status: 'PENDING' | 'APPROVED' | 'REJECTED') => {
-    const styles = {
-      PENDING: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-      APPROVED: 'bg-green-100 text-green-800 border-green-300',
-      REJECTED: 'bg-red-100 text-red-800 border-red-300',
-    };
-
-    return (
-      <Badge className={styles[status]} variant="outline">
-        {status}
-      </Badge>
-    );
-  };
-
   return (
     <>
       <PageHeader
@@ -101,7 +88,7 @@ export default async function EmployeeSupplierDetailPage({ params }: Props) {
         }
       >
         <div className="flex flex-wrap items-center gap-3 mt-4">
-          {getStatusBadge(supplier.status)}
+          <SupplierStatusBadge status={supplier.status} />
           {supplier.engagements.length > 0 && (
             <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200">
               {supplier.engagements.length} engagement{supplier.engagements.length !== 1 ? 's' : ''}

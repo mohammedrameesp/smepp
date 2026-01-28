@@ -8,6 +8,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { LeaveStatusBadge } from '@/components/ui/status-badge';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -17,11 +18,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Calendar, Clock, CheckCircle, XCircle, AlertCircle, ExternalLink } from 'lucide-react';
+import { Calendar, AlertCircle, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { formatDate } from '@/lib/core/datetime';
 import { getAnnualLeaveDetails } from '@/features/leave/lib/leave-utils';
-import { getStatusClasses, ICON_SIZES } from '@/lib/constants';
+import { ICON_SIZES } from '@/lib/constants';
 
 interface LeaveBalance {
   id: string;
@@ -104,22 +105,6 @@ export function EmployeeLeaveSection({ userId }: EmployeeLeaveSectionProps) {
 
     fetchData();
   }, [userId, currentYear]);
-
-  const getStatusBadge = (status: string) => {
-    const statusClasses = getStatusClasses(status);
-    switch (status) {
-      case 'APPROVED':
-        return <Badge className={`${statusClasses} hover:${statusClasses.split(' ')[0]}`}><CheckCircle className={`${ICON_SIZES.xs} mr-1`} />Approved</Badge>;
-      case 'REJECTED':
-        return <Badge className={`${statusClasses} hover:${statusClasses.split(' ')[0]}`}><XCircle className={`${ICON_SIZES.xs} mr-1`} />Rejected</Badge>;
-      case 'PENDING':
-        return <Badge className={`${statusClasses} hover:${statusClasses.split(' ')[0]}`}><Clock className={`${ICON_SIZES.xs} mr-1`} />Pending</Badge>;
-      case 'CANCELLED':
-        return <Badge className={`${statusClasses} hover:${statusClasses.split(' ')[0]}`}>Cancelled</Badge>;
-      default:
-        return <Badge variant="secondary">{status}</Badge>;
-    }
-  };
 
   if (loading) {
     return (
@@ -362,7 +347,7 @@ export function EmployeeLeaveSection({ userId }: EmployeeLeaveSectionProps) {
                       </div>
                     </TableCell>
                     <TableCell className="text-right">{Number(request.totalDays)}</TableCell>
-                    <TableCell>{getStatusBadge(request.status)}</TableCell>
+                    <TableCell><LeaveStatusBadge status={request.status} showIcon /></TableCell>
                     <TableCell className="text-right">
                       <Link href={`/admin/leave/requests/${request.id}`}>
                         <Button variant="ghost" size="sm">View</Button>

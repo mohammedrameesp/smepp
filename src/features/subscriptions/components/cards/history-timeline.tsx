@@ -46,6 +46,7 @@
 import { SubscriptionHistory, SubscriptionHistoryAction, SubscriptionStatus } from '@prisma/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { SubscriptionStatusBadge } from '@/components/ui/status-badge';
 import { formatDate, formatDateTime } from '@/lib/core/datetime';
 
 interface HistoryTimelineProps {
@@ -70,19 +71,6 @@ export function HistoryTimeline({ history, purchaseDate, cancelledAt, reactivate
         return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300">Reassigned</Badge>;
       default:
         return <Badge variant="outline">{action}</Badge>;
-    }
-  };
-
-  const getStatusBadge = (status?: SubscriptionStatus | null) => {
-    if (!status) return null;
-
-    switch (status) {
-      case 'ACTIVE':
-        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300">Active</Badge>;
-      case 'CANCELLED':
-        return <Badge variant="destructive">Cancelled</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
     }
   };
 
@@ -127,9 +115,9 @@ export function HistoryTimeline({ history, purchaseDate, cancelledAt, reactivate
                 {entry.oldStatus && entry.newStatus && (
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-sm text-gray-600">Status:</span>
-                    {getStatusBadge(entry.oldStatus)}
+                    <SubscriptionStatusBadge status={entry.oldStatus} />
                     <span className="text-gray-400">→</span>
-                    {getStatusBadge(entry.newStatus)}
+                    <SubscriptionStatusBadge status={entry.newStatus} />
                   </div>
                 )}
 
