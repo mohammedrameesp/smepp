@@ -65,12 +65,7 @@ export function fileResponse(
   });
 }
 
-/**
- * Create a no-content response (204).
- */
-export function noContentResponse(): NextResponse {
-  return new NextResponse(null, { status: 204 });
-}
+// Note: noContentResponse is defined in errors.ts to keep all response helpers together
 
 /**
  * Create an error response for invalid request body.
