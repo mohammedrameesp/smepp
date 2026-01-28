@@ -27,7 +27,7 @@ import { createAssetSchema, assetQuerySchema } from '@/features/assets';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { generateAssetTagByCategory, recordAssetCreation } from '@/features/assets';
 import { convertToQAR } from '@/lib/core/currency';
-import { buildFilterWithSearch } from '@/lib/db/search-filter';
+import { buildFilterWithSearch } from '@/lib/core/search-filter';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { updateSetupProgress } from '@/features/onboarding/lib';
 import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';

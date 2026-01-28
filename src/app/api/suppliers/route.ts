@@ -5,7 +5,7 @@
  */
 import { NextResponse } from 'next/server';
 import { supplierQuerySchema } from '@/features/suppliers';
-import { buildFilterWithSearch } from '@/lib/db/search-filter';
+import { buildFilterWithSearch } from '@/lib/core/search-filter';
 import { withErrorHandler } from '@/lib/http/handler';
 
 export const GET = withErrorHandler(

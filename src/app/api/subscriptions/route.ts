@@ -28,7 +28,7 @@ import { logAction, ActivityActions } from '@/lib/core/activity';
 import { getQatarNow, getQatarStartOfDay } from '@/lib/core/datetime';
 import { parseInputDateString } from '@/lib/core/datetime';
 import { convertToQAR } from '@/lib/core/currency';
-import { buildFilterWithSearch } from '@/lib/db/search-filter';
+import { buildFilterWithSearch } from '@/lib/core/search-filter';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
