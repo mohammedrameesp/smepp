@@ -19,6 +19,7 @@
  */
 
 import { z } from 'zod';
+import { requiredString } from '@/lib/validations/field-schemas';
 import { approvalSchema, rejectionSchema, cancellationSchema } from '@/lib/validations/workflow-schemas';
 import { createQuerySchema } from '@/lib/validations/pagination-schema';
 import { LeaveStatus, LeaveRequestType, LeaveCategory, Prisma } from '@prisma/client';
@@ -41,7 +42,7 @@ const payTierSchema = z.object({
   /** Percentage of salary paid (0-100) */
   payPercent: z.number().int().min(0).max(100, 'Pay percent must be 0-100'),
   /** Display label for the tier */
-  label: z.string().min(1, 'Label is required').max(100, 'Label is too long'),
+  label: requiredString('Label is required').max(100, 'Label is too long'),
 });
 
 /**
@@ -79,7 +80,7 @@ const leaveCategorySchema = z.nativeEnum(LeaveCategory);
 /** Base schema for leave type fields (without refinements) */
 const leaveTypeBaseSchema = z.object({
   /** Leave type display name */
-  name: z.string().min(1, 'Name is required').max(100, 'Name is too long'),
+  name: requiredString('Name is required').max(100, 'Name is too long'),
   /** Optional description */
   description: z.string().max(500, 'Description is too long').optional().nullable(),
   /** Hex color for UI badges (e.g., "#3B82F6") */
@@ -163,11 +164,11 @@ export const updateLeaveTypeSchema = leaveTypeBaseSchema.partial();
  */
 export const createLeaveRequestSchema = z.object({
   /** Reference to the leave type */
-  leaveTypeId: z.string().min(1, 'Leave type is required'),
+  leaveTypeId: requiredString('Leave type is required'),
   /** Leave start date (ISO string) */
-  startDate: z.string().min(1, 'Start date is required'),
+  startDate: requiredString('Start date is required'),
   /** Leave end date (ISO string) */
-  endDate: z.string().min(1, 'End date is required'),
+  endDate: requiredString('End date is required'),
   /** Type: FULL_DAY, HALF_DAY_AM, or HALF_DAY_PM */
   requestType: z.nativeEnum(LeaveRequestType).default('FULL_DAY'),
   /** Optional reason for the leave */
@@ -251,7 +252,7 @@ export const approveLeaveRequestSchema = z.object({
  */
 export const rejectLeaveRequestSchema = z.object({
   /** Required reason for rejection */
-  reason: z.string().min(1, 'Rejection reason is required').max(500, 'Reason is too long'),
+  reason: requiredString('Rejection reason is required').max(500, 'Reason is too long'),
 });
 
 /**
@@ -260,7 +261,7 @@ export const rejectLeaveRequestSchema = z.object({
  */
 export const cancelLeaveRequestSchema = z.object({
   /** Required reason for cancellation */
-  reason: z.string().min(1, 'Cancellation reason is required').max(500, 'Reason is too long'),
+  reason: requiredString('Cancellation reason is required').max(500, 'Reason is too long'),
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -275,7 +276,7 @@ export const updateLeaveBalanceSchema = z.object({
   /** Days to add (positive) or subtract (negative), max ±365 */
   adjustment: z.number().min(-365, 'Adjustment is too low').max(365, 'Adjustment is too high'),
   /** Required notes explaining the adjustment */
-  adjustmentNotes: z.string().min(1, 'Adjustment notes are required').max(500, 'Notes are too long'),
+  adjustmentNotes: requiredString('Adjustment notes are required').max(500, 'Notes are too long'),
 });
 
 /**
@@ -284,9 +285,9 @@ export const updateLeaveBalanceSchema = z.object({
  */
 export const initializeLeaveBalanceSchema = z.object({
   /** Employee/member ID */
-  memberId: z.string().min(1, 'Member ID is required'),
+  memberId: requiredString('Member ID is required'),
   /** Leave type to initialize */
-  leaveTypeId: z.string().min(1, 'Leave type ID is required'),
+  leaveTypeId: requiredString('Leave type ID is required'),
   /** Year for the balance (2000-2100) */
   year: z.number().int().min(2000).max(2100),
   /** Optional custom entitlement (uses leave type default if not specified) */
@@ -355,9 +356,9 @@ export const leaveBalanceQuerySchema = z.object({
  */
 export const teamCalendarQuerySchema = z.object({
   /** Calendar view start date */
-  startDate: z.string().min(1, 'Start date is required'),
+  startDate: requiredString('Start date is required'),
   /** Calendar view end date */
-  endDate: z.string().min(1, 'End date is required'),
+  endDate: requiredString('End date is required'),
   /** Filter by status (optional) */
   status: z.nativeEnum(LeaveStatus).optional(),
   /** Filter by leave type (optional) */
@@ -388,13 +389,13 @@ export const leaveTypeQuerySchema = z.object({
  */
 export const createPublicHolidaySchema = z.object({
   /** Holiday name (e.g., "Eid al-Fitr", "Qatar National Day") */
-  name: z.string().min(1, 'Holiday name is required').max(100, 'Name is too long'),
+  name: requiredString('Holiday name is required').max(100, 'Name is too long'),
   /** Optional description */
   description: z.string().max(500, 'Description is too long').optional(),
   /** Start date of the holiday (ISO string or Date) */
-  startDate: z.string().min(1, 'Start date is required'),
+  startDate: requiredString('Start date is required'),
   /** End date of the holiday (same as start for single-day holidays) */
-  endDate: z.string().min(1, 'End date is required'),
+  endDate: requiredString('End date is required'),
   /** Year for the holiday (2000-2100) */
   year: z.number().int().min(2000).max(2100),
   /** Whether this is a recurring fixed-date holiday */
@@ -416,13 +417,13 @@ export const createPublicHolidaySchema = z.object({
  */
 export const updatePublicHolidaySchema = z.object({
   /** Holiday name */
-  name: z.string().min(1, 'Holiday name is required').max(100, 'Name is too long').optional(),
+  name: requiredString('Holiday name is required').max(100, 'Name is too long').optional(),
   /** Optional description */
   description: z.string().max(500, 'Description is too long').nullable().optional(),
   /** Start date of the holiday */
-  startDate: z.string().min(1, 'Start date is required').optional(),
+  startDate: requiredString('Start date is required').optional(),
   /** End date of the holiday */
-  endDate: z.string().min(1, 'End date is required').optional(),
+  endDate: requiredString('End date is required').optional(),
   /** Year for the holiday */
   year: z.number().int().min(2000).max(2100).optional(),
   /** Whether this is a recurring fixed-date holiday */

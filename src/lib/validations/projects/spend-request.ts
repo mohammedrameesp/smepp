@@ -5,6 +5,7 @@
  */
 
 import { z } from 'zod';
+import { requiredString, optionalEmail } from '@/lib/validations/field-schemas';
 
 // Enum schemas matching Prisma enums
 export const purchaseTypeEnum = z.enum([
@@ -37,7 +38,7 @@ export const billingCycleEnum = z.enum(['ONE_TIME', 'MONTHLY', 'YEARLY']);
 
 // Item schema for individual line items
 export const spendRequestItemSchema = z.object({
-  description: z.string().min(1, 'Description is required').max(500),
+  description: requiredString('Description is required').max(500),
   quantity: z.number().int().min(1, 'Quantity must be at least 1'),
   unitPrice: z.number().min(0, 'Price must be positive'),
   currency: z.string().min(1).max(5).default('QAR'), // Supports QAR, USD, or custom currencies
@@ -53,7 +54,7 @@ export const spendRequestItemSchema = z.object({
 
 // Schema for creating a new spend request
 export const createSpendRequestSchema = z.object({
-  title: z.string().min(1, 'Title is required').max(200),
+  title: requiredString('Title is required').max(200),
   description: z.string().optional().nullable(),
   justification: z.string().optional().nullable(),
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).default('MEDIUM'),
@@ -69,7 +70,7 @@ export const createSpendRequestSchema = z.object({
   // Vendor details
   vendorName: z.string().optional().nullable(),
   vendorContact: z.string().optional().nullable(),
-  vendorEmail: z.string().email('Invalid email format').optional().nullable().or(z.literal('')),
+  vendorEmail: optionalEmail(),
 
   // Additional notes
   additionalNotes: z.string().optional().nullable(),
@@ -92,7 +93,7 @@ export const createSpendRequestSchema = z.object({
 
 // Schema for updating a spend request (only when PENDING)
 export const updateSpendRequestSchema = z.object({
-  title: z.string().min(1, 'Title is required').max(200).optional(),
+  title: requiredString('Title is required').max(200).optional(),
   description: z.string().optional().nullable(),
   justification: z.string().optional().nullable(),
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).optional(),
@@ -108,7 +109,7 @@ export const updateSpendRequestSchema = z.object({
   // Vendor details
   vendorName: z.string().optional().nullable(),
   vendorContact: z.string().optional().nullable(),
-  vendorEmail: z.string().email('Invalid email format').optional().nullable().or(z.literal('')),
+  vendorEmail: optionalEmail(),
 
   // Additional notes
   additionalNotes: z.string().optional().nullable(),
@@ -129,7 +130,7 @@ export const addSpendRequestItemSchema = spendRequestItemSchema;
 
 // Schema for updating a single item
 export const updateSpendRequestItemSchema = z.object({
-  description: z.string().min(1, 'Description is required').max(500).optional(),
+  description: requiredString('Description is required').max(500).optional(),
   quantity: z.number().int().min(1, 'Quantity must be at least 1').optional(),
   unitPrice: z.number().min(0, 'Price must be positive').optional(),
   currency: z.string().min(1).max(5).optional(), // Supports QAR, USD, or custom currencies
@@ -143,12 +144,9 @@ export const updateSpendRequestItemSchema = z.object({
   productUrl: z.string().url('Invalid URL format').optional().nullable().or(z.literal('')),
 });
 
-// Type exports
+// Type exports for schema inputs
+// Note: For enum types (PurchaseType, CostType, etc.), use imports from '@prisma/client'
 export type CreateSpendRequestInput = z.infer<typeof createSpendRequestSchema>;
 export type UpdateSpendRequestInput = z.infer<typeof updateSpendRequestSchema>;
 export type UpdateSpendRequestStatusInput = z.infer<typeof updateSpendRequestStatusSchema>;
 export type SpendRequestItemInput = z.infer<typeof spendRequestItemSchema>;
-export type PurchaseType = z.infer<typeof purchaseTypeEnum>;
-export type CostType = z.infer<typeof costTypeEnum>;
-export type PaymentMode = z.infer<typeof paymentModeEnum>;
-export type BillingCycle = z.infer<typeof billingCycleEnum>;

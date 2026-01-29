@@ -24,8 +24,8 @@
  */
 
 import { z } from 'zod';
-import { optionalString } from '@/lib/validations/field-schemas';
-import { VALIDATION_PATTERNS, PATTERN_MESSAGES } from '@/lib/validations/patterns';
+import { optionalString, requiredString } from '@/lib/validations/field-schemas';
+import { VALIDATION_PATTERNS } from '@/lib/validations/patterns';
 import { createQuerySchema } from '@/lib/validations/pagination-schema';
 import { SupplierStatus, Prisma } from '@prisma/client';
 
@@ -39,9 +39,9 @@ import { SupplierStatus, Prisma } from '@prisma/client';
  */
 const supplierBaseSchema = z.object({
   /** Supplier/vendor company name (required) */
-  name: z.string().min(1, 'Company name is required'),
+  name: requiredString('Company name is required'),
   /** Business category (required) */
-  category: z.string().min(1, 'Category is required'),
+  category: requiredString('Category is required'),
   /** Street/building address */
   address: z.string().optional().nullable().or(z.literal('')),
   /** City location */
@@ -56,7 +56,7 @@ const supplierBaseSchema = z.object({
   /** Year company was established (1800-current) */
   establishmentYear: z.coerce.number().int().min(1800).max(new Date().getFullYear()).optional().nullable(),
   /** Primary contact person name (required) */
-  primaryContactName: z.string().min(1, 'Contact name is required'),
+  primaryContactName: requiredString('Contact name is required'),
   /** Primary contact job title */
   primaryContactTitle: z.string().optional().nullable().or(z.literal('')),
   /** Primary contact email address (optional - either email or phone required) */
@@ -170,7 +170,7 @@ export const approveSupplierSchema = z.object({
  */
 export const rejectSupplierSchema = z.object({
   /** Required reason for rejection */
-  rejectionReason: z.string().min(1, 'Rejection reason is required'),
+  rejectionReason: requiredString('Rejection reason is required'),
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -183,13 +183,13 @@ export const rejectSupplierSchema = z.object({
  */
 export const createEngagementSchema = z.object({
   /** Date of interaction (ISO string) */
-  date: z.string().min(1, 'Date is required'),
+  date: requiredString('Date is required'),
   /** Description of the engagement */
-  notes: z.string().min(1, 'Notes are required'),
+  notes: requiredString('Notes are required'),
   /** Rating 1-5 stars (optional) */
   rating: z.coerce.number().int().min(1).max(5).optional().nullable(),
   /** User who logged the engagement */
-  createdById: z.string().min(1, 'Creator ID is required'),
+  createdById: requiredString('Creator ID is required'),
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════

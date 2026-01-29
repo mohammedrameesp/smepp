@@ -151,10 +151,3 @@ export function matchesPattern(
 ): boolean {
   return VALIDATION_PATTERNS[pattern].test(value);
 }
-
-/**
- * Get error message for a pattern
- */
-export function getPatternMessage(pattern: keyof typeof PATTERN_MESSAGES): string {
-  return PATTERN_MESSAGES[pattern];
-}

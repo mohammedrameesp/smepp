@@ -30,7 +30,7 @@ export const requiredString = (message?: string) =>
   z.string().min(1, message || 'This field is required');
 
 /**
- * Optional email field
+ * Optional email field that transforms empty strings to null
  */
 export const optionalEmail = () =>
   z
@@ -40,17 +40,3 @@ export const optionalEmail = () =>
     .nullable()
     .or(z.literal(''))
     .transform((val) => (val === '' ? null : val));
-
-/**
- * Optional currency field
- */
-export const optionalCurrency = (maxAmount: number = 999999999) =>
-  z
-    .union([z.string(), z.number(), z.null()])
-    .optional()
-    .transform((val) => {
-      if (val === null || val === undefined || val === '') return null;
-      const num = typeof val === 'string' ? parseFloat(val) : val;
-      if (isNaN(num) || num < 0 || num > maxAmount) return null;
-      return num;
-    });
