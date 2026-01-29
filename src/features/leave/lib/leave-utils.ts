@@ -9,6 +9,17 @@ import { LeaveStatus, LeaveRequestType } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import { formatDate, formatDayMonth } from '@/lib/core/datetime';
 import { getStatusColor } from '@/lib/constants';
+import {
+  DEFAULT_WEEKEND_DAYS,
+  isWeekend,
+  isHoliday,
+  countCalendarDays,
+  countWorkingDays as countWorkingDaysBase,
+  countHolidayDays as countHolidayDaysBase,
+  getHolidayNamesInRange,
+  datesOverlap,
+  type HolidayLike,
+} from '@/lib/utils/calendar-utils';
 
 // Type definitions for Qatar labor law fields
 export interface PayTier {
@@ -404,19 +415,8 @@ export function shouldAutoInitializeBalance(
   return true;
 }
 
-/**
- * Default weekend days (Qatar: Friday and Saturday)
- */
-export const DEFAULT_WEEKEND_DAYS = [5, 6] as const; // Friday = 5, Saturday = 6
-
-/**
- * Check if a date is a weekend
- * @param date Date to check
- * @param weekendDays Array of weekend day numbers (0=Sun, 1=Mon, ..., 5=Fri, 6=Sat)
- */
-export function isWeekend(date: Date, weekendDays: number[] = [5, 6]): boolean {
-  return weekendDays.includes(date.getDay());
-}
+// Re-export commonly used calendar utilities for backward compatibility
+export { DEFAULT_WEEKEND_DAYS, isWeekend, datesOverlap } from '@/lib/utils/calendar-utils';
 
 /**
  * Calculate calendar days between two dates (includes weekends)
@@ -425,16 +425,7 @@ export function isWeekend(date: Date, weekendDays: number[] = [5, 6]): boolean {
  * @returns Number of calendar days (inclusive)
  */
 export function calculateCalendarDays(startDate: Date, endDate: Date): number {
-  const start = new Date(startDate);
-  start.setHours(0, 0, 0, 0);
-
-  const end = new Date(endDate);
-  end.setHours(0, 0, 0, 0);
-
-  const diffTime = end.getTime() - start.getTime();
-  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end dates
-
-  return Math.max(0, diffDays);
+  return countCalendarDays(startDate, endDate);
 }
 
 /**
@@ -462,27 +453,11 @@ export function calculateWorkingDays(
     return 0.5;
   }
 
-  // If including weekends (for Annual Leave), count all calendar days
-  if (includeWeekends) {
-    return calculateCalendarDays(startDate, endDate);
-  }
-
-  // For full day requests, count working days (excluding weekends)
-  let count = 0;
-  const current = new Date(startDate);
-  current.setHours(0, 0, 0, 0);
-
-  const end = new Date(endDate);
-  end.setHours(0, 0, 0, 0);
-
-  while (current <= end) {
-    if (!isWeekend(current, weekendDays)) {
-      count++;
-    }
-    current.setDate(current.getDate() + 1);
-  }
-
-  return count;
+  // Use the base calendar utility for full day requests
+  return countWorkingDaysBase(startDate, endDate, {
+    weekendDays,
+    includeWeekends,
+  });
 }
 
 /**
@@ -506,22 +481,8 @@ export interface PublicHolidayData {
  * @returns Holiday name if date is a holiday, null otherwise
  */
 export function isPublicHoliday(date: Date, holidays: PublicHolidayData[]): string | null {
-  const checkDate = new Date(date);
-  checkDate.setHours(0, 0, 0, 0);
-
-  for (const holiday of holidays) {
-    const startDate = new Date(holiday.startDate);
-    startDate.setHours(0, 0, 0, 0);
-
-    const endDate = new Date(holiday.endDate);
-    endDate.setHours(0, 0, 0, 0);
-
-    if (checkDate >= startDate && checkDate <= endDate) {
-      return holiday.name;
-    }
-  }
-
-  return null;
+  // PublicHolidayData satisfies HolidayLike, so we can use the calendar utility directly
+  return isHoliday(date, holidays);
 }
 
 /**
@@ -536,28 +497,8 @@ export function getHolidaysInRange(
   endDate: Date,
   holidays: PublicHolidayData[]
 ): string[] {
-  const start = new Date(startDate);
-  start.setHours(0, 0, 0, 0);
-
-  const end = new Date(endDate);
-  end.setHours(0, 0, 0, 0);
-
-  const holidayNames: string[] = [];
-
-  for (const holiday of holidays) {
-    const holidayStart = new Date(holiday.startDate);
-    holidayStart.setHours(0, 0, 0, 0);
-
-    const holidayEnd = new Date(holiday.endDate);
-    holidayEnd.setHours(0, 0, 0, 0);
-
-    // Check if holiday range overlaps with date range
-    if (holidayStart <= end && holidayEnd >= start) {
-      holidayNames.push(holiday.name);
-    }
-  }
-
-  return [...new Set(holidayNames)]; // Remove duplicates
+  // Use the calendar utility - returns unique holiday names
+  return getHolidayNamesInRange(startDate, endDate, holidays);
 }
 
 /**
@@ -574,24 +515,8 @@ export function countHolidayDays(
   holidays: PublicHolidayData[],
   weekendDays: number[] = [5, 6]
 ): number {
-  const start = new Date(startDate);
-  start.setHours(0, 0, 0, 0);
-
-  const end = new Date(endDate);
-  end.setHours(0, 0, 0, 0);
-
-  let count = 0;
-  const current = new Date(start);
-
-  while (current <= end) {
-    // Only count if it's a holiday AND not a weekend (to avoid double counting)
-    if (!isWeekend(current, weekendDays) && isPublicHoliday(current, holidays)) {
-      count++;
-    }
-    current.setDate(current.getDate() + 1);
-  }
-
-  return count;
+  // Use calendar utility - excludeWeekendHolidays=true to avoid double counting
+  return countHolidayDaysBase(startDate, endDate, holidays, true, weekendDays);
 }
 
 /**
@@ -624,35 +549,13 @@ export function calculateWorkingDaysWithHolidays(
     return 0.5;
   }
 
-  // For full day requests, count working days (excluding weekends if applicable, and holidays)
-  let count = 0;
-  const current = new Date(startDate);
-  current.setHours(0, 0, 0, 0);
-
-  const end = new Date(endDate);
-  end.setHours(0, 0, 0, 0);
-
-  while (current <= end) {
-    const isWeekendDay = isWeekend(current, weekendDays);
-    const isHoliday = isPublicHoliday(current, holidays) !== null;
-
-    // Skip holidays always
-    if (isHoliday) {
-      current.setDate(current.getDate() + 1);
-      continue;
-    }
-
-    // Skip weekends if not including them
-    if (!includeWeekends && isWeekendDay) {
-      current.setDate(current.getDate() + 1);
-      continue;
-    }
-
-    count++;
-    current.setDate(current.getDate() + 1);
-  }
-
-  return count;
+  // Use the base calendar utility with holiday exclusion for full day requests
+  return countWorkingDaysBase(startDate, endDate, {
+    weekendDays,
+    includeWeekends,
+    holidays,
+    excludeHolidays: true,
+  });
 }
 
 /**
@@ -708,18 +611,6 @@ export function calculateAvailableBalance(
  */
 export function getCurrentYear(): number {
   return new Date().getFullYear();
-}
-
-/**
- * Check if two date ranges overlap
- */
-export function datesOverlap(
-  start1: Date,
-  end1: Date,
-  start2: Date,
-  end2: Date
-): boolean {
-  return start1 <= end2 && end1 >= start2;
 }
 
 /**
