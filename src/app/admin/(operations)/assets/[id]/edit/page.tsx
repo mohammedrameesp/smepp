@@ -39,7 +39,8 @@ import { Package, ShoppingCart, MapPin, Info, Wrench, RefreshCw } from 'lucide-r
 import { ICON_SIZES } from '@/lib/constants';
 import { DisposeAssetDialog } from '@/features/assets';
 import { toInputDateString, formatDate } from '@/lib/core/datetime';
-import { updateAssetSchema, type UpdateAssetRequest } from '@/features/assets';
+import { updateAssetSchema, baseAssetSchema } from '@/features/assets';
+import type { z } from 'zod';
 import { AssetStatus } from '@prisma/client';
 import { CategorySelector } from '@/features/assets';
 import { AssetTypeCombobox } from '@/features/assets';
@@ -104,9 +105,9 @@ export default function EditAssetPage() {
     handleSubmit,
     formState: { errors, isSubmitting },
     watch,
-    setValue,
+    setValue: setValueRaw,
     reset,
-  } = useForm<UpdateAssetRequest>({
+  } = useForm<Partial<z.infer<typeof baseAssetSchema>>>({
     resolver: zodResolver(updateAssetSchema),
     defaultValues: {
       assetTag: '',
@@ -134,6 +135,10 @@ export default function EditAssetPage() {
     },
     mode: 'onChange',
   });
+
+  // Type-safe setValue wrapper (zodResolver causes type issues with refinements)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const setValue = setValueRaw as (name: string, value: any, options?: { shouldValidate?: boolean }) => void;
 
   // Watch critical fields
   const watchedType = watch('type');
@@ -308,7 +313,7 @@ export default function EditAssetPage() {
   useEffect(() => {
     if (watchedPrice && watchedCurrency) {
       if (watchedCurrency === 'QAR') {
-        setValue('priceQAR', null);
+        setValue('priceQAR', undefined);
       } else {
         // Convert any other currency to QAR using exchange rate
         const rate = exchangeRates[watchedCurrency] || 1;
@@ -407,7 +412,7 @@ export default function EditAssetPage() {
     }
   };
 
-  const onSubmit = async (data: UpdateAssetRequest) => {
+  const onSubmit = async (data: Record<string, unknown>) => {
     try {
       const response = await fetch(`/api/assets/${params?.id}`, {
         method: 'PUT',

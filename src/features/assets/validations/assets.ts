@@ -53,6 +53,35 @@ import { AssetStatus, Prisma } from '@prisma/client';
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
+ * Base schema for asset creation without refinements.
+ * Used for form type inference to avoid `never` type issues.
+ */
+export const baseCreateAssetSchema = z.object({
+  assetTag: optionalString(),
+  type: z.string().min(1, 'Type is required'),
+  categoryId: optionalStringToNull(),
+  brand: optionalString(),
+  model: z.string().min(1, 'Model is required'),
+  serial: optionalString(),
+  configuration: optionalString(),
+  purchaseDate: optionalString(),
+  warrantyExpiry: optionalString(),
+  supplier: optionalString(),
+  invoiceNumber: optionalString(),
+  price: z.number().positive().optional().nullable(),
+  priceCurrency: optionalString(),
+  priceQAR: z.number().positive().optional().nullable(),
+  status: z.nativeEnum(AssetStatus).default(AssetStatus.IN_USE),
+  assignedMemberId: optionalStringToNull(),
+  assignmentDate: optionalStringToNull(),
+  statusChangeDate: optionalStringToNull(),
+  notes: optionalString(),
+  locationId: optionalStringToNull(),
+  isShared: z.boolean().default(false),
+  depreciationCategoryId: optionalStringToNull(),
+});
+
+/**
  * Schema for creating a new asset.
  *
  * Validates all asset fields with business rules for assignment.
@@ -74,52 +103,7 @@ import { AssetStatus, Prisma } from '@prisma/client';
  *   assignmentDate: "2025-01-15"
  * }
  */
-export const createAssetSchema = z.object({
-  /** Custom asset tag or auto-generated if empty (format: ORG-CAT-YYSEQ) */
-  assetTag: optionalString(),
-  /** Asset type (e.g., "Laptop", "Monitor") - required for categorization */
-  type: z.string().min(1, 'Type is required'),
-  /** Category ID for tag generation and reporting (optional, auto-detected from type) */
-  categoryId: optionalStringToNull(),
-  /** Manufacturer/brand name */
-  brand: optionalString(),
-  /** Model name/number - required for identification */
-  model: z.string().min(1, 'Model is required'),
-  /** Serial number for warranty/tracking */
-  serial: optionalString(),
-  /** Hardware configuration details (RAM, storage, etc.) */
-  configuration: optionalString(),
-  /** Date of purchase (ISO string) */
-  purchaseDate: optionalString(),
-  /** Warranty expiration date (ISO string) */
-  warrantyExpiry: optionalString(),
-  /** Supplier/vendor name */
-  supplier: optionalString(),
-  /** Purchase invoice/PO number */
-  invoiceNumber: optionalString(),
-  /** Purchase price in original currency */
-  price: z.number().positive().optional().nullable(),
-  /** Original price currency code (e.g., "USD", "QAR") */
-  priceCurrency: optionalString(),
-  /** Price converted to QAR (auto-calculated at 3.65 rate for USD) */
-  priceQAR: z.number().positive().optional().nullable(),
-  /** Asset status (default: IN_USE) */
-  status: z.nativeEnum(AssetStatus).default(AssetStatus.IN_USE),
-  /** ID of assigned team member (required for IN_USE unless shared) */
-  assignedMemberId: optionalStringToNull(),
-  /** Date asset was assigned (required for IN_USE unless shared) */
-  assignmentDate: optionalStringToNull(),
-  /** Date of status change (for SPARE, REPAIR, etc.) */
-  statusChangeDate: optionalStringToNull(),
-  /** Additional notes about the asset */
-  notes: optionalString(),
-  /** Location ID (references Location model) */
-  locationId: optionalStringToNull(),
-  /** Whether asset is shared (no specific assignee) */
-  isShared: z.boolean().default(false),
-  /** Depreciation category ID for financial tracking */
-  depreciationCategoryId: optionalStringToNull(),
-}).superRefine((data, ctx) => {
+export const createAssetSchema = baseCreateAssetSchema.superRefine((data, ctx) => {
   // ─────────────────────────────────────────────────────────────────────────────
   // RULE: IN_USE non-shared assets require assignment
   // ─────────────────────────────────────────────────────────────────────────────
@@ -165,8 +149,9 @@ export const createAssetSchema = z.object({
  *
  * Used as foundation for update schema which makes all fields optional.
  * Separating base from refinements allows partial updates.
+ * Exported for form type inference (avoids `never` type from refinements).
  */
-const baseAssetSchema = z.object({
+export const baseAssetSchema = z.object({
   assetTag: optionalString(),
   type: z.string().min(1, 'Type is required'),
   categoryId: optionalStringToNull(),
@@ -307,8 +292,68 @@ export const assetQuerySchema = z.object({
 
 /** Inferred type for asset creation */
 export type CreateAssetRequest = z.infer<typeof createAssetSchema>;
+
 /** Inferred type for asset update */
 export type UpdateAssetRequest = z.infer<typeof updateAssetSchema>;
+
+/**
+ * Form input type for asset creation.
+ * Explicit interface to avoid `never` type issues from Zod refinements.
+ */
+export interface CreateAssetFormData {
+  assetTag?: string | null;
+  type: string;
+  categoryId?: string | null;
+  brand?: string | null;
+  model: string;
+  serial?: string | null;
+  configuration?: string | null;
+  purchaseDate?: string | null;
+  warrantyExpiry?: string | null;
+  supplier?: string | null;
+  invoiceNumber?: string | null;
+  price?: number | null;
+  priceCurrency?: string | null;
+  priceQAR?: number | null;
+  status?: AssetStatus;
+  assignedMemberId?: string | null;
+  assignmentDate?: string | null;
+  statusChangeDate?: string | null;
+  notes?: string | null;
+  locationId?: string | null;
+  isShared?: boolean;
+  depreciationCategoryId?: string | null;
+}
+
+/**
+ * Form input type for asset update.
+ * All fields optional since updates can be partial.
+ */
+export interface UpdateAssetFormData {
+  assetTag?: string | null;
+  type?: string;
+  categoryId?: string | null;
+  brand?: string | null;
+  model?: string;
+  serial?: string | null;
+  configuration?: string | null;
+  purchaseDate?: string | null;
+  warrantyExpiry?: string | null;
+  supplier?: string | null;
+  invoiceNumber?: string | null;
+  price?: number | null;
+  priceCurrency?: string | null;
+  priceQAR?: number | null;
+  status?: AssetStatus;
+  assignedMemberId?: string | null;
+  assignmentDate?: string | null;
+  statusChangeDate?: string | null;
+  notes?: string | null;
+  locationId?: string | null;
+  isShared?: boolean;
+  depreciationCategoryId?: string | null;
+}
+
 /** Inferred type for query parameters */
 export type AssetQuery = z.infer<typeof assetQuerySchema>;
 

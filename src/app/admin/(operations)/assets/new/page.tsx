@@ -36,7 +36,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Package, ShoppingCart, MapPin, Info, RefreshCw } from 'lucide-react';
 import { ICON_SIZES } from '@/lib/constants';
 import { toInputDateString } from '@/lib/core/datetime';
-import { createAssetSchema, type CreateAssetRequest } from '@/features/assets';
+import { createAssetSchema, baseCreateAssetSchema } from '@/features/assets';
+import type { z } from 'zod';
 import { AssetStatus } from '@prisma/client';
 import { CategorySelector } from '@/features/assets';
 import { AssetTypeCombobox } from '@/features/assets';
@@ -77,7 +78,7 @@ export default function NewAssetPage() {
     handleSubmit,
     formState: { errors, isSubmitting },
     watch,
-    setValue,
+    setValue: setValueRaw,
     getValues,
   } = useForm({
     resolver: zodResolver(createAssetSchema),
@@ -106,6 +107,10 @@ export default function NewAssetPage() {
     },
     mode: 'onChange',
   });
+
+  // Type-safe setValue wrapper (zodResolver causes type issues with refinements)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const setValue = setValueRaw as (name: string, value: any, options?: { shouldValidate?: boolean }) => void;
 
   // Watch critical fields for side effects
   const watchedType = watch('type');
@@ -300,7 +305,7 @@ export default function NewAssetPage() {
     }
   }, [watchedStatus, watchedAssignedUserId, watchedIsShared, setValue]);
 
-  const onSubmit = async (data: CreateAssetRequest) => {
+  const onSubmit = async (data: Record<string, unknown>) => {
     try {
       const response = await fetch('/api/assets', {
         method: 'POST',
