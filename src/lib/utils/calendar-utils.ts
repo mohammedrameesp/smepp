@@ -43,16 +43,6 @@ export interface HolidayLike {
 }
 
 /**
- * Full holiday data structure for calendar calculations
- */
-export interface HolidayData extends HolidayLike {
-  /** Unique identifier */
-  id: string;
-  /** Holiday name */
-  name: string;
-}
-
-/**
  * Options for working day calculations
  */
 export interface WorkingDaysOptions {
