@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
-import { updateSpendRequestSchema } from '@/lib/validations/projects/spend-request';
+import { updateSpendRequestSchema } from '@/features/spend-requests/validations';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { calculateSpendRequestItems, CalculatedItem } from '@/features/spend-requests/lib/spend-request-creation';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';

@@ -4,7 +4,7 @@
  * @module tests/unit/lib/validations
  */
 
-import { uploadSchema, signedUrlSchema } from '@/lib/validations/core/upload';
+import { uploadSchema, signedUrlSchema } from '@/lib/validations/upload';
 
 describe('Upload Validation Schemas', () => {
   // ═══════════════════════════════════════════════════════════════════════════

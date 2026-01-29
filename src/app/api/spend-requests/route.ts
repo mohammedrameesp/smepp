@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Prisma, SpendRequestStatus, SpendRequestPriority } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
-import { createSpendRequestSchema } from '@/lib/validations/projects/spend-request';
+import { createSpendRequestSchema } from '@/features/spend-requests/validations';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { generateSpendRequestNumber } from '@/features/spend-requests/lib/spend-request-utils';
 import {

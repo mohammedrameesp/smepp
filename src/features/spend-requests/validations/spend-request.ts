@@ -1,7 +1,7 @@
 /**
  * @file spend-request.ts
  * @description Validation schemas for spend request workflows including items, vendor details, and status updates
- * @module validations/projects
+ * @module features/spend-requests/validations
  */
 
 import { z } from 'zod';

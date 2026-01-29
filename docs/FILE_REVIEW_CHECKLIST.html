@@ -166,11 +166,11 @@
 <body>
   <div class="container">
     <h1>Source Code Review Checklist</h1>
-    <p>Generated: 2026-01-28 | Total Files: <strong>922</strong> (Updated: removed help system)</p>
+    <p>Generated: 2026-01-29 | Total Files: <strong>919</strong> (Updated: validation files reorganized)</p>
 
     <div class="stats">
       <div class="stat">
-        <div class="stat-value" id="totalFiles">922</div>
+        <div class="stat-value" id="totalFiles">919</div>
         <div class="stat-label">Total Files</div>
       </div>
       <div class="stat">
@@ -198,7 +198,7 @@
       </div>
       <div class="progress-bar">
         <div class="progress-fill" id="progressFill" style="width: 0%"></div>
-        <span class="progress-text" id="progressText">0 / 922 files reviewed</span>
+        <span class="progress-text" id="progressText">0 / 919 files reviewed</span>
       </div>
     </div>
 
@@ -781,6 +781,8 @@
       "src/features/spend-requests/lib/index.ts",
       "src/features/spend-requests/lib/spend-request-creation.ts",
       "src/features/spend-requests/lib/spend-request-utils.ts",
+      "src/features/spend-requests/validations/index.ts",
+      "src/features/spend-requests/validations/spend-request.ts",
       // features - subscriptions
       "src/features/subscriptions/components/cards/cost-breakdown.tsx",
       "src/features/subscriptions/components/cards/history-timeline.tsx",
@@ -948,15 +950,11 @@
       "src/lib/utils/service-account-detection.ts",
       "src/lib/utils/user-display.ts",
       "src/lib/utils/whatsapp-verification-check.ts",
-      // lib - validations
-      "src/lib/validations/core/index.ts",
-      "src/lib/validations/core/upload.ts",
-      "src/lib/validations/core/users.ts",
+      // lib - validations (shared utilities only)
       "src/lib/validations/field-schemas.ts",
       "src/lib/validations/pagination-schema.ts",
       "src/lib/validations/patterns.ts",
-      "src/lib/validations/projects/index.ts",
-      "src/lib/validations/projects/spend-request.ts",
+      "src/lib/validations/upload.ts",
       "src/lib/validations/workflow-schemas.ts",
       // lib - whatsapp
       "src/lib/whatsapp/action-tokens.ts",
@@ -1367,6 +1365,25 @@
       "src/lib/qnas/client.ts": { checked: true, status: "keep" },
       "src/lib/qnas/index.ts": { checked: true, status: "keep" },
       "src/lib/qnas/types.ts": { checked: true, status: "keep" },
+      // lib - utils (reviewed 2026-01-28)
+      "src/lib/utils/calendar-utils.ts": { checked: true, status: "keep" },
+      "src/lib/utils/code-prefix.ts": { checked: true, status: "keep" },
+      "src/lib/utils/json-utils.ts": { checked: true, status: "keep" },
+      "src/lib/utils/math-utils.ts": { checked: true, status: "keep" },
+      "src/lib/utils/service-account-detection.ts": { checked: true, status: "keep" },
+      "src/lib/utils/user-display.ts": { checked: true, status: "keep" },
+      "src/lib/utils/whatsapp-verification-check.ts": { checked: true, status: "keep" },
+      // lib - validations (reviewed 2026-01-29, shared utilities only)
+      "src/lib/validations/field-schemas.ts": { checked: true, status: "keep" },
+      "src/lib/validations/pagination-schema.ts": { checked: true, status: "keep" },
+      "src/lib/validations/patterns.ts": { checked: true, status: "keep" },
+      "src/lib/validations/upload.ts": { checked: true, status: "keep" },
+      "src/lib/validations/workflow-schemas.ts": { checked: true, status: "keep" },
+      // feature validations (reviewed 2026-01-29)
+      "src/features/spend-requests/validations/index.ts": { checked: true, status: "keep" },
+      "src/features/spend-requests/validations/spend-request.ts": { checked: true, status: "keep" },
+      "src/features/suppliers/validations/suppliers.ts": { checked: true, status: "keep" },
+      "src/features/leave/validations/leave.ts": { checked: true, status: "keep" },
     };
 
     // Initialize
