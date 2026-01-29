@@ -1,8 +1,21 @@
 /**
- * WhatsApp Business API Integration Types
+ * @file types.ts
+ * @description WhatsApp Business API Integration Types
+ * @module lib/whatsapp
  *
  * Types for Meta Cloud API integration, message templates,
  * and approval workflow notifications.
+ *
+ * @example
+ * ```typescript
+ * import type {
+ *   WhatsAppConfigData,
+ *   ApprovalNotificationData,
+ *   SendNotificationResult,
+ * } from '@/lib/whatsapp';
+ *
+ * const result: SendNotificationResult = await sendApprovalNotification(data);
+ * ```
  */
 
 import { ApprovalModule } from '@prisma/client';
@@ -11,37 +24,68 @@ import { ApprovalModule } from '@prisma/client';
 // CONFIGURATION TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/**
+ * Input for creating/updating WhatsApp configuration.
+ * @security Access token will be encrypted before storage.
+ */
 export interface WhatsAppConfigInput {
+  /** Meta Cloud API phone number ID */
   phoneNumberId: string;
+  /** Meta Business Account ID */
   businessAccountId: string;
-  accessToken: string; // Will be encrypted before storage
+  /** Meta access token - will be encrypted before storage */
+  accessToken: string;
 }
 
+/**
+ * Decrypted WhatsApp configuration for use in API calls.
+ * @security Contains decrypted access token - do not log or expose.
+ */
 export interface WhatsAppConfigData {
+  /** Meta Cloud API phone number ID */
   phoneNumberId: string;
+  /** Meta Business Account ID */
   businessAccountId: string;
-  accessToken: string; // Decrypted for use
+  /** Decrypted access token for API authentication */
+  accessToken: string;
+  /** Token for webhook verification */
   webhookVerifyToken: string;
+  /** Whether this configuration is active */
   isActive: boolean;
 }
 
+/**
+ * Input for platform-wide WhatsApp configuration (super admin).
+ */
 export interface PlatformWhatsAppConfigInput {
   phoneNumberId: string;
   businessAccountId: string;
   accessToken: string;
+  /** Phone number for display purposes (e.g., +974 XXXX XXXX) */
   displayPhoneNumber?: string;
+  /** Business name associated with this WhatsApp account */
   businessName?: string;
 }
 
+/**
+ * Platform WhatsApp configuration with display metadata.
+ */
 export interface PlatformWhatsAppConfigData extends WhatsAppConfigData {
   displayPhoneNumber?: string;
   businessName?: string;
 }
 
+/** WhatsApp source type for tenant configuration */
 export type WhatsAppSourceType = 'NONE' | 'PLATFORM' | 'CUSTOM';
 
+/**
+ * Resolved effective WhatsApp configuration for a tenant.
+ * Indicates whether platform or custom config is being used.
+ */
 export interface EffectiveWhatsAppConfig {
+  /** The resolved configuration */
   config: WhatsAppConfigData;
+  /** Source of the configuration */
   source: 'PLATFORM' | 'CUSTOM';
 }
 
@@ -49,22 +93,39 @@ export interface EffectiveWhatsAppConfig {
 // MESSAGE TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/**
+ * WhatsApp template message structure for Meta API.
+ */
 export interface WhatsAppTemplateMessage {
-  to: string; // Phone number in E.164 format
+  /** Recipient phone number in E.164 format (e.g., +97455123456) */
+  to: string;
+  /** Template name as registered in Meta Business Manager */
   templateName: string;
+  /** Language code (e.g., 'en', 'ar') */
   languageCode: string;
+  /** Template components (header, body, buttons) */
   components: WhatsAppTemplateComponent[];
 }
 
+/**
+ * Template component structure.
+ */
 export interface WhatsAppTemplateComponent {
+  /** Component type */
   type: 'header' | 'body' | 'button';
+  /** Parameters to fill template placeholders */
   parameters?: WhatsAppParameter[];
+  /** Button subtype (for button components) */
   sub_type?: 'quick_reply';
+  /** Button index (0-based) */
   index?: number;
-  // For button components
+  /** Button payload for quick_reply buttons */
   payload?: string;
 }
 
+/**
+ * Template parameter types.
+ */
 export interface WhatsAppParameter {
   type: 'text' | 'currency' | 'date_time' | 'image' | 'document' | 'video' | 'payload';
   text?: string;
@@ -79,9 +140,14 @@ export interface WhatsAppParameter {
   };
 }
 
+/**
+ * Quick reply button structure.
+ */
 export interface WhatsAppButton {
   type: 'quick_reply';
-  payload: string; // Action token
+  /** Action token for the button callback */
+  payload: string;
+  /** Button display text */
   text: string;
 }
 
@@ -89,6 +155,9 @@ export interface WhatsAppButton {
 // META API RESPONSE TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/**
+ * Response from Meta's send message API.
+ */
 export interface MetaSendMessageResponse {
   messaging_product: 'whatsapp';
   contacts: Array<{
@@ -100,16 +169,25 @@ export interface MetaSendMessageResponse {
   }>;
 }
 
+/**
+ * Webhook payload from Meta.
+ */
 export interface MetaWebhookPayload {
   object: 'whatsapp_business_account';
   entry: MetaWebhookEntry[];
 }
 
+/**
+ * Webhook entry containing changes.
+ */
 export interface MetaWebhookEntry {
   id: string;
   changes: MetaWebhookChange[];
 }
 
+/**
+ * Webhook change with message or status updates.
+ */
 export interface MetaWebhookChange {
   value: {
     messaging_product: 'whatsapp';
@@ -127,18 +205,29 @@ export interface MetaWebhookChange {
   field: 'messages';
 }
 
+/**
+ * Incoming WhatsApp message from webhook.
+ */
 export interface MetaWebhookMessage {
+  /** Sender's phone number */
   from: string;
+  /** Message ID */
   id: string;
+  /** Unix timestamp */
   timestamp: string;
+  /** Message type */
   type: 'text' | 'button' | 'interactive';
+  /** Text message content */
   text?: {
     body: string;
   };
+  /** Button callback (for quick_reply buttons) */
   button?: {
-    payload: string; // The action token
+    /** The action token from button payload */
+    payload: string;
     text: string;
   };
+  /** Interactive message response */
   interactive?: {
     type: 'button_reply';
     button_reply: {
@@ -148,17 +237,26 @@ export interface MetaWebhookMessage {
   };
 }
 
+/**
+ * Message status update from webhook.
+ */
 export interface MetaWebhookStatus {
+  /** Message ID */
   id: string;
+  /** Delivery status */
   status: 'sent' | 'delivered' | 'read' | 'failed';
+  /** Unix timestamp */
   timestamp: string;
+  /** Recipient phone number */
   recipient_id: string;
+  /** Conversation metadata */
   conversation?: {
     id: string;
     origin: {
       type: string;
     };
   };
+  /** Error details if failed */
   errors?: Array<{
     code: number;
     title: string;
@@ -173,18 +271,29 @@ export interface MetaWebhookStatus {
 // ACTION TOKEN TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/**
+ * Payload stored in action token for approve/reject actions.
+ * @security Token payload is stored in database, not embedded in token string.
+ */
 export interface ActionTokenPayload {
   tenantId: string;
   entityType: ApprovalModule;
   entityId: string;
   action: 'approve' | 'reject';
   approverId: string;
-  expiresAt: number; // Unix timestamp
+  /** Token expiration as Unix timestamp (milliseconds) */
+  expiresAt: number;
 }
 
+/**
+ * Result of token validation.
+ */
 export interface ActionTokenValidationResult {
+  /** Whether the token is valid */
   valid: boolean;
+  /** Token payload if valid */
   payload?: ActionTokenPayload;
+  /** Error message if invalid */
   error?: string;
 }
 
@@ -192,8 +301,12 @@ export interface ActionTokenValidationResult {
 // NOTIFICATION TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Entity types that support WhatsApp approval notifications */
 export type ApprovalEntityType = 'LEAVE_REQUEST' | 'SPEND_REQUEST' | 'ASSET_REQUEST';
 
+/**
+ * Data required to send an approval notification.
+ */
 export interface ApprovalNotificationData {
   tenantId: string;
   approverId: string;
@@ -202,34 +315,52 @@ export interface ApprovalNotificationData {
   details: ApprovalDetails;
 }
 
+/**
+ * Approval request details for template population.
+ * Different fields are used depending on the entity type.
+ */
 export interface ApprovalDetails {
+  /** Name of the person making the request */
   requesterName: string;
+
   // Leave request specific
   leaveType?: string;
   startDate?: Date;
   endDate?: Date;
   totalDays?: number;
   reason?: string;
-  // Purchase request specific
+
+  // Spend request specific
   title?: string;
   totalAmount?: number;
+  /** Currency code (defaults to QAR for Qatar) */
   currency?: string;
+
   // Asset request specific
   assetName?: string;
   assetType?: string;
   justification?: string;
 }
 
+/**
+ * Result of sending a notification.
+ */
 export interface SendNotificationResult {
   success: boolean;
+  /** Meta message ID if successful */
   messageId?: string;
+  /** Error message if failed */
   error?: string;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// TEMPLATE NAMES (must match approved templates in Meta)
+// TEMPLATE NAMES
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/**
+ * WhatsApp template names registered in Meta Business Manager.
+ * @remarks These must match the approved templates in your Meta account.
+ */
 export const WHATSAPP_TEMPLATES = {
   LEAVE_APPROVAL: 'leave_approval_request',
   PURCHASE_APPROVAL: 'purchase_approval_request',
@@ -237,4 +368,36 @@ export const WHATSAPP_TEMPLATES = {
   ACTION_CONFIRMATION: 'approval_action_confirmed',
 } as const;
 
-export type WhatsAppTemplateName = typeof WHATSAPP_TEMPLATES[keyof typeof WHATSAPP_TEMPLATES];
+/** Type for template name values */
+export type WhatsAppTemplateName = (typeof WHATSAPP_TEMPLATES)[keyof typeof WHATSAPP_TEMPLATES];
+
+/*
+ * ========== CODE REVIEW SUMMARY ==========
+ * File: types.ts
+ * Reviewed: 2026-01-29
+ *
+ * CHANGES MADE:
+ * - Added @file, @description, @module JSDoc tags
+ * - Added @example in file header
+ * - Added JSDoc comments to all interfaces with field descriptions
+ * - Added @security warnings for sensitive data types
+ * - Added @remarks for template configuration dependency
+ * - Fixed currency comment for Qatar default
+ *
+ * SECURITY NOTES:
+ * - WhatsAppConfigData contains decrypted access token - documented with @security
+ * - ActionTokenPayload stores sensitive data - documented
+ *
+ * REMAINING CONCERNS:
+ * - None
+ *
+ * REQUIRED TESTS:
+ * - [ ] Type inference tests (compile-time only)
+ * - [ ] WHATSAPP_TEMPLATES values match Meta registration
+ *
+ * DEPENDENCIES:
+ * - Imports from: @prisma/client (ApprovalModule)
+ * - Used by: All other whatsapp module files
+ *
+ * PRODUCTION READY: YES
+ */
