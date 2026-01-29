@@ -5,15 +5,15 @@
 
 describe('WhatsApp Approval Integration Tests', () => {
   describe('ApprovalModule to EntityType Conversion', () => {
-    type ApprovalModule = 'LEAVE_REQUEST' | 'PURCHASE_REQUEST' | 'ASSET_REQUEST';
-    type ApprovalEntityType = 'LEAVE_REQUEST' | 'PURCHASE_REQUEST' | 'ASSET_REQUEST';
+    type ApprovalModule = 'LEAVE_REQUEST' | 'SPEND_REQUEST' | 'ASSET_REQUEST';
+    type ApprovalEntityType = 'LEAVE_REQUEST' | 'SPEND_REQUEST' | 'ASSET_REQUEST';
 
     const toEntityType = (module: ApprovalModule): ApprovalEntityType => {
       switch (module) {
         case 'LEAVE_REQUEST':
           return 'LEAVE_REQUEST';
-        case 'PURCHASE_REQUEST':
-          return 'PURCHASE_REQUEST';
+        case 'SPEND_REQUEST':
+          return 'SPEND_REQUEST';
         case 'ASSET_REQUEST':
           return 'ASSET_REQUEST';
         default:
@@ -25,8 +25,8 @@ describe('WhatsApp Approval Integration Tests', () => {
       expect(toEntityType('LEAVE_REQUEST')).toBe('LEAVE_REQUEST');
     });
 
-    it('should map PURCHASE_REQUEST correctly', () => {
-      expect(toEntityType('PURCHASE_REQUEST')).toBe('PURCHASE_REQUEST');
+    it('should map SPEND_REQUEST correctly', () => {
+      expect(toEntityType('SPEND_REQUEST')).toBe('SPEND_REQUEST');
     });
 
     it('should map ASSET_REQUEST correctly', () => {

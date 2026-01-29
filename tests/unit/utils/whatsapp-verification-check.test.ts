@@ -37,10 +37,11 @@ describe('WhatsApp Verification Check', () => {
     const tenantId = 'tenant-123';
     const memberId = 'member-456';
 
+    // Default mock uses PLATFORM source (no custom config needed)
     const mockOrg = (overrides = {}) => ({
       whatsAppSource: 'PLATFORM',
       whatsAppPlatformEnabled: true,
-      whatsAppConfig: { isActive: true },
+      whatsAppConfig: null, // PLATFORM source doesn't use tenant config
       ...overrides,
     });
 
@@ -66,9 +67,9 @@ describe('WhatsApp Verification Check', () => {
         expect(result.isWhatsAppEnabled).toBe(false);
       });
 
-      it('should return needsVerification: false when config is not active', async () => {
+      it('should return needsVerification: false when PLATFORM not enabled for tenant', async () => {
         (mockPrisma.organization.findUnique as jest.Mock).mockResolvedValue(
-          mockOrg({ whatsAppConfig: { isActive: false } })
+          mockOrg({ whatsAppSource: 'PLATFORM', whatsAppPlatformEnabled: false })
         );
         (mockPrisma.teamMember.findUnique as jest.Mock).mockResolvedValue(mockMember());
 
@@ -78,9 +79,13 @@ describe('WhatsApp Verification Check', () => {
         expect(result.isWhatsAppEnabled).toBe(false);
       });
 
-      it('should return needsVerification: false when whatsAppConfig is null', async () => {
+      it('should return needsVerification: false when CUSTOM source but config not active', async () => {
         (mockPrisma.organization.findUnique as jest.Mock).mockResolvedValue(
-          mockOrg({ whatsAppConfig: null })
+          mockOrg({
+            whatsAppSource: 'CUSTOM',
+            whatsAppPlatformEnabled: false,
+            whatsAppConfig: { isActive: false },
+          })
         );
         (mockPrisma.teamMember.findUnique as jest.Mock).mockResolvedValue(mockMember());
 
@@ -88,6 +93,56 @@ describe('WhatsApp Verification Check', () => {
 
         expect(result.needsVerification).toBe(false);
         expect(result.isWhatsAppEnabled).toBe(false);
+      });
+
+      it('should return needsVerification: false when CUSTOM source but no config', async () => {
+        (mockPrisma.organization.findUnique as jest.Mock).mockResolvedValue(
+          mockOrg({
+            whatsAppSource: 'CUSTOM',
+            whatsAppPlatformEnabled: false,
+            whatsAppConfig: null,
+          })
+        );
+        (mockPrisma.teamMember.findUnique as jest.Mock).mockResolvedValue(mockMember());
+
+        const result = await checkWhatsAppVerificationNeeded(tenantId, memberId);
+
+        expect(result.needsVerification).toBe(false);
+        expect(result.isWhatsAppEnabled).toBe(false);
+      });
+    });
+
+    describe('when WhatsApp enabled via different sources', () => {
+      it('should return isWhatsAppEnabled: true for PLATFORM source with platformEnabled', async () => {
+        (mockPrisma.organization.findUnique as jest.Mock).mockResolvedValue(
+          mockOrg({
+            whatsAppSource: 'PLATFORM',
+            whatsAppPlatformEnabled: true,
+            whatsAppConfig: null, // No custom config needed for PLATFORM
+          })
+        );
+        (mockPrisma.teamMember.findUnique as jest.Mock).mockResolvedValue(mockMember());
+
+        const result = await checkWhatsAppVerificationNeeded(tenantId, memberId);
+
+        expect(result.isWhatsAppEnabled).toBe(true);
+        expect(result.needsVerification).toBe(true);
+      });
+
+      it('should return isWhatsAppEnabled: true for CUSTOM source with active config', async () => {
+        (mockPrisma.organization.findUnique as jest.Mock).mockResolvedValue(
+          mockOrg({
+            whatsAppSource: 'CUSTOM',
+            whatsAppPlatformEnabled: false,
+            whatsAppConfig: { isActive: true },
+          })
+        );
+        (mockPrisma.teamMember.findUnique as jest.Mock).mockResolvedValue(mockMember());
+
+        const result = await checkWhatsAppVerificationNeeded(tenantId, memberId);
+
+        expect(result.isWhatsAppEnabled).toBe(true);
+        expect(result.needsVerification).toBe(true);
       });
     });
 

@@ -81,5 +81,5 @@ export {
 // Approval Integration (use in API routes)
 export {
   notifyApproversViaWhatsApp,
-  invalidateWhatsAppTokens,
+  notifyNextLevelApproversViaWhatsApp,
 } from './approval-integration';

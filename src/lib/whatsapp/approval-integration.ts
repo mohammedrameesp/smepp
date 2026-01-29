@@ -15,7 +15,6 @@ import {
   canSendWhatsAppNotification,
 } from './send-notification';
 import logger from '@/lib/core/log';
-import { invalidateTokensForEntity } from './action-tokens';
 import type { ApprovalEntityType, ApprovalDetails } from './types';
 
 /**
@@ -335,23 +334,6 @@ export async function notifyNextLevelApproversViaWhatsApp(
   } catch (error) {
     // Log but don't throw - WhatsApp notifications are non-critical
     logger.error({ ...logContext, error: error instanceof Error ? error.message : 'Unknown error' }, 'WhatsApp Integration: Error in notifyNextLevelApproversViaWhatsApp');
-  }
-}
-
-/**
- * Invalidate WhatsApp action tokens when a request is processed through web UI.
- *
- * Call this when a request is approved/rejected through the web interface
- * to prevent the WhatsApp buttons from still working.
- */
-export async function invalidateWhatsAppTokens(
-  entityType: ApprovalModule,
-  entityId: string
-): Promise<void> {
-  try {
-    await invalidateTokensForEntity(toEntityType(entityType), entityId);
-  } catch (error) {
-    console.error('WhatsApp: Error invalidating tokens:', error);
   }
 }
 

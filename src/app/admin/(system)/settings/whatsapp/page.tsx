@@ -17,7 +17,7 @@ interface UserPhone {
   id: string;
   phoneNumber: string;
   isVerified: boolean;
-  user: {
+  member: {
     id: string;
     name: string;
     email: string;
@@ -83,12 +83,12 @@ export default function WhatsAppSettingsPage() {
     }
   };
 
-  const handleVerifyPhone = async (userId: string) => {
+  const handleVerifyPhone = async (memberId: string) => {
     try {
       const res = await fetch('/api/whatsapp/phones', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId }),
+        body: JSON.stringify({ memberId }),
       });
 
       if (res.ok) {
@@ -253,7 +253,7 @@ export default function WhatsAppSettingsPage() {
                         <Phone className={`${ICON_SIZES.sm} text-muted-foreground`} />
                       </div>
                       <div>
-                        <p className="font-medium">{phone.user.name}</p>
+                        <p className="font-medium">{phone.member.name}</p>
                         <p className="text-sm text-muted-foreground">{phone.phoneNumber}</p>
                       </div>
                     </div>
@@ -271,7 +271,7 @@ export default function WhatsAppSettingsPage() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => handleVerifyPhone(phone.user.id)}
+                            onClick={() => handleVerifyPhone(phone.member.id)}
                           >
                             Verify
                           </Button>

@@ -123,9 +123,11 @@ export async function checkWhatsAppVerificationNeeded(
   }
 
   // Check if WhatsApp is enabled for the organization
+  // PLATFORM source uses platform config (no tenant whatsAppConfig)
+  // CUSTOM source requires tenant's own whatsAppConfig to be active
   const isWhatsAppEnabled =
-    org.whatsAppSource !== 'NONE' &&
-    (org.whatsAppConfig?.isActive ?? false);
+    (org.whatsAppSource === 'PLATFORM' && org.whatsAppPlatformEnabled) ||
+    (org.whatsAppSource === 'CUSTOM' && (org.whatsAppConfig?.isActive ?? false));
 
   // Check if user is eligible (admin or can approve requests)
   const isEligible = member.isAdmin || member.canApprove;
