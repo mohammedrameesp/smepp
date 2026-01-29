@@ -73,7 +73,7 @@ export const uploadSchema = z.object({
    * Determines the storage path and access permissions.
    */
   entityType: z.enum(UPLOAD_ENTITY_TYPES, {
-    errorMap: () => ({ message: `Entity type must be one of: ${UPLOAD_ENTITY_TYPES.join(', ')}` }),
+    message: `Entity type must be one of: ${UPLOAD_ENTITY_TYPES.join(', ')}`,
   }),
 
   /**

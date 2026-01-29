@@ -138,19 +138,17 @@ const searchablePaginationSchema = basePaginationSchema.extend({
 export function createQuerySchema<T extends z.ZodRawShape>(
   fields: T,
   sortOptions?: string[]
-): z.ZodObject<
-  typeof searchablePaginationSchema.shape & T & { sort?: z.ZodOptional<z.ZodEnum<[string, ...string[]]>> }
-> {
+) {
   const baseSchema = searchablePaginationSchema.extend(fields);
 
   // If sort options provided, create an enum validator for the sort field
   if (sortOptions && sortOptions.length > 0) {
     return baseSchema.extend({
       sort: z.enum(sortOptions as [string, ...string[]]).optional(),
-    }) as z.ZodObject<typeof searchablePaginationSchema.shape & T & { sort: z.ZodOptional<z.ZodEnum<[string, ...string[]]>> }>;
+    });
   }
 
-  return baseSchema as z.ZodObject<typeof searchablePaginationSchema.shape & T>;
+  return baseSchema;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

@@ -43,7 +43,7 @@ import { z } from 'zod';
 export function optionalString(): z.ZodUnion<
   [z.ZodOptional<z.ZodNullable<z.ZodString>>, z.ZodLiteral<''>]
 > {
-  return z.string().optional().nullable().or(z.literal(''));
+  return z.string().nullable().optional().or(z.literal(''));
 }
 
 /**
@@ -62,15 +62,11 @@ export function optionalString(): z.ZodUnion<
  * schema.parse({ middleName: null });    // { middleName: null }
  * ```
  */
-export function optionalStringToNull(): z.ZodEffects<
-  z.ZodUnion<[z.ZodOptional<z.ZodNullable<z.ZodString>>, z.ZodLiteral<''>]>,
-  string | null | undefined,
-  string | null | undefined
-> {
+export function optionalStringToNull() {
   return z
     .string()
-    .optional()
     .nullable()
+    .optional()
     .or(z.literal(''))
     .transform((val) => (val === '' ? null : val));
 }
@@ -117,18 +113,12 @@ export function requiredString(message?: string): z.ZodString {
  * schema.parse({ contactEmail: 'invalid' });          // Throws: Invalid email address
  * ```
  */
-export function optionalEmail(): z.ZodEffects<
-  z.ZodUnion<
-    [z.ZodOptional<z.ZodNullable<z.ZodString>>, z.ZodLiteral<''>]
-  >,
-  string | null | undefined,
-  string | null | undefined
-> {
+export function optionalEmail() {
   return z
     .string()
     .email('Invalid email address')
-    .optional()
     .nullable()
+    .optional()
     .or(z.literal(''))
     .transform((val) => (val === '' ? null : val));
 }
