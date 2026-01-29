@@ -11,6 +11,7 @@ import { logAction, ActivityActions } from '@/lib/core/activity';
 import {
   calculateWorkingDays,
   canEditLeaveRequest,
+  DEFAULT_WEEKEND_DAYS,
 } from '@/features/leave/lib/leave-utils';
 import { validateNoOverlap } from '@/features/leave/lib/leave-request-validation';
 import { cleanupStorageFile } from '@/lib/storage/cleanup';
@@ -257,7 +258,7 @@ async function updateLeaveRequestHandler(request: NextRequest, context: APIConte
       where: { id: tenantId },
       select: { weekendDays: true },
     });
-    const weekendDays = organization?.weekendDays ?? [5, 6]; // Default to Friday-Saturday
+    const weekendDays = organization?.weekendDays ?? [...DEFAULT_WEEKEND_DAYS]; // Default to Friday-Saturday (GCC)
 
     // Check for overlapping requests (excluding current request) within tenant
     const overlappingRequests = await db.leaveRequest.findMany({

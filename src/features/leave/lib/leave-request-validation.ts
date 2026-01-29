@@ -25,6 +25,8 @@ import {
   calculateAvailableBalance,
   meetsServiceRequirement,
   formatServiceDuration,
+  DEFAULT_WEEKEND_DAYS,
+  datesOverlap,
 } from '@/features/leave/lib/leave-utils';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -180,7 +182,7 @@ export function validateLeaveRequestDates(params: LeaveRequestDateParams): {
     isAdmin,
     adminOverrideNotice,
     bypassNoticeRequirement,
-    weekendDays = [5, 6], // Default to Friday-Saturday
+    weekendDays = [...DEFAULT_WEEKEND_DAYS], // Default to Friday-Saturday (GCC)
   } = params;
 
   // Calculate days - Accrual-based leave (Annual Leave) includes weekends
@@ -225,9 +227,7 @@ export function validateNoOverlap(
   existingRequests: Array<{ startDate: Date; endDate: Date }>
 ): ValidationResult {
   const hasOverlap = existingRequests.some(req => {
-    const reqStart = new Date(req.startDate);
-    const reqEnd = new Date(req.endDate);
-    return startDate <= reqEnd && endDate >= reqStart;
+    return datesOverlap(startDate, endDate, new Date(req.startDate), new Date(req.endDate));
   });
 
   if (hasOverlap) {

@@ -11,6 +11,7 @@ import { formatDate, formatDayMonth } from '@/lib/core/datetime';
 import { getStatusColor } from '@/lib/constants';
 import {
   DEFAULT_WEEKEND_DAYS,
+  normalizeDate,
   isWeekend,
   isHoliday,
   countCalendarDays,
@@ -46,12 +47,8 @@ export interface SickLeavePayBreakdown {
  * @returns Number of complete months of service
  */
 export function calculateServiceMonths(joinDate: Date, referenceDate: Date = new Date()): number {
-  const join = new Date(joinDate);
-  const ref = new Date(referenceDate);
-
-  // Reset time components for accurate date comparison
-  join.setHours(0, 0, 0, 0);
-  ref.setHours(0, 0, 0, 0);
+  const join = normalizeDate(joinDate);
+  const ref = normalizeDate(referenceDate);
 
   if (ref < join) return 0;
 
@@ -274,11 +271,8 @@ export function getMonthsWorkedInYear(
 ): number {
   if (!dateOfJoining) return 0;
 
-  const joinDate = new Date(dateOfJoining);
-  joinDate.setHours(0, 0, 0, 0);
-
-  const refDate = new Date(referenceDate);
-  refDate.setHours(0, 0, 0, 0);
+  const joinDate = normalizeDate(dateOfJoining);
+  const refDate = normalizeDate(referenceDate);
 
   // If join date is in the future, no months worked
   if (joinDate > refDate) return 0;
@@ -416,7 +410,7 @@ export function shouldAutoInitializeBalance(
 }
 
 // Re-export commonly used calendar utilities for backward compatibility
-export { DEFAULT_WEEKEND_DAYS, isWeekend, datesOverlap } from '@/lib/utils/calendar-utils';
+export { DEFAULT_WEEKEND_DAYS, normalizeDate, isWeekend, datesOverlap } from '@/lib/utils/calendar-utils';
 
 /**
  * Calculate calendar days between two dates (includes weekends)
@@ -680,11 +674,8 @@ export function canCancelLeaveRequest(status: LeaveStatus, startDate: Date): boo
     return false;
   }
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const start = new Date(startDate);
-  start.setHours(0, 0, 0, 0);
+  const today = normalizeDate(new Date());
+  const start = normalizeDate(startDate);
 
   return start > today;
 }
@@ -698,11 +689,8 @@ export function canEditLeaveRequest(status: LeaveStatus, startDate: Date): boole
     return false;
   }
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const start = new Date(startDate);
-  start.setHours(0, 0, 0, 0);
+  const today = normalizeDate(new Date());
+  const start = normalizeDate(startDate);
 
   return start > today;
 }
@@ -756,11 +744,8 @@ export function getRequestTypeText(requestType: LeaveRequestType): string {
 export function meetsNoticeDaysRequirement(startDate: Date, minNoticeDays: number): boolean {
   if (minNoticeDays === 0) return true;
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const start = new Date(startDate);
-  start.setHours(0, 0, 0, 0);
+  const today = normalizeDate(new Date());
+  const start = normalizeDate(startDate);
 
   const diffTime = start.getTime() - today.getTime();
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));

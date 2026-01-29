@@ -19,6 +19,7 @@ import {
   ServiceBasedEntitlement,
   getAnnualLeaveDetails,
   calculateAvailableBalance,
+  DEFAULT_WEEKEND_DAYS,
 } from '@/features/leave/lib/leave-utils';
 import {
   validateLeaveTypeEligibility,
@@ -328,7 +329,7 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
       where: { id: tenantId },
       select: { weekendDays: true },
     });
-    const weekendDays = organization?.weekendDays ?? [5, 6]; // Default to Friday-Saturday
+    const weekendDays = organization?.weekendDays ?? [...DEFAULT_WEEKEND_DAYS]; // Default to Friday-Saturday (GCC)
 
     // Check if member has existing balance for admin-assigned leave types
     const existingBalance = await db.leaveBalance.findFirst({
