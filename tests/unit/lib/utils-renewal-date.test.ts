@@ -13,13 +13,15 @@ describe('Renewal Date Utilities', () => {
     });
 
     it('should calculate next monthly renewal for past date', () => {
+      // Use a date that exists in all months (1-28) to avoid edge cases
       const pastDate = new Date();
       pastDate.setMonth(pastDate.getMonth() - 2); // 2 months ago
+      pastDate.setDate(15); // Use 15th to avoid month-length edge cases
 
       const nextRenewal = getNextRenewalDate(pastDate, BillingCycle.MONTHLY);
       expect(nextRenewal).toBeDefined();
       expect(nextRenewal!.getTime()).toBeGreaterThan(new Date().getTime());
-      expect(nextRenewal?.getDate()).toBe(pastDate.getDate());
+      expect(nextRenewal?.getDate()).toBe(15);
     });
 
     it('should calculate next yearly renewal for past date', () => {

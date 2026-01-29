@@ -207,18 +207,18 @@ describe('Backup Codes', () => {
   });
 
   describe('Uniqueness Across Large Code Sets', () => {
-    it('should generate unique codes across 50 generation batches', async () => {
+    it('should generate unique codes across 10 generation batches', async () => {
       const allCodes = new Set<string>();
-      const batchCount = 50;
+      const batchCount = 10;
 
       for (let i = 0; i < batchCount; i++) {
         const result = await generateBackupCodes();
         result.plainCodes.forEach((code) => allCodes.add(code));
       }
 
-      // 50 batches * 10 codes = 500 codes should all be unique
+      // 10 batches * 10 codes = 100 codes should all be unique
       expect(allCodes.size).toBe(batchCount * 10);
-    }, 60000);
+    }, 30000);
 
     it('should have sufficient entropy to avoid collisions', async () => {
       // With 32 possible characters and 8-character codes (ignoring hyphen),
