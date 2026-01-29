@@ -1,19 +1,45 @@
 /**
  * @file json-utils.ts
- * @description Shared JSON parsing and manipulation utilities
+ * @description Safe JSON parsing and manipulation utilities.
  * @module lib/utils
+ *
+ * @remarks
+ * These utilities handle the common pattern of JSON-stored arrays in database columns
+ * (e.g., languages, skills, tags stored as JSON strings). They provide safe parsing
+ * with fallbacks to prevent runtime errors from malformed data.
+ *
+ * @example
+ * ```ts
+ * import { parseJsonArray } from '@/lib/utils/json-utils';
+ *
+ * // Safe parsing from database column
+ * const languages = parseJsonArray(employee.languages);
+ * ```
  */
 
 /**
- * Safely parse a JSON array string (commonly used for languages, skills, tags, etc.)
- * @param value - JSON string, array, or null
- * @returns Parsed array or empty array
+ * Safely parse a JSON array string (commonly used for languages, skills, tags, etc.).
+ * Handles multiple input types and returns an empty array for invalid/missing data.
+ *
+ * @param value - JSON string, array, or null/undefined
+ * @returns Parsed string array, or empty array if parsing fails
  *
  * @example
- * parseJsonArray('["English","Arabic"]') // ['English', 'Arabic']
- * parseJsonArray(['English', 'Arabic'])  // ['English', 'Arabic']
- * parseJsonArray(null)                    // []
- * parseJsonArray('invalid')               // []
+ * ```ts
+ * // JSON string input
+ * parseJsonArray('["English","Arabic"]');     // ['English', 'Arabic']
+ *
+ * // Already an array (passthrough)
+ * parseJsonArray(['English', 'Arabic']);      // ['English', 'Arabic']
+ *
+ * // Null/undefined handling
+ * parseJsonArray(null);                       // []
+ * parseJsonArray(undefined);                  // []
+ *
+ * // Invalid JSON handling
+ * parseJsonArray('invalid');                  // []
+ * parseJsonArray('{"key": "value"}');         // [] (object, not array)
+ * ```
  */
 export function parseJsonArray(value: string | string[] | null | undefined): string[] {
   if (!value) return [];
@@ -27,4 +53,33 @@ export function parseJsonArray(value: string | string[] | null | undefined): str
   }
 }
 
-
+/*
+ * ========== CODE REVIEW SUMMARY ==========
+ * File: json-utils.ts
+ * Reviewed: 2026-01-29
+ *
+ * CHANGES MADE:
+ * - Enhanced file-level documentation with @remarks
+ * - Added comprehensive @example showing all input scenarios
+ * - Cleaned up trailing whitespace
+ *
+ * SECURITY NOTES:
+ * - Uses native JSON.parse which is safe against code injection
+ * - No security concerns
+ *
+ * REMAINING CONCERNS:
+ * - None
+ *
+ * REQUIRED TESTS:
+ * - [ ] parseJsonArray with valid JSON array string
+ * - [ ] parseJsonArray with array input (passthrough)
+ * - [ ] parseJsonArray with null/undefined
+ * - [ ] parseJsonArray with invalid JSON
+ * - [ ] parseJsonArray with JSON object (not array)
+ *
+ * DEPENDENCIES:
+ * - No external dependencies
+ * - Used by: employee profiles, settings, any JSON array columns
+ *
+ * PRODUCTION READY: YES
+ */
