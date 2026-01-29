@@ -28,6 +28,7 @@ import {
 import type { UserAssetHistoryItem, UserSubscriptionHistoryItem } from '@/features/users/components';
 import { EmployeeLeaveSection } from '@/features/employees/components';
 import { deriveOrgRole } from '@/lib/access-control';
+import { getDisplayEmail } from '@/lib/utils/user-display';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -97,7 +98,7 @@ export default async function AdminEmployeeDetailPage({ params }: Props) {
   const roleBadgeVariant = employeeRole === 'ADMIN' ? 'error' : 'info';
 
   // Hide auto-generated internal emails from UI display
-  const displayEmail = employee.email.endsWith('.internal') ? undefined : employee.email;
+  const displayEmail = getDisplayEmail(employee.email);
 
   return (
     <>

@@ -27,6 +27,7 @@ import { Resend } from 'resend';
 import { prisma } from '@/lib/core/prisma';
 import { decrypt } from '@/lib/oauth/utils';
 import logger from '@/lib/core/log';
+import { isInternalEmail } from '@/lib/utils/user-display';
 
 // Nodemailer types (dynamically imported to avoid Edge Runtime issues)
 type Transporter = Awaited<ReturnType<typeof import('nodemailer')['createTransport']>>;
@@ -152,7 +153,7 @@ export async function sendEmail({ to, subject, text, html, from, tenantId }: Ema
   const toAddresses = Array.isArray(to) ? to : [to];
 
   // Skip placeholder emails for non-login users (nologin-xxx@org.internal)
-  const realAddresses = toAddresses.filter(email => !email.endsWith('.internal'));
+  const realAddresses = toAddresses.filter(email => !isInternalEmail(email));
   if (realAddresses.length === 0) {
     logger.debug({ originalTo: to }, 'Skipping email - all recipients are .internal addresses');
     return { success: true, skipped: true };

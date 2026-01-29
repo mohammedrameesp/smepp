@@ -17,6 +17,7 @@ import { updateSetupProgress } from '@/features/onboarding/lib';
 import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
 import logger from '@/lib/core/log';
 import { deriveOrgRole } from '@/lib/access-control';
+import { isInternalEmail } from '@/lib/utils/user-display';
 
 async function getUsersHandler(request: NextRequest, context: APIContext) {
   const { tenant, prisma: tenantPrisma } = context;
@@ -277,7 +278,7 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
   // their HR profile onboarding with dateOfJoining set
 
   // Send welcome/invitation email only to users who can login (non-blocking)
-  if (canLogin && finalEmail && !finalEmail.endsWith('.internal')) {
+  if (canLogin && finalEmail && !isInternalEmail(finalEmail)) {
     try {
       // Fetch organization with auth config for customized email
       const org = await prisma.organization.findUnique({

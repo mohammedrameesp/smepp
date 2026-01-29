@@ -27,32 +27,4 @@ export function parseJsonArray(value: string | string[] | null | undefined): str
   }
 }
 
-/**
- * Safely parse a JSON object string
- * @param value - JSON string, object, or null
- * @param defaultValue - Default value if parsing fails (default: {})
- * @returns Parsed object or default value
- *
- * @example
- * parseJsonObject('{"key": "value"}')  // { key: 'value' }
- * parseJsonObject({ key: 'value' })    // { key: 'value' }
- * parseJsonObject(null)                 // {}
- * parseJsonObject('invalid')            // {}
- */
-export function parseJsonObject<T extends Record<string, unknown>>(
-  value: string | T | null | undefined,
-  defaultValue: T = {} as T
-): T {
-  if (!value) return defaultValue;
-  if (typeof value === 'object') return value;
-
-  try {
-    const parsed = JSON.parse(value);
-    return typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)
-      ? parsed
-      : defaultValue;
-  } catch {
-    return defaultValue;
-  }
-}
 
