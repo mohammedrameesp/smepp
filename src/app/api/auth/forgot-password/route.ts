@@ -1,3 +1,15 @@
+/**
+ * @file route.ts
+ * @description Password reset request endpoint. Sends a secure reset link via email.
+ * @module api/auth/forgot-password
+ *
+ * Security features:
+ * - Token is hashed before storage (SHA-256) to prevent DB compromise attacks
+ * - Always returns success to prevent email enumeration
+ * - Tokens expire after 1 hour
+ * - Supports org-branded emails with subdomain routing
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { randomBytes, createHash } from 'crypto';
@@ -241,3 +253,12 @@ Need help? Contact support@durj.qa
     );
   }
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation at top
+ * Issues: None - code is well-structured with proper security measures
+ */

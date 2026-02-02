@@ -1,3 +1,23 @@
+/**
+ * @module api/admin/change-requests/[id]
+ * @description Admin API for viewing and resolving individual profile change requests.
+ *
+ * Provides operations to get details of a specific change request and
+ * resolve it by approving or rejecting with optional notes.
+ *
+ * @endpoints
+ * - GET /api/admin/change-requests/[id] - Get a single change request
+ * - PATCH /api/admin/change-requests/[id] - Resolve a change request
+ *
+ * @pathParams
+ * - id: The change request ID
+ *
+ * @requestBody (PATCH)
+ * - status: 'APPROVED' | 'REJECTED'
+ * - notes: Optional resolver notes
+ *
+ * @security Requires admin authentication and tenant context
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { invalidBodyResponse } from '@/lib/http/responses';
@@ -106,3 +126,42 @@ async function getChangeRequestHandler(
 }
 
 export const GET = withErrorHandler(getChangeRequestHandler, { requireAuth: true, requireAdmin: true });
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * CODE REVIEW SUMMARY
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * File: src/app/api/admin/change-requests/[id]/route.ts
+ * Reviewed: 2026-02-01
+ *
+ * FUNCTIONALITY: [PASS]
+ * - GET: Retrieves single change request with member details
+ * - PATCH: Resolves request (approve/reject) with optional notes
+ * - Records resolver ID and timestamp
+ * - Prevents re-resolving already processed requests
+ *
+ * SECURITY: [PASS]
+ * - Requires admin authentication for both endpoints
+ * - Uses tenant-scoped Prisma (auto-filters by tenantId)
+ * - Validates request body with Zod schema
+ * - Uses findFirst (not findUnique) for tenant-safe lookups
+ *
+ * VALIDATION: [PASS]
+ * - Zod schema enforces status enum (APPROVED/REJECTED)
+ * - Notes field is optional string
+ * - Returns 400 for already-resolved requests
+ *
+ * ERROR HANDLING: [PASS]
+ * - 403 for missing tenant context
+ * - 404 for non-existent request
+ * - 400 for invalid body or already resolved
+ * - Wrapped with global error handler
+ *
+ * IMPROVEMENTS:
+ * - Consider adding activity log entry for resolution
+ * - Could notify employee when request is resolved
+ * - Add audit trail for who resolved and when
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ */

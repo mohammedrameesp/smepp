@@ -1,3 +1,10 @@
+/**
+ * @module app/admin/(hr)/leave/balances
+ * @description Admin page for viewing and managing employee leave balances.
+ * Shows summary statistics including pending requests, approved requests,
+ * employees on leave today, and total employees with leave balances.
+ */
+
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
@@ -82,3 +89,18 @@ export default async function AdminLeaveBalancesPage() {
     </>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation
+ * Issues: None - File follows best practices:
+ *   - Uses batched Promise.all for database queries (avoids N+1)
+ *   - Proper tenant isolation with tenantId filtering
+ *   - Auth checks for admin OR HR access
+ *   - Efficient groupBy query for unique employee count
+ *   - Clean server component with client-side table delegation
+ *   - No console.log statements
+ */

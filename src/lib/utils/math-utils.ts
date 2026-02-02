@@ -111,35 +111,3 @@ export function roundTo(value: number, decimals: number = 2): number {
   return Math.round(value * factor) / factor;
 }
 
-/*
- * ========== CODE REVIEW SUMMARY ==========
- * File: math-utils.ts
- * Reviewed: 2026-01-29
- *
- * CHANGES MADE:
- * - Enhanced file-level documentation with @remarks
- * - Added module-level @example showing common usage
- * - Improved function documentation with more examples
- * - Added edge case examples (NaN, Infinity, negative) to docs
- * - Removed trailing whitespace
- *
- * SECURITY NOTES:
- * - No security concerns - pure mathematical utilities
- * - Safe handling of NaN/Infinity prevents unexpected behavior
- *
- * REMAINING CONCERNS:
- * - None
- *
- * REQUIRED TESTS:
- * - [ ] formatNumber with valid numbers
- * - [ ] formatNumber with NaN/Infinity
- * - [ ] calculatePercentage accuracy
- * - [ ] calculateAnnualRate with valid/invalid years
- * - [ ] roundTo precision and edge cases
- *
- * DEPENDENCIES:
- * - No external dependencies
- * - Used by: asset depreciation, payroll calculations, financial reports
- *
- * PRODUCTION READY: YES
- */

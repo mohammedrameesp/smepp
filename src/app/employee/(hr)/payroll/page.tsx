@@ -1,3 +1,27 @@
+/**
+ * @module app/employee/(hr)/payroll/page
+ * @description Employee payroll dashboard. Provides a comprehensive overview of the
+ * employee's salary structure, recent payslips, active loans, and gratuity projection.
+ * Serves as the main hub for payroll-related information.
+ *
+ * @route /employee/payroll
+ * @access Authenticated employees
+ *
+ * @dependencies
+ * - prisma: Salary structure, payslips, loans queries
+ * - gratuity utilities: Gratuity calculation functions
+ * - currency utilities: Formatting functions
+ * - payroll utilities: Month names and status formatting
+ *
+ * @features
+ * - Salary breakdown (basic + allowances = gross)
+ * - Allowance itemization (housing, transport, food, phone, other)
+ * - Gratuity projection with link to details
+ * - Active loans summary
+ * - Recent payslips list (last 6) with quick access
+ * - Navigation to full payslips list
+ */
+
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { redirect } from 'next/navigation';
@@ -296,3 +320,42 @@ export default async function EmployeePayrollPage() {
     </>
   );
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ *
+ * Purpose: Employee payroll dashboard aggregating salary, payslips, loans, and gratuity
+ *
+ * Key Logic:
+ * - Parallel data fetching for salary structure, member profile, payslips, and loans
+ * - Gratuity calculation only if both salary and dateOfJoining exist
+ * - Recent payslips limited to 6 most recent
+ * - Active loans filtered by status='ACTIVE'
+ *
+ * Data Flow:
+ * - Server component with direct Prisma queries
+ * - All queries filtered by session.user.id (member perspective)
+ * - No tenant filtering needed as user ID is globally unique
+ *
+ * Calculations:
+ * - Total loan remaining: Sum of remainingAmount from active loans
+ * - Gross salary: Directly from salaryStructure.grossSalary
+ * - Gratuity: Calculated via calculateGratuity helper using basicSalary and dateOfJoining
+ *
+ * Edge Cases:
+ * - No salary structure: Shows placeholder message to contact HR
+ * - No date of joining: Gratuity projection unavailable
+ * - No payslips: Empty state in recent payslips section
+ * - No active loans: Stat chip hidden via hideWhenZero prop
+ *
+ * Dependencies:
+ * - calculateGratuity, getServiceDurationText from gratuity lib
+ * - getMonthName, getPayrollStatusText, getPayrollStatusColor from payroll utils
+ * - formatCurrency from currency lib
+ *
+ * Future Considerations:
+ * - Tax document downloads
+ * - Salary revision history
+ * - Loan application submission
+ * - Year-to-date earnings summary
+ */

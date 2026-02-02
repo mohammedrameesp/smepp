@@ -278,3 +278,12 @@ export const GET = withErrorHandler(previewDisposeHandler, {
   rateLimit: true,
   requireModule: 'assets',
 });
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes: None required - comprehensive IFRS disposal documentation
+ * Issues: None - proper tenant isolation, preview mode for safe operations,
+ *         rate limiting, activity logging
+ */

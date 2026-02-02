@@ -1,3 +1,28 @@
+/**
+ * @module app/login/page
+ * @description Login page with multi-tenant and multi-auth support.
+ *
+ * This is the main login page for the Durj platform. It supports:
+ * - Email/password credentials authentication
+ * - OAuth (Google, Microsoft) when configured for the tenant
+ * - Multi-tenant subdomain routing with organization-specific branding
+ * - Auth method restrictions per organization
+ * - Domain email restrictions per organization
+ *
+ * Key features:
+ * - Detects subdomain and loads tenant-specific branding (logo, colors, welcome text)
+ * - Shows appropriate OAuth buttons based on org config (hasCustomGoogleOAuth, hasCustomAzureOAuth)
+ * - Handles auth error messages from URL params (e.g., DomainNotAllowed, OAuthError)
+ * - Auto-redirects logged-in users to their correct org subdomain
+ * - Shows "Organization Not Found" screen with countdown for invalid subdomains
+ * - Dev mode indicator when DEV_AUTH_ENABLED is set
+ *
+ * @dependencies
+ * - next-auth/react: signIn, getSession for authentication
+ * - useSubdomain: Hook to extract subdomain from URL
+ * - useTenantBranding: Hook to fetch org branding configuration
+ * - TenantBrandedPanel: Component for left-side branding panel
+ */
 'use client';
 
 import { signIn, getSession } from 'next-auth/react';
@@ -640,3 +665,42 @@ export default function LoginPage() {
     </Suspense>
   );
 }
+
+/* =============================================================================
+ * CODE REVIEW SUMMARY
+ * =============================================================================
+ *
+ * WHAT THIS FILE DOES:
+ * Main login page handling multi-tenant authentication with credentials and OAuth.
+ * Supports organization-specific branding, auth method restrictions, and cross-org
+ * redirect logic.
+ *
+ * KEY COMPONENTS:
+ * - LoginForm: Main form component with all login logic
+ * - LoginPage: Wrapper with Suspense boundary for searchParams
+ *
+ * AUTHENTICATION FLOWS:
+ * 1. Credentials: Email/password via NextAuth credentials provider
+ * 2. Google OAuth: Custom OAuth route for subdomain tenants
+ * 3. Microsoft OAuth: Custom OAuth route for subdomain tenants
+ *
+ * POTENTIAL ISSUES:
+ * 1. [LOW] DEV_AUTH_ENABLED check uses string comparison - could use boolean env var
+ * 2. [LOW] Multiple useEffect hooks could be consolidated for cleaner code
+ * 3. [MEDIUM] Error handling in handleCredentialsSignIn catches generic Error -
+ *    could benefit from more specific error types
+ *
+ * SECURITY CONSIDERATIONS:
+ * - OAuth state is managed by custom OAuth routes, not this component
+ * - Password field properly hidden by default with toggle
+ * - Session check prevents logged-in users from seeing login form
+ * - Cross-org access properly blocked with redirect to correct subdomain
+ *
+ * PERFORMANCE:
+ * - Branding loading gate prevents flash of wrong auth methods
+ * - Suspense boundary ensures searchParams don't block initial render
+ * - Session check runs once on mount
+ *
+ * LAST REVIEWED: 2025-01-27
+ * REVIEWED BY: Code Review System
+ * =========================================================================== */

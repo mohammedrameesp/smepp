@@ -1,3 +1,17 @@
+/**
+ * @module api/admin/team/check-email
+ * @description Email availability check endpoint for team member management.
+ * Validates email format and checks for existing members or pending invitations
+ * before allowing new team member additions.
+ *
+ * @endpoints
+ * - GET /api/admin/team/check-email?email={email} - Check email availability
+ *
+ * @security
+ * - Requires authentication (requireAuth: true)
+ * - Requires admin role (requireAdmin: true)
+ * - Queries scoped to tenant organization
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { VALIDATION_PATTERNS } from '@/lib/validations/patterns';
@@ -83,3 +97,29 @@ export const GET = withErrorHandler(async (request: NextRequest, { tenant }) => 
 
 // Force dynamic rendering - no caching
 export const dynamic = 'force-dynamic';
+
+/*
+ * =============================================================================
+ * CODE REVIEW SUMMARY
+ * =============================================================================
+ *
+ * Purpose:
+ * Email availability validation endpoint for team member management. Checks if
+ * an email address can be used to add a new member by validating format and
+ * checking for existing members or pending invitations.
+ *
+ * Strengths:
+ * - Email validation using shared VALIDATION_PATTERNS for consistency
+ * - Email normalization to lowercase prevents case-sensitivity issues
+ * - Checks both active members and pending invitations for completeness
+ * - Allows proceeding with expired invitations (canProceed flag)
+ * - Returns descriptive error messages for UI display
+ * - Properly excludes soft-deleted members (isDeleted: false)
+ *
+ * Concerns:
+ * - [NONE] Well-implemented with proper tenant scoping
+ *
+ * Status: APPROVED - Clean, well-scoped email validation endpoint
+ * Last Reviewed: 2026-02-01
+ * =============================================================================
+ */

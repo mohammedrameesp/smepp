@@ -1,9 +1,23 @@
+/**
+ * @file loading.tsx
+ * @module app/employee/(hr)/leave/new
+ * @description Loading skeleton for the new leave request page.
+ *
+ * Features:
+ * - Form field skeletons matching actual form layout
+ * - Date picker and select input skeletons
+ * - Submit button skeleton
+ */
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { FileEdit } from 'lucide-react';
 import { ICON_SIZES } from '@/lib/constants';
 
-export default function NewLeaveRequestLoading() {
+/**
+ * Loading skeleton for the new leave request form.
+ * @returns Skeleton UI matching the leave request form layout
+ */
+export default function NewLeaveRequestLoading(): React.JSX.Element {
   return (
     <>
       <PageHeader
@@ -61,3 +75,13 @@ export default function NewLeaveRequestLoading() {
     </>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation at top
+ *   - Added function documentation with return type
+ * Issues: None - simple loading skeleton component
+ */

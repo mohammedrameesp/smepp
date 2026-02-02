@@ -1,3 +1,28 @@
+/**
+ * @module app/employee/(hr)/payroll/payslips/[id]/page
+ * @description Employee payslip detail page. Displays comprehensive breakdown of a
+ * specific payslip including earnings, deductions, and net pay. Verifies ownership
+ * to prevent unauthorized access to other employees' payslips.
+ *
+ * @route /employee/payroll/payslips/[id]
+ * @access Authenticated employees (own payslips only)
+ *
+ * @dependencies
+ * - prisma: Payslip with member and deductions data
+ * - currency utilities: Formatting functions
+ * - datetime utilities: Date formatting
+ * - payroll utilities: Month names
+ *
+ * @features
+ * - Employee information card
+ * - Earnings breakdown (basic + all allowances)
+ * - Itemized deductions list
+ * - Net pay summary with prominent display
+ * - Payment confirmation with date (if paid)
+ * - Bank account masking for security
+ * - Ownership verification before display
+ */
+
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { redirect, notFound } from 'next/navigation';
@@ -222,3 +247,48 @@ export default async function EmployeePayslipDetailPage({ params }: PageProps) {
     </>
   );
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ *
+ * Purpose: Detailed payslip view with earnings, deductions, and net pay breakdown
+ *
+ * Key Logic:
+ * - Ownership verification: Redirects if payslip.memberId !== session.user.id
+ * - Uses notFound() for non-existent payslip IDs
+ * - Earnings breakdown: basic + all allowances = gross
+ * - Deductions itemized from related PayslipDeduction records
+ *
+ * Data Flow:
+ * - Server component with async params (Next.js 15 pattern)
+ * - Single Prisma query with includes: member, payrollRun, deductions
+ * - All Decimal fields converted to Number for display
+ *
+ * Security:
+ * - Session check with redirect to root
+ * - Ownership verification prevents IDOR access to other employees' payslips
+ * - Bank IBAN masked to show only last 4 characters
+ *
+ * Display:
+ * - Two-column layout for Earnings vs Deductions
+ * - Net pay prominently displayed in green banner
+ * - Payment date shown only if isPaid=true and paidAt exists
+ * - Other allowances row hidden if amount is 0
+ *
+ * Edge Cases:
+ * - Payslip not found: Returns Next.js notFound() response
+ * - Not owner: Redirects to payroll dashboard
+ * - No deductions: Shows "No deductions this month" message
+ * - No bank info: Shows "Not specified" placeholder
+ *
+ * Dependencies:
+ * - formatCurrency from currency lib
+ * - formatDate from datetime lib
+ * - getMonthName from payroll utils
+ *
+ * Future Considerations:
+ * - PDF download/print functionality
+ * - Year-to-date totals
+ * - Comparison with previous months
+ * - Digital signature verification
+ */

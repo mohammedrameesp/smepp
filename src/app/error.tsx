@@ -1,3 +1,22 @@
+/**
+ * @module app/error
+ * @description Application-level error boundary component.
+ *
+ * This component catches and handles runtime errors that occur within the
+ * application. It provides:
+ * - Error logging to the application logger
+ * - Automatic error reporting to backend API for super admin visibility
+ * - User-friendly 500 error page with branded styling
+ * - Recovery options (retry, navigate home)
+ * - Error digest display for support reference
+ *
+ * Note: This error boundary does NOT catch errors in:
+ * - The root layout (use global-error.tsx for that)
+ * - Server-side rendering errors
+ *
+ * @see {@link module:app/global-error} - For root layout errors
+ * @see {@link module:lib/core/log} - Application logger
+ */
 'use client';
 
 import { useEffect } from 'react';
@@ -182,3 +201,35 @@ export default function Error({
     </div>
   );
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ *
+ * Purpose:
+ * Application-level error boundary that catches runtime errors and displays
+ * a user-friendly error page with recovery options.
+ *
+ * Key Features:
+ * - Error logging to application logger with full context
+ * - Async error reporting to /api/errors/report (non-blocking)
+ * - Error digest display for support reference
+ * - Retry button using Next.js reset() function
+ * - Navigation to home page option
+ * - Branded 500 error styling with gradient effects
+ *
+ * Security Considerations:
+ * - Error stack traces are sent to backend but not displayed to users
+ * - Error reporting is fire-and-forget to prevent UI blocking
+ * - Only error.message and digest shown to end users
+ *
+ * Potential Improvements:
+ * - Add user feedback form for error context
+ * - Implement error rate limiting to prevent spam
+ * - Add error categorization for analytics
+ * - Consider Sentry or similar service integration
+ *
+ * Dependencies:
+ * - @/lib/core/log: Application logger
+ * - lucide-react: Icons
+ * - next/navigation: Router for home navigation
+ */

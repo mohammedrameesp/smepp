@@ -1,3 +1,18 @@
+/**
+ * @file route.ts
+ * @description API endpoints for invitation management by token
+ * @module api/invitations/[token]
+ *
+ * Handles:
+ * - GET: Retrieve invitation details by token (public, no auth required)
+ * - POST: Accept invitation (requires authentication)
+ *
+ * The invitation flow supports:
+ * - Employee and non-employee (system account) invitations
+ * - Custom OAuth configuration per organization
+ * - WPS (Wage Protection System) tracking for employees
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
@@ -415,3 +430,14 @@ export async function POST(
     );
   }
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation at top describing both endpoints
+ *   - Documented supported invitation features (OAuth, WPS, employee types)
+ * Issues: None - Uses Serializable transaction for race condition prevention,
+ *   proper email validation, and comprehensive error handling with handleSystemError
+ */

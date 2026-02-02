@@ -1,3 +1,29 @@
+/**
+ * @module app/admin/(hr)/leave/balances/client
+ * @description Client component for managing employee leave balances and exceptions.
+ * Provides a comprehensive view of all employees' leave entitlements with
+ * accrual calculations, adjustments, and exception management.
+ *
+ * @features
+ * Balances Tab:
+ * - Grouped view by employee with expandable details
+ * - Filter by year, leave type, and employee search
+ * - Support for accrual-based leave calculation
+ * - Manual balance initialization and adjustments
+ * - Visual breakdown: entitlement, carried forward, adjustments, used, pending
+ *
+ * Exceptions Tab:
+ * - Manage leave rule overrides (e.g., bypass notice requirements)
+ * - Add/remove exception permissions for individual employees
+ *
+ * @dependencies
+ * - GET /api/leave/balances - Fetches leave balances
+ * - POST /api/leave/balances - Creates new balance record
+ * - GET /api/users - Fetches employees with HR profiles
+ * - GET /api/leave/types - Fetches leave type definitions
+ * - GET /api/leave/exceptions - Fetches leave exceptions
+ * - POST /api/leave/exceptions - Enables/disables exceptions
+ */
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -911,3 +937,36 @@ export function LeaveBalancesClient() {
     </>
   );
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ *
+ * Purpose: Manage employee leave balances with accrual support and exceptions
+ *
+ * Strengths:
+ * - Comprehensive balance breakdown (entitlement, carried, adjustments, used, pending)
+ * - Support for accrual-based leave with proper month calculation
+ * - Expandable employee groups for clean information hierarchy
+ * - Tab-based separation of balances vs exceptions
+ * - Year and leave type filtering
+ * - Good helper text explaining exception functionality
+ *
+ * Weaknesses:
+ * - Large component (900+ lines) should be split into sub-components
+ * - Modal dialogs use fixed positioning instead of Dialog component
+ * - No pagination (fetches all with ps=1000)
+ * - Console.error for failures instead of toast notifications
+ * - Empty dependency array warning for initial useEffect
+ *
+ * Security:
+ * - API handles authorization for balance modifications
+ * - Exception management properly scoped to admins
+ *
+ * Recommendations:
+ * - Extract InitializeBalanceDialog and AddExceptionDialog to components
+ * - Replace custom modals with shadcn Dialog component
+ * - Add server-side pagination for large organizations
+ * - Add toast errors for fetch failures
+ * - Consider adding bulk balance initialization
+ * - Add confirmation before enabling/disabling exceptions
+ */

@@ -1,3 +1,19 @@
+/**
+ * @module app/admin/(hr)/employees/change-requests/client
+ * @description Client component for managing employee profile change requests.
+ * Allows admins to view, filter, approve, or reject change requests submitted
+ * by employees who want to update their profile information.
+ *
+ * @features
+ * - Filter requests by status (pending/approved/rejected)
+ * - View request details in a modal dialog
+ * - Approve or reject pending requests with optional notes
+ * - Links to employee profiles for context
+ *
+ * @dependencies
+ * - GET /api/admin/change-requests - Fetches change requests
+ * - PATCH /api/admin/change-requests/:id - Resolves a change request
+ */
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -268,3 +284,31 @@ export function ChangeRequestsClient() {
     </>
   );
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ *
+ * Purpose: Admin interface for reviewing and resolving employee profile change requests
+ *
+ * Strengths:
+ * - Clean separation of concerns with dedicated fetch and resolve functions
+ * - Good error handling with user-friendly toast notifications
+ * - Proper loading states during data fetching and resolution
+ * - Status badges provide clear visual feedback
+ * - Modal dialog keeps workflow focused
+ *
+ * Weaknesses:
+ * - No pagination for large numbers of requests
+ * - Status filter uses string literals instead of enum constants
+ * - Missing optimistic UI updates when resolving requests
+ *
+ * Security:
+ * - Relies on API-level authentication and authorization
+ * - No client-side exposure of sensitive data
+ *
+ * Recommendations:
+ * - Add pagination for scalability with high request volumes
+ * - Extract status constants to shared module
+ * - Consider adding bulk approval/rejection functionality
+ * - Add confirmation dialog before rejecting requests
+ */

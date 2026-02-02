@@ -1,3 +1,10 @@
+/**
+ * @module app/admin/(hr)/payroll/salary-structures/page
+ * @description Salary structures list page - displays all employee salary structures
+ * with basic salary, allowances breakdown, gross salary totals, and effective dates.
+ * Shows active/inactive status for each structure. Provides navigation to create
+ * new structures, access payroll runs, payslips, and loans management.
+ */
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { redirect } from 'next/navigation';
@@ -215,3 +222,40 @@ export default async function SalaryStructuresPage({ searchParams }: PageProps) 
     </>
   );
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ *
+ * Purpose: Server-side rendered page displaying all employee salary structures
+ * with search and pagination.
+ *
+ * Key Features:
+ * - Search by employee name or email
+ * - Paginated list with 20 items per page
+ * - Shows breakdown (basic, allowances, gross total)
+ * - Active/inactive status badges
+ * - Effective date display
+ * - Quick actions to add new structure, access runs/payslips/loans
+ *
+ * Data Flow:
+ * - Server-side data fetching with Prisma
+ * - URL-based search state for bookmarkable searches
+ * - Parallel queries for data and count
+ *
+ * Security:
+ * - Requires authenticated session
+ * - Access restricted to admins OR users with Finance access
+ * - Tenant-scoped queries via tenantId filter
+ *
+ * Improvements Made:
+ * - Efficient parallel queries with Promise.all
+ * - Clean search filter implementation
+ * - Good use of shared UI components
+ * - Proper number conversion for Prisma Decimal types
+ *
+ * Potential Improvements:
+ * - Add filter for active/inactive structures
+ * - Add bulk salary revision functionality
+ * - Add salary comparison/analysis view
+ * - Consider adding department/team grouping
+ */

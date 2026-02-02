@@ -1,3 +1,16 @@
+/**
+ * @file route.ts
+ * @description Initiates Azure AD OAuth flow with org-specific or platform credentials.
+ * @module api/auth/oauth/azure
+ *
+ * Features:
+ * - Supports custom OAuth apps per organization
+ * - Falls back to platform-wide credentials
+ * - Validates allowed auth methods per org
+ * - Supports custom domains with verified status
+ * - Uses encrypted state for CSRF protection
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { encryptState } from '@/lib/oauth/utils';
@@ -116,3 +129,12 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation at top
+ * Issues: None - proper error handling and security checks in place
+ */

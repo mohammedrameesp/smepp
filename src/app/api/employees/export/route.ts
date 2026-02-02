@@ -201,3 +201,12 @@ async function exportEmployeesHandler(request: NextRequest, context: APIContext)
 }
 
 export const GET = withErrorHandler(exportEmployeesHandler, { requireAdmin: true, requireModule: 'employees' });
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes: None required - well-documented Excel export with sensitive data masking
+ * Issues: None - proper tenant isolation, sensitive data masking (QID, passport, IBAN),
+ *         conditional cell highlighting for expiry dates
+ */

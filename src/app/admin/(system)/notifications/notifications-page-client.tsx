@@ -1,3 +1,38 @@
+/**
+ * @module app/admin/(system)/notifications/notifications-page-client
+ * @description Client component for the notifications page. Handles interactive
+ * notification management including filtering, marking as read, and real-time
+ * state updates without page reload.
+ *
+ * @dependencies
+ * - useNotifications: Hook for refreshing notification count in header
+ * - formatDistanceToNow: Relative time formatting (date-fns)
+ * - formatDate: Standard date formatting utility
+ *
+ * @props
+ * - initialNotifications: Server-fetched notifications array
+ * - totalCount: Total notifications for the user
+ * - unreadCount: Count of unread notifications
+ *
+ * @features
+ * - Filter tabs: All / Unread / Read
+ * - Mark all as read (bulk action)
+ * - Mark individual as read
+ * - Icon mapping by notification type
+ * - Color-coded badges by status (approved/rejected/warning)
+ * - Statistics cards (total, unread, read)
+ * - External link navigation with auto-mark-read
+ *
+ * @api-calls
+ * - POST /api/notifications - Mark all as read
+ * - PATCH /api/notifications/[id]/read - Mark single as read
+ *
+ * @state
+ * - notifications: Local copy of notifications for optimistic updates
+ * - filter: Current filter selection (all/unread/read)
+ * - markingAllRead: Loading state for bulk action
+ */
+
 'use client';
 
 import { useState } from 'react';
@@ -325,3 +360,34 @@ export function NotificationsPageClient({
     </>
   );
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ * ===================
+ * Date: 2026-02-01
+ * Reviewer: Claude (AI Code Review)
+ *
+ * Overall Assessment: PASS
+ * Well-implemented client component with good interactivity patterns.
+ *
+ * Strengths:
+ * 1. Optimistic UI updates for mark-as-read actions
+ * 2. Proper loading states (markingAllRead spinner)
+ * 3. Good filter implementation with tabs
+ * 4. Effective icon and color mapping by notification type
+ * 5. Inline computed unreadCount for accurate display after mutations
+ * 6. Error handling with console.error (non-blocking)
+ * 7. Clean separation from server component
+ *
+ * Potential Improvements:
+ * 1. Line 92: unreadCount prop is unused (calculated locally instead)
+ *    - Consider removing from props interface or using for initial render
+ * 2. Could add error toast notifications for failed operations
+ * 3. Consider adding pagination for large notification lists (currently all in memory)
+ * 4. No retry mechanism for failed API calls
+ * 5. Could add optimistic update rollback on API failure
+ *
+ * Security: Good - API calls use proper HTTP methods
+ * Performance: Good for typical notification counts; may need pagination at scale
+ * Maintainability: Good - clear state management, readable logic
+ */

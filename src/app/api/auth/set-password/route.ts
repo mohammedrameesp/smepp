@@ -1,3 +1,20 @@
+/**
+ * @file route.ts
+ * @description Initial password setup for invited users. Allows users to set
+ * their password after receiving an invite email with a setup token.
+ * @module api/auth/set-password
+ *
+ * Endpoints:
+ * - GET: Validate setup token and get user info
+ * - POST: Set initial password for user
+ *
+ * Security features:
+ * - Token expiry validation
+ * - Prevents double password setting
+ * - Marks email as verified on success
+ * - Password complexity validation (SEC-010)
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { hash } from 'bcryptjs';
@@ -188,3 +205,12 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation at top
+ * Issues: None - proper validation and security measures in place
+ */

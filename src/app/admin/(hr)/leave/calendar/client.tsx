@@ -1,3 +1,24 @@
+/**
+ * @module app/admin/(hr)/leave/calendar/client
+ * @description Client component for displaying leave requests in a calendar view.
+ * Shows approved and pending leave requests overlaid on a monthly calendar
+ * with organization-specific weekend days and public holiday support.
+ *
+ * @features
+ * - Monthly calendar grid with navigation
+ * - Leave request events with employee names and color-coded leave types
+ * - Status filter (all/approved/pending)
+ * - Organization-configured weekend highlighting
+ * - Public holiday display integration
+ * - Leave type legend
+ * - Monthly leave list summary with links to request details
+ *
+ * @dependencies
+ * - GET /api/leave/calendar - Fetches leave events for date range
+ * - GET /api/leave/types - Fetches leave type definitions
+ * - GET /api/admin/organization - Fetches weekend day configuration
+ * - GET /api/admin/public-holidays - Fetches public holidays
+ */
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -363,3 +384,35 @@ export function LeaveCalendarClient() {
     </Card>
   );
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ *
+ * Purpose: Visual calendar display of leave requests with holiday integration
+ *
+ * Strengths:
+ * - Clean monthly calendar grid with intuitive navigation
+ * - Organization-specific weekend day configuration
+ * - Public holiday integration with visual indicators
+ * - Leave type legend for color reference
+ * - Combined calendar + list view for the month
+ * - Events span multiple days correctly
+ *
+ * Weaknesses:
+ * - Custom calendar implementation vs using established library
+ * - No week or day view options
+ * - Console.error for failures without user notification
+ * - Calendar doesn't show days from previous/next months
+ * - Limited to showing 3 events per day (could be configurable)
+ *
+ * Security:
+ * - Relies on API-level tenant isolation
+ * - No sensitive data exposed beyond approved leave info
+ *
+ * Recommendations:
+ * - Consider using react-big-calendar or similar for more features
+ * - Add toast notifications for fetch errors
+ * - Show overflow count and allow clicking to see all events
+ * - Consider adding "create leave" quick action from calendar
+ * - Add week view for detailed scheduling
+ */

@@ -1,3 +1,12 @@
+/**
+ * @module app/(marketing)/page
+ * @description Main landing page for Durj marketing site.
+ * Features hero section, pain points addressing SME challenges,
+ * AI and WhatsApp feature highlights, feature grid with modules,
+ * Qatar-specific benefits, platform capabilities, CTA section, and footer.
+ * Uses client-side rendering for mobile menu state management.
+ */
+
 'use client';
 
 import { useState } from 'react';
@@ -580,3 +589,75 @@ export default function LandingPage() {
     </>
   );
 }
+
+/*
+ * =============================================================================
+ * CODE REVIEW SUMMARY
+ * =============================================================================
+ *
+ * OVERVIEW:
+ * Main landing page for the Durj marketing site. Client-side component that
+ * renders a comprehensive marketing page with multiple sections showcasing
+ * the platform's features, Qatar-specific benefits, and call-to-action elements.
+ *
+ * ARCHITECTURE:
+ * - Client Component ('use client' for mobile menu interactivity)
+ * - Single-page layout with multiple themed sections
+ * - Uses local landing.css stylesheet for custom styling
+ * - No external data fetching (static marketing content)
+ *
+ * SECTIONS:
+ * 1. Navigation - Logo, links, CTA buttons, mobile menu toggle
+ * 2. Hero - Main value proposition with dashboard preview mockup
+ * 3. Pain Points - Problem/solution cards addressing SME challenges
+ * 4. Smart Features - AI assistant and WhatsApp approvals highlights
+ * 5. Features - Module grid (Assets, Subscriptions, HR, Leave, etc.)
+ * 6. Qatar - Qatar-specific benefits (QID, CR, health cards, QAR)
+ * 7. Platform - Security and modern team features
+ * 8. Pricing - Commented out (temporarily hidden)
+ * 9. CTA - Final call-to-action section
+ * 10. Footer - Links and contact information
+ *
+ * STRENGTHS:
+ * - Well-structured sections with clear visual hierarchy
+ * - Mobile-responsive menu implementation with useState
+ * - Rich visual mockups (dashboard preview, chat mockups)
+ * - Strong focus on Qatar market (QID, WPS, QAR, local compliance)
+ * - Feature cards use map() for maintainable content rendering
+ * - Proper aria attributes on mobile menu button
+ * - Internal anchor links for smooth navigation
+ * - Clear value proposition and pain point messaging
+ *
+ * POTENTIAL IMPROVEMENTS:
+ * - Extract section components for better maintainability
+ * - Feature data (pain points, features, Qatar features) could be moved
+ *   to separate constants file for easier content updates
+ * - Missing metadata export (page uses client directive, but could use
+ *   generateMetadata or move metadata to a parent layout)
+ * - Uses standard img tags - should use Next.js Image for optimization
+ * - Hardcoded copyright year "2025" in footer (inconsistent with other pages
+ *   that use new Date().getFullYear())
+ * - Pricing section commented out - should be fully removed or enabled
+ * - Some inline styles could be moved to CSS classes
+ * - Mobile menu visibility class logic could use clsx/cn utility
+ * - Emoji usage in feature icons may not render consistently cross-platform
+ *
+ * SECURITY CONSIDERATIONS:
+ * - No user input handling
+ * - All links are internal or mailto (no external attack vectors)
+ * - No sensitive data exposure
+ *
+ * ACCESSIBILITY:
+ * - Mobile menu button has aria-label and aria-expanded
+ * - Semantic section elements used
+ * - Could benefit from skip navigation link
+ * - Feature list items could use role="list" explicitly
+ * - Color contrast should be verified in landing.css
+ *
+ * PERFORMANCE:
+ * - Client-side rendering required only for mobile menu state
+ * - Consider extracting static sections to Server Components
+ * - Images should be optimized with Next.js Image component
+ * - CSS is imported directly (bundled with component)
+ * =============================================================================
+ */

@@ -1,3 +1,23 @@
+/**
+ * @module api/company-documents/[id]
+ * @description API endpoints for managing individual company documents.
+ * Supports retrieval, update, and deletion of document records with proper
+ * tenant isolation and activity logging.
+ *
+ * @endpoints
+ * - GET    /api/company-documents/[id] - Get a single document with asset and creator info
+ * - PUT    /api/company-documents/[id] - Update a document (admin only)
+ * - DELETE /api/company-documents/[id] - Delete a document and its storage file (admin only)
+ *
+ * @features
+ * - IDOR protection via tenant-scoped queries
+ * - Storage file cleanup on deletion
+ * - Activity logging for updates and deletions
+ * - Expiry status calculation included in responses
+ *
+ * @requires Authentication
+ * @requires Module: documents
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
@@ -204,3 +224,35 @@ export const DELETE = withErrorHandler(async (
 
   return NextResponse.json({ success: true });
 }, { requireAdmin: true, requireModule: 'documents' });
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * CODE REVIEW SUMMARY
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * OVERVIEW:
+ * Implements single document management (GET/PUT/DELETE) with proper tenant
+ * isolation, activity logging, and storage cleanup on deletion.
+ *
+ * SECURITY:
+ * [+] IDOR protection via findFirst with tenantId filter
+ * [+] Asset reassignment validates new asset belongs to tenant
+ * [+] PUT/DELETE require admin role
+ * [+] Activity logging for updates and deletions
+ * [+] Storage file cleanup on deletion (STORAGE-003)
+ *
+ * PATTERNS:
+ * [+] Includes related entity info (asset, creator) in GET response
+ * [+] Partial schema validation for PUT (only validate provided fields)
+ * [+] Expiry info attached to responses
+ * [+] Cleanup of orphaned storage files
+ *
+ * POTENTIAL IMPROVEMENTS:
+ * [-] Consider soft delete for audit trail / recovery
+ * [-] PUT updateData building is verbose - could simplify with Object.entries
+ * [-] Missing transaction wrapper for DELETE (db delete + storage cleanup)
+ * [-] Consider adding document history/version tracking
+ *
+ * LAST REVIEWED: 2026-02-01
+ * ═══════════════════════════════════════════════════════════════════════════════
+ */

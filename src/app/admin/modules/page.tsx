@@ -1,3 +1,22 @@
+/**
+ * @module ModulesPage
+ * @description Module management page for installing/uninstalling organization modules.
+ * Allows admins to enable features like Leave, Payroll, Spend Requests, etc.
+ *
+ * Key features:
+ * - View installed and available modules
+ * - Install modules with dependency checking
+ * - Uninstall modules with cascade option for dependents
+ * - Data preservation or deletion option when uninstalling
+ * - Auto-opens install dialog when ?install=moduleId is in URL
+ *
+ * API endpoints used:
+ * - GET /api/modules - List all modules with install status
+ * - POST /api/modules - Install a module
+ * - DELETE /api/modules - Uninstall a module
+ * - GET /api/modules/[id]/data-count - Get data counts for uninstall warning
+ */
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -133,9 +152,9 @@ export default function ModulesPage() {
     loadingCounts: false,
   });
 
-  // Fetch modules
+  // Fetch modules on mount
   useEffect(() => {
-    fetchModules();
+    void fetchModules();
   }, []);
 
   // Auto-open install dialog if install param is present
@@ -779,3 +798,17 @@ export default function ModulesPage() {
     </>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation at top
+ *   - Added void keyword to floating promise in useEffect
+ * Issues: None
+ *   - console.error statements are appropriate (in error handlers)
+ *   - Tenant isolation: API endpoints handle tenant context server-side
+ *   - Error handling: try-catch with user-friendly toast messages
+ *   - TypeScript: All types properly defined, no 'any' usage
+ */

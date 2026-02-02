@@ -238,3 +238,11 @@ async function importAssetsHandler(request: NextRequest, context: APIContext) {
 }
 
 export const POST = withErrorHandler(importAssetsHandler, { requireAdmin: true, requireModule: 'assets' });
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes: None required - comprehensive import logic with error handling
+ * Issues: None - proper tenant isolation, duplicate handling, activity logging
+ */

@@ -1,3 +1,9 @@
+/**
+ * @file route.ts
+ * @description Activity log API - audit trail for all user actions within the organization
+ * @module system/activity
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withErrorHandler } from '@/lib/http/handler';
@@ -75,3 +81,13 @@ export const GET = withErrorHandler(async (request: NextRequest, { prisma, tenan
     },
   });
 }, { requireAuth: true, requireAdmin: true });
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes: Added JSDoc module documentation at top
+ * Issues: None - activity log access properly secured with admin authorization,
+ *         Zod validation for query parameters, pagination support,
+ *         tenant isolation automatic via prisma extension
+ */

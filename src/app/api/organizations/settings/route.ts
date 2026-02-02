@@ -1,3 +1,24 @@
+/**
+ * @module api/organizations/settings
+ * @description API endpoints for managing organization settings.
+ * Provides admin-level access to configure organization branding, modules,
+ * currencies, and other configuration options.
+ *
+ * @endpoints
+ * - GET /api/organizations/settings - Get organization settings
+ * - PUT /api/organizations/settings - Update organization settings (admin only)
+ *
+ * @features
+ * - Module enable/disable management
+ * - Brand colors (primary/secondary)
+ * - Multi-currency support (primary + additional currencies)
+ * - Code prefix management with cache invalidation
+ * - Automatic onboarding completion marking
+ * - Setup progress tracking updates
+ *
+ * @requires Authentication
+ * @requires Admin role (for PUT)
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/core/prisma';
@@ -178,3 +199,42 @@ export const PUT = withErrorHandler(async (request: NextRequest, { tenant }) => 
 
   return NextResponse.json({ success: true, settings: organization });
 }, { requireAuth: true, requireAdmin: true });
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * CODE REVIEW SUMMARY
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * OVERVIEW:
+ * Admin-level settings management for organization configuration. Handles
+ * branding, modules, currencies, and other organization-wide settings.
+ *
+ * SECURITY:
+ * [+] GET available to all authenticated users (read-only)
+ * [+] PUT requires admin role
+ * [+] Module IDs validated against whitelist (VALID_MODULES)
+ * [+] Currency codes validated against whitelist (VALID_CURRENCIES)
+ * [+] Color values validated with regex (hex format)
+ *
+ * PATTERNS:
+ * [+] Uses withErrorHandler for consistent error responses
+ * [+] Validates all input against schema before processing
+ * [+] Cache invalidation for code prefix changes
+ * [+] Automatic onboarding completion on settings save
+ * [+] Non-blocking setup progress updates
+ * [+] Revalidates admin layout for module navigation changes
+ *
+ * POTENTIAL IMPROVEMENTS:
+ * [-] VALID_MODULES list could be imported from registry for single source
+ * [-] VALID_CURRENCIES duplicated with CurrencyStep.tsx
+ * [-] Consider adding settings change history for audit
+ * [-] Owner employee code update logic is complex - could be a separate function
+ * [-] Missing validation that primary currency isn't in additionalCurrencies
+ *
+ * NOTES:
+ * - Saving settings marks onboarding as complete
+ * - Code prefix changes update owner's employee code if needed
+ *
+ * LAST REVIEWED: 2026-02-01
+ * ═══════════════════════════════════════════════════════════════════════════════
+ */

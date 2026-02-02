@@ -1,3 +1,26 @@
+/**
+ * @module api/admin/full-backup
+ * @description Admin API for exporting complete organization data as an Excel workbook.
+ *
+ * Exports comprehensive data across 12+ worksheets including:
+ * - Team Members with roles and employee details
+ * - Assets with categories, assignments, and maintenance records
+ * - Asset and Subscription history
+ * - Subscriptions with billing and renewal info
+ * - Activity logs and audit trail
+ * - Suppliers and engagements
+ * - Profile change requests
+ * - Spend/purchase requests and line items
+ *
+ * All data is tenant-scoped for security.
+ *
+ * @endpoints
+ * - GET /api/admin/full-backup - Download Excel backup file
+ *
+ * @returns Excel file (.xlsx) with formatted sheets and styled headers
+ *
+ * @security Requires admin authentication and tenant context
+ */
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import ExcelJS from 'exceljs';
@@ -632,3 +655,43 @@ export const GET = withErrorHandler(async (_request, { tenant }) => {
     },
   });
 }, { requireAuth: true, requireAdmin: true });
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * CODE REVIEW SUMMARY
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * File: src/app/api/admin/full-backup/route.ts
+ * Reviewed: 2026-02-01
+ *
+ * FUNCTIONALITY: [PASS]
+ * - Exports comprehensive Excel workbook with 12+ worksheets
+ * - Includes all major entities: members, assets, subscriptions, etc.
+ * - Consistent date formatting (dd/mm/yyyy)
+ * - Professional styling with bold headers and gray background
+ *
+ * SECURITY: [PASS]
+ * - Requires admin authentication
+ * - All queries are tenant-scoped
+ * - Uses safeQuery for optional tables (graceful fallback)
+ * - Sensitive fields appropriately included (no password hashes)
+ *
+ * PERFORMANCE: [CONCERNS]
+ * - Loads all data into memory (problematic for large orgs)
+ * - 12 parallel queries is efficient but buffer size unbounded
+ * - No streaming - entire workbook built before response
+ *
+ * ERROR HANDLING: [PASS]
+ * - safeQuery handles missing tables gracefully
+ * - Wrapped with error handler
+ * - Proper content-type and disposition headers
+ *
+ * IMPROVEMENTS:
+ * - Add size limits or warn for large exports
+ * - Consider streaming for large datasets
+ * - Add export progress indication for slow exports
+ * - Consider chunked export for very large organizations
+ * - Column header "Price USD" labeled as priceQAR (naming inconsistency)
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ */

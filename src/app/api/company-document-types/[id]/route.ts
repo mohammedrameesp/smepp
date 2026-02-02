@@ -1,3 +1,17 @@
+/**
+ * @module api/company-document-types/[id]
+ * @description API endpoints for managing individual company document types.
+ * Supports retrieval, update, and deletion of document type records.
+ * All operations verify tenant ownership to prevent cross-tenant access (IDOR protection).
+ *
+ * @endpoints
+ * - GET    /api/company-document-types/[id] - Get a single document type
+ * - PUT    /api/company-document-types/[id] - Update a document type (admin only)
+ * - DELETE /api/company-document-types/[id] - Delete a document type (admin only)
+ *
+ * @requires Authentication
+ * @requires Module: documents
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
@@ -123,3 +137,34 @@ export const DELETE = withErrorHandler(async (
 
   return NextResponse.json({ success: true });
 }, { requireAdmin: true, requireModule: 'documents' });
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * CODE REVIEW SUMMARY
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * OVERVIEW:
+ * Implements single document type management endpoints (GET/PUT/DELETE) with
+ * proper tenant isolation and IDOR protection.
+ *
+ * SECURITY:
+ * [+] IDOR protection via findFirst with tenantId filter before any operation
+ * [+] PUT/DELETE require admin role
+ * [+] Code uniqueness validation on update (tenant-scoped)
+ * [+] Module access control via requireModule: 'documents'
+ * [+] Consistent 404 for both not found and wrong tenant (prevents enumeration)
+ *
+ * PATTERNS:
+ * [+] Uses partial schema for PUT to allow partial updates
+ * [+] Existence check before update/delete operations
+ * [+] Consistent error messages across endpoints
+ *
+ * POTENTIAL IMPROVEMENTS:
+ * [-] DELETE does not check if document type is in use by documents
+ * [-] Consider cascade behavior or prevent deletion if documents exist
+ * [-] Missing activity logging for updates and deletions
+ * [-] Consider returning updated/deleted entity in response
+ *
+ * LAST REVIEWED: 2026-02-01
+ * ═══════════════════════════════════════════════════════════════════════════════
+ */

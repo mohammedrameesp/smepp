@@ -1,3 +1,12 @@
+/**
+ * @module app/employee/(hr)/payroll/payslips
+ * @description Loading skeleton for the payslips list page.
+ *
+ * Features:
+ * - Year filter tabs skeleton
+ * - Table with 7-column grid skeleton
+ * - Pagination controls skeleton
+ */
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { FileText } from 'lucide-react';
@@ -74,3 +83,12 @@ export default function PayslipsListLoading() {
     </>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation at top
+ * Issues: None - loading skeleton matches payslips list layout
+ */

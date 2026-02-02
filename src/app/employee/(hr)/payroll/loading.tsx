@@ -1,3 +1,12 @@
+/**
+ * @module app/employee/(hr)/payroll
+ * @description Loading skeleton for the payroll overview page.
+ *
+ * Features:
+ * - Salary overview card with component breakdown
+ * - Quick stats grid (3 cards)
+ * - Recent payslips list skeleton
+ */
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { FileText, Calculator, CreditCard, DollarSign } from 'lucide-react';
@@ -106,3 +115,12 @@ export default function PayrollOverviewLoading() {
     </>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation at top
+ * Issues: None - loading skeleton matches payroll overview layout
+ */

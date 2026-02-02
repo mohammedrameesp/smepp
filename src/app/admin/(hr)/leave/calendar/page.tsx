@@ -1,3 +1,10 @@
+/**
+ * @module app/admin/(hr)/leave/calendar
+ * @description Admin calendar view for team leave schedules.
+ * Provides a visual overview of approved leave across all team members
+ * with pending request count and quick navigation to related pages.
+ */
+
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
@@ -77,3 +84,17 @@ export default async function AdminLeaveCalendarPage() {
     </>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation
+ * Issues: None - File follows best practices:
+ *   - Uses batched Promise.all for database queries (avoids N+1)
+ *   - Proper tenant isolation with tenantId filtering
+ *   - Auth checks for admin OR HR access
+ *   - Clean server component with client-side calendar delegation
+ *   - No console.log statements
+ */

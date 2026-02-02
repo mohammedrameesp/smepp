@@ -1,3 +1,13 @@
+/**
+ * @module app/employee/(operations)/asset-requests/[id]
+ * @description Loading skeleton for the asset request detail page.
+ *
+ * Features:
+ * - Status badges skeleton in header
+ * - Asset details card with 4-field grid
+ * - Request details section
+ * - Activity history timeline skeleton
+ */
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Package, FileText, Clock } from 'lucide-react';
@@ -100,3 +110,12 @@ export default function AssetRequestDetailLoading() {
     </>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation at top
+ * Issues: None - loading skeleton matches asset request detail layout
+ */

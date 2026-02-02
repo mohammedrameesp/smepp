@@ -1,3 +1,31 @@
+/**
+ * @module super-admin/email-failures/page
+ * @description Email delivery failure monitoring and management page.
+ * Tracks failed email sends across all modules and organizations with
+ * resolution workflow and cleanup capabilities.
+ *
+ * @features
+ * - Statistics dashboard (total, unresolved, last 24h, top module)
+ * - Filterable list by module, tenant, and resolution status
+ * - Bulk selection for batch resolve/unresolve operations
+ * - Resolution notes tracking with timestamp and resolver info
+ * - Cleanup function to delete old resolved failures (30+ days)
+ * - Pagination for large datasets
+ *
+ * @modules-tracked
+ * - assets, asset-requests, leave, spend-requests
+ * - suppliers, users, hr, auth
+ *
+ * @workflow
+ * - Failures logged automatically when email send fails
+ * - Admin reviews and marks as resolved with optional notes
+ * - Old resolved failures can be cleaned up to reduce database size
+ *
+ * @api
+ * - GET /api/super-admin/email-failures - List with filters and stats
+ * - PATCH /api/super-admin/email-failures - Bulk resolve/unresolve
+ * - DELETE /api/super-admin/email-failures - Clean up old resolved
+ */
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -591,3 +619,59 @@ export default function EmailFailuresPage() {
     </div>
   );
 }
+
+/* =============================================================================
+ * CODE REVIEW SUMMARY
+ * =============================================================================
+ *
+ * File: src/app/super-admin/email-failures/page.tsx
+ * Type: Client Component
+ * Last Reviewed: 2026-02-01
+ *
+ * PURPOSE:
+ * Monitors and manages email delivery failures across all platform modules.
+ * Provides resolution workflow and cleanup capabilities for failed emails.
+ *
+ * ARCHITECTURE:
+ * - Client component for interactive filtering and bulk operations
+ * - Stats dashboard for quick health assessment
+ * - Multi-filter support with URL-based pagination
+ * - Bulk selection for batch resolve/unresolve operations
+ * - Resolution notes for audit trail
+ *
+ * API INTEGRATION:
+ * - GET: Fetch failures with filters (module, tenant, resolved, pagination)
+ * - PATCH: Bulk update resolution status with notes
+ * - DELETE: Clean up resolved failures older than 30 days
+ *
+ * FILTER OPTIONS:
+ * - Module: assets, asset-requests, leave, spend-requests, suppliers, users, hr, auth
+ * - Tenant: Organization-specific filtering
+ * - Status: Resolved/Unresolved/All
+ *
+ * WORKFLOW:
+ * 1. Email send fails -> logged to EmailFailure table
+ * 2. Admin reviews failures in this UI
+ * 3. Admin investigates and resolves with optional notes
+ * 4. Periodic cleanup removes old resolved failures
+ *
+ * SECURITY CONSIDERATIONS:
+ * [+] Resolution tracking with timestamp and resolver ID
+ * [+] Confirmation dialog for bulk operations
+ * [!] Email addresses displayed - consider masking for privacy
+ *
+ * UI/UX:
+ * [+] Module-specific color coding
+ * [+] Bulk selection with select-all
+ * [+] Pagination for large datasets
+ * [+] Reset filters button
+ * [-] No export functionality
+ *
+ * POTENTIAL IMPROVEMENTS:
+ * - Add retry failed email functionality
+ * - Implement automatic retry with exponential backoff
+ * - Add email content preview in detail view
+ * - Create alerting rules for failure thresholds
+ * - Add chart showing failure trends over time
+ *
+ * =========================================================================== */

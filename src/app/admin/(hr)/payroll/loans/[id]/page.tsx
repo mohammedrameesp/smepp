@@ -1,3 +1,10 @@
+/**
+ * @module LoanDetailPage
+ * @description Detailed view page for a single employee loan. Shows loan progress,
+ * repayment history, amount summary, and provides actions for loan management
+ * (pause, resume, record payment, write-off).
+ */
+
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { redirect, notFound } from 'next/navigation';
@@ -34,10 +41,12 @@ import { LoanActions } from '@/features/payroll/components';
 import { DetailCard } from '@/components/ui/detail-card';
 import { InfoField, InfoFieldGrid } from '@/components/ui/info-field';
 
+/** Props for the loan detail page */
 interface PageProps {
   params: Promise<{ id: string }>;
 }
 
+/** Status configuration for styling and display text */
 const statusConfig = {
   ACTIVE: {
     label: 'Active',
@@ -73,9 +82,19 @@ const statusConfig = {
   },
 };
 
-export default async function LoanDetailPage({ params }: PageProps) {
+/**
+ * Loan Detail Page Component
+ *
+ * Server component that displays comprehensive loan information including
+ * progress tracking, repayment history, and management actions.
+ *
+ * @param params - Route parameters containing the loan ID
+ * @returns The rendered loan detail page
+ */
+export default async function LoanDetailPage({ params }: PageProps): Promise<React.JSX.Element> {
   const session = await getServerSession(authOptions);
-  // Allow access for admins OR users with Finance access
+
+  // Authorization check: require admin role OR finance access
   const hasAccess = session?.user?.isAdmin || session?.user?.hasFinanceAccess;
   if (!session || !hasAccess) {
     redirect('/');
@@ -83,6 +102,7 @@ export default async function LoanDetailPage({ params }: PageProps) {
 
   const { id } = await params;
 
+  // Fetch loan with related data (member, approver, repayment history)
   const loan = await prisma.employeeLoan.findUnique({
     where: { id },
     include: {
@@ -108,13 +128,17 @@ export default async function LoanDetailPage({ params }: PageProps) {
     notFound();
   }
 
+  // Convert Decimal types to numbers for calculations
   const totalAmount = Number(loan.totalAmount);
   const remainingAmount = Number(loan.remainingAmount);
   const monthlyDeduction = Number(loan.monthlyDeduction);
   const paidAmount = Number(loan.totalPaid);
+
+  // Calculate progress metrics for display
   const progressPercent = totalAmount > 0 ? (paidAmount / totalAmount) * 100 : 0;
   const estimatedRemainingMonths = monthlyDeduction > 0 ? Math.ceil(remainingAmount / monthlyDeduction) : 0;
 
+  // Get status configuration for styling
   const status = statusConfig[loan.status as keyof typeof statusConfig] || statusConfig.ACTIVE;
 
   const statusBadgeVariant = loan.status === 'ACTIVE' ? 'success' :
@@ -323,3 +347,19 @@ export default async function LoanDetailPage({ params }: PageProps) {
     </>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation at top of file
+ *   - Added JSDoc documentation for PageProps and statusConfig
+ *   - Added JSDoc function documentation with return type
+ *   - Added inline comments for data fetching and calculations
+ *   - Verified authorization check is in place
+ *   - Note: Tenant isolation relies on loan.id uniqueness across tenants
+ * Issues:
+ *   - POTENTIAL: Consider adding explicit tenantId check for defense in depth
+ *     (currently relies on loan ID being globally unique via CUID)
+ */

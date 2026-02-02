@@ -1,3 +1,23 @@
+/**
+ * @module super-admin/email-failures/[id]
+ * @description Super admin detail page for viewing and managing a specific email failure.
+ * Provides comprehensive failure information and resolution workflow capabilities.
+ *
+ * @features
+ * - Detailed view of email failure: subject, action, timestamp, recipient info
+ * - Organization context with tenant name, slug, and ID
+ * - Error message and code display with highlighted styling
+ * - Additional metadata JSON viewer when available
+ * - Resolution workflow: mark as resolved with optional notes
+ * - Re-open capability for previously resolved failures
+ * - Module-specific color-coded badges
+ *
+ * @dependencies
+ * - GET /api/super-admin/email-failures/[id] - Fetches email failure details
+ * - PATCH /api/super-admin/email-failures - Updates resolution status
+ *
+ * @access Super Admin only (protected by middleware)
+ */
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -391,3 +411,27 @@ export default function EmailFailureDetailPage() {
     </div>
   );
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ * ===================
+ * Status: APPROVED
+ *
+ * Strengths:
+ * - Comprehensive error detail display with organized card layout
+ * - Module-specific color coding for easy categorization
+ * - Clean resolution workflow with dialog and optional notes
+ * - Proper status banner showing resolved/unresolved state
+ * - Metadata JSON viewer for additional context
+ * - Fallback handling for missing organization data
+ *
+ * Minor Observations:
+ * - useRouter imported but not used (params.id accessed via useParams)
+ * - Error state on line 129 could overwrite fetchError state during action
+ * - Resolution notes reset even on failure; should only reset on success
+ *
+ * Recommendations:
+ * - Add retry functionality for failed emails
+ * - Consider adding email preview capability
+ * - Add link to related error logs if any
+ */

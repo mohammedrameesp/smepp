@@ -1,3 +1,27 @@
+/**
+ * @module app/forgot-password/page
+ * @description Forgot password page for initiating password reset flow.
+ *
+ * This page allows users to request a password reset email. It's tenant-aware
+ * and displays appropriate branding when accessed from an organization subdomain.
+ *
+ * Key features:
+ * - Email input form with validation
+ * - Tenant-specific branding via TenantBrandedPanel
+ * - Success state with email confirmation message
+ * - Consistent "try again" option if email not received
+ * - Links back to login page
+ * - Passes orgSlug to API for tenant context
+ *
+ * Security notes:
+ * - Does not reveal whether email exists in system (prevents enumeration)
+ * - Rate limiting handled by API endpoint
+ *
+ * @dependencies
+ * - useSubdomain: Hook to detect tenant subdomain
+ * - useTenantBranding: Fetch org branding colors and logo
+ * - TenantBrandedPanel: Left-side branding panel
+ */
 'use client';
 
 import { useState } from 'react';
@@ -207,3 +231,38 @@ export default function ForgotPasswordPage() {
     </div>
   );
 }
+
+/* =============================================================================
+ * CODE REVIEW SUMMARY
+ * =============================================================================
+ *
+ * WHAT THIS FILE DOES:
+ * Provides a form for users to request a password reset email. Tenant-aware
+ * with organization-specific branding.
+ *
+ * KEY STATES:
+ * - Form: Initial email input state
+ * - Loading: While sending reset request
+ * - Success: Shows confirmation message (same regardless of email existence)
+ *
+ * POTENTIAL ISSUES:
+ * 1. [LOW] No rate limiting on client side - relies entirely on API
+ * 2. [LOW] Could add email format validation before submission
+ *
+ * SECURITY CONSIDERATIONS:
+ * - Does NOT reveal if email exists (prevents enumeration attacks)
+ * - Success message is generic: "If an account exists..."
+ * - orgSlug passed to API for tenant context
+ *
+ * PERFORMANCE:
+ * - Simple component with minimal state
+ * - Branding loaded via hook, cached if same subdomain
+ *
+ * ACCESSIBILITY:
+ * - Proper form labels
+ * - Loading states indicated visually and via disabled buttons
+ * - Success/error states have appropriate visual indicators
+ *
+ * LAST REVIEWED: 2025-01-27
+ * REVIEWED BY: Code Review System
+ * =========================================================================== */

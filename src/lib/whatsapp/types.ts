@@ -371,33 +371,3 @@ export const WHATSAPP_TEMPLATES = {
 /** Type for template name values */
 export type WhatsAppTemplateName = (typeof WHATSAPP_TEMPLATES)[keyof typeof WHATSAPP_TEMPLATES];
 
-/*
- * ========== CODE REVIEW SUMMARY ==========
- * File: types.ts
- * Reviewed: 2026-01-29
- *
- * CHANGES MADE:
- * - Added @file, @description, @module JSDoc tags
- * - Added @example in file header
- * - Added JSDoc comments to all interfaces with field descriptions
- * - Added @security warnings for sensitive data types
- * - Added @remarks for template configuration dependency
- * - Fixed currency comment for Qatar default
- *
- * SECURITY NOTES:
- * - WhatsAppConfigData contains decrypted access token - documented with @security
- * - ActionTokenPayload stores sensitive data - documented
- *
- * REMAINING CONCERNS:
- * - None
- *
- * REQUIRED TESTS:
- * - [ ] Type inference tests (compile-time only)
- * - [ ] WHATSAPP_TEMPLATES values match Meta registration
- *
- * DEPENDENCIES:
- * - Imports from: @prisma/client (ApprovalModule)
- * - Used by: All other whatsapp module files
- *
- * PRODUCTION READY: YES
- */

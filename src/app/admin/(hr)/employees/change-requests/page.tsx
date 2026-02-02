@@ -1,9 +1,16 @@
+/**
+ * @module app/admin/(hr)/employees/change-requests
+ * @description Admin page for reviewing and managing employee profile change
+ * requests. Displays pending, approved, and rejected request counts with
+ * navigation to related pages (employees, document expiry).
+ */
+
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { redirect } from 'next/navigation';
 
-import { Users, AlertTriangle, FileText } from 'lucide-react';
+import { Users, FileText } from 'lucide-react';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 import { ChangeRequestsClient } from './client';
@@ -87,3 +94,18 @@ export default async function ChangeRequestsPage() {
     </>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation
+ *   - Removed unused import 'AlertTriangle' from lucide-react
+ * Issues: None - File follows best practices:
+ *   - Uses batched Promise.all for database queries (avoids N+1)
+ *   - Proper tenant isolation with tenantId filtering
+ *   - Auth checks for admin OR HR access
+ *   - Clean server component with client-side table delegation
+ *   - No console.log statements
+ */

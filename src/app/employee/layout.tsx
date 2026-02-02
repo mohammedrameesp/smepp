@@ -1,3 +1,22 @@
+/**
+ * @module app/employee
+ * @description Root layout for the Employee Portal.
+ *
+ * This server component handles authentication, authorization, and context setup
+ * for all employee-facing pages. It fetches organization settings from the database
+ * and passes them to the client layout component.
+ *
+ * Features:
+ * - Authentication enforcement (redirects to /login if unauthenticated)
+ * - Role-based access control (non-employees redirected to /admin or /no-access)
+ * - Organization deletion detection (redirects to /org-deleted if org no longer exists)
+ * - Dynamic metadata generation with organization name
+ * - Admin employee-view mode support via cookie
+ * - Onboarding status checking for new employees
+ * - AI chat feature flag passed to client layout
+ *
+ * @see EmployeeLayoutClient - Client component that renders the actual layout
+ */
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
@@ -129,3 +148,12 @@ export default async function EmployeeLayout({
     </EmployeeLayoutClient>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation at top
+ * Issues: None - well-structured server component with proper auth checks
+ */

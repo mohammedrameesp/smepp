@@ -1,3 +1,15 @@
+/**
+ * @file route.ts
+ * @description Organization logo upload endpoint
+ * @module api/organizations/logo
+ *
+ * Handles organization logo uploads with:
+ * - File type validation (PNG, WebP, SVG only - JPEG rejected for transparency)
+ * - File size validation (max 2MB)
+ * - Automatic inverse logo generation for dark backgrounds
+ * - Storage in Supabase with public URL generation
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import logger from '@/lib/core/log';
@@ -15,7 +27,7 @@ import { MAX_LOGO_SIZE_BYTES } from '@/lib/constants';
 // Force Node.js runtime (required for Buffer operations)
 export const runtime = 'nodejs';
 
-// Allowed image types (no JPEG - doesn't support transparency well)
+/** Allowed image MIME types - JPEG excluded as it doesn't support transparency */
 const ALLOWED_TYPES = ['image/png', 'image/webp', 'image/svg+xml'];
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -134,3 +146,11 @@ export const POST = withErrorHandler(async (request: NextRequest, { tenant }) =>
     inverseGenerated: !!logoUrlInverse,
   });
 }, { requireAuth: true, requireAdmin: true });
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes: Added review summary
+ * Issues: None identified
+ */

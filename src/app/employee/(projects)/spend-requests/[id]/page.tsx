@@ -1,3 +1,27 @@
+/**
+ * @module app/employee/(projects)/spend-requests/[id]/page
+ * @description Employee spend request detail view. Displays comprehensive information
+ * about a specific spend request including approval chain status, line items, and history.
+ * Allows employees to view request status and delete pending requests.
+ *
+ * @route /employee/spend-requests/[id]
+ * @access Authenticated employees (own requests only)
+ *
+ * @dependencies
+ * - spend-request-utils: Status labels and delete permission logic
+ * - ApprovalChainStatus: Multi-level approval visualization component
+ * - datetime utilities: Date formatting functions
+ *
+ * @features
+ * - Approval chain progress visualization
+ * - Line items table with pricing details
+ * - Request history timeline
+ * - Review/rejection notes display
+ * - Delete functionality for pending requests
+ * - Loading and error states with navigation
+ * - QAR conversion display for non-QAR currencies
+ */
+
 'use client';
 
 import { useState, useEffect, use, useCallback } from 'react';
@@ -491,3 +515,47 @@ export default function EmployeeSpendRequestDetailPage({ params }: { params: Pro
     </>
   );
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ *
+ * Purpose: Detail view for employee's own spend request with approval progress
+ *
+ * Key Logic:
+ * - Uses React 19 `use()` hook for async params resolution
+ * - Fetches request data on mount with useCallback for stable reference
+ * - Delete only allowed for PENDING/DRAFT status (via canDeleteRequest util)
+ * - Approval chain visualization shows multi-level approval progress
+ *
+ * Data Flow:
+ * - Client component fetches from /api/spend-requests/[id]
+ * - API handles tenant-scoping and ownership verification
+ * - State management: request, loading, deleting, error
+ *
+ * UI States:
+ * - Loading: Spinner with skeleton header
+ * - Error: Error message with back navigation
+ * - Not found: Clear message with back navigation
+ * - Success: Full detail view with conditional sections
+ *
+ * Security:
+ * - API endpoint verifies requesterId matches session.user.id
+ * - Delete confirmation via AlertDialog
+ * - No direct editing from this page (view-only)
+ *
+ * Edge Cases:
+ * - Request not found: Shows not found state
+ * - API error: Shows error state but keeps navigation
+ * - Delete failure: Error displayed in banner, stays on page
+ * - Multi-currency: Shows QAR conversion if currency !== 'QAR'
+ *
+ * Dependencies:
+ * - ApprovalChainStatus: Shared approval visualization component
+ * - StatusBadge, PriorityBadge: Consistent status display
+ * - canDeleteRequest: Shared business logic for delete permission
+ *
+ * Future Considerations:
+ * - Edit functionality for pending requests
+ * - Print/PDF export capability
+ * - Comments/notes thread with admin
+ */

@@ -1,3 +1,28 @@
+/**
+ * @module api/chat
+ * @description AI chat API with conversation management.
+ *
+ * Provides the main chat interface for AI-powered conversations with full
+ * security controls including rate limiting, input sanitization, and audit logging.
+ * Supports conversation CRUD operations with proper authorization.
+ *
+ * @route POST /api/chat - Send message and get AI response
+ * @route GET /api/chat - List conversations or get conversation messages
+ * @route DELETE /api/chat - Delete a conversation
+ *
+ * @security
+ * - Requires authentication for all endpoints
+ * - Organization-level AI chat enable/disable check
+ * - Multi-tier rate limiting (per-user, per-org, concurrent)
+ * - Input sanitization for prompt injection prevention
+ * - CSRF verification on DELETE operations
+ * - Audit logging with token usage tracking
+ *
+ * @ratelimits
+ * - Per-user: Based on subscription tier
+ * - Per-org: Monthly token budget
+ * - Concurrent: Max 3 simultaneous requests per user
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { withErrorHandler } from '@/lib/http/handler';
@@ -287,3 +312,41 @@ export const DELETE = withErrorHandler(async (request: NextRequest, { tenant }) 
 
   return NextResponse.json({ success: true });
 }, { requireAuth: true });
+
+/* =============================================================================
+ * CODE REVIEW SUMMARY
+ * =============================================================================
+ *
+ * OVERVIEW:
+ * Main AI chat API providing conversation management with comprehensive
+ * security controls. Supports message sending, conversation listing, and
+ * deletion with full audit trail.
+ *
+ * SECURITY ASSESSMENT: GOOD
+ * - Authentication required for all endpoints
+ * - Multi-tier rate limiting (user, org, concurrent)
+ * - Input sanitization prevents prompt injection
+ * - CSRF verification on DELETE operations
+ * - Audit logging with token tracking
+ * - Organization-level AI enable/disable control
+ *
+ * POTENTIAL IMPROVEMENTS:
+ * 1. Add message encryption at rest
+ * 2. Content moderation for AI responses
+ * 3. Rate limit headers in all responses (not just 429)
+ * 4. Webhook notifications for admin audit alerts
+ *
+ * RATE LIMIT TIERS:
+ * - Per-user: Based on subscription tier
+ * - Per-org: Monthly token budget
+ * - Concurrent: Max 3 simultaneous requests
+ *
+ * DEPENDENCIES:
+ * - @/lib/ai/chat-service: Core chat processing
+ * - @/lib/ai/input-sanitizer: Prompt injection prevention
+ * - @/lib/ai/rate-limiter: Multi-tier rate limiting
+ * - @/lib/ai/audit-logger: Security audit trail
+ * - @/lib/ai/budget-tracker: Token usage monitoring
+ *
+ * LAST REVIEWED: 2026-02-01
+ * ============================================================================= */

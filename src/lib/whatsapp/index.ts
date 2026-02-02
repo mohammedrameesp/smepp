@@ -129,33 +129,3 @@ export {
   notifyApproversViaWhatsApp,
   notifyNextLevelApproversViaWhatsApp,
 } from './approval-integration';
-
-/*
- * ========== CODE REVIEW SUMMARY ==========
- * File: index.ts
- * Reviewed: 2026-01-29
- *
- * CHANGES MADE:
- * - Added @file, @description, @module JSDoc tags
- * - Added @example showing common usage patterns
- * - Organized exports into logical sections with headers
- * - Added inline comments for export categories
- *
- * SECURITY NOTES:
- * - Encryption functions (encrypt/decrypt) are exported for flexibility
- *   but should only be used for WhatsApp tokens
- *
- * REMAINING CONCERNS:
- * - None
- *
- * REQUIRED TESTS:
- * - [ ] All exports are accessible
- * - [ ] No circular dependencies
- *
- * DEPENDENCIES:
- * - Re-exports from: types, config, client, action-tokens, templates,
- *   send-notification, approval-integration
- * - Used by: API routes, approval workflow handlers
- *
- * PRODUCTION READY: YES
- */

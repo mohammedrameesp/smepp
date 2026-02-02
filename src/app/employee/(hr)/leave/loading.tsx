@@ -1,9 +1,23 @@
+/**
+ * @file loading.tsx
+ * @module app/employee/(hr)/leave
+ * @description Loading skeleton for the employee leave dashboard page.
+ *
+ * Features:
+ * - Skeleton cards matching leave balance card layout
+ * - Recent requests and upcoming leaves skeleton sections
+ * - Maintains consistent layout during data fetching
+ */
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Clock, FileText } from 'lucide-react';
 import { ICON_SIZES } from '@/lib/constants';
 
-export default function LeaveLoading() {
+/**
+ * Loading skeleton component for the leave dashboard.
+ * @returns Skeleton UI matching the leave page layout
+ */
+export default function LeaveLoading(): React.JSX.Element {
   return (
     <>
       <PageHeader
@@ -88,3 +102,13 @@ export default function LeaveLoading() {
     </>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation at top
+ *   - Added function documentation with return type
+ * Issues: None - simple loading skeleton component
+ */

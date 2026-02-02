@@ -1,3 +1,10 @@
+/**
+ * @module app/admin/(projects)/spend-requests/[id]/page
+ * @description Admin spend request detail page. Displays full spend request information
+ * including line items, approval chain status, vendor details, and history. Allows admins
+ * to review and update request status (approve, reject, mark complete).
+ */
+
 'use client';
 
 import { useState, useEffect, use, useCallback } from 'react';
@@ -623,3 +630,44 @@ export default function AdminSpendRequestDetailPage({ params }: { params: Promis
     </div>
   );
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ *
+ * Purpose:
+ * Comprehensive admin detail page for viewing and managing individual spend requests.
+ * Displays all request information, line items, approval workflow, vendor details,
+ * and complete history. Provides status management controls for admins.
+ *
+ * Key Features:
+ * - Full spend request details with formatted amounts and dates
+ * - Line items table with item-level pricing and categories
+ * - Approval chain visualization showing multi-step approval progress
+ * - Vendor information section (name, contact, email)
+ * - Purchase and cost type details (purchase type, cost center, project, payment mode)
+ * - Complete history timeline with action icons
+ * - Status update actions with review notes
+ * - Requester and reviewer information cards
+ * - Loading skeleton and error states
+ * - Currency formatting with QAR conversion display
+ *
+ * Code Quality: Good
+ * - Well-structured with clear sections for different data areas
+ * - Uses React 19's use() hook for params unwrapping
+ * - Proper TypeScript interfaces for all data structures
+ * - Leverages shared components (StatusBadge, PriorityBadge, ApprovalChainStatus)
+ * - Imports utility functions from feature module (spend-request-utils)
+ * - Uses shared datetime formatting utilities
+ * - Good error handling with user-friendly messages
+ *
+ * Potential Improvements:
+ * - Component is quite large (600+ lines) - consider extracting sections into subcomponents
+ * - Could add loading states for individual sections during status updates
+ * - Consider adding edit functionality for request details
+ * - Could benefit from adding document/file attachments view
+ * - History section could support filtering/search for long histories
+ * - Consider adding print/export functionality
+ * - The formatAmount helper could be moved to shared utilities
+ * - Could add keyboard shortcuts for common approval actions
+ * - Consider optimistic updates for status changes
+ */

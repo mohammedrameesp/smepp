@@ -1,10 +1,24 @@
+/**
+ * @file route.ts
+ * @description Mark notification as read endpoint
+ * @module api/notifications/[id]/read
+ *
+ * Marks a single notification as read for the current user.
+ * Validates that the notification belongs to the requesting user.
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 
 /**
  * PATCH /api/notifications/[id]/read
- * Mark a single notification as read
+ *
+ * Mark a single notification as read.
+ * Verifies the notification belongs to the current user before updating.
+ *
+ * @param id - Notification ID from URL params
+ * @returns Updated notification object
  */
 export const PATCH = withErrorHandler(
   async (request: NextRequest, context: APIContext) => {
@@ -52,3 +66,15 @@ export const PATCH = withErrorHandler(
   },
   { requireAuth: true }
 );
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation at top
+ *   - Enhanced PATCH handler documentation
+ * Issues: None - Proper authorization check (recipientId === userId),
+ *   tenant isolation via tenant-scoped prisma client,
+ *   proper 404 and 403 error handling
+ */

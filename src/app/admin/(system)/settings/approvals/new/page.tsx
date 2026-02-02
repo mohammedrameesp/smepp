@@ -1,3 +1,16 @@
+/**
+ * @module admin/settings/approvals/new/page
+ * @description Form page for creating new multi-level approval policies.
+ * Supports configuring approval chains for leave requests, spend requests,
+ * and asset requests with customizable thresholds (days/amount), priority,
+ * and up to 5 approval levels with different approver roles.
+ *
+ * @route /admin/settings/approvals/new
+ * @access Admin only
+ * @dependencies
+ * - POST /api/approval-policies - Creates new approval policy
+ * - @/features/approvals - APPROVER_ROLES constant
+ */
 'use client';
 
 import { useState } from 'react';
@@ -308,3 +321,35 @@ export default function NewApprovalPolicyPage() {
     </>
   );
 }
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * CODE REVIEW SUMMARY
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * OVERVIEW:
+ * Form page for creating multi-level approval policies with dynamic threshold
+ * fields based on module type (days for leave, amount for spend/asset).
+ *
+ * STRENGTHS:
+ * - Dynamic form fields based on module selection
+ * - Visual approval chain builder with reorderable levels
+ * - Clear validation messages via toast notifications
+ * - Maximum 5 levels enforced with user feedback
+ * - Uses centralized APPROVER_ROLES from features/approvals
+ * - Proper navigation after successful creation
+ * - Level order automatically recalculated on removal
+ *
+ * POTENTIAL IMPROVEMENTS:
+ * - Add drag-and-drop reordering for approval levels
+ * - Consider form validation library (react-hook-form + zod) for better UX
+ * - Add preview of how the policy will apply to sample requests
+ * - Consider warning if similar policy already exists (overlapping thresholds)
+ *
+ * SECURITY:
+ * - Server-side validation on API route
+ * - Only numeric inputs for thresholds
+ * - Priority defaults to 0 if not set
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ */

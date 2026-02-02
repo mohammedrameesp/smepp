@@ -1,3 +1,10 @@
+/**
+ * @module app/admin/(hr)/payroll/salary-structures/[id]/edit/page
+ * @description Edit salary structure page - allows admins to modify existing employee
+ * salary components including basic salary and all allowances (housing, transport,
+ * food, phone, other). Displays employee information and provides real-time gross
+ * salary calculation preview. Supports updating the effective date for salary changes.
+ */
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -361,3 +368,39 @@ export default function EditSalaryStructurePage() {
     </>
   );
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ *
+ * Purpose: Client-side form for editing existing employee salary structures
+ * with real-time calculation preview.
+ *
+ * Key Features:
+ * - Displays current employee information (read-only)
+ * - Editable salary components (basic + all allowances)
+ * - Real-time gross salary and total allowances calculation
+ * - Effective date modification
+ * - Conditional display of non-zero allowances in summary
+ *
+ * Data Flow:
+ * - Fetches existing structure from /api/payroll/salary-structures/[id]
+ * - PUT request to same endpoint for updates
+ * - Redirects to list on success
+ *
+ * Security:
+ * - Client-side page (relies on API for authorization)
+ * - Form validation prevents invalid submissions
+ *
+ * Improvements Made:
+ * - Clean two-column layout (inputs + summary)
+ * - Real-time calculation preview
+ * - Good error handling with redirect on failure
+ * - Proper loading state with spinner
+ *
+ * Potential Improvements:
+ * - Add comparison with previous salary values
+ * - Add effective date validation (not before current date?)
+ * - Consider adding revision history display
+ * - Add confirmation dialog for significant changes
+ * - Consider adding auto-calculate mode like new page
+ */

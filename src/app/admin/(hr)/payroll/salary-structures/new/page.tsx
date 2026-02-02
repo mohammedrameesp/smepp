@@ -1,3 +1,11 @@
+/**
+ * @module app/admin/(hr)/payroll/salary-structures/new/page
+ * @description New salary structure creation page - allows admins to set up salary
+ * components for employees. Supports two modes: auto-calculate (enter total salary
+ * and percentages are applied) or manual entry of individual components. Includes
+ * configurable percentage breakdown for basic salary and allowances (housing,
+ * transport, food, phone, other) with real-time gross salary calculation preview.
+ */
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -531,3 +539,40 @@ export default function NewSalaryStructurePage() {
     </>
   );
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ *
+ * Purpose: Client-side form for creating new salary structures with flexible
+ * auto-calculate or manual entry modes.
+ *
+ * Key Features:
+ * - Employee selection (filtered to those without salary structure)
+ * - Two entry modes: auto-calculate from total or manual component entry
+ * - Configurable percentage breakdown for auto-calculation
+ * - Real-time gross salary preview
+ * - Effective date selection
+ * - Loads default percentages from organization settings
+ *
+ * Data Flow:
+ * - Fetches employees without salary structure from /api/team
+ * - Fetches default percentages from /api/settings/payroll-percentages
+ * - Posts to /api/payroll/salary-structures to create
+ *
+ * Security:
+ * - Client-side page (relies on API for authorization)
+ * - Form validation prevents invalid submissions
+ *
+ * Improvements Made:
+ * - Excellent dual-mode entry (auto vs manual)
+ * - Customizable percentage breakdown with validation
+ * - Real-time calculation preview
+ * - Good use of useCallback for memoized calculations
+ * - Clean form validation with user-friendly errors
+ *
+ * Potential Improvements:
+ * - Add option to copy from existing employee's structure
+ * - Add salary history preview for employee
+ * - Consider adding template selection for common structures
+ * - Add confirmation dialog before submission
+ */

@@ -1,3 +1,15 @@
+/**
+ * @module admin/settings/permissions/page
+ * @description Server page for role permission management. Fetches organization
+ * data and current permissions for Manager and Member roles, then renders the
+ * PermissionsClient component. Only accessible by Owner and Admin users.
+ *
+ * @route /admin/settings/permissions
+ * @access Owner and Admin only (server-side auth check)
+ * @dependencies
+ * - @/lib/access-control - getPermissionsForRole, PERMISSION_GROUPS
+ * - Prisma: Organization (enabledModules)
+ */
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { redirect } from 'next/navigation';
@@ -67,3 +79,33 @@ export default async function PermissionsSettingsPage() {
     </>
   );
 }
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * CODE REVIEW SUMMARY
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * OVERVIEW:
+ * Server component that fetches organization and permission data before
+ * rendering the client-side permission management interface.
+ *
+ * STRENGTHS:
+ * - Server-side auth check with appropriate redirects
+ * - Parallel permission fetching with Promise.all
+ * - Uses centralized PERMISSION_GROUPS constant
+ * - Passes enabledModules to client for module-aware UI
+ * - Clean data flow from server to client component
+ *
+ * POTENTIAL IMPROVEMENTS:
+ * - Add loading.tsx for streaming SSR experience
+ * - Consider error boundary for graceful error handling
+ * - Could add metadata export for SEO
+ *
+ * SECURITY:
+ * - Multiple auth checks: session, isOwner/isAdmin, organizationId
+ * - Tenant context validated before database query
+ * - Redirects to /admin on authorization failure
+ * - getPermissionsForRole respects enabled modules
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ */

@@ -1,3 +1,14 @@
+/**
+ * @module app/employee
+ * @description Loading skeleton for the Employee Dashboard page.
+ *
+ * Features:
+ * - Header skeleton with stat chip placeholders
+ * - Alert banner skeletons
+ * - Mobile-first responsive layout with stacked cards on mobile
+ * - Desktop 3-column grid layout for dashboard widgets
+ * - Matches the actual dashboard layout structure
+ */
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -75,3 +86,12 @@ export default function EmployeeDashboardLoading() {
     </>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation at top
+ * Issues: None - loading skeleton matches dashboard layout
+ */

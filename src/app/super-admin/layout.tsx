@@ -1,3 +1,25 @@
+/**
+ * @module super-admin/layout
+ * @description Super Admin Layout with embedded login form and 2FA verification.
+ * Provides the shell for all super admin pages including sidebar navigation,
+ * header with page context, and authentication gate.
+ *
+ * @features
+ * - Two-step login: credentials + 2FA verification
+ * - Embedded login form (no separate login page required)
+ * - Responsive sidebar with mobile drawer support
+ * - Dynamic page title/description based on route
+ * - 2FA enforcement banner for admins without 2FA enabled
+ *
+ * @authentication
+ * - Requires authenticated session with isSuperAdmin flag
+ * - Supports OTP code and backup code verification
+ * - Auto-redirects non-super-admins to homepage
+ *
+ * @navigation
+ * - Main: Dashboard, Organizations, Users
+ * - System: Super Admins, AI Management, Email Failures, Error Logs, Backups, Settings
+ */
 'use client';
 
 import { useSession, signIn, signOut } from 'next-auth/react';
@@ -26,6 +48,7 @@ import {
   EyeOff,
   MailWarning,
   AlertOctagon,
+  Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
 import { TwoFactorBanner } from '@/components/super-admin/two-factor-banner';
@@ -39,6 +62,7 @@ const mainNavItems = [
 
 const systemNavItems = [
   { icon: ShieldCheck, href: '/super-admin/admins', title: 'Super Admins' },
+  { icon: Sparkles, href: '/super-admin/ai-management', title: 'AI Management' },
   { icon: MailWarning, href: '/super-admin/email-failures', title: 'Email Failures' },
   { icon: AlertOctagon, href: '/super-admin/error-logs', title: 'Error Logs' },
   { icon: HardDrive, href: '/super-admin/backups', title: 'Backups' },
@@ -300,6 +324,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
     if (pathname.startsWith('/super-admin/organizations')) return { title: 'Organizations', description: 'Manage all registered organizations' };
     if (pathname.startsWith('/super-admin/users')) return { title: 'Users', description: 'View all platform users' };
     if (pathname.startsWith('/super-admin/admins')) return { title: 'Super Admins', description: 'Manage super admin accounts' };
+    if (pathname.startsWith('/super-admin/ai-management')) return { title: 'AI Management', description: 'Monitor AI usage and configure settings' };
     if (pathname.startsWith('/super-admin/email-failures')) return { title: 'Email Failures', description: 'Monitor and manage email delivery failures' };
     if (pathname.startsWith('/super-admin/error-logs')) return { title: 'Error Logs', description: 'Monitor and manage system errors across all services' };
     if (pathname.startsWith('/super-admin/settings')) return { title: 'Settings', description: 'Platform configuration' };
@@ -399,3 +424,49 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
     </div>
   );
 }
+
+/* =============================================================================
+ * CODE REVIEW SUMMARY
+ * =============================================================================
+ *
+ * File: src/app/super-admin/layout.tsx
+ * Type: Client Component (Layout with Auth Gate)
+ * Last Reviewed: 2026-02-01
+ *
+ * PURPOSE:
+ * Provides authentication gate and navigation shell for all super admin pages.
+ * Embeds login form directly in layout eliminating need for separate login route.
+ *
+ * ARCHITECTURE:
+ * - Client component for session management and interactivity
+ * - LoginForm embedded component for two-step authentication
+ * - SidebarContent extracted for desktop/mobile reuse
+ * - Hooks placed before conditional returns for React rules compliance
+ *
+ * AUTHENTICATION FLOW:
+ * 1. User submits credentials -> /api/super-admin/auth/login
+ * 2. If 2FA enabled: receives pending2faToken, shows OTP form
+ * 3. User submits OTP/backup code -> /api/super-admin/auth/verify-2fa
+ * 4. On success: receives loginToken, calls signIn('super-admin-credentials')
+ * 5. Session established, router.refresh() shows dashboard
+ *
+ * SECURITY CONSIDERATIONS:
+ * [+] Two-factor authentication support (TOTP + backup codes)
+ * [+] Password visibility toggle for UX
+ * [+] Auto-redirect non-super-admins to homepage
+ * [+] 2FA enforcement banner for admins without 2FA
+ * [!] Session check happens client-side (server middleware also validates)
+ *
+ * UI/UX:
+ * [+] Responsive sidebar with mobile drawer
+ * [+] Step indicator for login progress
+ * [+] Dynamic page title based on route
+ * [+] OTP paste support for convenience
+ *
+ * POTENTIAL IMPROVEMENTS:
+ * - Add rate limiting feedback for failed login attempts
+ * - Consider session timeout warning
+ * - Add keyboard shortcut for sidebar toggle
+ * - Implement "Remember this device" for 2FA
+ *
+ * =========================================================================== */

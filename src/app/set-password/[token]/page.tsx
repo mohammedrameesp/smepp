@@ -1,3 +1,30 @@
+/**
+ * @module app/set-password/[token]/page
+ * @description Initial password setup page for new users created by admins.
+ *
+ * This page is used when an admin creates a user account without a password.
+ * The user receives an email with a token link to set their initial password.
+ * This is different from password reset - it's for first-time password creation.
+ *
+ * Key features:
+ * - Token validation with specific error states (already_set, expired, invalid)
+ * - Displays user info (name, email) from token validation response
+ * - Password strength indicator using getPasswordStrength utility
+ * - Password confirmation with match validation
+ * - Show/hide password toggle for both fields
+ * - Tenant branding support via TenantBrandedPanel
+ * - Success state with auto-redirect to login
+ *
+ * Error states:
+ * - already_set: Password already created, redirect to login
+ * - expired: Token expired, contact admin for new invitation
+ * - invalid: Token invalid, contact admin for assistance
+ *
+ * @dependencies
+ * - getPasswordStrength: Password validation utility
+ * - useSubdomain/useTenantBranding: Tenant branding hooks
+ * - TenantBrandedPanel: Left-side branding panel
+ */
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -392,3 +419,36 @@ export default function SetPasswordPage() {
     </div>
   );
 }
+
+/* =============================================================================
+ * CODE REVIEW SUMMARY
+ * =============================================================================
+ *
+ * WHAT THIS FILE DOES:
+ * Enables users created by admins (without password) to set their initial password.
+ * Similar to reset-password but for first-time setup with different error handling.
+ *
+ * KEY DIFFERENCES FROM RESET-PASSWORD:
+ * - Error states include "already_set" (password already created)
+ * - Displays user name/email from invitation
+ * - Different messaging ("Create password" vs "Reset password")
+ * - "expired" error directs to admin (not forgot-password)
+ *
+ * POTENTIAL ISSUES:
+ * 1. [LOW] Password strength calculated multiple times per render - could memoize
+ * 2. [LOW] 3-second redirect delay is hardcoded
+ * 3. [LOW] renderErrorContent function could be extracted to a separate component
+ *
+ * SECURITY CONSIDERATIONS:
+ * - Token validated server-side before showing form
+ * - Returns user info only for valid tokens
+ * - Minimum 8 character password requirement
+ * - Token is single-use (consumed on password set)
+ *
+ * PERFORMANCE:
+ * - Token validation includes user info (single API call)
+ * - Error states rendered conditionally to avoid unnecessary DOM
+ *
+ * LAST REVIEWED: 2025-01-27
+ * REVIEWED BY: Code Review System
+ * =========================================================================== */

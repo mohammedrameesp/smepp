@@ -168,11 +168,6 @@ export async function requireRecent2FA(
  * File: require-recent-2fa.ts
  * Reviewed: 2025-01-29
  *
- * CHANGES MADE:
- * - Added comprehensive file-level documentation with security context
- * - Added JSDoc with @param, @returns, @security, @example for all exports
- * - Added inline documentation for interface fields
- * - Added list of sensitive operations that should use this module
  *
  * SECURITY NOTES:
  * - Implements step-up authentication for high-risk operations
@@ -183,16 +178,11 @@ export async function requireRecent2FA(
  * REMAINING CONCERNS:
  * - Consider requiring 2FA setup for all super admins (currently optional)
  *
- * REQUIRED TESTS:
- * - [x] Returns verified:true when 2FA disabled
- * - [x] Returns verified:false when 2FA enabled but never verified
- * - [x] Returns verified:true within time window
- * - [x] Returns verified:false after time window expires
- * - [x] requireRecent2FA returns proper NextResponse
+
  *
  * DEPENDENCIES:
  * - @/lib/core/prisma: Database access
  * - next/server: NextResponse
  *
- * PRODUCTION READY: YES
+
  */

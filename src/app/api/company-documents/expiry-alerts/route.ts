@@ -1,3 +1,19 @@
+/**
+ * @module api/company-documents/expiry-alerts
+ * @description API endpoint for retrieving company documents that are expired or expiring soon.
+ * Returns documents within the warning period (defined by DOCUMENT_EXPIRY_WARNING_DAYS)
+ * along with a summary of expired vs expiring counts.
+ *
+ * @endpoints
+ * - GET /api/company-documents/expiry-alerts - Get documents expiring soon or already expired
+ *
+ * @returns
+ * - alerts: Array of documents with expiry info (status, daysRemaining)
+ * - summary: { total, expired, expiring }
+ *
+ * @requires Authentication
+ * @requires Module: documents
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
@@ -64,3 +80,33 @@ export const GET = withErrorHandler(async (_request: NextRequest, context: APICo
     },
   });
 }, { requireAuth: true, requireModule: 'documents' });
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * CODE REVIEW SUMMARY
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * OVERVIEW:
+ * Provides a read-only endpoint for retrieving documents that are expired or
+ * approaching expiry. Used to power dashboard alerts and notification systems.
+ *
+ * SECURITY:
+ * [+] Tenant isolation via tenantId filter
+ * [+] Read-only operation (no state modification)
+ * [+] Module access control via requireModule: 'documents'
+ *
+ * PATTERNS:
+ * [+] Uses Qatar timezone for date calculations (business requirement)
+ * [+] Returns categorized alerts (expired vs expiring) with summary counts
+ * [+] Includes related asset info for context
+ * [+] Ordered by expiryDate ascending (most urgent first)
+ *
+ * POTENTIAL IMPROVEMENTS:
+ * [-] Consider adding pagination for organizations with many expiring documents
+ * [-] Missing caching headers for performance optimization
+ * [-] Consider adding filter for specific asset or document type
+ * [-] Could benefit from configurable warning period per-tenant
+ *
+ * LAST REVIEWED: 2026-02-01
+ * ═══════════════════════════════════════════════════════════════════════════════
+ */

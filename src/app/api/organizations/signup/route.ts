@@ -1,3 +1,29 @@
+/**
+ * @module api/organizations/signup
+ * @description Public organization signup endpoint for new tenant registration.
+ *
+ * Creates a new organization with initial setup including:
+ * - Organization record with FREE tier subscription
+ * - Setup progress tracking
+ * - Admin invitation with email verification
+ * - Default permissions, leave types, and asset categories (async seeding)
+ * - Welcome email and super admin notification
+ *
+ * @authentication None - Public endpoint
+ * @ratelimit None configured - consider adding for abuse prevention
+ *
+ * @example
+ * POST /api/organizations/signup
+ * {
+ *   "name": "Acme Corp",
+ *   "slug": "acme",
+ *   "adminEmail": "admin@acme.com",
+ *   "adminName": "John Doe",
+ *   "industry": "Technology",
+ *   "companySize": "11-50"
+ * }
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import logger from '@/lib/core/log';
@@ -317,3 +343,38 @@ Need help? Contact support@durj.qa
     );
   }
 }
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * CODE REVIEW SUMMARY
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * STRENGTHS:
+ * - Comprehensive validation using Zod schema before processing
+ * - Transaction-based organization creation ensures atomicity
+ * - Non-blocking async seeding prevents slow response times
+ * - Detailed welcome email with organization portal URL
+ * - Super admin notification for new signups (fire and forget)
+ * - Proper error handling with structured error responses
+ * - Case-insensitive email handling for consistency
+ *
+ * CONCERNS:
+ * - No rate limiting on public signup endpoint (abuse vector)
+ * - Error details exposed in 500 response may leak implementation info
+ * - Inline HTML email template is long and hard to maintain
+ * - No input sanitization for name/industry fields (potential XSS in emails)
+ * - NEXT_PUBLIC_APP_DOMAIN fallback to localhost could cause issues
+ *
+ * RECOMMENDATIONS:
+ * - Add rate limiting (e.g., 5 signups per IP per hour)
+ * - Extract email template to separate file or use template library
+ * - Sanitize user input before embedding in HTML emails
+ * - Add monitoring/alerting for signup failures
+ * - Consider adding CAPTCHA for bot prevention
+ * - Remove error.message from 500 response in production
+ *
+ * SECURITY NOTES:
+ * - Owner duplicate check prevents account hijacking
+ * - Invite token uses crypto.randomBytes (secure)
+ * - 7-day expiry limits exposure window
+ */

@@ -1,3 +1,11 @@
+/**
+ * @module app/(marketing)/cookies/page
+ * @description Cookie Policy page for the Durj marketing site.
+ * Provides comprehensive information about cookie usage, local storage,
+ * session storage, third-party cookies, and cookie management options.
+ * Includes navigation header and footer consistent with other legal pages.
+ */
+
 import Link from 'next/link';
 import '../landing.css';
 
@@ -537,3 +545,57 @@ export default function CookiePolicyPage() {
     </div>
   );
 }
+
+/*
+ * =============================================================================
+ * CODE REVIEW SUMMARY
+ * =============================================================================
+ *
+ * OVERVIEW:
+ * Static Cookie Policy page component that renders comprehensive cookie usage
+ * documentation for the Durj platform. Server-side rendered with Next.js metadata
+ * export for SEO.
+ *
+ * ARCHITECTURE:
+ * - Server Component (default, no 'use client' directive)
+ * - Single-page layout with navigation header and footer
+ * - Uses shared landing.css stylesheet from parent directory
+ * - Exports metadata object for page title and description
+ *
+ * STRENGTHS:
+ * - Comprehensive cookie documentation covering all cookie types
+ * - Detailed tables for essential, preference, and analytics cookies
+ * - Clear explanation of local storage and session storage usage
+ * - Third-party service cookie documentation with privacy policy links
+ * - Multi-tenant environment considerations explained
+ * - Browser-specific instructions for cookie management
+ * - Well-organized with anchor links for each section
+ * - Consistent styling with other legal pages
+ * - External links use rel="noopener noreferrer" for security
+ *
+ * POTENTIAL IMPROVEMENTS:
+ * - Extract common navigation and footer into shared components to reduce
+ *   duplication across legal pages (cookies, privacy, terms)
+ * - Consider moving cookie table data to a constants file for easier updates
+ * - Add structured data (JSON-LD) for better SEO on legal pages
+ * - "Last updated" date is hardcoded - could be automated or moved to config
+ * - Mobile menu functionality is missing (only nav-links visible)
+ * - Navigation links point to /#domains and /#security which may not exist
+ *   on the landing page (should verify anchor targets)
+ *
+ * SECURITY CONSIDERATIONS:
+ * - All external links properly use rel="noopener noreferrer"
+ * - No user input handling (static content)
+ * - No sensitive data exposure
+ *
+ * ACCESSIBILITY:
+ * - Semantic HTML structure with proper heading hierarchy
+ * - Tables include thead for accessibility
+ * - Links are descriptive
+ * - Could benefit from skip navigation link
+ *
+ * PERFORMANCE:
+ * - Server-side rendered (no JavaScript required for content)
+ * - Uses img elements - could use Next.js Image component for optimization
+ * =============================================================================
+ */

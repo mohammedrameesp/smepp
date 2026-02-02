@@ -1,3 +1,17 @@
+/**
+ * @module admin/settings/whatsapp/page
+ * @description WhatsApp integration settings page for organization administrators.
+ * Displays read-only configuration status (Platform, Custom, or Disabled) and
+ * manages user phone number verification for WhatsApp notifications. Configuration
+ * changes require platform administrator access.
+ *
+ * @route /admin/settings/whatsapp
+ * @access Admin only
+ * @dependencies
+ * - GET /api/whatsapp/config - Fetches WhatsApp configuration status
+ * - GET /api/whatsapp/phones - Lists user phone numbers
+ * - PATCH /api/whatsapp/phones - Verifies phone number
+ */
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -288,3 +302,40 @@ export default function WhatsAppSettingsPage() {
     </div>
   );
 }
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * CODE REVIEW SUMMARY
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * OVERVIEW:
+ * WhatsApp integration status page with read-only configuration display and
+ * user phone number management. Configuration is controlled at platform level.
+ *
+ * STRENGTHS:
+ * - Clear status visualization (enabled/disabled with badges)
+ * - Platform vs Custom source distinction with appropriate styling
+ * - User phone list with verification status
+ * - Manual verify action for admin oversight
+ * - Refresh button for phone list without page reload
+ * - Helpful messaging about contacting platform admin for changes
+ * - Conditional UI - phone section only shows when WhatsApp is enabled
+ *
+ * POTENTIAL IMPROVEMENTS:
+ * - Add test message functionality to verify configuration
+ * - Consider webhook status/health check display
+ * - Add notification preferences per user
+ * - Consider bulk verification for multiple phones
+ * - Add phone number format validation display
+ *
+ * SECURITY:
+ * - Configuration is read-only at org level (platform admin controlled)
+ * - Phone verification requires explicit admin action
+ * - No sensitive API credentials exposed in UI
+ *
+ * MISSING:
+ * - Does not follow PageHeader/PageContent pattern (uses custom header)
+ * - Consider aligning with other settings pages for consistency
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ */

@@ -1,3 +1,32 @@
+/**
+ * @module super-admin/backups/page
+ * @description Backup and recovery management page for platform data.
+ * Allows super admins to create, download, restore, and delete backups
+ * for the entire platform or individual organizations.
+ *
+ * @features
+ * - Create manual backups (full platform, all orgs, or single org)
+ * - Download backup files directly
+ * - Restore organization backups with preview
+ * - Delete old backups with confirmation
+ * - Automatic daily backups via Vercel cron (4:00 AM Qatar time)
+ *
+ * @backup-types
+ * - Full Platform: Complete database backup including all organizations
+ * - Organization: Individual tenant data backup (restorable independently)
+ *
+ * @security
+ * - Super admin only access
+ * - Restore preview shows data counts before execution
+ * - Warning displayed about data replacement during restore
+ *
+ * @api
+ * - GET /api/super-admin/backups - List all backups and organizations
+ * - POST /api/super-admin/backups - Create new backup
+ * - GET /api/super-admin/backups/[path] - Download backup file
+ * - DELETE /api/super-admin/backups/[path] - Delete backup
+ * - POST /api/super-admin/backups/restore - Preview/execute restore
+ */
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -677,3 +706,55 @@ export default function BackupsPage() {
     </div>
   );
 }
+
+/* =============================================================================
+ * CODE REVIEW SUMMARY
+ * =============================================================================
+ *
+ * File: src/app/super-admin/backups/page.tsx
+ * Type: Client Component
+ * Last Reviewed: 2026-02-01
+ *
+ * PURPOSE:
+ * Comprehensive backup management interface for creating, downloading,
+ * restoring, and deleting database backups at platform and organization levels.
+ *
+ * ARCHITECTURE:
+ * - Client component for file downloads and modal interactions
+ * - Backup types: full (platform-wide), organization (tenant-specific)
+ * - Restore workflow: preview -> confirm -> execute
+ * - Automatic backups via Vercel cron at 4:00 AM Qatar time
+ *
+ * API INTEGRATION:
+ * - GET /api/super-admin/backups: List backups and organizations
+ * - POST /api/super-admin/backups: Create backup (type + optional orgId)
+ * - GET /api/super-admin/backups/[path]: Download backup file as blob
+ * - DELETE /api/super-admin/backups/[path]: Delete backup file
+ * - POST /api/super-admin/backups/restore: Preview or execute restore
+ *
+ * BACKUP ORGANIZATION:
+ * - Full backups stored in: /full/{filename}
+ * - Org backups stored in: /orgs/{slug}/{filename}
+ * - Grouped by organization in UI for easy navigation
+ *
+ * SECURITY CONSIDERATIONS:
+ * [+] Restore preview shows data counts before execution
+ * [+] Warning message about data replacement displayed
+ * [+] Delete confirmation dialog required
+ * [!] Full platform restore not implemented (only org-level)
+ * [!] No backup encryption mentioned
+ *
+ * ERROR HANDLING:
+ * [+] Error state with dismiss functionality
+ * [+] Success feedback with download links for created backups
+ * [+] Loading states for all async operations
+ *
+ * POTENTIAL IMPROVEMENTS:
+ * - Add backup scheduling configuration UI
+ * - Implement backup retention policies
+ * - Add backup integrity verification (checksum)
+ * - Support backup encryption at rest
+ * - Add backup comparison tool
+ * - Implement incremental backups for large datasets
+ *
+ * =========================================================================== */

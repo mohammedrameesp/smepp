@@ -1,3 +1,24 @@
+/**
+ * @module super-admin/feedback/[id]
+ * @description Super admin detail page for viewing and managing user feedback submissions.
+ * Supports both bug reports and feature requests with admin workflow capabilities.
+ *
+ * @features
+ * - Feedback type differentiation (BUG vs FEATURE) with distinct icons
+ * - Status workflow: NEW -> REVIEWED -> IN_PROGRESS -> DONE / WONT_FIX
+ * - Full message content display with preserved formatting
+ * - Screenshot viewer with external link support
+ * - Submitter information: email, name, organization
+ * - Context data: page URL, browser user agent
+ * - Admin actions: status update and internal notes
+ * - Timestamp display for submission and last update
+ *
+ * @dependencies
+ * - GET /api/feedback/[id] - Fetches feedback details
+ * - PATCH /api/feedback/[id] - Updates status and admin notes
+ *
+ * @access Super Admin only (protected by middleware)
+ */
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -341,3 +362,28 @@ export default function FeedbackDetailPage() {
     </div>
   );
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ * ===================
+ * Status: APPROVED
+ *
+ * Strengths:
+ * - Clean two-column layout with main content and sidebar
+ * - Type-specific icons (Bug vs Lightbulb) for quick identification
+ * - Status workflow with comprehensive options
+ * - Screenshot support with external link viewer
+ * - Good use of shadcn/ui components throughout
+ * - Proper loading and not-found states
+ *
+ * Minor Observations:
+ * - useRouter imported but only router.back() used; could use Link instead
+ * - STATUS_STYLES.variant types could be stricter (Badge variant type)
+ * - Error handling in catch blocks logs to console but shows generic toast
+ * - Screenshot img uses src prop which should use next/image for optimization
+ *
+ * Recommendations:
+ * - Add reply/response capability to contact the user
+ * - Consider linking feedback to related issues/tasks
+ * - Add next/previous navigation between feedback items
+ */

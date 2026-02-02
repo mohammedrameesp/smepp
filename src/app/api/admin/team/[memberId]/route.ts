@@ -1,3 +1,19 @@
+/**
+ * @module api/admin/team/[memberId]
+ * @description Team member management endpoints for updating permissions and removing
+ * members. Supports both the new boolean-based permission system and legacy role field
+ * for backwards compatibility. Handles WhatsApp verification prompts on permission changes.
+ *
+ * @endpoints
+ * - PATCH /api/admin/team/[memberId] - Update member permissions (owner only)
+ * - DELETE /api/admin/team/[memberId] - Remove member from organization (soft delete)
+ *
+ * @security
+ * - PATCH: Requires authentication + owner role for permission changes
+ * - DELETE: Requires authentication + admin role, only owners can remove admins
+ * - Validates member belongs to tenant organization
+ * - Prevents self-modification and owner removal
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { z } from 'zod';
@@ -207,3 +223,38 @@ export const DELETE = withErrorHandler(async (
 
   return NextResponse.json({ success: true });
 }, { requireAuth: true, requireAdmin: true });
+
+/*
+ * =============================================================================
+ * CODE REVIEW SUMMARY
+ * =============================================================================
+ *
+ * Purpose:
+ * Core team member management - permission updates and member removal. Implements
+ * role-based access control with owner-only permission changes and proper
+ * deletion restrictions.
+ *
+ * Strengths:
+ * - Owner-only permission changes prevent privilege escalation
+ * - Prevents self-modification (can't change own permissions or remove self)
+ * - Protects organization owner from removal
+ * - Admins can only remove members, not other admins (hierarchy enforcement)
+ * - Soft delete preserves audit trail (isDeleted, deletedAt, TERMINATED status)
+ * - Zod validation for request body
+ * - Backwards compatibility with legacy role field
+ * - WhatsApp verification prompt handling on permission promotion
+ * - Updates permissionsUpdatedAt for tracking changes
+ *
+ * Concerns:
+ * - [LOW] PATCH requires owner but DELETE requires admin - inconsistent naming
+ *   (requireAdmin option doesn't enforce owner, manual check does)
+ * - [LOW] No audit logging of permission changes
+ *
+ * Recommendations:
+ * - Add audit logging for permission changes and member removals
+ * - Consider adding notification to removed member
+ *
+ * Status: APPROVED - Well-secured with proper access control hierarchy
+ * Last Reviewed: 2026-02-01
+ * =============================================================================
+ */

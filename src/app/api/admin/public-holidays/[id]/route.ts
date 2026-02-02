@@ -1,3 +1,26 @@
+/**
+ * @module api/admin/public-holidays/[id]
+ * @description Admin API for CRUD operations on individual public holidays.
+ *
+ * Provides endpoints to view, update, and delete specific public holidays
+ * identified by their unique ID.
+ *
+ * @endpoints
+ * - GET /api/admin/public-holidays/[id] - Get a single holiday
+ * - PATCH /api/admin/public-holidays/[id] - Update a holiday (admin only)
+ * - DELETE /api/admin/public-holidays/[id] - Delete a holiday (admin only)
+ *
+ * @pathParams
+ * - id: The public holiday ID
+ *
+ * @validation
+ * - Duplicate name/year combinations are prevented
+ * - All date fields are validated
+ *
+ * @security
+ * - GET: Requires authenticated user
+ * - PATCH/DELETE: Requires admin role
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
@@ -139,3 +162,42 @@ async function deletePublicHolidayHandler(request: NextRequest, context: APICont
 export const GET = withErrorHandler(getPublicHolidayHandler, { requireAuth: true });
 export const PATCH = withErrorHandler(updatePublicHolidayHandler, { requireAuth: true, requireAdmin: true });
 export const DELETE = withErrorHandler(deletePublicHolidayHandler, { requireAuth: true, requireAdmin: true });
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * CODE REVIEW SUMMARY
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * File: src/app/api/admin/public-holidays/[id]/route.ts
+ * Reviewed: 2026-02-01
+ *
+ * FUNCTIONALITY: [PASS]
+ * - GET: Retrieves single holiday by ID
+ * - PATCH: Updates holiday with partial data
+ * - DELETE: Removes holiday from system
+ * - Duplicate prevention on name+year during updates
+ *
+ * SECURITY: [PASS]
+ * - GET allows any authenticated user
+ * - PATCH/DELETE require admin role
+ * - Uses tenant-scoped Prisma client
+ * - Validates request body with Zod schema
+ *
+ * VALIDATION: [PASS]
+ * - ID parameter validated (required)
+ * - Body validated with updatePublicHolidaySchema
+ * - Cross-checks for duplicate name/year excluding self
+ *
+ * ERROR HANDLING: [PASS]
+ * - 400 for missing ID parameter
+ * - 404 for non-existent holiday
+ * - 409 for duplicate name+year combination
+ * - 403 for missing tenant context
+ *
+ * IMPROVEMENTS:
+ * - Consider soft delete to preserve history
+ * - Add check if holiday is in use (leave calculations)
+ * - Consider warning before deleting past holidays
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ */

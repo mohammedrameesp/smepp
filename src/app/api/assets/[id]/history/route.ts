@@ -87,3 +87,11 @@ export const GET = withErrorHandler(async (_request, { tenant, params }) => {
 
   return NextResponse.json(history);
 }, { requireAuth: true, requireModule: 'assets' });
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes: None required - well-documented history endpoint
+ * Issues: None - tenant filtering delegated to service function
+ */

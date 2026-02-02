@@ -1,4 +1,6 @@
 /**
+ * @module api/webhooks/whatsapp
+ *
  * WhatsApp Webhook Handler
  *
  * Handles incoming webhooks from Meta Cloud API:
@@ -17,7 +19,8 @@ import {
   sendActionConfirmation,
   invalidateTokensForEntity,
 } from '@/lib/whatsapp';
-import type { MetaWebhookPayload, ApprovalEntityType } from '@/lib/whatsapp';
+import type { MetaWebhookPayload } from '@/lib/whatsapp';
+import { ApprovalModule } from '@prisma/client';
 
 // NOTIF-002: Simple in-memory rate limiting for webhook
 // Allows 100 requests per minute per IP
@@ -193,18 +196,18 @@ async function processButtonClick(
     // Execute the approval/rejection based on entity type
     const details = await executeApprovalAction(
       tenantId,
-      entityType as unknown as ApprovalEntityType,
+      entityType,
       entityId,
       action,
       approverId
     );
 
-    // Send confirmation message
+    // Send confirmation message back to the user who clicked the button
     await sendActionConfirmation({
       tenantId,
       recipientPhone: senderPhone,
       action,
-      entityType: entityType as unknown as ApprovalEntityType,
+      entityType,
       details,
     });
 
@@ -218,11 +221,19 @@ async function processButtonClick(
 }
 
 /**
- * Execute the approval or rejection action
+ * Execute the approval or rejection action.
+ * Routes to the appropriate handler based on entity type and updates database accordingly.
+ *
+ * @param tenantId - The tenant ID for isolation
+ * @param entityType - Type of approval entity (LEAVE_REQUEST, SPEND_REQUEST, ASSET_REQUEST)
+ * @param entityId - ID of the entity being approved/rejected
+ * @param action - Whether to approve or reject
+ * @param approverId - ID of the user performing the action
+ * @returns Details for the confirmation message
  */
 async function executeApprovalAction(
   tenantId: string,
-  entityType: ApprovalEntityType,
+  entityType: ApprovalModule,
   entityId: string,
   action: 'approve' | 'reject',
   approverId: string
@@ -461,7 +472,7 @@ async function executeAssetAction(
     });
   }
 
-  // Invalidate all other tokens for this entity
+  // Invalidate all other tokens for this entity to prevent duplicate actions
   await invalidateTokensForEntity('ASSET_REQUEST', entityId);
 
   return {
@@ -469,3 +480,22 @@ async function executeAssetAction(
     title: `${request.asset.type} - ${request.asset.model}`,
   };
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Fixed type imports: use ApprovalModule from Prisma instead of ApprovalEntityType
+ *   - Removed unnecessary `as unknown as` type casts
+ *   - Added JSDoc documentation to executeApprovalAction function
+ *   - Added inline comment for sendActionConfirmation call
+ *   - Added inline comment for token invalidation
+ * Security:
+ *   - Has webhook signature verification (NOTIF-005 - x-hub-signature-256)
+ *   - Has rate limiting (NOTIF-002 - 100 req/min per IP)
+ *   - Has tenant isolation in all action execution functions
+ *   - Validates token before processing actions
+ *   - Invalidates tokens after use to prevent replay attacks
+ * Issues: None
+ */

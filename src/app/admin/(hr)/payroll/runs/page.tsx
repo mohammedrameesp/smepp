@@ -1,3 +1,11 @@
+/**
+ * @module app/admin/(hr)/payroll/runs/page
+ * @description Payroll runs list page - displays all monthly payroll runs with
+ * filtering by status (Draft, Submitted, Approved, Processing, Paid, Cancelled).
+ * Shows summary information including employee count, gross/net totals, and
+ * creation date. Provides navigation to create new runs, manage salary structures,
+ * view payslips, and manage loans.
+ */
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { redirect } from 'next/navigation';
@@ -231,3 +239,39 @@ export default async function PayrollRunsPage({ searchParams }: PageProps) {
     </>
   );
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ *
+ * Purpose: Server-side rendered page displaying all payroll runs with status
+ * filtering and pagination.
+ *
+ * Key Features:
+ * - Status filter tabs (All, Draft, Submitted, Approved, Processing, Paid, Cancelled)
+ * - Paginated list with 20 items per page
+ * - Summary info (reference, period, employee count, gross/deductions/net)
+ * - Quick actions to create new run, manage salary structures, payslips, loans
+ * - Color-coded status badges
+ *
+ * Data Flow:
+ * - Server-side data fetching with Prisma
+ * - URL-based filter state for bookmarkable views
+ * - Includes createdBy relation for audit trail
+ *
+ * Security:
+ * - Requires authenticated session
+ * - Access restricted to admins OR users with Finance access
+ * - Tenant-scoped queries via tenantId filter
+ *
+ * Improvements Made:
+ * - Efficient parallel queries with Promise.all
+ * - Clean status filter implementation
+ * - Good use of shared UI components
+ * - Proper number conversion for Prisma Decimal types
+ *
+ * Potential Improvements:
+ * - Add year filter dropdown for historical data
+ * - Add bulk actions (e.g., cancel multiple runs)
+ * - Add sorting options (by date, amount, status)
+ * - Consider adding summary stats (total paid this year, etc.)
+ */

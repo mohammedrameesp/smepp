@@ -1,3 +1,39 @@
+/**
+ * @module SuperAdminOrganizationDetailPage
+ * @description Client component for viewing and managing a specific organization
+ * in the Super Admin dashboard. Provides comprehensive organization management
+ * capabilities including configuration, user management, and feature controls.
+ *
+ * Features:
+ * - Organization overview with stats (members, assets, owner info)
+ * - Module usage insights per enabled module
+ * - AI Chat feature toggle and token budget management
+ * - WhatsApp Business API configuration (platform or custom)
+ * - Custom domain setup with DNS verification
+ * - Authentication settings (SSO, domain restrictions, custom OAuth)
+ * - Custom SMTP email configuration
+ * - Member list and pending invitations management
+ * - Recent activity audit log display
+ * - Organization edit and delete capabilities
+ * - Super admin impersonation with 2FA re-authentication
+ *
+ * Security:
+ * - Protected by super admin middleware
+ * - Impersonation requires recent 2FA verification
+ * - Destructive actions (delete) require slug confirmation
+ * - OAuth secrets masked after save
+ *
+ * Data Flow:
+ * - Fetches organization data via API routes
+ * - Parallel loading of org, invitations, auth config, email config
+ * - Real-time updates after configuration changes
+ *
+ * @see {@link src/app/api/super-admin/organizations/[id]/route.ts} - Organization API
+ * @see {@link src/app/api/super-admin/organizations/[id]/auth-config/route.ts} - Auth config API
+ * @see {@link src/app/api/super-admin/organizations/[id]/email-config/route.ts} - Email config API
+ * @see {@link src/app/api/super-admin/organizations/[id]/whatsapp/route.ts} - WhatsApp config API
+ * @see {@link src/app/api/super-admin/organizations/[id]/custom-domain/route.ts} - Custom domain API
+ */
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -3067,3 +3103,71 @@ export default function OrganizationDetailPage() {
     </div>
   );
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ * ===================
+ * Date: 2026-02-01
+ * Reviewer: Claude Code Review
+ *
+ * OVERVIEW:
+ * Comprehensive organization management page for super admins. This is a large
+ * (~3100 lines) client component handling multiple configuration sections.
+ *
+ * STRENGTHS:
+ * 1. Well-organized feature sections with collapsible panels
+ * 2. Good loading and error state handling throughout
+ * 3. Proper 2FA re-authentication for sensitive impersonation action
+ * 4. TypeScript interfaces for all data structures
+ * 5. Consistent UI patterns with Card components
+ * 6. Good feedback with success/error messages
+ * 7. Destructive actions require confirmation (delete with slug match)
+ * 8. Secrets properly masked after save operations
+ *
+ * POTENTIAL IMPROVEMENTS:
+ * 1. Component decomposition - file is very large, could split into:
+ *    - OrganizationHeader component
+ *    - AIFeaturesSection component
+ *    - WhatsAppSection component
+ *    - AuthSettingsSection component
+ *    - EmailConfigSection component
+ *    - ModuleInsightsSection component
+ *    - MembersSection component
+ *    - InvitationsSection component
+ * 2. State management - consider useReducer for complex state
+ * 3. Form handling - could use react-hook-form for validation
+ * 4. Extract API calls to custom hooks (useOrganization, useAuthConfig, etc.)
+ * 5. Add optimistic updates for better UX
+ * 6. Consider SWR or React Query for data fetching with caching
+ *
+ * SECURITY NOTES:
+ * - Impersonation properly requires 2FA re-authentication
+ * - OAuth secrets cleared from state after save
+ * - Delete confirmation matches organization slug
+ * - API routes handle actual authorization
+ *
+ * ACCESSIBILITY:
+ * - Uses proper Label/htmlFor associations
+ * - Dialog components have proper aria attributes
+ * - Loading states provide visual feedback
+ * - Consider adding aria-live regions for status updates
+ *
+ * PERFORMANCE CONCERNS:
+ * 1. Large component bundle size due to many imports
+ * 2. Multiple parallel API calls on mount (acceptable)
+ * 3. No memoization of expensive renders
+ * 4. Consider code splitting for dialog components
+ *
+ * TESTING RECOMMENDATIONS:
+ * 1. Unit tests for helper functions (getIndustryLabel, getCompanySizeLabel)
+ * 2. Integration tests for each configuration section
+ * 3. Test 2FA re-auth flow for impersonation
+ * 4. Test delete confirmation validation
+ * 5. Test error handling for failed API calls
+ * 6. Test custom domain DNS verification flow
+ * 7. Test WhatsApp source switching
+ *
+ * REFACTORING PRIORITY: HIGH
+ * This component would benefit significantly from being split into smaller,
+ * focused components for maintainability and testability.
+ */

@@ -1,3 +1,17 @@
+/**
+ * @module api/approval-steps/[id]/reject
+ * @description API endpoint to reject an approval step in a workflow chain.
+ * Rejection terminates the entire approval chain. Handles: validating approver
+ * permissions, preventing self-rejection, processing the rejection, updating
+ * entity status to REJECTED, reversing pending leave balances, and notifying
+ * the requester with the rejection reason.
+ *
+ * @endpoints
+ * - POST /api/approval-steps/[id]/reject - Reject a pending approval step
+ *
+ * @authentication Required (via requireCanApprove - must have approval permissions)
+ * @tenancy Tenant-scoped - Uses tenant context for entity updates and notifications
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { processApprovalSchema } from '@/features/approvals/validations/approvals';
 import { processApproval } from '@/features/approvals/lib';
@@ -199,3 +213,40 @@ async function handleRejection(
     );
   }
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ * ===================
+ *
+ * Purpose:
+ * Rejects a pending approval step, terminating the entire approval chain.
+ * Updates entity status to REJECTED and reverses any pending balance reservations.
+ *
+ * Strengths:
+ * - Complete rejection workflow: reject -> entity update -> balance reversal -> notify
+ * - Proper balance handling: removes from pending on rejection
+ * - Rejection reason captured and sent in notification
+ * - Activity logging for audit trail
+ * - Self-rejection prevention via requesterId
+ *
+ * Potential Improvements:
+ * - SECURITY: Step lookup uses findUnique without tenant filter (unlike approve route)
+ * - Should use findFirst with tenantId like the approve handler does
+ * - handleRejection could be extracted to shared service layer
+ * - Error handling: If balance update fails, rejection already processed
+ * - Consider transaction for entity update + balance update
+ * - Could support partial rejection with reason per level
+ *
+ * Security:
+ * - ISSUE: Missing tenant filter on step lookup (lines 53-56) - potential IDOR
+ * - requireCanApprove ensures authorization
+ * - Entity updates use tenant-scoped db client
+ * - Activity logging captures rejection with notes
+ *
+ * Testing Considerations:
+ * - Test rejection updates entity status to REJECTED
+ * - Test leave balance pending decrement
+ * - Test requester receives rejection notification with reason
+ * - Test cross-tenant rejection prevention (currently vulnerable)
+ * - Test self-rejection prevention
+ */

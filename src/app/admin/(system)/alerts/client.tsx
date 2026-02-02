@@ -1,3 +1,9 @@
+/**
+ * @module admin/(system)/alerts/client
+ * @description Client component for alerts page with filtering and search.
+ * Provides tabbed navigation by category and date range filtering.
+ */
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -25,9 +31,13 @@ interface AlertsClientProps {
   };
 }
 
+/** Alert category filter options */
 type AlertCategory = 'all' | 'celebrations' | 'documents' | 'subscriptions';
+
+/** Date range filter options */
 type DateRange = 'all' | 'week' | 'month';
 
+/** Emoji icons for each alert type */
 const ALERT_ICONS: Record<Alert['type'], string> = {
   birthday: '🎂',
   anniversary: '🎉',
@@ -204,3 +214,13 @@ export function AlertsClient({ alerts, counts }: AlertsClientProps) {
     </div>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation at top
+ *   - Added inline comments for type definitions and constants
+ * Issues: None - Component uses useMemo for efficient filtering
+ */

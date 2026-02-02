@@ -1,3 +1,12 @@
+/**
+ * @module app/super-admin/system/page
+ * @description Super admin system health monitoring page. Displays platform status,
+ * service health indicators, resource usage metrics, and database statistics.
+ * Shows real database counts (organizations, users, assets, employees, leave requests)
+ * with simulated demo data for service metrics and quick actions.
+ * Server component with dynamic rendering for real-time database access.
+ */
+
 import { prisma } from '@/lib/core/prisma';
 import {
   Activity,
@@ -318,3 +327,43 @@ function ResourceBar({
     </div>
   );
 }
+
+/*
+ * =============================================================================
+ * CODE REVIEW SUMMARY
+ * =============================================================================
+ *
+ * File: src/app/super-admin/system/page.tsx
+ * Type: Server Component - System Health Dashboard
+ *
+ * FUNCTIONALITY:
+ * - Overall platform status with uptime indicator
+ * - Service health cards with latency and uptime metrics (demo data)
+ * - Resource usage bars (CPU, Memory, Storage, Network) (demo data)
+ * - Recent system events timeline (demo data)
+ * - Real database statistics (orgs, users, assets, employees, leave requests)
+ * - Quick action buttons for admin operations (demo, non-functional)
+ *
+ * ARCHITECTURE:
+ * - Server component with dynamic rendering (force-dynamic)
+ * - Parallel database queries via Promise.all for efficiency
+ * - ResourceBar helper component for consistent progress bar styling
+ * - Demo badges clearly mark simulated vs real data
+ *
+ * DATA SOURCES:
+ * [REAL] Database statistics from Prisma queries
+ * [DEMO] Service status, latency, uptime - hardcoded demo values
+ * [DEMO] Resource usage percentages - hardcoded demo values
+ * [DEMO] Recent events - hardcoded demo values
+ * [DEMO] Quick actions - non-functional placeholders
+ *
+ * IMPROVEMENTS SUGGESTED:
+ * [HIGH] Implement real service health checks (API ping, DB connection test)
+ * [HIGH] Connect quick actions to actual functionality
+ * [MEDIUM] Add actual DB size query (pg_database_size or similar)
+ * [MEDIUM] Implement real resource monitoring via hosting provider API
+ * [LOW] Add auto-refresh for real-time updates
+ * [LOW] Add historical trends/charts for metrics
+ *
+ * =============================================================================
+ */

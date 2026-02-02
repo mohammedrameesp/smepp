@@ -1,3 +1,13 @@
+/**
+ * @module app/employee/(hr)/payroll/payslips/[id]
+ * @description Loading skeleton for the payslip detail page.
+ *
+ * Features:
+ * - Employee information card skeleton
+ * - 2-column grid for earnings and deductions
+ * - Net pay summary highlight card
+ * - Payment information section
+ */
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Building, TrendingUp, TrendingDown, DollarSign, CreditCard } from 'lucide-react';
@@ -140,3 +150,12 @@ export default function PayslipDetailLoading() {
     </>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation at top
+ * Issues: None - loading skeleton matches payslip detail layout
+ */

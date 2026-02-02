@@ -1,3 +1,27 @@
+/**
+ * @module app/employee/(hr)/payroll/gratuity/page
+ * @description Employee gratuity projection page. Calculates and displays end-of-service
+ * benefits (EOSB) based on Qatar labor law formula using basic salary and service duration.
+ * Includes future projections and formula explanation.
+ *
+ * @route /employee/payroll/gratuity
+ * @access Authenticated employees
+ *
+ * @dependencies
+ * - prisma: Salary structure and team member data
+ * - gratuity utilities: Calculation and projection functions
+ * - currency utilities: Formatting functions
+ * - datetime utilities: Date formatting
+ *
+ * @features
+ * - Current gratuity amount display
+ * - Service duration calculation
+ * - Calculation breakdown (full years + pro-rated partial year)
+ * - Future projections (1, 2, 3, 5, 10 years)
+ * - Formula explanation with weekly rate calculation
+ * - Disclaimer about estimate vs actual
+ */
+
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { redirect } from 'next/navigation';
@@ -188,3 +212,42 @@ export default async function EmployeeGratuityPage() {
     </>
   );
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ *
+ * Purpose: Detailed gratuity calculation page with projections and formula explanation
+ *
+ * Key Logic:
+ * - Parallel fetch of salary structure and team member data
+ * - Early return with info message if either data is missing
+ * - Gratuity calculation using Qatar labor law formula (3 weeks per year)
+ * - Future projections for 1, 2, 3, 5, 10 years from current date
+ *
+ * Data Flow:
+ * - Server component with direct Prisma queries
+ * - Queries by session.user.id for personal data only
+ * - calculateGratuity returns: gratuityAmount, weeklyRate, yearsOfService, monthsOfService, breakdown
+ * - projectGratuity returns array of {years, amount} objects
+ *
+ * Gratuity Formula (Qatar Labor Law):
+ * - Weekly rate = Basic Salary / 30 * 7
+ * - Annual gratuity = Weekly rate * 3 weeks
+ * - Total = Years * Annual (with pro-rating for partial years)
+ *
+ * Edge Cases:
+ * - No salary structure: Shows dedicated missing-data UI
+ * - No dateOfJoining: Shows dedicated missing-data UI
+ * - Less than 1 year service: Still calculates pro-rated amount
+ *
+ * Dependencies:
+ * - calculateGratuity, projectGratuity, getServiceDurationText from gratuity lib
+ * - formatCurrency from currency lib
+ * - formatDate from datetime lib
+ *
+ * Future Considerations:
+ * - Custom gratuity rules per organization (beyond Qatar standard)
+ * - Different calculation for resignation vs termination
+ * - Historical gratuity growth chart
+ * - PDF export for financial planning
+ */

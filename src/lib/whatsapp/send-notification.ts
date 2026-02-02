@@ -286,38 +286,3 @@ function getTemplateName(entityType: ApprovalEntityType): string {
       return 'unknown';
   }
 }
-
-/*
- * ========== CODE REVIEW SUMMARY ==========
- * File: send-notification.ts
- * Reviewed: 2026-01-29
- *
- * CHANGES MADE:
- * - Added @file, @description, @module JSDoc tags
- * - Added comprehensive @example showing full usage
- * - Added section headers for code organization
- * - Added JSDoc to all exported functions
- * - Documented @param for all parameters
- *
- * SECURITY NOTES:
- * - Phone numbers are masked in logs (only first 6 chars shown)
- * - Error details from Meta API are logged but may contain sensitive info
- * - Access tokens are handled by WhatsAppClient, never logged here
- *
- * REMAINING CONCERNS:
- * - None
- *
- * REQUIRED TESTS:
- * - [ ] sendApprovalNotification success path
- * - [ ] sendApprovalNotification handles missing config
- * - [ ] sendApprovalNotification handles missing phone
- * - [ ] sendApprovalNotification handles API errors
- * - [ ] sendActionConfirmation sends text message
- * - [ ] canSendWhatsAppNotification returns correct results
- *
- * DEPENDENCIES:
- * - Imports from: ./client, ./config, ./action-tokens, ./templates
- * - Used by: approval-integration.ts, webhook handlers
- *
- * PRODUCTION READY: YES
- */

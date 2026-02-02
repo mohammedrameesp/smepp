@@ -1,3 +1,12 @@
+/**
+ * @module app/employee/(operations)/suppliers
+ * @description Loading skeleton for the suppliers list page.
+ *
+ * Features:
+ * - Stat badges skeleton in header (3 badges)
+ * - 6-column table grid skeleton
+ * - 8 placeholder rows matching actual table
+ */
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Building2 } from 'lucide-react';
@@ -56,3 +65,12 @@ export default function SuppliersListLoading() {
     </>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation at top
+ * Issues: None - loading skeleton matches suppliers list layout
+ */

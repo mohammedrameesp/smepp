@@ -1,3 +1,24 @@
+/**
+ * @module app/employee/(projects)/spend-requests/page
+ * @description Employee spend requests list page. Displays the current user's submitted
+ * spend requests with statistics (total, pending, approved, rejected) and a table view.
+ * Allows employees to view their requests and navigate to create new ones.
+ *
+ * @route /employee/spend-requests
+ * @access Authenticated employees
+ *
+ * @dependencies
+ * - next-auth: Session authentication
+ * - prisma: Database queries for spend request counts
+ * - SpendRequestListTable: Shared table component with isAdmin=false mode
+ *
+ * @features
+ * - Real-time count statistics by status
+ * - Paginated request list (via SpendRequestListTable)
+ * - New request creation link
+ * - Breadcrumb navigation
+ */
+
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
@@ -91,3 +112,34 @@ export default async function EmployeeSpendRequestsPage() {
     </>
   );
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ *
+ * Purpose: Employee-facing spend requests list page showing user's own requests
+ *
+ * Key Logic:
+ * - Session check with redirect to login if not authenticated
+ * - Parallel database queries for status counts (optimized with Promise.all)
+ * - Statistics conditionally shown only when count > 0
+ * - Uses shared SpendRequestListTable with isAdmin=false flag
+ *
+ * Data Flow:
+ * - Server component fetches count data directly via Prisma
+ * - Filters all queries by requesterId = session.user.id
+ * - Table component handles its own data fetching and pagination
+ *
+ * Edge Cases:
+ * - No session: Redirects to /login
+ * - No requests: Table shows empty state, only "total requests" stat shown
+ *
+ * Dependencies:
+ * - SpendRequestListTable: Reusable table component shared with admin view
+ * - StatChip/StatChipGroup: Unified statistics display pattern
+ * - PageHeader/PageContent: Standard layout components
+ *
+ * Future Considerations:
+ * - Could add filtering by status directly in URL params
+ * - Could add search functionality
+ * - Consider adding draft request support
+ */

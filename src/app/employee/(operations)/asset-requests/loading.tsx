@@ -1,3 +1,12 @@
+/**
+ * @module app/employee/(operations)/asset-requests
+ * @description Loading skeleton for the asset requests list page.
+ *
+ * Features:
+ * - Stat badge skeletons in header
+ * - Search and filter controls skeleton
+ * - Request card list skeleton with pagination
+ */
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Package } from 'lucide-react';
@@ -70,3 +79,12 @@ export default function AssetRequestsLoading() {
     </>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation at top
+ * Issues: None - loading skeleton matches asset requests layout
+ */

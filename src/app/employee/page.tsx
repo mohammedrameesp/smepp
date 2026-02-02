@@ -1,3 +1,31 @@
+/**
+ * @module app/employee
+ * @description Employee Dashboard - the main landing page for employee portal.
+ *
+ * This server component displays a comprehensive dashboard with personalized
+ * information for the logged-in employee. It fetches and aggregates data from
+ * multiple sources in parallel for optimal performance.
+ *
+ * Features:
+ * - Personalized greeting with time of day and employee tenure
+ * - Leave balance summary with accrual calculations
+ * - Asset and subscription holdings overview
+ * - Pending requests summary (leave, spend, asset requests)
+ * - Document expiry alerts (QID, passport, health card)
+ * - Team celebrations (birthdays and work anniversaries)
+ * - Quick actions and navigation for mobile
+ * - Admin employee-view mode support
+ *
+ * Data Sources:
+ * - TeamMember profile with HR fields
+ * - Leave balances and requests
+ * - Asset assignments and requests
+ * - Subscription assignments
+ * - Spend requests
+ *
+ * @see getMemberSubscriptionHistory - Fetches subscription assignments
+ * @see getMemberAssetHistory - Fetches asset assignments
+ */
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
@@ -490,3 +518,12 @@ export default async function EmployeeDashboard() {
     );
   }
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation at top
+ * Issues: None - comprehensive dashboard with proper error handling
+ */

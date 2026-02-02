@@ -1,3 +1,10 @@
+/**
+ * @module app/employee/(hr)/leave/[id]/page
+ * @description Employee leave request detail page. Displays comprehensive information
+ * about a specific leave request including dates, status, approval chain progress,
+ * balance summary, and request history. Allows employees to view their own requests
+ * and cancel pending requests if timing permits.
+ */
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -386,3 +393,45 @@ export default function EmployeeLeaveRequestDetailPage() {
     </>
   );
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ *
+ * Purpose:
+ * Employee leave request detail page displaying comprehensive request information,
+ * approval workflow status, balance summary, and request history. Provides cancel
+ * functionality for eligible pending requests.
+ *
+ * Key Features:
+ * - Fetches leave request details and associated balance data via API
+ * - Displays approval chain progress for multi-step approval workflows
+ * - Shows balance summary with entitlement, used, pending, and remaining days
+ * - Provides request history timeline with all status changes
+ * - Cancel dialog for requests that haven't started yet
+ *
+ * Critical Logic:
+ * - canCancelLeaveRequest: Determines if cancellation is allowed based on status/date
+ * - Balance calculation: Combines entitlement, carried forward, and adjustments
+ * - API error handling: Distinguishes between 404, 401, and other errors
+ *
+ * Edge Cases Handled:
+ * - Non-accrual leave types hide "Request Type" field
+ * - Optional fields (emergency contact, document, notes) conditionally rendered
+ * - Balance section only shown when balance data exists
+ * - Approval chain section only shown when chain exists
+ *
+ * Potential Issues:
+ * - Line 183: canEditLeaveRequest() called but result discarded (dead code)
+ * - totalDays field accepts string|number, may cause display inconsistency
+ * - No retry mechanism for failed API calls
+ * - No loading state differentiation between initial load and refresh
+ *
+ * Security Considerations:
+ * - API endpoint handles authorization; 401 errors properly displayed
+ * - Document URLs rendered with noopener noreferrer for external links
+ * - No sensitive data exposed in error messages
+ *
+ * Performance:
+ * - Sequential API calls (request then balance) could be parallelized
+ * - Callback memoization with useCallback prevents unnecessary re-renders
+ */

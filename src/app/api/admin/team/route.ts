@@ -1,3 +1,18 @@
+/**
+ * @module api/admin/team
+ * @description Team member listing endpoint. Returns all active organization members
+ * with their permissions, pending status (credentials/SSO), and authentication
+ * configuration for the organization.
+ *
+ * @endpoints
+ * - GET /api/admin/team - List organization members with auth status
+ *
+ * @security
+ * - Requires authentication (requireAuth: true)
+ * - Requires admin role (requireAdmin: true)
+ * - Queries scoped to tenant organization
+ * - Excludes soft-deleted members
+ */
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { withErrorHandler } from '@/lib/http/handler';
@@ -177,3 +192,35 @@ export const GET = withErrorHandler(async (_request, { tenant }) => {
     },
   });
 }, { requireAuth: true, requireAdmin: true });
+
+/*
+ * =============================================================================
+ * CODE REVIEW SUMMARY
+ * =============================================================================
+ *
+ * Purpose:
+ * Comprehensive team member listing with authentication status, permissions,
+ * and pending setup indicators. Aggregates data from multiple sources to
+ * provide a complete view of organization membership.
+ *
+ * Strengths:
+ * - Proper tenant isolation with soft-delete filtering
+ * - Efficiently batches User lookups with single query using email list
+ * - Combines credentials and SSO pending status detection
+ * - Returns organization auth configuration for UI adaptation
+ * - Uses deriveDisplayRole for consistent role presentation
+ * - Proper ordering (owners first, then admins, then by join date)
+ *
+ * Concerns:
+ * - [LOW] Multiple sequential queries could be optimized with joins
+ * - [LOW] Exposing passwordHash presence (via membersWithPasswordSet) could
+ *   be considered information leakage, though used only internally
+ *
+ * Recommendations:
+ * - Consider adding pagination for large organizations
+ * - Consider caching auth config since it changes infrequently
+ *
+ * Status: APPROVED - Well-structured listing with comprehensive data
+ * Last Reviewed: 2026-02-01
+ * =============================================================================
+ */

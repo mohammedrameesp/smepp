@@ -173,3 +173,12 @@ async function updateAccountTypeHandler(request: NextRequest, context: APIContex
 }
 
 export const PATCH = withErrorHandler(updateAccountTypeHandler, { requireAuth: true });
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes: None needed - file has JSDoc, proper owner-only authorization check,
+ *          Zod validation, tenant isolation, activity logging
+ * Issues: None - account type confirmation logic is secure
+ */

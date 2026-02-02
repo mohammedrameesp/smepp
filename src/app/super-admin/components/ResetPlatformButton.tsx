@@ -1,3 +1,15 @@
+/**
+ * @module super-admin/components/ResetPlatformButton
+ * @description Dangerous platform reset button for super admin testing purposes.
+ * Provides a confirmation dialog requiring explicit "DELETE ALL" text input
+ * before permanently deleting all organizations, users (except super admins),
+ * and associated data from the platform.
+ *
+ * @example
+ * ```tsx
+ * <ResetPlatformButton />
+ * ```
+ */
 'use client';
 
 import { useState } from 'react';
@@ -127,3 +139,43 @@ export function ResetPlatformButton() {
     </AlertDialog>
   );
 }
+
+/**
+ * CODE REVIEW SUMMARY
+ *
+ * Purpose:
+ * Provides a destructive platform reset capability for super admin testing/development.
+ * Implements a multi-step confirmation flow requiring explicit "DELETE ALL" text entry
+ * to prevent accidental data destruction.
+ *
+ * Key Components:
+ * - ResetPlatformButton: Self-contained button with AlertDialog confirmation modal
+ * - Confirmation input field with exact text matching
+ * - Loading state and result feedback display
+ *
+ * Data Flow:
+ * - User clicks button -> Opens AlertDialog
+ * - User types "DELETE ALL" -> Enables submit button
+ * - POST request to /api/super-admin/reset-platform
+ * - Success: Shows message, auto-closes after 2s, refreshes page
+ * - Error: Displays error message in dialog
+ *
+ * Potential Issues:
+ * - PRODUCTION RISK: Should be disabled or removed in production environments
+ * - No environment check to prevent accidental production use
+ * - No audit logging of reset attempts visible in this component
+ * - Single confirmation step - could add additional verification for extra safety
+ *
+ * Security Considerations:
+ * - CRITICAL: This is an extremely dangerous operation - deletes all tenant data
+ * - Relies on super admin authentication at API route level
+ * - Text confirmation provides some protection against accidental clicks
+ * - Consider adding TOTP/2FA re-verification for this specific action
+ * - Should log all reset attempts with actor identity
+ *
+ * Recommendations:
+ * - Add environment variable check to completely disable in production
+ * - Add re-authentication requirement before reset
+ * - Consider rate limiting reset attempts
+ * - Add explicit warning banner when NODE_ENV !== 'development'
+ */

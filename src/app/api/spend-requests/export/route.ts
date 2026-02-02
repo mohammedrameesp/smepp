@@ -189,3 +189,11 @@ async function exportSpendRequestsHandler(request: NextRequest, context: APICont
 }
 
 export const GET = withErrorHandler(exportSpendRequestsHandler, { requireAdmin: true, requireModule: 'spend-requests' });
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes: Added review summary
+ * Issues: None identified
+ */

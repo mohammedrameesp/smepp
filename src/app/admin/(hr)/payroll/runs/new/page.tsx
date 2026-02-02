@@ -1,3 +1,10 @@
+/**
+ * @module app/admin/(hr)/payroll/runs/new/page
+ * @description New payroll run creation page - allows admins to initiate a monthly
+ * payroll process by selecting the target year and month. Creates a draft payroll
+ * run that includes all employees with active salary structures. Provides year
+ * selection spanning 5 years and month selection with user-friendly names.
+ */
 'use client';
 
 import { useState } from 'react';
@@ -139,3 +146,37 @@ export default function NewPayrollRunPage() {
     </>
   );
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ *
+ * Purpose: Client-side form for creating a new monthly payroll run by selecting
+ * the target year and month.
+ *
+ * Key Features:
+ * - Month and year selection with 5-year range
+ * - Preview message showing selected period
+ * - Loading state during submission
+ * - Automatic redirect to new payroll run detail page
+ * - Cancel button to return to list
+ *
+ * Data Flow:
+ * - Posts to /api/payroll/runs to create new payroll run
+ * - Redirects to /admin/payroll/runs/[id] on success
+ *
+ * Security:
+ * - Client-side page (relies on API for authorization)
+ * - No duplicate run check on client (handled by API)
+ *
+ * Improvements Made:
+ * - Clean, simple form with clear user feedback
+ * - Good use of toast notifications for success/error
+ * - Proper loading state prevents double submission
+ * - Uses shared Select component for consistent UX
+ *
+ * Potential Improvements:
+ * - Add validation to prevent selecting future months
+ * - Show warning if a payroll run already exists for selected period
+ * - Add ability to set custom period end date
+ * - Consider adding preview of employees that will be included
+ */

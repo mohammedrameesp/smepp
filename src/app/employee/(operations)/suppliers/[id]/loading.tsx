@@ -1,3 +1,16 @@
+/**
+ * @module app/employee/(operations)/suppliers/[id]
+ * @description Loading skeleton for the supplier detail page.
+ *
+ * Features:
+ * - Status badges skeleton in header
+ * - 3-column responsive grid layout (2 main + 1 sidebar)
+ * - Company information card with 6-field grid
+ * - Contact information section (primary/secondary)
+ * - Payment terms card
+ * - Approval information sidebar card
+ * - Engagement history timeline
+ */
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Building2, User, FileText, CheckCircle, Calendar } from 'lucide-react';
@@ -150,3 +163,12 @@ export default function SupplierDetailLoading() {
     </>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation at top
+ * Issues: None - loading skeleton matches supplier detail layout
+ */

@@ -25,3 +25,11 @@ export const GET = withErrorHandler(async (_request, { tenant, params }) => {
     throw error;
   }
 }, { requireAuth: true, requireModule: 'assets' });
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes: None required - file is well-documented
+ * Issues: None - tenant filtering delegated to service function, proper error handling
+ */

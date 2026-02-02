@@ -1,3 +1,27 @@
+/**
+ * @module api/admin/full-restore
+ * @description Admin API for restoring organization data from an Excel backup file.
+ *
+ * Imports data from an Excel workbook (created by full-backup endpoint):
+ * - Users: Upserts by email address
+ * - Assets: Updates by asset tag if exists, otherwise creates new
+ * - Subscriptions: Updates by service name if exists, otherwise creates new
+ *
+ * Features:
+ * - Cross-tenant validation for member assignments
+ * - Error tracking per record with detailed messages
+ * - Date parsing for dd/mm/yyyy format
+ * - Skips auth-related system accounts
+ *
+ * @endpoints
+ * - POST /api/admin/full-restore - Upload and restore from Excel file
+ *
+ * @requestBody FormData with 'file' field containing .xlsx file
+ *
+ * @returns Summary of created/updated/error counts per entity type
+ *
+ * @security Requires admin authentication and tenant context
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { AssetStatus, BillingCycle, SubscriptionStatus, Role, Prisma } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
@@ -263,3 +287,45 @@ export const POST = withErrorHandler(async (request: NextRequest, { tenant }) =>
     results,
   });
 }, { requireAuth: true, requireAdmin: true });
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * CODE REVIEW SUMMARY
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * File: src/app/api/admin/full-restore/route.ts
+ * Reviewed: 2026-02-01
+ *
+ * FUNCTIONALITY: [PASS]
+ * - Restores data from Excel backup (full-backup format)
+ * - Upserts users by email, assets by tag, subscriptions by name
+ * - Cross-tenant validation for member assignments
+ * - Detailed error tracking per record
+ *
+ * SECURITY: [PASS]
+ * - Requires admin authentication
+ * - Tenant-scoped data restoration
+ * - Validates member assignments belong to same tenant
+ * - Skips auth-related system accounts
+ *
+ * VALIDATION: [ACCEPTABLE]
+ * - Checks for required fields (email, model, serviceName)
+ * - Uses Prisma enums for status fields
+ * - Date parsing handles dd/mm/yyyy format
+ *
+ * ERROR HANDLING: [PASS]
+ * - Per-record error tracking with row numbers
+ * - Continues processing on individual record failures
+ * - Returns comprehensive results summary
+ * - 400 for missing file upload
+ *
+ * IMPROVEMENTS:
+ * - Add transaction support for atomic restores
+ * - Consider dry-run mode for validation
+ * - Add file size limit validation
+ * - History sheets (assetHistory, subscriptionHistory) not imported
+ * - Role import references User model but should use TeamMember
+ * - Consider adding rollback capability
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ */

@@ -1,3 +1,12 @@
+/**
+ * @module app/suppliers/register/page
+ * @description Public supplier registration page with tenant branding. Allows external
+ * suppliers to self-register for an organization. Displays tenant-customized branding
+ * (logo, colors) from subdomain. Collects company info, primary/secondary contacts,
+ * payment terms, and additional info. Submissions require approval before activation.
+ * Uses react-hook-form with Zod validation for form handling.
+ */
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -638,3 +647,54 @@ export default function SupplierRegistrationPage() {
     </div>
   );
 }
+
+/*
+ * =============================================================================
+ * CODE REVIEW SUMMARY
+ * =============================================================================
+ *
+ * File: src/app/suppliers/register/page.tsx
+ * Type: Client Component - Public Supplier Registration Form
+ *
+ * FUNCTIONALITY:
+ * - Multi-section registration form (company, contacts, payment, additional info)
+ * - Tenant-branded header using subdomain branding (logo, colors)
+ * - Category autocomplete with suggestions from API
+ * - Country selection with CountrySelect component
+ * - Mobile number input with country code selector
+ * - Cross-field validation (email or mobile required)
+ * - Success state with next steps information
+ *
+ * ARCHITECTURE:
+ * - react-hook-form with Zod schema validation
+ * - Custom hooks for subdomain and tenant branding
+ * - Dynamic gradient header based on org brand colors
+ * - Loading state prevents flash of unstyled content
+ *
+ * FORM VALIDATION:
+ * [OK] Required fields: company name, category, primary contact name
+ * [OK] Either email or mobile required for primary contact
+ * [OK] Cross-field validation triggers on related field changes
+ * [OK] Real-time validation feedback (mode: 'onChange')
+ *
+ * SECURITY:
+ * [OK] Public page - no authentication required (by design)
+ * [OK] Submissions go to pending status requiring admin approval
+ * [OK] Input sanitization via Zod schema
+ * [OK] Mobile input strips non-numeric characters
+ *
+ * UX CONSIDERATIONS:
+ * [OK] Loading spinner while fetching branding
+ * [OK] Inline error messages per field
+ * [OK] Clear success state with next steps
+ * [OK] Tab can be closed after successful submission
+ *
+ * IMPROVEMENTS SUGGESTED:
+ * [MEDIUM] Add CAPTCHA or honeypot to prevent spam registrations
+ * [MEDIUM] Add file upload for company documents/certificates
+ * [LOW] Add form progress indicator for long form
+ * [LOW] Consider saving draft to localStorage
+ * [LOW] Add duplicate company name check before submission
+ *
+ * =============================================================================
+ */

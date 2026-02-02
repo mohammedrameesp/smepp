@@ -1,3 +1,24 @@
+/**
+ * @module api/organizations/[id]
+ * @description Core organization management endpoint for viewing and updating tenant settings.
+ *
+ * Provides organization details including subscription info, member counts, and
+ * branding settings. Supports updating name, logo, primary color, and code prefix.
+ *
+ * @authentication Required - Session-based
+ * @authorization GET: Any organization member | PATCH: Admin or Owner only
+ *
+ * @example
+ * GET /api/organizations/abc123
+ *
+ * PATCH /api/organizations/abc123
+ * {
+ *   "name": "New Company Name",
+ *   "primaryColor": "#3B82F6",
+ *   "codePrefix": "ACM"
+ * }
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
@@ -169,3 +190,34 @@ export async function PATCH(
     return NextResponse.json({ error: 'Failed to update organization' }, { status: 500 });
   }
 }
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * CODE REVIEW SUMMARY
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * STRENGTHS:
+ * - Proper authentication and authorization checks
+ * - Zod validation with specific patterns (hex color, 2-3 char prefix)
+ * - Code prefix uniqueness validation before update
+ * - Cache invalidation after prefix changes
+ * - Returns derived orgRole for frontend use
+ *
+ * CONCERNS:
+ * - Uses raw getServerSession instead of withErrorHandler pattern
+ * - GET includes Stripe subscription data without explicit permission check
+ * - No audit logging for organization setting changes
+ * - teamMembers count includes all members (should filter isDeleted?)
+ *
+ * RECOMMENDATIONS:
+ * - Migrate to withErrorHandler for consistency
+ * - Add audit logging for configuration changes
+ * - Filter deleted members from count
+ * - Consider adding DELETE method with proper ownership transfer flow
+ * - Add rate limiting to prevent cache thrashing
+ *
+ * SECURITY NOTES:
+ * - Proper tenant isolation via membership check
+ * - Admin/Owner authorization for writes
+ * - Code prefix validated and uniqueness enforced
+ */

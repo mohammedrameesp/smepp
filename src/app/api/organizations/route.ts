@@ -1,3 +1,22 @@
+/**
+ * @module api/organizations
+ * @description API endpoints for organization management.
+ * Handles listing user's organizations and creating new organizations.
+ * Organization creation includes slug validation, setup progress initialization,
+ * and automatic owner membership creation.
+ *
+ * @endpoints
+ * - GET  /api/organizations - List all organizations the user belongs to
+ * - POST /api/organizations - Create a new organization with owner membership
+ *
+ * @features
+ * - Automatic slug generation from organization name
+ * - Custom slug validation (3-63 chars, alphanumeric + hyphens)
+ * - Serializable transaction for race condition prevention
+ * - Setup progress tracking initialization
+ *
+ * @requires Authentication
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
@@ -226,3 +245,39 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * CODE REVIEW SUMMARY
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * OVERVIEW:
+ * Core organization management endpoints for listing user's organizations and
+ * creating new organizations with proper initialization.
+ *
+ * SECURITY:
+ * [+] Session-based authentication for both endpoints
+ * [+] Users can only see organizations they belong to
+ * [+] Custom slug validation prevents reserved/invalid slugs
+ * [+] Serializable transaction isolation prevents race conditions
+ *
+ * PATTERNS:
+ * [+] Automatic slug generation from name with collision handling
+ * [+] Atomic organization creation (org + setup progress + owner member)
+ * [+] Proper error handling for slug conflicts (409 Conflict)
+ * [+] Returns subdomain URL for immediate redirect
+ *
+ * POTENTIAL IMPROVEMENTS:
+ * [-] GET doesn't use withErrorHandler (inconsistent with POST pattern)
+ * [-] Consider adding organization limit per user for abuse prevention
+ * [-] Missing activity logging for organization creation
+ * [-] Consider adding organization templates (pre-configured modules)
+ * [-] Slug generation could produce very long slugs for long names
+ *
+ * NOTES:
+ * - Owner is created as TeamMember with isOwner=true, isEmployee=false
+ * - Organizations start on FREE tier with default limits (5 users, 50 assets)
+ *
+ * LAST REVIEWED: 2026-02-01
+ * ═══════════════════════════════════════════════════════════════════════════════
+ */

@@ -1,3 +1,10 @@
+/**
+ * @module app/admin/(hr)/payroll/payslips/[id]/page
+ * @description Admin payslip detail page - displays comprehensive payslip information
+ * for a single employee including earnings breakdown (basic salary and all allowances),
+ * itemized deductions, net pay calculation, employee details, and payment information
+ * (bank, IBAN, QID). Shows payment confirmation status and date when applicable.
+ */
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { redirect, notFound } from 'next/navigation';
@@ -244,3 +251,40 @@ export default async function AdminPayslipDetailPage({ params }: PageProps) {
     </>
   );
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ *
+ * Purpose: Server-side rendered page displaying comprehensive payslip details for
+ * a single employee including earnings, deductions, and payment information.
+ *
+ * Key Features:
+ * - Displays net pay prominently with visual emphasis
+ * - Shows itemized earnings (basic + all allowances)
+ * - Shows itemized deductions with descriptions
+ * - Employee details sidebar (name, ID, designation)
+ * - Payment details (bank, IBAN, QID, payroll reference)
+ * - Payment confirmation status and date
+ * - Navigation to employee profile and full payroll run
+ *
+ * Data Flow:
+ * - Server-side data fetching with Prisma
+ * - Includes member, payrollRun, and deductions relations
+ * - Uses notFound() for missing payslips
+ *
+ * Security:
+ * - Requires authenticated session
+ * - Access restricted to admins OR users with Finance access
+ * - No tenant check on the payslip query (potential issue)
+ *
+ * Improvements Made:
+ * - Clean responsive layout (2/3 + 1/3 grid)
+ * - Good use of DetailCard component for visual consistency
+ * - Proper number conversion from Prisma Decimal types
+ *
+ * Potential Improvements:
+ * - Add tenantId check to payslip query for security
+ * - Add PDF download/print functionality
+ * - Consider adding ability to edit deductions
+ * - Add navigation to previous/next payslip in the run
+ */

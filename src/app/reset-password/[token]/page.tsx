@@ -1,3 +1,31 @@
+/**
+ * @module app/reset-password/[token]/page
+ * @description Password reset page for setting a new password via token.
+ *
+ * This page completes the password reset flow initiated from the forgot-password
+ * page. Users receive a time-limited token via email and use this page to set
+ * a new password.
+ *
+ * Key features:
+ * - Token validation on page load (before showing form)
+ * - Password strength indicator using getPasswordStrength utility
+ * - Password confirmation with match validation
+ * - Show/hide password toggle for both fields
+ * - Tenant branding support via TenantBrandedPanel
+ * - Success state with auto-redirect to login
+ * - Invalid/expired token error handling with retry option
+ *
+ * States:
+ * - Loading: Token validation in progress
+ * - Invalid: Token expired or invalid, shows error with link to forgot-password
+ * - Form: Valid token, shows password reset form
+ * - Success: Password reset complete, redirecting to login
+ *
+ * @dependencies
+ * - getPasswordStrength: Password validation utility
+ * - useSubdomain/useTenantBranding: Tenant branding hooks
+ * - TenantBrandedPanel: Left-side branding panel
+ */
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -321,3 +349,39 @@ export default function ResetPasswordPage() {
     </div>
   );
 }
+
+/* =============================================================================
+ * CODE REVIEW SUMMARY
+ * =============================================================================
+ *
+ * WHAT THIS FILE DOES:
+ * Allows users to set a new password using a reset token received via email.
+ * Validates the token before showing the form and provides password strength
+ * feedback.
+ *
+ * KEY STATES:
+ * - Validating: Token being checked on mount
+ * - Invalid: Token expired or invalid, shows error with retry option
+ * - Form: Valid token, password reset form displayed
+ * - Success: Password reset, auto-redirecting to login
+ *
+ * POTENTIAL ISSUES:
+ * 1. [LOW] Password strength calculated multiple times per render in JSX -
+ *    could memoize the result
+ * 2. [LOW] 3-second redirect delay is hardcoded - could be configurable
+ * 3. [LOW] Token validation runs on every page load, no caching
+ *
+ * SECURITY CONSIDERATIONS:
+ * - Token validated server-side before form is shown
+ * - Minimum 8 character password requirement
+ * - Password confirmation required
+ * - Token is single-use (consumed on successful reset)
+ *
+ * PERFORMANCE:
+ * - Token validation is quick (single API call)
+ * - Password strength calculation is lightweight
+ * - Tenant branding loaded in parallel with token validation
+ *
+ * LAST REVIEWED: 2025-01-27
+ * REVIEWED BY: Code Review System
+ * =========================================================================== */

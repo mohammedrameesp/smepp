@@ -1,3 +1,30 @@
+/**
+ * @module app/invite/[token]/page
+ * @description Organization invitation acceptance page.
+ *
+ * This page handles the flow when a user clicks an invitation link to join
+ * an organization. It validates the invitation token, displays invitation
+ * details, and processes the acceptance.
+ *
+ * Key features:
+ * - Fetches and displays invitation details (org name, role, expiry)
+ * - Tenant branding via useTenantBranding hook
+ * - Handles both new users (redirect to signup) and existing users (accept directly)
+ * - Email mismatch detection (warns if signed in with different email)
+ * - Expiry warning for invitations expiring within 24 hours
+ * - Session update after acceptance to include new organization
+ * - Redirects to org subdomain admin portal after successful join
+ *
+ * User flows:
+ * 1. Not logged in: Shows "Create Account & Join" button -> redirects to /signup
+ * 2. Logged in (matching email): Shows "Accept Invitation" button -> joins org
+ * 3. Logged in (different email): Shows warning, accept button disabled
+ *
+ * @dependencies
+ * - next-auth/react: useSession for auth state, signIn for login redirect
+ * - useTenantBranding: Fetch org branding from invitation
+ * - formatDate: Date formatting utility
+ */
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -375,3 +402,41 @@ export default function InvitePage() {
     </div>
   );
 }
+
+/* =============================================================================
+ * CODE REVIEW SUMMARY
+ * =============================================================================
+ *
+ * WHAT THIS FILE DOES:
+ * Handles the complete invitation acceptance flow - from viewing invitation
+ * details to joining the organization. Supports both new and existing users.
+ *
+ * KEY FLOWS:
+ * 1. Unauthenticated user: Shows org details, "Create Account" redirects to signup
+ * 2. Authenticated (matching email): Shows "Accept Invitation" to join directly
+ * 3. Authenticated (wrong email): Shows warning, accept button disabled
+ *
+ * POTENTIAL ISSUES:
+ * 1. [MEDIUM] APP_URL and APP_DOMAIN defined at module level - could fail if
+ *    env vars not available at build time
+ * 2. [LOW] 1.5 second delay before redirect after acceptance is arbitrary
+ * 3. [LOW] MobileLogo component defined inside the component - could be extracted
+ *
+ * SECURITY CONSIDERATIONS:
+ * - Email mismatch check prevents accepting invitation for different user
+ * - Session updated with new organizationId after acceptance
+ * - Token validated server-side before showing details
+ *
+ * PERFORMANCE:
+ * - Invitation details fetched once on mount
+ * - Session update triggers token refresh
+ * - Branding loaded based on invitation org slug
+ *
+ * ACCESSIBILITY:
+ * - Expiry warning for soon-expiring invitations (< 24 hours)
+ * - Clear role and email display
+ * - Disabled state for mismatched email
+ *
+ * LAST REVIEWED: 2025-01-27
+ * REVIEWED BY: Code Review System
+ * =========================================================================== */

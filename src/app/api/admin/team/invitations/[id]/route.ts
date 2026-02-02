@@ -1,3 +1,18 @@
+/**
+ * @module api/admin/team/invitations/[id]
+ * @description Single invitation management endpoints. Supports resending invitations
+ * (regenerating tokens and extending expiry) and canceling/deleting pending invitations.
+ *
+ * @endpoints
+ * - POST /api/admin/team/invitations/[id] - Resend invitation with new token
+ * - DELETE /api/admin/team/invitations/[id] - Cancel pending invitation
+ *
+ * @security
+ * - Requires authentication (requireAuth: true)
+ * - Requires admin role (requireAdmin: true)
+ * - Validates invitation belongs to tenant organization
+ * - Prevents operations on already-accepted invitations
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { randomBytes } from 'crypto';
@@ -102,3 +117,33 @@ export const DELETE = withErrorHandler(async (
 
   return NextResponse.json({ success: true });
 }, { requireAuth: true, requireAdmin: true });
+
+/*
+ * =============================================================================
+ * CODE REVIEW SUMMARY
+ * =============================================================================
+ *
+ * Purpose:
+ * Manages individual invitation lifecycle - resending (with token regeneration)
+ * and cancellation. Used when invitations expire or need to be withdrawn.
+ *
+ * Strengths:
+ * - Proper tenant validation (invitation.organizationId !== tenantId)
+ * - Prevents operations on already-accepted invitations
+ * - Token regeneration using crypto.randomBytes for security
+ * - Generates proper subdomain-based invite URLs
+ * - 7-day expiration for resent invitations
+ *
+ * Concerns:
+ * - [LOW] POST endpoint for resend does not send actual email - only returns URL
+ *   (email sending may be handled elsewhere or be intentional for manual sharing)
+ * - [LOW] No rate limiting on resend - could be abused for token generation
+ *
+ * Recommendations:
+ * - Consider adding rate limiting on resend endpoint
+ * - Consider logging invitation resend/delete actions for audit trail
+ *
+ * Status: APPROVED - Proper invitation management with minor enhancement opportunities
+ * Last Reviewed: 2026-02-01
+ * =============================================================================
+ */

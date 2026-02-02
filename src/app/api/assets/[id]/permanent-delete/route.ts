@@ -67,3 +67,12 @@ async function permanentDeleteHandler(request: NextRequest, context: APIContext)
 }
 
 export const DELETE = withErrorHandler(permanentDeleteHandler, { requireAdmin: true, requireModule: 'assets' });
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes: None required - file is well-documented
+ * Issues: None - proper tenant isolation, only allows deletion of soft-deleted assets,
+ *         activity logging for permanent deletion audit trail
+ */

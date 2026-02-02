@@ -1,3 +1,15 @@
+/**
+ * @module admin/settings/ai-usage/page
+ * @description AI usage monitoring dashboard for organization administrators.
+ * Displays token consumption, request counts, cost estimates, user breakdown,
+ * daily trends, popular AI functions, and security audit metrics including
+ * flagged queries and risk scores. Supports configurable time ranges (7/30/90 days).
+ *
+ * @route /admin/settings/ai-usage
+ * @access Admin only
+ * @dependencies
+ * - GET /api/admin/ai-usage - Fetches AI usage statistics and audit data
+ */
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -496,3 +508,37 @@ export default function AIUsagePage() {
     </>
   );
 }
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * CODE REVIEW SUMMARY
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * OVERVIEW:
+ * Comprehensive AI usage dashboard with multi-tab interface showing usage trends,
+ * per-user breakdown, popular functions, and security metrics. Well-designed
+ * data visualization with progress bars and bar charts.
+ *
+ * STRENGTHS:
+ * - Configurable time range selector (7/30/90 days)
+ * - Visual progress indicators with color-coded thresholds (75%/90%)
+ * - Security tab with flagged queries and risk scores
+ * - Clean tab organization separating different data views
+ * - Responsive grid layouts for different screen sizes
+ * - Uses centralized datetime formatting functions
+ * - Proper loading and error states
+ *
+ * POTENTIAL IMPROVEMENTS:
+ * - Consider extracting the bar chart into a reusable component
+ * - Add export functionality for usage reports
+ * - Consider adding date range picker for custom date selection
+ * - Could cache data with SWR or React Query for better UX
+ * - Add tooltips to chart bars for detailed information
+ *
+ * SECURITY:
+ * - Displays security audit metrics for admin oversight
+ * - Flagged queries visible for investigation
+ * - Rate limit info helps admins understand constraints
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ */

@@ -1,15 +1,32 @@
+/**
+ * @module api/public/tenant-branding
+ * @description Public endpoint for fetching organization branding and auth configuration.
+ *
+ * Returns tenant-specific branding (logo, colors, welcome text) and authentication
+ * settings (allowed methods, domain restrictions, custom OAuth status) for login pages.
+ * Used by the login UI to customize appearance per organization subdomain.
+ *
+ * @authentication None - Public endpoint
+ * @ratelimit None configured - consider adding for abuse prevention
+ *
+ * @example
+ * GET /api/public/tenant-branding?subdomain=acme
+ * Response: {
+ *   "found": true,
+ *   "branding": {
+ *     "organizationName": "Acme Corp",
+ *     "logoUrl": "https://...",
+ *     "primaryColor": "#3B82F6",
+ *     "hasCustomGoogleOAuth": true
+ *   }
+ * }
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { RESERVED_SUBDOMAINS } from '@/lib/multi-tenant/subdomain';
 import type { TenantBranding, TenantBrandingResponse } from '@/lib/multi-tenant/tenant-branding';
 import logger from '@/lib/core/log';
-
-/**
- * GET /api/public/tenant-branding?subdomain=acme
- *
- * Public endpoint to fetch organization branding for login pages.
- * No authentication required.
- */
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -100,3 +117,34 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * CODE REVIEW SUMMARY
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * STRENGTHS:
+ * - Typed response using TenantBrandingResponse
+ * - Reserved subdomain check prevents access to system routes
+ * - OAuth secrets are not exposed (only boolean status returned)
+ * - Comprehensive branding data including auth configuration
+ * - Proper error handling with different status codes
+ *
+ * CONCERNS:
+ * - No rate limiting (could be used for organization enumeration)
+ * - No caching headers (could reduce DB load for popular subdomains)
+ * - Fetches OAuth secrets from DB just to check existence
+ * - organizationId is exposed in response (potential info leakage)
+ *
+ * RECOMMENDATIONS:
+ * - Add rate limiting (e.g., 100 requests per IP per minute)
+ * - Add Cache-Control headers for short-term caching (e.g., 5 minutes)
+ * - Use EXISTS query for OAuth check instead of fetching secrets
+ * - Consider removing organizationId from public response
+ * - Add request logging for analytics
+ *
+ * SECURITY NOTES:
+ * - OAuth secrets never returned to client
+ * - Reserved subdomain protection
+ * - No authentication required (by design for login pages)
+ */

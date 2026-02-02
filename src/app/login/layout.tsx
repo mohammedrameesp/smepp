@@ -1,3 +1,21 @@
+/**
+ * @module app/login/layout
+ * @description Login page layout with dynamic metadata for social sharing.
+ *
+ * This layout component generates dynamic metadata for the login page based on
+ * the organization (tenant) context. It enables proper WhatsApp and social media
+ * previews to show organization-specific information.
+ *
+ * Key features:
+ * - Extracts organization from subdomain or custom domain
+ * - Generates org-specific title, description, and OpenGraph images
+ * - Falls back to default Durj branding for main domain
+ * - Supports both subdomain routing (org.domain.com) and custom domains
+ *
+ * @dependencies
+ * - prisma: Database access for organization lookup
+ * - next/headers: Server-side header access for host detection
+ */
 import { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { prisma } from '@/lib/core/prisma';
@@ -91,3 +109,37 @@ export default function LoginLayout({
 }) {
   return <>{children}</>;
 }
+
+/* =============================================================================
+ * CODE REVIEW SUMMARY
+ * =============================================================================
+ *
+ * WHAT THIS FILE DOES:
+ * Server-side layout for the login page that generates dynamic metadata for
+ * SEO and social sharing based on the organization context.
+ *
+ * KEY FUNCTIONS:
+ * - generateMetadata: Async function that determines org from host and generates
+ *   appropriate OpenGraph/Twitter card metadata
+ *
+ * METADATA GENERATION:
+ * 1. Custom domain: Looks up org by customDomain field (verified only)
+ * 2. Subdomain: Extracts slug from host and looks up by slug
+ * 3. Main domain: Returns default Durj branding
+ *
+ * POTENTIAL ISSUES:
+ * 1. [LOW] Error handling logs to console but doesn't surface to monitoring
+ * 2. [LOW] Subdomain extraction uses simple split - may have edge cases with
+ *    complex domain structures
+ *
+ * SECURITY CONSIDERATIONS:
+ * - Only verified custom domains are used for branding
+ * - Database query is read-only with limited field selection
+ *
+ * PERFORMANCE:
+ * - Prisma query is minimal (only selects name, logoUrl, primaryColor)
+ * - Error cases fall back to default metadata without blocking
+ *
+ * LAST REVIEWED: 2025-01-27
+ * REVIEWED BY: Code Review System
+ * =========================================================================== */

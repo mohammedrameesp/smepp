@@ -1,3 +1,23 @@
+/**
+ * @module app/no-access/page
+ * @description No Access page for users without portal access.
+ *
+ * This page is displayed when a user is authenticated but has no access to
+ * either the admin or employee portal. This typically occurs with:
+ * - Misconfigured service accounts
+ * - Users with isServiceAccount=true but lacking admin privileges
+ * - Database inconsistencies in user role assignments
+ *
+ * The page provides:
+ * - Clear explanation of the access issue
+ * - Contact support option (via email link)
+ * - Sign out button to switch accounts
+ *
+ * Redirected here from:
+ * - middleware.ts: When service account users lack proper access
+ *
+ * @see {@link module:middleware} - Access control middleware
+ */
 'use client';
 
 import { signOut, useSession } from 'next-auth/react';
@@ -5,13 +25,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ShieldX, LogOut, Mail } from 'lucide-react';
 import { ICON_SIZES } from '@/lib/constants';
-
-/**
- * No Access Page
- *
- * This page is shown when a user (typically a misconfigured service account)
- * doesn't have access to either the admin or employee portal.
- */
 export default function NoAccessPage() {
   const { data: session } = useSession();
 
@@ -58,3 +71,43 @@ export default function NoAccessPage() {
     </div>
   );
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ *
+ * Purpose:
+ * Page displayed when authenticated users have no access to any portal,
+ * typically due to misconfigured service accounts.
+ *
+ * Key Features:
+ * - Clear explanation of the access configuration issue
+ * - Displays user's email for context
+ * - Contact support button with pre-filled email mailto link
+ * - Sign out button to switch to different account
+ * - Uses shadcn/ui Card components for consistent styling
+ *
+ * Target Users:
+ * - Service accounts without admin privileges
+ * - Users with broken/incomplete role assignments
+ * - Edge cases from database inconsistencies
+ *
+ * UX Considerations:
+ * - Non-alarming messaging (configuration error, not rejection)
+ * - Actionable next steps (contact admin or support)
+ * - Easy account switching via sign out
+ *
+ * Security Considerations:
+ * - User email is exposed in mailto link (acceptable for support)
+ * - No sensitive data displayed
+ *
+ * Potential Improvements:
+ * - Add in-app support ticket creation
+ * - Add link to organization admin contact if available
+ * - Track occurrences for identifying configuration issues
+ *
+ * Dependencies:
+ * - next-auth/react: signOut, useSession
+ * - @/components/ui/button, card: UI components
+ * - lucide-react: ShieldX, LogOut, Mail icons
+ * - @/lib/constants: ICON_SIZES
+ */

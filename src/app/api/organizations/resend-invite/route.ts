@@ -1,3 +1,25 @@
+/**
+ * @module api/organizations/resend-invite
+ * @description Public API endpoint for resending organization signup invitations.
+ * Allows users who haven't completed their organization setup to request a new
+ * invitation email. Also supports changing the invitation email address.
+ *
+ * @endpoints
+ * - POST /api/organizations/resend-invite - Resend signup invitation email
+ *
+ * @features
+ * - In-memory rate limiting (3 attempts per 15 minutes)
+ * - Email change support via slug + newEmail parameters
+ * - Invitation expiry validation
+ * - Branded HTML email with organization colors
+ *
+ * @security
+ * - Public endpoint (no auth required)
+ * - Rate limited per email/slug
+ * - Does not reveal whether email exists (security through obscurity)
+ *
+ * @note In production, consider using Redis for rate limiting instead of in-memory Map
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import logger from '@/lib/core/log';
@@ -264,3 +286,37 @@ Need help? Contact support@durj.qa
     );
   }
 }
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * CODE REVIEW SUMMARY
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * OVERVIEW:
+ * Public endpoint for resending organization signup invitations. Supports both
+ * simple resend and email change flows for users who haven't completed setup.
+ *
+ * SECURITY:
+ * [+] Rate limiting (3 attempts per 15 minutes per email/slug)
+ * [+] Does not reveal whether email exists (returns success regardless)
+ * [+] Validates invitation hasn't expired
+ * [+] Checks new email isn't already an organization owner
+ * [+] Zod validation on input
+ *
+ * PATTERNS:
+ * [+] Branded HTML email matching organization colors
+ * [+] Supports both resend and email change flows
+ * [+] Calculates and displays days remaining until expiry
+ * [+] Structured logging for debugging
+ *
+ * POTENTIAL IMPROVEMENTS:
+ * [!] In-memory rate limiting won't work with multiple server instances
+ *     - Should use Redis or similar distributed store in production
+ * [-] Consider adding CAPTCHA for public endpoint abuse prevention
+ * [-] Email template could be extracted to a template system
+ * [-] Missing email delivery tracking/confirmation
+ * [-] Rate limit window doesn't reset properly (attempts.count never resets to 1)
+ *
+ * LAST REVIEWED: 2026-02-01
+ * ═══════════════════════════════════════════════════════════════════════════════
+ */

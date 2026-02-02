@@ -1,3 +1,15 @@
+/**
+ * @file route.ts
+ * @description Notification management API endpoints
+ * @module api/notifications
+ *
+ * Provides endpoints for managing user notifications:
+ * - GET: List notifications with pagination and filtering
+ * - POST: Mark all notifications as read
+ *
+ * Notifications are scoped to both tenant and user (recipientId).
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
@@ -5,7 +17,13 @@ import { notificationQuerySchema } from '@/features/notifications/validations/no
 
 /**
  * GET /api/notifications
- * List user's notifications with pagination and optional filtering
+ *
+ * List user's notifications with pagination and optional filtering.
+ * Notifications are filtered by recipientId to ensure users only see their own.
+ *
+ * @param isRead - Optional filter for read/unread status
+ * @param p - Page number (default: 1)
+ * @param ps - Page size (default: 20)
  */
 export const GET = withErrorHandler(
   async (request: NextRequest, context: APIContext) => {
@@ -89,3 +107,15 @@ export const POST = withErrorHandler(
   },
   { requireAuth: true }
 );
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation at top
+ *   - Enhanced GET handler documentation with parameter details
+ * Issues: None - Proper tenant isolation via tenant-scoped prisma client,
+ *   recipientId check ensures users only see their own notifications,
+ *   uses Zod validation for query parameters
+ */

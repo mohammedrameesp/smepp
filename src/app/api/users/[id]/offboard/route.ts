@@ -227,3 +227,13 @@ async function cancelOffboardingHandler(
 }
 
 export const DELETE = withErrorHandler(cancelOffboardingHandler, { requireAdmin: true });
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes: None needed - file has JSDoc, admin-only authorization, prevents self-offboarding
+ *          and owner offboarding, proper status transitions, date validation,
+ *          activity logging, tenant isolation
+ * Issues: None - offboarding workflow is secure
+ */

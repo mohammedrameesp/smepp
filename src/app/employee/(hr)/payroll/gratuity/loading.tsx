@@ -1,3 +1,13 @@
+/**
+ * @module app/employee/(hr)/payroll/gratuity
+ * @description Loading skeleton for the gratuity projection page.
+ *
+ * Features:
+ * - Current gratuity amount card skeleton
+ * - Calculation breakdown section
+ * - Future projections grid (5 year milestones)
+ * - Formula explanation section
+ */
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DollarSign, Calculator, TrendingUp, Info } from 'lucide-react';
@@ -128,3 +138,12 @@ export default function GratuityProjectionLoading() {
     </>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation at top
+ * Issues: None - loading skeleton matches gratuity page layout
+ */

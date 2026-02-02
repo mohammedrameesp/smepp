@@ -1,3 +1,10 @@
+/**
+ * @module admin/(system)/my-approvals
+ * @description Pending approvals dashboard for managers and admins.
+ * Shows leave requests, spend requests, and asset requests awaiting approval.
+ * Managers see only their direct reports; admins see all pending requests.
+ */
+
 import { Metadata } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { redirect } from 'next/navigation';
@@ -19,6 +26,13 @@ export const metadata: Metadata = {
   description: 'Pending approval requests',
 };
 
+/**
+ * Fetches pending approvals based on user role.
+ * Admins see all pending requests; managers see only their direct reports.
+ * @param tenantId - Organization tenant ID for data isolation
+ * @param userId - Current user's ID to find direct reports
+ * @param isAdmin - Whether user has admin privileges
+ */
 async function getPendingApprovals(tenantId: string, userId: string, isAdmin: boolean) {
   // For managers (non-admins), get their direct reports' IDs
   let directReportIds: string[] = [];
@@ -214,3 +228,13 @@ export default async function MyApprovalsPage() {
     </>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation at top
+ *   - Added JSDoc comments for getPendingApprovals function
+ * Issues: None - Proper tenant isolation implemented via tenantId filtering
+ */

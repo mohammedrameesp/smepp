@@ -1,3 +1,19 @@
+/**
+ * @file route.ts
+ * @description Password reset endpoint with token validation and password update.
+ * @module api/auth/reset-password
+ *
+ * Endpoints:
+ * - GET: Validate reset token without consuming it
+ * - POST: Reset password using valid token
+ *
+ * Security features:
+ * - Token comparison using SHA-256 hash
+ * - Password complexity validation (SEC-010)
+ * - Clears lockout on successful reset
+ * - Invalidates all existing sessions via passwordChangedAt
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { hash } from 'bcryptjs';
@@ -162,3 +178,12 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation at top
+ * Issues: None - proper security measures implemented
+ */

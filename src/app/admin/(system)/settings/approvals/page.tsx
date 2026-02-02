@@ -1,3 +1,15 @@
+/**
+ * @module admin/settings/approvals/page
+ * @description Server page for listing and managing approval policies.
+ * Displays all configured approval chains grouped by module (Leave, Spend, Asset),
+ * showing thresholds, priority, and approval chain visualization. Includes smart
+ * routing explanation for automatic step skipping when no approver is available.
+ *
+ * @route /admin/settings/approvals
+ * @access Admin only (server-side auth check)
+ * @dependencies
+ * - Prisma: ApprovalPolicy with levels relation
+ */
 import { Metadata } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { redirect } from 'next/navigation';
@@ -182,3 +194,37 @@ export default async function ApprovalPoliciesPage() {
     </>
   );
 }
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * CODE REVIEW SUMMARY
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * OVERVIEW:
+ * Server-rendered page for listing all approval policies grouped by module.
+ * Provides visual representation of approval chains with tooltips for role
+ * descriptions.
+ *
+ * STRENGTHS:
+ * - Server-side data fetching for fast initial load
+ * - Server-side auth check with redirect for unauthorized access
+ * - Policies grouped by module for easy navigation
+ * - Visual chain display with arrow connectors
+ * - Tooltip descriptions for each approver role
+ * - Smart routing explanation in alert banner
+ * - Empty state with call-to-action to create first policy
+ * - Inactive policies clearly marked with badge
+ *
+ * POTENTIAL IMPROVEMENTS:
+ * - Add bulk actions (activate/deactivate multiple policies)
+ * - Consider search/filter for organizations with many policies
+ * - Add policy duplication feature
+ * - Show usage stats (how many requests matched each policy)
+ *
+ * SECURITY:
+ * - Server-side session validation
+ * - Tenant isolation via session.user.organizationId filter
+ * - Admin-only access enforced before data fetch
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ */

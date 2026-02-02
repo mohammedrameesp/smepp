@@ -1,3 +1,12 @@
+/**
+ * @module app/employee/(projects)/spend-requests/new
+ * @description Loading skeleton for the new spend request form page.
+ *
+ * Features:
+ * - 5 form section card skeletons
+ * - 3 form field skeletons per section
+ * - Action buttons skeleton at bottom
+ */
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -44,3 +53,12 @@ export default function NewSpendRequestLoading() {
     </>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation at top
+ * Issues: None - loading skeleton matches new spend request form layout
+ */

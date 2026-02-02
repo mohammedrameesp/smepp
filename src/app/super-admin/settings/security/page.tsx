@@ -1,3 +1,11 @@
+/**
+ * @module app/super-admin/settings/security/page
+ * @description Super admin security settings page for managing two-factor authentication.
+ * Provides complete 2FA lifecycle management: setup with QR code, verification, backup codes,
+ * disabling 2FA, and regenerating backup codes. Uses authenticator app (TOTP) approach.
+ * Client component with session-based access control.
+ */
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -673,3 +681,43 @@ export default function SecuritySettingsPage() {
     </div>
   );
 }
+
+/*
+ * =============================================================================
+ * CODE REVIEW SUMMARY
+ * =============================================================================
+ *
+ * File: src/app/super-admin/settings/security/page.tsx
+ * Type: Client Component - Security Settings Page (2FA Management)
+ *
+ * FUNCTIONALITY:
+ * - Complete 2FA lifecycle: setup, verification, enable, disable
+ * - QR code display for authenticator app enrollment
+ * - Manual entry key as fallback
+ * - Backup codes generation, display, and regeneration
+ * - Copy-to-clipboard for backup codes (individual and bulk)
+ *
+ * ARCHITECTURE:
+ * - Multi-step dialog flow (QR -> Verify -> Backup Codes)
+ * - Separate dialogs for setup, disable, and regenerate actions
+ * - Session-based access control with redirect for non-admins
+ *
+ * SECURITY:
+ * [OK] Session check redirects unauthorized users
+ * [OK] 2FA verification required for sensitive actions (disable, regenerate)
+ * [OK] Backup codes shown only once with save warning
+ * [OK] Uses secure API endpoints for 2FA operations
+ *
+ * STATE MANAGEMENT:
+ * [OK] Proper cleanup of sensitive data (codes, tokens) on dialog close
+ * [OK] Loading states prevent duplicate submissions
+ * [OK] Error states displayed clearly to user
+ *
+ * IMPROVEMENTS SUGGESTED:
+ * [MEDIUM] Add rate limiting indicator for failed verification attempts
+ * [LOW] Consider adding session timeout warning during 2FA setup
+ * [LOW] Add confirmation before closing setup dialog mid-process
+ * [LOW] Extract dialog components to reduce file length (675+ lines)
+ *
+ * =============================================================================
+ */

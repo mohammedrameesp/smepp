@@ -1,3 +1,26 @@
+/**
+ * @module api/export/full-backup
+ * @description API endpoint for exporting a complete tenant data backup as an Excel file.
+ * Exports all tenant-scoped business data across multiple sheets for data portability
+ * and compliance requirements.
+ *
+ * @endpoints
+ * - GET /api/export/full-backup - Download complete tenant data as XLSX
+ *
+ * @sheets
+ * - Metadata, Team Members, Assets, Subscriptions, Suppliers
+ * - Asset History, Subscription History, Supplier Engagements
+ * - Activity Logs, Maintenance Records, Profile Change Requests
+ * - Purchase Requests, PR Items, PR History
+ *
+ * @security
+ * - Requires admin privileges
+ * - All data is tenant-scoped
+ * - Extended timeout (60s) for large exports
+ *
+ * @requires Authentication
+ * @requires Admin role
+ */
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { withErrorHandler } from '@/lib/http/handler';
@@ -546,3 +569,37 @@ export const GET = withErrorHandler(async (_request, { tenant }) => {
     },
   });
 }, { requireAuth: true, requireAdmin: true });
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * CODE REVIEW SUMMARY
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * OVERVIEW:
+ * Comprehensive data export endpoint that generates an XLSX file containing all
+ * tenant business data. Used for data portability, backups, and compliance.
+ *
+ * SECURITY:
+ * [+] Requires admin role - sensitive operation
+ * [+] All queries filtered by tenantId
+ * [+] Uses indirect filtering for related entities (e.g., asset: { tenantId })
+ * [+] Export metadata includes user email for audit trail
+ *
+ * PATTERNS:
+ * [+] Parallel data fetching with Promise.all for performance
+ * [+] Consistent data transformation for each entity type
+ * [+] Includes relationship data (assignedMember, performedBy, etc.)
+ * [+] Extended timeout (60s) for large exports
+ * [+] Version tracking in metadata for import compatibility
+ *
+ * POTENTIAL IMPROVEMENTS:
+ * [-] Consider streaming for very large datasets to avoid memory issues
+ * [-] Missing progress indication for long-running exports
+ * [-] Consider adding export history/audit logging
+ * [-] Could add selective export (choose which sheets to include)
+ * [-] Missing company documents and leave module data in export
+ * [-] Consider compression for large files
+ *
+ * LAST REVIEWED: 2026-02-01
+ * ═══════════════════════════════════════════════════════════════════════════════
+ */

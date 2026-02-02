@@ -1,3 +1,23 @@
+/**
+ * @module super-admin/users/page
+ * @description Platform-wide users listing page showing all TeamMembers across organizations.
+ * Server component that provides a read-only view of all registered users.
+ *
+ * @features
+ * - List all active team members across all organizations
+ * - Display user details: name, email, organization, role, join date
+ * - Responsive card-based layout for user information
+ * - Empty state handling when no users exist
+ *
+ * @data
+ * - Queries TeamMember (not User) to show organization-specific memberships
+ * - Filters out soft-deleted members (isDeleted: false)
+ * - Includes tenant relationship for organization context
+ *
+ * @note
+ * - Read-only view, no edit/delete capabilities on this page
+ * - Users may appear multiple times if they belong to multiple organizations
+ */
 import { prisma } from '@/lib/core/prisma';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -98,3 +118,56 @@ export default async function SuperAdminUsersPage() {
     </div>
   );
 }
+
+/* =============================================================================
+ * CODE REVIEW SUMMARY
+ * =============================================================================
+ *
+ * File: src/app/super-admin/users/page.tsx
+ * Type: Server Component
+ * Last Reviewed: 2026-02-01
+ *
+ * PURPOSE:
+ * Displays all platform users (TeamMembers) across all organizations in a
+ * read-only list format for super admin oversight.
+ *
+ * ARCHITECTURE:
+ * - Server component with direct database query
+ * - Simple data model: TeamMember with tenant relationship
+ * - Card-based layout instead of table for responsiveness
+ * - Uses shared utility functions for display formatting
+ *
+ * DATA MODEL:
+ * - Queries TeamMember (organization memberships) not User (global accounts)
+ * - Filters soft-deleted members (isDeleted: false)
+ * - Orders by creation date (newest first)
+ * - Includes tenant for organization context
+ *
+ * DISPLAY FIELDS:
+ * - Name and email (with initials avatar)
+ * - Organization name
+ * - Role badge (Admin/Member)
+ * - Join date (relative time)
+ *
+ * SECURITY CONSIDERATIONS:
+ * [+] Read-only view - no modification capabilities
+ * [+] Uses utility functions for safe email display
+ * [!] No pagination - may have performance issues with large user bases
+ *
+ * UI/UX:
+ * [+] Responsive card layout
+ * [+] Empty state handling
+ * [+] Relative timestamps for recency
+ * [-] No search or filtering functionality
+ * [-] No detail view or drill-down
+ *
+ * POTENTIAL IMPROVEMENTS:
+ * - Add pagination for scalability
+ * - Implement search by name/email
+ * - Add filter by organization
+ * - Add user detail modal or page
+ * - Show last activity timestamp
+ * - Add export functionality (CSV)
+ * - Consider showing User account status (verified, 2FA)
+ *
+ * =========================================================================== */

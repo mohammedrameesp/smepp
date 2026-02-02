@@ -1,3 +1,11 @@
+/**
+ * @module app/super-admin/settings/whatsapp/page
+ * @description Super admin WhatsApp Business API configuration page. Allows platform-wide
+ * WhatsApp integration setup for approval notifications. Manages Meta API credentials,
+ * webhook configuration, and displays usage statistics per organization. Organizations
+ * can use this platform config or configure their own custom WhatsApp integration.
+ */
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -524,3 +532,44 @@ export default function WhatsAppSettingsPage() {
     </div>
   );
 }
+
+/*
+ * =============================================================================
+ * CODE REVIEW SUMMARY
+ * =============================================================================
+ *
+ * File: src/app/super-admin/settings/whatsapp/page.tsx
+ * Type: Client Component - WhatsApp Business API Configuration
+ *
+ * FUNCTIONALITY:
+ * - Configure platform-wide WhatsApp Business API credentials
+ * - Display webhook URL and verify token for Meta console
+ * - Show usage statistics: messages sent/delivered/failed
+ * - Track organization adoption (platform vs custom vs none)
+ * - Display top organizations by message volume
+ *
+ * ARCHITECTURE:
+ * - Parallel data fetching for config and stats on mount
+ * - Form state managed locally (not react-hook-form)
+ * - Session-based access control with redirect
+ *
+ * SECURITY:
+ * [OK] Access token input is password-masked with toggle
+ * [OK] Token cleared after successful save (not persisted in state)
+ * [OK] Existing token hint without exposing actual value
+ * [OK] Session validation before API calls
+ *
+ * DATA HANDLING:
+ * [OK] Token only sent when explicitly entered (blank = keep existing)
+ * [OK] Webhook verify token shown read-only (generated server-side)
+ * [OK] Copy-to-clipboard for webhook configuration values
+ *
+ * IMPROVEMENTS SUGGESTED:
+ * [MEDIUM] Add connection test button to validate credentials
+ * [MEDIUM] Show message delivery rate/success percentage
+ * [LOW] Add date range selector for usage statistics
+ * [LOW] Consider pagination for top tenants list
+ * [LOW] Add loading skeleton for stats section
+ *
+ * =============================================================================
+ */

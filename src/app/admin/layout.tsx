@@ -1,6 +1,19 @@
+/**
+ * @module AdminLayout
+ * @description Server-side layout component for the admin dashboard.
+ * Handles authentication, authorization, impersonation, and tenant context.
+ *
+ * Key responsibilities:
+ * - Validates user session and admin/department-level access
+ * - Supports super admin impersonation via signed JWT cookie
+ * - Fetches tenant-scoped badge counts and organization settings
+ * - Enforces view-mode cookie for admin/employee view switching
+ * - Handles deleted organization redirect
+ */
+
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
-import { cookies, headers } from 'next/headers';
+import { cookies } from 'next/headers';
 import { unstable_noStore as noStore } from 'next/cache';
 import { jwtVerify } from 'jose';
 import { authOptions } from '@/lib/core/auth';
@@ -240,3 +253,13 @@ export default async function AdminLayout({
     </AdminLayoutClient>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation at top
+ *   - Removed unused 'headers' import from 'next/headers'
+ * Issues: None
+ */

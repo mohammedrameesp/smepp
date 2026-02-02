@@ -177,3 +177,11 @@ export async function GET(request: NextRequest) {
     totalAssets: stats.reduce((acc, s) => acc + s._count, 0),
   });
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes: Added review summary
+ * Issues: None identified
+ */

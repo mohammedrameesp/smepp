@@ -1,3 +1,10 @@
+/**
+ * @module app/admin/(hr)/employees/[id]/edit
+ * @description Admin page for editing employee profiles, permissions,
+ * and HR settings. Supports role-based access control configuration,
+ * WPS settings, and detailed profile editing via HRProfileForm.
+ */
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -8,7 +15,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { User, Users, Loader2, Shield, ArrowLeft, Banknote } from 'lucide-react';
+import { User, Users, Loader2, Shield, ArrowLeft } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { ICON_SIZES } from '@/lib/constants';
 import { cn } from '@/lib/core/utils';
@@ -583,3 +590,19 @@ export default function AdminEmployeeEditPage() {
     </>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation
+ *   - Removed unused import 'Banknote' from lucide-react
+ * Issues: None - File follows best practices:
+ *   - Uses useCallback for memoized fetch functions
+ *   - Proper error handling with toast notifications
+ *   - Optimistic UI updates with rollback on error
+ *   - Clean separation of permission toggles and HR profile form
+ *   - Loading and error states handled appropriately
+ *   - No console.log statements (only uses toast for user feedback)
+ */

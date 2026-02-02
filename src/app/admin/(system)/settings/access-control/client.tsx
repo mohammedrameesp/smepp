@@ -1,3 +1,14 @@
+/**
+ * @module admin/settings/access-control/client
+ * @description Client component for managing team member roles and reporting hierarchy.
+ * Provides a searchable table interface for assigning display roles (Owner, Admin,
+ * Manager, HR, Finance, Operations, Employee) and configuring manager relationships.
+ *
+ * @dependencies
+ * - GET /api/team-members - Fetches organization team members
+ * - PUT /api/users/:id - Updates user role or reporting manager
+ * - @/lib/access-control - Role derivation and display constants
+ */
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -458,3 +469,34 @@ export function AccessControlClient() {
     </div>
   );
 }
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * CODE REVIEW SUMMARY
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * OVERVIEW:
+ * Well-structured client component for team role and hierarchy management.
+ * Uses display roles from access-control library for consistent role presentation.
+ *
+ * STRENGTHS:
+ * - Derives display roles using centralized deriveDisplayRole function
+ * - Stats cards provide quick overview of team composition
+ * - Search functionality for filtering large teams
+ * - Role legend provides clear descriptions of each role
+ * - Proper loading and error states
+ * - Uses ICON_SIZES constant for consistent sizing
+ *
+ * POTENTIAL IMPROVEMENTS:
+ * - Consider pagination for organizations with many team members
+ * - Add optimistic updates for role changes to improve perceived performance
+ * - Consider debouncing search input for better performance
+ * - Error boundary could wrap the component for graceful error handling
+ *
+ * SECURITY:
+ * - Role updates are validated server-side (cannot set OWNER role)
+ * - Owners cannot have their manager changed (disabled in UI)
+ * - API calls handle errors appropriately without exposing internals
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ */

@@ -1,3 +1,10 @@
+/**
+ * @module app/admin/(hr)/leave/requests
+ * @description Admin page for viewing and managing all leave requests.
+ * Displays filterable table of requests with status counts and navigation
+ * to calendar view and leave balances.
+ */
+
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
@@ -88,3 +95,17 @@ export default async function AdminLeaveRequestsPage() {
     </>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation
+ * Issues: None - File follows best practices:
+ *   - Uses batched Promise.all for database queries (avoids N+1)
+ *   - Proper tenant isolation with tenantId filtering
+ *   - Auth checks for admin OR HR access
+ *   - Clean server component with feature-based client table component
+ *   - No console.log statements
+ */

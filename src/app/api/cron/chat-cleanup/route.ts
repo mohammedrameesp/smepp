@@ -1,3 +1,24 @@
+/**
+ * @module api/cron/chat-cleanup
+ * @description Scheduled job for cleaning up expired chat data.
+ *
+ * This cron endpoint handles automatic cleanup of chat conversations
+ * and audit logs based on retention policies. Supports configurable
+ * retention periods and preserves flagged entries longer for review.
+ *
+ * @route POST /api/cron/chat-cleanup - Execute cleanup (cron)
+ * @route GET /api/cron/chat-cleanup - Manual trigger (dev only)
+ *
+ * @security
+ * - Requires Bearer token authentication (CRON_SECRET)
+ * - GET method disabled in production
+ *
+ * @retention
+ * - Conversations with expiresAt: deleted when past expiry
+ * - Conversations without expiresAt: 90 days (configurable via CHAT_RETENTION_DAYS)
+ * - Non-flagged audit logs: 90 days
+ * - Flagged audit logs: 1 year (for security review)
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import logger from '@/lib/core/log';
@@ -109,3 +130,39 @@ export async function GET(request: NextRequest) {
   }
   return POST(request);
 }
+
+/* =============================================================================
+ * CODE REVIEW SUMMARY
+ * =============================================================================
+ *
+ * OVERVIEW:
+ * Scheduled cleanup job for chat data retention policy enforcement.
+ * Handles automatic deletion of expired conversations and old audit logs
+ * with tiered retention for flagged security entries.
+ *
+ * SECURITY ASSESSMENT: GOOD
+ * - Bearer token authentication via CRON_SECRET
+ * - GET method disabled in production
+ * - Flagged audit logs retained longer (1 year vs 90 days)
+ * - Comprehensive logging of deletion counts
+ *
+ * POTENTIAL IMPROVEMENTS:
+ * 1. Add Slack/email notification for cleanup results
+ * 2. Per-organization retention policy overrides
+ * 3. Dry-run mode for testing retention policies
+ * 4. Batch deletion for large datasets to avoid timeouts
+ *
+ * RETENTION POLICIES:
+ * - Conversations with expiresAt: Deleted when past expiry
+ * - Conversations without expiresAt: 90 days (CHAT_RETENTION_DAYS env)
+ * - Non-flagged audit logs: 90 days
+ * - Flagged audit logs: 1 year
+ *
+ * DEPENDENCIES:
+ * - @/lib/core/prisma: Database access
+ * - @/lib/core/log: Structured logging
+ * - CRON_SECRET env: Authentication token
+ * - CHAT_RETENTION_DAYS env: Configurable retention (default 90)
+ *
+ * LAST REVIEWED: 2026-02-01
+ * ============================================================================= */

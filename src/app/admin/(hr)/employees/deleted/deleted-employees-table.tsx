@@ -1,3 +1,18 @@
+/**
+ * @module app/admin/(hr)/employees/deleted/deleted-employees-table
+ * @description Client component for displaying and managing soft-deleted employees.
+ * Shows employees in the "trash" with countdown timers for permanent deletion
+ * and allows admins to restore them before the 30-day retention period expires.
+ *
+ * @features
+ * - Display deleted employees with remaining days until permanent deletion
+ * - Visual urgency indicators for employees with 7 or fewer days remaining
+ * - Restore functionality to bring employees back to active status
+ * - Empty state when no deleted employees exist
+ *
+ * @dependencies
+ * - POST /api/users/:id/restore - Restores a soft-deleted employee
+ */
 'use client';
 
 import { useState } from 'react';
@@ -159,3 +174,31 @@ export function DeletedEmployeesTable({ employees }: DeletedEmployeesTableProps)
     </>
   );
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ *
+ * Purpose: Display and manage soft-deleted employees with restoration capability
+ *
+ * Strengths:
+ * - Clear visual urgency indicators (red for <=7 days remaining)
+ * - Informative empty state explaining the retention policy
+ * - Warning banner about auto-deletion policy
+ * - Proper loading states during restore operations
+ * - Good error handling with toast notifications
+ *
+ * Weaknesses:
+ * - No confirmation dialog before restore (though restore is non-destructive)
+ * - No bulk restore functionality
+ * - Hard-coded 30-day and 7-day thresholds (could be configurable)
+ *
+ * Security:
+ * - Relies on API-level authorization for restore operations
+ * - No exposure of sensitive employee data beyond display needs
+ *
+ * Recommendations:
+ * - Consider adding permanent deletion option for authorized users
+ * - Extract retention period constants to configuration
+ * - Add sorting options (by deletion date, days remaining)
+ * - Consider adding bulk restore for multiple employees
+ */

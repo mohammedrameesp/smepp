@@ -1,3 +1,21 @@
+/**
+ * @module app/global-error
+ * @description Global error boundary for critical application failures.
+ *
+ * This component catches errors that occur in the root layout or when the
+ * standard error boundary fails. It renders a completely standalone error
+ * page with its own <html> and <body> tags since the root layout may be
+ * unavailable.
+ *
+ * Key differences from error.tsx:
+ * - Renders full HTML document (including <html> and <body>)
+ * - Uses inline styles only (CSS may not be available)
+ * - Uses console.error instead of logger (logger may not be available)
+ * - No navigation to home (router may not be available)
+ * - Minimal dependencies to maximize reliability
+ *
+ * @see {@link module:app/error} - Standard error boundary
+ */
 'use client';
 
 import { useEffect } from 'react';
@@ -165,3 +183,38 @@ export default function GlobalError({
     </html>
   );
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ *
+ * Purpose:
+ * Global error boundary that catches critical errors in the root layout
+ * or when the standard error boundary fails. This is the last line of
+ * defense for unhandled errors.
+ *
+ * Key Features:
+ * - Renders complete HTML document (not dependent on root layout)
+ * - Uses only inline styles (CSS may not be available)
+ * - Uses console.error instead of logger (may be unavailable)
+ * - Minimal external dependencies for maximum reliability
+ * - Error digest display for support reference
+ * - Single retry button (no home navigation - router may fail)
+ *
+ * Design Decisions:
+ * - No router.push() - uses reset() only to avoid potential failures
+ * - Inline styles - no Tailwind classes that require CSS
+ * - System font stack - no custom font loading
+ * - Only lucide-react icon (RefreshCw) - minimal dependency
+ *
+ * Security Considerations:
+ * - Only error.digest exposed to user, no stack traces
+ * - No external API calls (network may be down)
+ *
+ * Potential Improvements:
+ * - Add offline detection and messaging
+ * - Consider adding a "report issue" link with mailto:
+ * - Add browser console logging instructions for users
+ *
+ * Dependencies:
+ * - lucide-react: RefreshCw icon only
+ */

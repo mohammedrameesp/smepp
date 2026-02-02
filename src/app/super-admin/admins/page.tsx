@@ -1,3 +1,25 @@
+/**
+ * @module super-admin/admins/page
+ * @description Super Admins management page for inviting and managing platform administrators.
+ * Provides functionality to view, invite, and remove super admin users.
+ *
+ * @features
+ * - List all super admins with 2FA and email verification status
+ * - Invite new super admins via email
+ * - Remove super admin privileges with confirmation dialog
+ * - Search/filter super admins by name or email
+ * - Stats display (total, 2FA enabled, verified)
+ *
+ * @security
+ * - Super admin only access
+ * - Warning displayed when inviting new admins about privilege level
+ * - Confirmation required before removing admin privileges
+ *
+ * @api
+ * - GET /api/super-admin/admins - List all super admins
+ * - POST /api/super-admin/admins - Invite new super admin
+ * - DELETE /api/super-admin/admins/[id] - Remove super admin privileges
+ */
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -435,3 +457,52 @@ export default function SuperAdminsPage() {
     </div>
   );
 }
+
+/* =============================================================================
+ * CODE REVIEW SUMMARY
+ * =============================================================================
+ *
+ * File: src/app/super-admin/admins/page.tsx
+ * Type: Client Component
+ * Last Reviewed: 2026-02-01
+ *
+ * PURPOSE:
+ * Manages super admin user accounts including viewing, inviting, and
+ * removing administrator privileges from platform users.
+ *
+ * ARCHITECTURE:
+ * - Client component for modal interactions and real-time updates
+ * - State management for admins list, modals, and loading states
+ * - Search filtering performed client-side on fetched data
+ * - Two modal components: InviteModal and RemoveConfirmModal
+ *
+ * API INTEGRATION:
+ * - GET /api/super-admin/admins: Fetches all super admins
+ * - POST /api/super-admin/admins: Invites new admin (email, optional name)
+ * - DELETE /api/super-admin/admins/[id]: Removes admin privileges
+ *
+ * SECURITY CONSIDERATIONS:
+ * [+] Warning banner displayed before invite about privilege level
+ * [+] Confirmation dialog required for privilege removal
+ * [+] Shows 2FA status to identify at-risk accounts
+ * [!] No self-removal prevention in UI (should be handled by API)
+ *
+ * UI/UX:
+ * [+] Stats cards for quick overview
+ * [+] Search functionality for large admin lists
+ * [+] Loading states and error handling with dismiss
+ * [+] Responsive table with mobile-friendly columns
+ *
+ * STATE MANAGEMENT:
+ * - admins: Full list from API
+ * - filteredAdmins: Derived from search query
+ * - showInvite/showRemoveDialog: Modal visibility
+ * - adminToRemove: Selected admin for deletion confirmation
+ *
+ * POTENTIAL IMPROVEMENTS:
+ * - Add pagination for large admin lists
+ * - Implement activity log for admin actions
+ * - Add role-based permissions within super admin tier
+ * - Show last login timestamp for each admin
+ *
+ * =========================================================================== */

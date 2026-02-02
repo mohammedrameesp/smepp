@@ -1,3 +1,13 @@
+/**
+ * @module app/(marketing)/terms/page
+ * @description Terms of Service page for the Durj marketing site.
+ * Comprehensive legal terms covering account registration, organization accounts,
+ * subscription tiers, data processing responsibilities, AI features, payroll,
+ * third-party services, acceptable use, intellectual property, liability,
+ * termination, and governing law (Qatar jurisdiction).
+ * Includes navigation header and footer consistent with other legal pages.
+ */
+
 import Link from 'next/link';
 import '../landing.css';
 
@@ -669,3 +679,90 @@ export default function TermsPage() {
     </div>
   );
 }
+
+/*
+ * =============================================================================
+ * CODE REVIEW SUMMARY
+ * =============================================================================
+ *
+ * OVERVIEW:
+ * Terms of Service page component that renders comprehensive legal terms
+ * governing use of the Durj platform. Server-side rendered with Next.js
+ * metadata export for SEO optimization.
+ *
+ * ARCHITECTURE:
+ * - Server Component (default, no 'use client' directive)
+ * - Single-page layout with navigation header and footer
+ * - Uses shared landing.css stylesheet from parent directory
+ * - Exports metadata object for page title and description
+ *
+ * SECTIONS COVERED:
+ * 1. Acceptance of Terms - Legal binding agreement
+ * 2. Definitions - Organization, roles, modules, tiers
+ * 3. Description of Service - Platform capabilities
+ * 4. User Accounts and Organizations - Registration, owner responsibilities
+ * 5. Subscription and Payment - Tiers, billing, upgrades/downgrades
+ * 6. Data Processing - Controller/processor responsibilities
+ * 7. AI Features - Assistant limitations, disclaimers
+ * 8. Payroll and Financial Features - WPS, accuracy disclaimers
+ * 9. Third-Party Services - Provider acknowledgments
+ * 10. Acceptable Use - Prohibited activities
+ * 11. Intellectual Property - Ownership rights
+ * 12. Data Export and Portability - Export capabilities, retention
+ * 13. Service Availability - Uptime, maintenance
+ * 14. Limitation of Liability - Damage caps
+ * 15. Indemnification - User obligations
+ * 16. Termination - Account closure terms
+ * 17. Governing Law - Qatar jurisdiction
+ * 18. Dispute Resolution - QICCA arbitration
+ * 19. General Provisions - Severability, waiver, force majeure
+ * 20. Changes to Terms - Notification process
+ * 21. Contact Us - Legal contact information
+ *
+ * STRENGTHS:
+ * - Comprehensive legal coverage appropriate for SaaS platform
+ * - Clear definitions section for legal clarity
+ * - Subscription tier table with limits clearly documented
+ * - AI limitations and disclaimers properly highlighted
+ * - WPS compliance and financial accuracy disclaimers
+ * - Multi-tenant data controller/processor roles defined
+ * - Qatar-specific jurisdiction and QICCA arbitration
+ * - Employee user rights clearly distinguished from org users
+ * - Cross-references to Privacy Policy for data details
+ * - Well-organized with anchor links for navigation
+ *
+ * POTENTIAL IMPROVEMENTS:
+ * - Extract common navigation and footer into shared components
+ * - Subscription tier table could be moved to shared constants
+ * - "Last updated" date is hardcoded - consider automating
+ * - Missing structured data (JSON-LD) for legal document SEO
+ * - Navigation links reference /#domains and /#security anchors
+ * - Mobile navigation not implemented
+ * - Uses standard img tags - should use Next.js Image component
+ * - Limitation of liability section uses uppercase - consider styling
+ *   alternatives for better readability
+ *
+ * SECURITY CONSIDERATIONS:
+ * - Legal contact email intentionally exposed
+ * - No user input handling (static content)
+ * - All external links properly secured
+ *
+ * ACCESSIBILITY:
+ * - Proper heading hierarchy maintained
+ * - Tables include thead for accessibility
+ * - Strong tags used for emphasis
+ * - Ordered and unordered lists properly structured
+ * - Could benefit from skip navigation link
+ *
+ * PERFORMANCE:
+ * - Server-side rendered (no client JavaScript)
+ * - Long page but static content benefits from caching
+ * - Images could be optimized with Next.js Image component
+ *
+ * LEGAL NOTES:
+ * - Governed by Qatar law with Doha jurisdiction
+ * - QICCA (Qatar International Centre for Conciliation and Arbitration)
+ * - Covers B2B SaaS multi-tenant architecture
+ * - Employee user relationship with employer (not Durj) clarified
+ * =============================================================================
+ */

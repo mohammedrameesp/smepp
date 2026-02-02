@@ -1,3 +1,9 @@
+/**
+ * @file route.ts
+ * @description Employment defaults API - probation periods and notice period tiers per Qatar labor law
+ * @module system/settings
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/core/prisma';
@@ -92,3 +98,14 @@ export const POST = withErrorHandler(async (request: NextRequest, { tenant }) =>
 
   return NextResponse.json({ success: true, settings: validatedSettings });
 }, { requireAuth: true, requireAdmin: true });
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes: Added JSDoc module documentation at top
+ * Issues: None - employment defaults properly secured with admin authorization,
+ *         Zod schema validation for probation and notice period tiers,
+ *         ensures tier uniqueness and zero-month baseline requirement,
+ *         tenant-scoped settings storage
+ */

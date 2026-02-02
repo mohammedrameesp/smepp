@@ -1,12 +1,20 @@
 /**
- * Pending Page - Safety net for authenticated users without an organization
+ * @module app/pending/page
+ * @description Pending organization page for users awaiting invitation.
  *
- * This page is shown when a user is logged in but doesn't belong to any organization.
+ * This page serves as a safety net for authenticated users who don't belong
+ * to any organization. It is critical for preventing redirect loops.
  *
- * DO NOT REMOVE - This page handles important edge cases:
+ * DO NOT REMOVE - Handles important edge cases:
  * - User account exists but was removed from their organization
  * - Invitation flow was partially completed
  * - Database inconsistencies where user has no org membership
+ *
+ * Features:
+ * - Session status checking with automatic redirect when org is assigned
+ * - "Check Again" button to refresh session and check for pending invitations
+ * - Integration with /api/invitations/pending API
+ * - Sign out option to switch accounts
  *
  * Redirected here from:
  * - middleware.ts: When authenticated users without org access protected routes
@@ -16,6 +24,9 @@
  *
  * With signup-by-invitation-only flow, this page is rarely reached but serves
  * as a safety net to prevent redirect loops and provide clear user guidance.
+ *
+ * @see {@link module:middleware} - Access control middleware
+ * @see {@link module:app/api/invitations/pending} - Pending invitations API
  */
 'use client';
 
@@ -158,3 +169,47 @@ export default function PendingPage() {
     </div>
   );
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ *
+ * Purpose:
+ * Safety net page for authenticated users who don't belong to any organization,
+ * preventing redirect loops and guiding users to wait for invitation.
+ *
+ * Key Features:
+ * - Automatic redirect to login if unauthenticated
+ * - Automatic redirect to home if user gains organization membership
+ * - "Check Again" button that:
+ *   - Refreshes session to check for new org membership
+ *   - Calls /api/invitations/pending to find pending invitations
+ *   - Redirects to invitation page if found
+ * - Sign out option with signedOut query param
+ * - Dark mode support
+ * - Durj branding/logo display
+ *
+ * Edge Cases Handled:
+ * - User removed from organization
+ * - Partially completed invitation flow
+ * - Database inconsistencies (no org membership)
+ * - Signup-by-invitation flow users waiting for invite
+ *
+ * IMPORTANT: DO NOT REMOVE - Critical for preventing redirect loops
+ *
+ * UX Considerations:
+ * - Clear messaging about waiting state
+ * - Proactive invitation checking
+ * - Multiple ways to resolve (check again, sign out)
+ *
+ * Potential Improvements:
+ * - Add polling interval for automatic status checks
+ * - Show list of pending invitations if multiple exist
+ * - Add notification when invitation arrives (WebSocket/SSE)
+ *
+ * Dependencies:
+ * - next-auth/react: useSession, signOut, update
+ * - next/navigation: useRouter
+ * - @/components/ui/button, card: UI components
+ * - lucide-react: Clock, Mail, LogOut, Loader2, RefreshCw icons
+ * - @/lib/constants: ICON_SIZES
+ */

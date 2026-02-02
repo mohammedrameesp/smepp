@@ -70,3 +70,17 @@ export default async function DeletedEmployeesPage() {
     </>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes: None - File already well-documented
+ * Issues: None - File follows best practices:
+ *   - Has JSDoc module documentation
+ *   - Proper tenant isolation with tenantId filtering
+ *   - Auth check via session.user.organizationId
+ *   - Efficient single query with select for specific fields
+ *   - Clean calculation of days remaining for recovery deadline
+ *   - No console.log statements
+ */

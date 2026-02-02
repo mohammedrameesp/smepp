@@ -404,39 +404,3 @@ export async function notifyNextLevelApproversViaWhatsApp(
     logger.error({ ...logContext, error: error instanceof Error ? error.message : 'Unknown error' }, 'WhatsApp Integration: Error in notifyNextLevelApproversViaWhatsApp');
   }
 }
-
-/*
- * ========== CODE REVIEW SUMMARY ==========
- * File: approval-integration.ts
- * Reviewed: 2026-01-29
- *
- * CHANGES MADE:
- * - Added @file, @description, @module JSDoc tags
- * - Added @example showing usage with initializeApprovalChain
- * - Added section headers for code organization
- * - Added comprehensive JSDoc to all functions
- * - Documented @remarks explaining non-blocking behavior
- * - Fixed JSDoc entity type from PURCHASE_REQUEST to SPEND_REQUEST
- *
- * SECURITY NOTES:
- * - No direct security concerns in this file
- * - Relies on send-notification.ts for secure token generation
- * - All database queries are tenant-scoped via prisma
- *
- * REMAINING CONCERNS:
- * - None
- *
- * REQUIRED TESTS:
- * - [x] notifyApproversViaWhatsApp finds correct approvers by role
- * - [x] notifyApproversViaWhatsApp handles missing entity
- * - [x] notifyApproversViaWhatsApp handles no approvers
- * - [x] notifyApproversViaWhatsApp does not throw on errors
- * - [ ] notifyNextLevelApproversViaWhatsApp notifies next level
- * - [ ] findApproversForRole handles all role types
- *
- * DEPENDENCIES:
- * - Imports from: @/lib/core/prisma, @/lib/core/log, ./send-notification
- * - Used by: Leave/Spend/Asset request API routes
- *
- * PRODUCTION READY: YES
- */

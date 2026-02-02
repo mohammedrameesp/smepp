@@ -1,3 +1,21 @@
+/**
+ * @module app/not-found
+ * @description Global 404 Not Found page.
+ *
+ * This component is displayed when a user navigates to a route that doesn't
+ * exist in the application. It provides:
+ * - Branded 404 error display with shadow effect
+ * - Navigation options (home, back)
+ * - Consistent styling with other error pages
+ *
+ * This page is triggered by:
+ * - Direct navigation to non-existent routes
+ * - Calling notFound() from server components
+ * - Dynamic route segments that don't match any data
+ *
+ * @see {@link module:app/error} - For runtime errors
+ * @see {@link module:app/forbidden/page} - For 403 access denied
+ */
 'use client';
 
 import { useRouter } from 'next/navigation';
@@ -125,3 +143,33 @@ export default function NotFound() {
     </div>
   );
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ *
+ * Purpose:
+ * Global 404 Not Found page displayed when users navigate to non-existent
+ * routes or when notFound() is called from server components.
+ *
+ * Key Features:
+ * - Branded 404 display with shadow text effect
+ * - Green/blue gradient divider (distinguishes from error pages)
+ * - Two navigation options: home and browser back
+ * - Responsive typography using clamp()
+ * - Consistent styling with other error pages
+ *
+ * UX Considerations:
+ * - Neutral color scheme (slate) vs red for errors
+ * - Clear messaging that page doesn't exist or was moved
+ * - Back button uses router.back() for natural navigation
+ *
+ * Potential Improvements:
+ * - Add search functionality to help users find content
+ * - Add popular/suggested links section
+ * - Track 404s for analytics (missing pages, broken links)
+ * - Consider adding breadcrumb-based navigation suggestions
+ *
+ * Dependencies:
+ * - next/navigation: useRouter for navigation
+ * - lucide-react: Home, ArrowLeft icons
+ */

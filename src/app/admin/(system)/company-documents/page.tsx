@@ -1,3 +1,30 @@
+/**
+ * @module app/admin/(system)/company-documents/page
+ * @description Server component page for listing and managing company documents.
+ * Displays all organization documents with expiry status tracking, statistics,
+ * and provides navigation to document details and creation.
+ *
+ * @dependencies
+ * - prisma: Database queries for documents, tenant-scoped
+ * - getDocumentExpiryInfo: Calculates expiry status (expired/expiring/valid)
+ * - DOCUMENT_EXPIRY_WARNING_DAYS: Configurable warning threshold
+ *
+ * @routes
+ * - GET /admin/company-documents - Lists all company documents
+ *
+ * @access
+ * - Admins: Full access
+ * - Department access users (Finance/HR/Operations): Read access
+ * - Approvers: Read access
+ * - Development mode: Open access
+ *
+ * @features
+ * - Document listing with expiry status badges
+ * - Statistics summary (total, expired, expiring soon, valid)
+ * - Suspense boundaries for async stat loading
+ * - Empty state with call-to-action
+ */
+
 import { Suspense } from 'react';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
@@ -249,3 +276,31 @@ export default async function CompanyDocumentsPage() {
     </>
   );
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ * ===================
+ * Date: 2026-02-01
+ * Reviewer: Claude (AI Code Review)
+ *
+ * Overall Assessment: PASS with minor observations
+ *
+ * Strengths:
+ * 1. Excellent use of React Suspense for progressive loading
+ * 2. Proper tenant isolation via tenantId filtering
+ * 3. Comprehensive access control (admin + department users + approvers)
+ * 4. Well-designed expiry status visualization (badges, colors)
+ * 5. Efficient parallel Promise.all for stats fetching
+ * 6. Good empty state UX with clear call-to-action
+ *
+ * Potential Improvements:
+ * 1. Line 89: `await getDocumentStats(tenantId)` result is unused in DocumentList
+ *    - Stats are already rendered by DocumentStats component
+ *    - Consider removing this redundant call
+ * 2. Consider pagination for large document lists
+ * 3. Could add sorting/filtering options for documents table
+ *
+ * Security: Good - tenant-scoped queries, proper access control
+ * Performance: Good - parallel fetching, Suspense boundaries
+ * Maintainability: Good - well-organized components with clear responsibilities
+ */

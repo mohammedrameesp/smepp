@@ -75,3 +75,11 @@ function buildSearchPrefix(format: string, prefix: string, date: Date): string {
 }
 
 export const GET = withErrorHandler(getNextCodeHandler, { requireAuth: true, requireModule: 'employees' });
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes: None required - file is well-documented with configurable format support
+ * Issues: None - proper tenant isolation, configurable code format via organization settings
+ */

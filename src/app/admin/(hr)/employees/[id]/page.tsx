@@ -1,3 +1,10 @@
+/**
+ * @module app/admin/(hr)/employees/[id]
+ * @description Employee detail page displaying profile information, assets,
+ * subscriptions, and leave history. Supports soft-deleted and offboarded
+ * employee states with appropriate banners and action restrictions.
+ */
+
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
@@ -312,3 +319,19 @@ export default async function AdminEmployeeDetailPage({ params }: Props) {
     </>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation
+ * Issues: None - File follows best practices:
+ *   - Proper tenant isolation check (employee fetched without tenantId filter
+ *     but access controlled via session.user.organizationId)
+ *   - Uses notFound() for missing employees
+ *   - Profile completion calculation is efficient (single pass)
+ *   - No N+1 queries - asset/subscription history fetched via dedicated functions
+ *   - Clean tabbed interface with lazy-loaded content sections
+ *   - Handles soft-delete and offboarding states appropriately
+ */

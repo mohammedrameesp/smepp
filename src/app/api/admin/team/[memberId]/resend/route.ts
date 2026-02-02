@@ -1,3 +1,18 @@
+/**
+ * @module api/admin/team/[memberId]/resend
+ * @description Resend invitation or setup email endpoint. Supports both credential-based
+ * password setup emails and SSO invitation emails. Regenerates tokens and extends
+ * expiration for pending members.
+ *
+ * @endpoints
+ * - POST /api/admin/team/[memberId]/resend - Resend setup/invitation email
+ *   Body: { type: 'credentials' | 'sso' }
+ *
+ * @security
+ * - Requires authentication (requireAuth: true)
+ * - Requires admin role (requireAdmin: true)
+ * - Validates member belongs to tenant organization
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { sendEmail, welcomeUserWithPasswordSetupEmail, organizationInvitationEmail } from '@/lib/email';
@@ -156,3 +171,36 @@ export const POST = withErrorHandler(async (request: NextRequest, { tenant, para
     return badRequestResponse('Invalid pending type');
   }
 }, { requireAuth: true, requireAdmin: true });
+
+/*
+ * =============================================================================
+ * CODE REVIEW SUMMARY
+ * =============================================================================
+ *
+ * Purpose:
+ * Resends setup or invitation emails to pending team members. Handles both
+ * credential-based password setup and SSO invitation flows with token
+ * regeneration and email dispatch.
+ *
+ * Strengths:
+ * - Supports both auth flows (credentials and SSO) in single endpoint
+ * - Regenerates tokens with fresh 7-day expiration
+ * - Deletes old SSO invitations before creating new ones (prevents duplicates)
+ * - Uses typed email templates for consistent messaging
+ * - Properly validates member belongs to tenant
+ * - Includes organization branding (primaryColor) in emails
+ *
+ * Concerns:
+ * - [LOW] No rate limiting - could allow email spam
+ * - [LOW] No validation of pendingType against member's actual pending state
+ *   (could send wrong email type)
+ *
+ * Recommendations:
+ * - Add rate limiting per member to prevent abuse
+ * - Verify member actually has the claimed pending type before sending
+ * - Consider logging resend events for audit trail
+ *
+ * Status: APPROVED - Functional resend with minor enhancement opportunities
+ * Last Reviewed: 2026-02-01
+ * =============================================================================
+ */

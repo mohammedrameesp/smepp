@@ -1,3 +1,12 @@
+/**
+ * @module app/employee/(hr)/leave/requests
+ * @description Loading skeleton for the leave requests list page.
+ *
+ * Features:
+ * - Search and filter skeletons
+ * - Table rows with request card skeletons
+ * - Pagination controls skeleton
+ */
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { FileText } from 'lucide-react';
@@ -64,3 +73,12 @@ export default function LeaveRequestsLoading() {
     </>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation at top
+ * Issues: None - loading skeleton matches page layout
+ */

@@ -166,3 +166,13 @@ export const GET = withErrorHandler(async (request: NextRequest, { tenant, param
     hasData: totalRecords > 0,
   });
 }, { requireAuth: true });
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - None needed - file already has proper JSDoc documentation
+ * Issues: None - Uses withErrorHandler, proper tenant isolation,
+ *   and Promise.all for efficient parallel queries
+ */

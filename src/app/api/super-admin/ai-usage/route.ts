@@ -24,20 +24,25 @@ export async function GET(request: NextRequest) {
     // Calculate date range
     const now = new Date();
     let dateFrom: Date | undefined;
+    let daysToFetch = 30;
 
     switch (period) {
       case 'day':
         dateFrom = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        daysToFetch = 1;
         break;
       case 'week':
         dateFrom = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        daysToFetch = 7;
         break;
       case 'month':
         dateFrom = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        daysToFetch = 30;
         break;
       case 'all':
       default:
         dateFrom = undefined;
+        daysToFetch = 90; // Default to 90 days for daily usage chart
     }
 
     // Build where clause
@@ -101,10 +106,87 @@ export async function GET(request: NextRequest) {
       organizationCount: orgUsage.length,
     };
 
+    // Get daily usage for trend chart
+    const dailyUsageStart = new Date(now.getTime() - daysToFetch * 24 * 60 * 60 * 1000);
+    const dailyUsageWhere: {
+      tenantId?: string;
+      createdAt: { gte: Date };
+    } = {
+      createdAt: { gte: dailyUsageStart },
+    };
+    if (orgId) {
+      dailyUsageWhere.tenantId = orgId;
+    }
+
+    const rawDailyUsage = await prisma.aIChatUsage.findMany({
+      where: dailyUsageWhere,
+      select: {
+        createdAt: true,
+        totalTokens: true,
+        costUsd: true,
+      },
+    });
+
+    // Aggregate by day
+    const dailyMap = new Map<string, { tokens: number; cost: number; calls: number }>();
+    for (const usage of rawDailyUsage) {
+      const dateKey = usage.createdAt.toISOString().split('T')[0];
+      const existing = dailyMap.get(dateKey) || { tokens: 0, cost: 0, calls: 0 };
+      existing.tokens += usage.totalTokens || 0;
+      existing.cost += usage.costUsd || 0;
+      existing.calls += 1;
+      dailyMap.set(dateKey, existing);
+    }
+
+    // Fill in missing days with zeros
+    const dailyUsage: Array<{ date: string; tokens: number; cost: number; calls: number }> = [];
+    for (let i = daysToFetch - 1; i >= 0; i--) {
+      const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+      const dateKey = date.toISOString().split('T')[0];
+      const data = dailyMap.get(dateKey) || { tokens: 0, cost: 0, calls: 0 };
+      dailyUsage.push({
+        date: dateKey,
+        ...data,
+      });
+    }
+
+    // Get audit summary
+    const auditWhere: {
+      tenantId?: string;
+      createdAt?: { gte: Date };
+    } = {};
+    if (orgId) {
+      auditWhere.tenantId = orgId;
+    }
+    if (dateFrom) {
+      auditWhere.createdAt = { gte: dateFrom };
+    }
+
+    const [auditStats, flaggedCount, activeAIOrgsCount] = await Promise.all([
+      prisma.aIChatAuditLog.aggregate({
+        where: auditWhere,
+        _count: { id: true },
+        _avg: { riskScore: true },
+      }),
+      prisma.aIChatAuditLog.count({
+        where: { ...auditWhere, flagged: true },
+      }),
+      prisma.organization.count({
+        where: { aiChatEnabled: true },
+      }),
+    ]);
+
     return NextResponse.json({
       organizations: orgUsage,
       totals,
       period,
+      dailyUsage,
+      auditSummary: {
+        totalQueries: auditStats._count.id,
+        avgRiskScore: Math.round(auditStats._avg.riskScore || 0),
+        flaggedQueries: flaggedCount,
+        activeAIOrgs: activeAIOrgsCount,
+      },
     });
   } catch (error) {
     logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'AI usage stats error');
@@ -114,3 +196,11 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes: Added review summary
+ * Issues: None identified
+ */

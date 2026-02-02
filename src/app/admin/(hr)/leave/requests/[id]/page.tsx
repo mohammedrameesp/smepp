@@ -1,3 +1,10 @@
+/**
+ * @module app/admin/(hr)/leave/requests/[id]/page
+ * @description Admin leave request detail page - displays comprehensive leave request
+ * information including request details, approval chain status, employee information,
+ * leave balance summary, and request history. Supports multi-level approval workflows
+ * with conditional approval action buttons based on user permissions and request status.
+ */
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -470,3 +477,39 @@ export default function AdminLeaveRequestDetailPage() {
     </>
   );
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ *
+ * Purpose: Admin page for viewing and managing individual leave request details with
+ * multi-level approval workflow support.
+ *
+ * Key Features:
+ * - Displays comprehensive leave request information (dates, type, duration, reason)
+ * - Shows approval chain status for multi-level approval workflows
+ * - Displays employee information with link to profile
+ * - Shows leave balance summary with accrual calculations for accrual-based types
+ * - Provides approval/rejection actions based on user permissions
+ * - Displays request history timeline
+ * - Shows emergency contact information when available
+ *
+ * Data Flow:
+ * - Fetches leave request details from /api/leave/requests/[id]
+ * - Fetches leave balance from /api/leave/balances
+ * - Fetches user profile for accrual calculations from /api/users/[id]
+ *
+ * Security:
+ * - Client-side page (relies on API for authorization)
+ * - Approval actions only shown when canCurrentUserApprove is true
+ *
+ * Improvements Made:
+ * - Well-structured component with clear separation of concerns
+ * - Good error handling with user-friendly error states
+ * - Proper loading state with skeleton
+ * - Uses shared UI components (DetailCard, InfoField, PageHeader)
+ *
+ * Potential Improvements:
+ * - Consider using React Query for data fetching with caching
+ * - Add optimistic updates for approval actions
+ * - Consider extracting balance calculation logic to a shared utility
+ */

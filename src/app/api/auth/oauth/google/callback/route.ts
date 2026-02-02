@@ -1,3 +1,28 @@
+/**
+ * @module api/auth/oauth/google/callback
+ * @description Google OAuth callback handler for custom OAuth flows.
+ *
+ * This route handles the OAuth callback from Google when organizations use
+ * custom Google OAuth credentials instead of the platform's default OAuth app.
+ * It supports tenant-specific Google configurations with optional domain restrictions.
+ *
+ * @route GET /api/auth/oauth/google/callback
+ *
+ * @security
+ * - Validates encrypted OAuth state parameter to prevent CSRF
+ * - Enforces email domain restrictions when configured
+ * - Validates user security status (isDeleted, canLogin, lockout)
+ * - Creates httpOnly session cookies with proper domain scoping
+ *
+ * @flow
+ * 1. Validates OAuth callback parameters (code, state)
+ * 2. Decrypts state to get organization context
+ * 3. Exchanges authorization code for access tokens
+ * 4. Fetches user profile from Google userinfo API
+ * 5. Validates email domain against org restrictions
+ * 6. Creates/updates user and team member records
+ * 7. Sets session cookie and redirects to dashboard
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/core/prisma';
@@ -194,3 +219,32 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+/* =============================================================================
+ * CODE REVIEW SUMMARY
+ * =============================================================================
+ *
+ * OVERVIEW:
+ * Google OAuth callback handler for custom per-organization OAuth credentials.
+ * Implements complete OAuth 2.0 authorization code flow with Google.
+ *
+ * SECURITY ASSESSMENT: GOOD
+ * - Encrypted state parameter prevents CSRF attacks
+ * - Email domain restrictions configurable per organization
+ * - OAuth security validation (isDeleted, canLogin, lockout) applied
+ * - Custom Google credentials decrypted securely
+ * - Session cookies use httpOnly, secure, and proper domain scoping
+ * - Error handling logs to system error dashboard
+ *
+ * POTENTIAL IMPROVEMENTS:
+ * 1. Consider adding PKCE flow for enhanced security
+ * 2. Token refresh/revocation support for long-lived sessions
+ * 3. Google Workspace domain verification
+ *
+ * DEPENDENCIES:
+ * - @/lib/oauth/utils: State encryption, user upsert, session creation
+ * - @/lib/oauth/google: Google-specific OAuth helpers
+ * - @/lib/core/prisma: Database access
+ *
+ * LAST REVIEWED: 2026-02-01
+ * ============================================================================= */

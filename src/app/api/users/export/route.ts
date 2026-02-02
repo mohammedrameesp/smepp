@@ -81,3 +81,11 @@ async function exportUsersHandler(request: NextRequest, context: APIContext) {
 }
 
 export const GET = withErrorHandler(exportUsersHandler, { requireAdmin: true });
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes: None needed - file has JSDoc, proper tenant isolation, admin authorization
+ * Issues: None - exports are properly secured and tenant-scoped
+ */

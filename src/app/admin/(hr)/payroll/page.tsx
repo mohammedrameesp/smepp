@@ -1,3 +1,10 @@
+/**
+ * @module PayrollDashboardPage
+ * @description Main dashboard page for the payroll module. Displays overview statistics,
+ * current month payroll status, quick action links, and recent payroll runs.
+ * Accessible to admins and users with Finance access.
+ */
+
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { redirect } from 'next/navigation';
@@ -22,9 +29,18 @@ import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 import { ICON_SIZES } from '@/lib/constants';
 
-export default async function PayrollDashboardPage() {
+/**
+ * Payroll Dashboard Page Component
+ *
+ * Server component that fetches and displays payroll statistics and recent activity.
+ * Uses Promise.all for optimized parallel database queries.
+ *
+ * @returns The rendered payroll dashboard page
+ */
+export default async function PayrollDashboardPage(): Promise<React.JSX.Element> {
   const session = await getServerSession(authOptions);
-  // Allow access for admins OR users with Finance access
+
+  // Authorization check: require admin role OR finance access
   const hasAccess = session?.user?.isAdmin || session?.user?.hasFinanceAccess;
   if (!session || !hasAccess) {
     redirect('/');
@@ -36,11 +52,13 @@ export default async function PayrollDashboardPage() {
 
   const tenantId = session.user.organizationId;
 
-  // Get statistics
+  // Calculate current period for payroll context
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear();
   const currentMonth = currentDate.getMonth() + 1;
 
+  // Fetch all dashboard statistics in parallel for optimal performance
+  // All queries are tenant-scoped for data isolation
   const [
     employeesWithSalary,
     totalSalaryStructures,
@@ -237,3 +255,16 @@ export default async function PayrollDashboardPage() {
     </>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation at top of file
+ *   - Added JSDoc function documentation with return type
+ *   - Added inline comments for authorization check and database queries
+ *   - Verified tenant isolation (tenantId used in all queries)
+ *   - Verified Promise.all pattern for parallel queries (no N+1 issues)
+ * Issues: None
+ */

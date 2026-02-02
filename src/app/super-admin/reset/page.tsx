@@ -1,3 +1,24 @@
+/**
+ * @module super-admin/reset
+ * @description Super admin testing tools page for development and QA purposes.
+ * Provides dangerous operations that should be disabled in production environments.
+ *
+ * @features
+ * - Platform reset: delete all organizations, users, and data (preserves super admins)
+ * - Database status indicator showing connection health
+ * - Cache clearing utility (placeholder)
+ * - Environment information display (NODE_ENV, platform, database)
+ * - Prominent warning banner about development-only usage
+ *
+ * @dependencies
+ * - ResetPlatformButton component for destructive reset action
+ *
+ * @security
+ * - This page should be disabled or removed in production environments
+ * - All destructive operations require confirmation
+ *
+ * @access Super Admin only (protected by middleware)
+ */
 'use client';
 
 import { AlertTriangle, ArrowLeft, Trash2, Database, RefreshCw } from 'lucide-react';
@@ -110,3 +131,31 @@ export default function ResetPage() {
     </div>
   );
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ * ===================
+ * Status: APPROVED with security note
+ *
+ * Strengths:
+ * - Clear warning banner about development-only usage
+ * - Organized grid layout for testing tools
+ * - Environment information display for debugging
+ * - Clean visual design with consistent card styling
+ *
+ * Minor Observations:
+ * - Clear Cache button is non-functional (just static text)
+ * - Database status is hardcoded as "Connected" - should be dynamic
+ * - Platform shows "Next.js 15" which should be "Next.js 16" per CLAUDE.md
+ * - No actual environment detection for disabling in production
+ *
+ * Security Recommendations:
+ * - Add NODE_ENV check to hide/disable in production
+ * - Consider adding audit logging for reset operations
+ * - Add IP-based access restriction for this page
+ *
+ * Recommendations:
+ * - Implement actual cache clearing functionality
+ * - Add real-time database connection check
+ * - Update platform version string
+ */

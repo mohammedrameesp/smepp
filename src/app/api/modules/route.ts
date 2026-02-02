@@ -1,3 +1,17 @@
+/**
+ * @file route.ts
+ * @description Module management API endpoints
+ * @module api/modules
+ *
+ * Provides endpoints for managing organization modules:
+ * - GET: List all available modules with installation status
+ * - POST: Install a module (admin only)
+ * - DELETE: Uninstall a module with optional data deletion (admin only)
+ *
+ * Modules are feature units that can be enabled/disabled per organization.
+ * Some modules have dependencies and tier requirements.
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { Prisma } from '@prisma/client';
@@ -405,3 +419,15 @@ async function deleteModuleDataWithTx(
       logger.warn({ moduleId }, 'No data deletion handler for module');
   }
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation at top
+ *   - Documented all three endpoints (GET, POST, DELETE)
+ * Issues: None - Uses withErrorHandler for consistent error handling,
+ *   requireAdmin for authorization, transactions for data integrity,
+ *   and proper tenant isolation via tenantId
+ */

@@ -1,3 +1,9 @@
+/**
+ * @module app/admin/(operations)/assets/deleted/deleted-assets-table
+ * @description Client component that displays a table of soft-deleted assets with options
+ * to restore them or permanently delete them. Part of the asset trash/recycle bin feature.
+ */
+
 'use client';
 
 import { useState } from 'react';
@@ -261,3 +267,36 @@ export function DeletedAssetsTable({ assets }: DeletedAssetsTableProps) {
     </>
   );
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ *
+ * Purpose:
+ * Displays a table of soft-deleted assets in the trash/recycle bin with functionality
+ * to restore assets back to active status or permanently delete them. Implements
+ * a 7-day auto-deletion policy with visual urgency indicators.
+ *
+ * Key Features:
+ * - Lists soft-deleted assets with deletion metadata (who deleted, when, days remaining)
+ * - Restore functionality via POST /api/assets/[id]/restore
+ * - Permanent delete with confirmation dialog via DELETE /api/assets/[id]/permanent-delete
+ * - Visual urgency indicators (amber/rose colors) based on days remaining
+ * - Dynamic asset icons based on asset type (laptop, phone, monitor, etc.)
+ * - Empty state with helpful message about 7-day retention policy
+ * - Warning banner about auto-deletion feature
+ *
+ * Code Quality: Good
+ * - Well-organized component structure with clear separation of concerns
+ * - Uses proper TypeScript interfaces for props and data
+ * - Appropriate use of React state for loading/deletion states
+ * - Consistent error handling with toast notifications
+ * - Good UI/UX with confirmation dialogs for destructive actions
+ *
+ * Potential Improvements:
+ * - Consider adding bulk restore/delete operations
+ * - Could add search/filter functionality for large trash bins
+ * - The getAssetIcon helper could be extracted to shared utils
+ * - Consider adding keyboard shortcuts for common actions
+ * - Error states could provide more actionable feedback
+ * - Could benefit from optimistic UI updates for restore/delete
+ */

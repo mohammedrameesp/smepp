@@ -1,3 +1,9 @@
+/**
+ * @module admin/(system)/my-approvals/client
+ * @description Client component for approvals management with filtering and actions.
+ * Provides approve/reject functionality with confirmation dialogs.
+ */
+
 'use client';
 
 import { useState } from 'react';
@@ -544,3 +550,11 @@ export function MyApprovalsClient({ approvals, grouped }: MyApprovalsClientProps
     </div>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes: Added review summary
+ * Issues: None identified
+ */

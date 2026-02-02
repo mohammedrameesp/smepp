@@ -1,3 +1,9 @@
+/**
+ * @file route.ts
+ * @description Exchange rate management API - allows organizations to set custom currency rates
+ * @module system/settings
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { DEFAULT_RATES_TO_QAR } from '@/lib/core/currency';
@@ -110,3 +116,13 @@ export const PUT = withErrorHandler(async (request: NextRequest, { tenant }) => 
     updatedBy: setting.updatedBy?.name || setting.updatedBy?.email,
   });
 }, { requireAuth: true, requireAdmin: true });
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes: Added JSDoc module documentation at top
+ * Issues: None - exchange rate management properly secured with admin authorization,
+ *         rate validation (positive number check), tenant-scoped settings,
+ *         activity logging with audit trail
+ */

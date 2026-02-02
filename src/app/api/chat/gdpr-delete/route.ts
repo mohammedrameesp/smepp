@@ -1,3 +1,20 @@
+/**
+ * @module api/chat/gdpr-delete
+ * @description GDPR-compliant chat data deletion endpoint.
+ *
+ * Provides users the ability to delete their chat history and anonymize
+ * audit logs in compliance with GDPR Article 17 (Right to Erasure).
+ * Supports both preview (GET) and deletion (POST) operations.
+ *
+ * @route GET /api/chat/gdpr-delete - Preview data that would be deleted
+ * @route POST /api/chat/gdpr-delete - Execute deletion
+ *
+ * @security
+ * - Requires authentication (withErrorHandler requireAuth)
+ * - Tenant-scoped: only deletes data for current user in current org
+ * - Audit logs anonymized (hashed memberId) rather than deleted
+ * - IP address and user agent removed from audit logs
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { withErrorHandler } from '@/lib/http/handler';
@@ -125,3 +142,38 @@ export const GET = withErrorHandler(async (_request: NextRequest, { tenant }) =>
     warning: 'This action is irreversible. All your chat conversations and messages will be permanently deleted.',
   });
 }, { requireAuth: true });
+
+/* =============================================================================
+ * CODE REVIEW SUMMARY
+ * =============================================================================
+ *
+ * OVERVIEW:
+ * GDPR Article 17 (Right to Erasure) implementation for AI chat data.
+ * Provides preview and deletion of user's chat history with audit log
+ * anonymization for compliance.
+ *
+ * SECURITY ASSESSMENT: GOOD
+ * - Requires authentication via withErrorHandler
+ * - Tenant-scoped: users can only delete their own data
+ * - Audit logs anonymized with SHA-256 hash, not deleted (preserves analytics)
+ * - PII (IP address, user agent) properly removed from audit logs
+ * - Deletion confirmation returned with counts
+ *
+ * POTENTIAL IMPROVEMENTS:
+ * 1. Add confirmation token/2FA for deletion action
+ * 2. Consider async deletion for large datasets
+ * 3. Email notification when deletion completes
+ * 4. Export before delete option (data portability)
+ *
+ * COMPLIANCE NOTES:
+ * - Conversations and messages: Hard delete (cascade)
+ * - Audit logs: Anonymized (hashed memberId, nulled PII)
+ * - Retention: Immediate upon request
+ *
+ * DEPENDENCIES:
+ * - @/lib/http/handler: withErrorHandler wrapper
+ * - @/lib/core/prisma: Database access
+ * - crypto: SHA-256 hashing for anonymization
+ *
+ * LAST REVIEWED: 2026-02-01
+ * ============================================================================= */

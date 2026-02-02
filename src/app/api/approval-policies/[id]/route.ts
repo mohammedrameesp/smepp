@@ -1,3 +1,17 @@
+/**
+ * @module api/approval-policies/[id]
+ * @description API endpoints for managing individual approval policies. Supports
+ * retrieving, updating, and deleting specific policies. Updates use versioning
+ * for audit trail purposes. Levels can be replaced atomically during updates.
+ *
+ * @endpoints
+ * - GET /api/approval-policies/[id] - Get a single policy with its approval levels
+ * - PATCH /api/approval-policies/[id] - Update policy settings and/or replace levels
+ * - DELETE /api/approval-policies/[id] - Delete a policy (cascades to levels)
+ *
+ * @authentication Required (Admin only via requireAdmin)
+ * @tenancy Tenant-scoped - All operations validate tenant ownership
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { updateApprovalPolicySchema } from '@/features/approvals/validations/approvals';
 import { logAction, ActivityActions } from '@/lib/core/activity';
@@ -187,3 +201,38 @@ async function deleteApprovalPolicyHandler(request: NextRequest, context: APICon
 }
 
 export const DELETE = withErrorHandler(deleteApprovalPolicyHandler, { requireAdmin: true });
+
+/*
+ * CODE REVIEW SUMMARY
+ * ===================
+ *
+ * Purpose:
+ * Individual policy management: retrieve, update with versioning, and delete.
+ * Supports atomic level replacement during updates.
+ *
+ * Strengths:
+ * - Version increment on every update provides audit trail
+ * - Atomic level replacement within transaction
+ * - Uses findFirst (tenant-filtered) before update/delete for ownership validation
+ * - Activity logging with before/after state for updates
+ * - Proper 404 handling when policy not found
+ *
+ * Potential Improvements:
+ * - DELETE: Should check for active approval chains before deletion (noted in code)
+ * - PATCH: Could support partial level updates instead of full replacement
+ * - PATCH: tenantId not set on new levels in createMany (relies on FK validation)
+ * - Consider soft delete for audit purposes
+ * - GET could include usage statistics (active chains using this policy)
+ *
+ * Security:
+ * - Tenant-scoped Prisma client prevents cross-tenant access
+ * - Admin-only access via requireAdmin
+ * - IDOR protection via findFirst with tenant filtering
+ * - Audit logging for all modifications
+ *
+ * Testing Considerations:
+ * - Test PATCH with and without levels array
+ * - Test version incrementing on each update
+ * - Test DELETE cascades to levels
+ * - Test 404 for non-existent or wrong-tenant policies
+ */

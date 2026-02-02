@@ -1,3 +1,10 @@
+/**
+ * @module app/admin/(hr)/employees/document-expiry
+ * @description Admin page for tracking and managing expiring employee documents.
+ * Displays counts of expired documents and those expiring within 30 days.
+ * Covers QID, passport, health card, contract, and driving license expiry dates.
+ */
+
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
@@ -104,3 +111,18 @@ export default async function DocumentExpiryPage() {
     </>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation
+ * Issues: None - File follows best practices:
+ *   - Uses batched Promise.all for database queries (avoids N+1)
+ *   - Proper tenant isolation with tenantId filtering
+ *   - Auth checks for admin OR HR access
+ *   - Excludes deleted employees from document expiry tracking
+ *   - Clean server component with client-side filtering delegation
+ *   - No console.log statements
+ */

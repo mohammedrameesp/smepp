@@ -69,3 +69,11 @@ async function getHandler(request: NextRequest, context: APIContext) {
 }
 
 export const GET = withErrorHandler(getHandler, { requireAuth: true, requireModule: 'assets' });
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes: None required - file is well-documented
+ * Issues: None - uses raw SQL with parameterized queries for tenantId safety
+ */

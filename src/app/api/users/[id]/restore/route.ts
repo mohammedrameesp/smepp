@@ -97,3 +97,12 @@ async function restoreUserHandler(
 }
 
 export const POST = withErrorHandler(restoreUserHandler, { requireAdmin: true });
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes: None needed - file has JSDoc, admin-only authorization, proper soft-delete
+ *          restoration logic, re-enables login, clears leaving date, activity logging
+ * Issues: None - user restoration is secure and well-documented
+ */

@@ -1,3 +1,32 @@
+/**
+ * @module app/profile/page
+ * @description User profile page with basic info and HR details.
+ *
+ * This page displays and allows editing of the current user's profile.
+ * It has two tabs: Basic Info (general profile) and HR Details (employee data).
+ *
+ * Key features:
+ * - Basic Info tab: name, email, profile picture, role, join date
+ * - HR Details tab: comprehensive HR profile form or view-only mode
+ * - Profile picture upload with validation (5MB max, JPEG/PNG only)
+ * - Profile completion indicator for employees
+ * - Account type switcher for owners (employee vs service account)
+ * - Activity summary (assigned assets and subscriptions count)
+ * - Document expiry alerts widget for employees
+ *
+ * Access control:
+ * - Admins: Can edit their own HR profile
+ * - Employees with onboarding complete: View-only HR profile
+ * - Employees without onboarding: Redirect to onboarding flow
+ * - Service accounts: No HR profile (shows service account info)
+ *
+ * @dependencies
+ * - next-auth/react: useSession for auth state
+ * - HRProfileForm: Editable HR profile form component
+ * - EmployeeProfileViewOnly: Read-only HR profile display
+ * - ExpiryAlertsWidget: Document expiry notifications
+ * - calculateProfileCompletion: HR profile completion calculator
+ */
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -737,3 +766,45 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+/* =============================================================================
+ * CODE REVIEW SUMMARY
+ * =============================================================================
+ *
+ * WHAT THIS FILE DOES:
+ * Comprehensive user profile page with two tabs - Basic Info for general profile
+ * management and HR Details for employee-specific information.
+ *
+ * KEY FEATURES:
+ * - Profile picture upload with size/type validation
+ * - Profile completion tracking for employees
+ * - Account type switching for owners (employee vs service)
+ * - Conditional HR profile display based on role and onboarding status
+ *
+ * POTENTIAL ISSUES:
+ * 1. [MEDIUM] hasFetched state used to prevent refetch on session update -
+ *    could miss legitimate session changes
+ * 2. [LOW] getRoleBadgeVariant has duplicate 'EMPLOYEE' cases (line 355-356)
+ * 3. [LOW] getRoleLabel has duplicate 'EMPLOYEE' cases (line 367-369)
+ * 4. [LOW] window.location.reload() after save is heavy-handed - could use
+ *    session.update() instead
+ * 5. [LOW] Large component (~740 lines) - could be split into sub-components
+ *
+ * SECURITY CONSIDERATIONS:
+ * - Unauthenticated users redirected to login
+ * - Profile picture validation (5MB max, JPEG/PNG only)
+ * - HR profile editing restricted by role
+ *
+ * PERFORMANCE:
+ * - Profile and HR profile fetched in parallel
+ * - Image preview uses FileReader (client-side, no upload until save)
+ * - Badge counts not fetched here (handled by layout)
+ *
+ * ACCESSIBILITY:
+ * - Proper form labels
+ * - Loading states for async operations
+ * - Error/success alerts for user feedback
+ *
+ * LAST REVIEWED: 2025-01-27
+ * REVIEWED BY: Code Review System
+ * =========================================================================== */

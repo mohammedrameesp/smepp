@@ -1,3 +1,17 @@
+/**
+ * @module api/approval-steps/[id]/approve
+ * @description API endpoint to approve an approval step in a workflow chain.
+ * Handles the complete approval flow including: validating approver permissions,
+ * preventing self-approval, processing the approval, updating entity status on
+ * final approval, adjusting leave balances, and notifying next-level approvers
+ * or the requester via in-app and WhatsApp notifications.
+ *
+ * @endpoints
+ * - POST /api/approval-steps/[id]/approve - Approve a pending approval step
+ *
+ * @authentication Required (via requireCanApprove - must have approval permissions)
+ * @tenancy Tenant-scoped - Validates step ownership before processing
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { processApprovalSchema } from '@/features/approvals/validations/approvals';
 import { processApproval, getCurrentPendingStep, getApproversForRole } from '@/features/approvals/lib';
@@ -308,3 +322,40 @@ async function notifyNextApprover(
     await createBulkNotifications(notifications, tenantId);
   }
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ * ===================
+ *
+ * Purpose:
+ * Approves a pending approval step. Handles multi-level workflows, final approval
+ * entity updates, balance adjustments, and notifications (in-app + WhatsApp).
+ *
+ * Strengths:
+ * - IDOR prevention: Step lookup includes tenantId filter
+ * - Self-approval prevention via requesterId passed to processApproval
+ * - Complete workflow: approval -> entity update -> balance update -> notify
+ * - WhatsApp notifications are non-blocking (fire-and-forget)
+ * - Asset request logic handles different status based on request type
+ * - Role-based notification routing to all eligible approvers
+ *
+ * Potential Improvements:
+ * - handleFinalApproval and notifyNextApprover are large; extract to service layer
+ * - Error handling: If balance update fails, approval is already processed
+ * - Consider wrapping entity update + balance update in transaction
+ * - notifyNextApprover duplicates entity lookup logic; could consolidate
+ * - WhatsApp notification error handling is implicit (swallowed)
+ *
+ * Security:
+ * - requireCanApprove ensures proper authorization
+ * - Tenant filtering on step lookup prevents cross-tenant approval
+ * - Requester ID retrieved for self-approval prevention
+ * - Activity logging for audit trail
+ *
+ * Testing Considerations:
+ * - Test multi-level approval flow (step 1, step 2, etc.)
+ * - Test final approval triggers entity status update
+ * - Test leave balance adjustments (pending -> used)
+ * - Test notification creation for next approvers
+ * - Test self-approval prevention
+ */

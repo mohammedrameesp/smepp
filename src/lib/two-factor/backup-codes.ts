@@ -163,14 +163,7 @@ export function getRemainingCodesCount(hashedCodes: string[]): number {
  * ========== CODE REVIEW SUMMARY ==========
  * File: backup-codes.ts
  * Reviewed: 2025-01-29
- *
- * CHANGES MADE:
- * - Added comprehensive JSDoc with @param, @returns, @security, @example
- * - Documented BACKUP_CODE_CHARS constant explaining ambiguous character exclusion
- * - Added @internal marker for private generateCode function
- * - Added security warnings for one-time code usage
- * - Improved interface documentation
- *
+
  * SECURITY NOTES:
  * - Uses crypto.randomInt for cryptographically secure code generation
  * - Backup codes are bcrypt hashed (10 rounds) before storage
@@ -191,5 +184,5 @@ export function getRemainingCodesCount(hashedCodes: string[]): number {
  * - crypto: Secure random number generation
  * - bcryptjs: Password hashing
  *
- * PRODUCTION READY: YES
+
  */

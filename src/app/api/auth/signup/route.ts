@@ -1,3 +1,28 @@
+/**
+ * @module api/auth/signup
+ * @description User registration endpoint for new account creation.
+ *
+ * Handles user signup with optional invitation token support for joining
+ * existing organizations. Supports both standalone user creation and
+ * invitation-based onboarding flows.
+ *
+ * @route POST /api/auth/signup
+ *
+ * @security
+ * - SEC-010: Enhanced password validation with complexity requirements
+ * - Passwords hashed with bcrypt (cost factor 12)
+ * - Email normalization prevents duplicate accounts
+ * - Invitation tokens validated for expiry and email match
+ * - Super admin status granted only to configured email
+ *
+ * @flow
+ * 1. Validates input against Zod schema with password strength rules
+ * 2. Checks for existing user with same email
+ * 3. If invite token present, validates invitation
+ * 4. Creates User record in transaction
+ * 5. Creates/updates TeamMember if joining an organization
+ * 6. Returns success with organization info for redirect
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import bcrypt from 'bcryptjs';
@@ -253,3 +278,34 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+/* =============================================================================
+ * CODE REVIEW SUMMARY
+ * =============================================================================
+ *
+ * OVERVIEW:
+ * User registration endpoint supporting standalone signup and invitation-based
+ * onboarding. Creates User records and optionally links to organizations.
+ *
+ * SECURITY ASSESSMENT: GOOD
+ * - SEC-010 password complexity validation enforced
+ * - bcrypt with cost factor 12 for secure hashing
+ * - Email normalization prevents duplicate account attacks
+ * - Invitation tokens validated for expiry, status, and email match
+ * - Database transaction ensures atomic user + team member creation
+ * - Super admin status only granted via env-configured email
+ *
+ * POTENTIAL IMPROVEMENTS:
+ * 1. Add rate limiting to prevent signup abuse
+ * 2. Email verification flow for non-invite signups
+ * 3. CAPTCHA integration for bot prevention
+ * 4. Audit logging for signup events
+ *
+ * DEPENDENCIES:
+ * - @/lib/security/password-validation: Password strength rules
+ * - @/lib/utils/code-prefix: Employee code generation
+ * - @/lib/core/prisma: Database access
+ * - bcryptjs: Password hashing
+ *
+ * LAST REVIEWED: 2026-02-01
+ * ============================================================================= */

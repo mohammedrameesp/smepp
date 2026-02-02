@@ -1,3 +1,19 @@
+/**
+ * @module app/admin/(hr)/employees/document-expiry/client
+ * @description Client component for monitoring employee document expiration.
+ * Displays alerts for expired or expiring employee documents (QID, Passport,
+ * Health Card, Driving License) with filtering and search capabilities.
+ *
+ * @features
+ * - Filter by document status (expired/expiring)
+ * - Filter by document type (QID, Passport, Health Card, Driving License)
+ * - Search by employee name or email
+ * - Visual indicators for expired vs. expiring-soon documents
+ * - Links to employee profiles for document updates
+ *
+ * @dependencies
+ * - GET /api/employees/expiry-alerts - Fetches document expiry alerts
+ */
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -241,3 +257,32 @@ export function DocumentExpiryClient() {
     </>
   );
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ *
+ * Purpose: Monitor and alert on employee document expirations
+ *
+ * Strengths:
+ * - Comprehensive filtering (search, status, document type)
+ * - Clear visual distinction between expired and expiring documents
+ * - Color-coded badges per document type
+ * - Responsive grid layout for filters
+ * - Good empty state messaging with context
+ *
+ * Weaknesses:
+ * - Document types are hard-coded (could be configurable)
+ * - No export/download functionality for compliance reporting
+ * - Console.error for API failures instead of user notification
+ * - Missing pagination for organizations with many employees
+ *
+ * Security:
+ * - Relies on API-level tenant isolation
+ * - No exposure of full document details (IDs, scans, etc.)
+ *
+ * Recommendations:
+ * - Add toast notification for fetch errors
+ * - Consider adding email notification triggers from this view
+ * - Add export to CSV/PDF for compliance audits
+ * - Extract document types to configuration for flexibility
+ */

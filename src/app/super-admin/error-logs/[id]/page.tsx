@@ -1,3 +1,25 @@
+/**
+ * @module super-admin/error-logs/[id]
+ * @description Super admin detail page for viewing and managing a specific error log.
+ * Provides comprehensive error analysis with stack traces, metadata, and resolution workflow.
+ *
+ * @features
+ * - Error classification by type (API_ERROR, CLIENT_ERROR, SERVICE_ERROR) with icons
+ * - Severity badges (warning, error, critical) with color coding
+ * - Full stack trace display with dark theme styling
+ * - Request info: HTTP method, path, user agent
+ * - User context: email, role, user ID
+ * - Organization context with tenant details
+ * - Copy debug info button for easy sharing with developers
+ * - Resolution workflow with notes capability
+ * - Additional metadata JSON viewer
+ *
+ * @dependencies
+ * - GET /api/super-admin/error-logs/[id] - Fetches error log details
+ * - PATCH /api/super-admin/error-logs - Updates resolution status
+ *
+ * @access Super Admin only (protected by middleware)
+ */
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -517,3 +539,28 @@ export default function ErrorLogDetailPage() {
     </div>
   );
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ * ===================
+ * Status: APPROVED
+ *
+ * Strengths:
+ * - Excellent error classification with type-specific icons
+ * - Severity color coding (warning/error/critical) for quick assessment
+ * - Full stack trace display with dark theme for readability
+ * - "Copy Debug Info" button for easy sharing with developers
+ * - Comprehensive context: request info, user info, organization
+ * - Clean resolution workflow matching email-failures pattern
+ *
+ * Minor Observations:
+ * - useRouter imported but not used (navigation via Link components)
+ * - TypeIcon component defined inside main component; could extract
+ * - fetchError_ naming convention unusual (trailing underscore)
+ * - Copy to clipboard lacks error detail in catch block
+ *
+ * Recommendations:
+ * - Add "View similar errors" link to find related issues
+ * - Consider adding error frequency/occurrence count
+ * - Add integration with external error tracking (Sentry link)
+ */

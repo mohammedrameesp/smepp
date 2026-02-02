@@ -1,3 +1,33 @@
+/**
+ * @module super-admin/error-logs/page
+ * @description Platform-wide error log monitoring and management page.
+ * Aggregates errors from API, client, and service sources with severity
+ * tracking and resolution workflow.
+ *
+ * @features
+ * - Statistics dashboard (total, unresolved, critical in 24h, last 24h)
+ * - Multi-filter support (type, source, severity, tenant, status)
+ * - Bulk selection for batch resolve/unresolve operations
+ * - Resolution notes tracking with timestamp and resolver info
+ * - Cleanup options (30+ days resolved, or all resolved)
+ * - Pagination for large datasets
+ * - Detail view with full stack trace
+ *
+ * @error-types
+ * - API_ERROR: Server-side API route errors
+ * - CLIENT_ERROR: Browser-side JavaScript errors
+ * - SERVICE_ERROR: Background service/job errors
+ *
+ * @severity-levels
+ * - warning: Non-critical issues
+ * - error: Standard errors requiring attention
+ * - critical: Urgent issues affecting platform stability
+ *
+ * @api
+ * - GET /api/super-admin/error-logs - List with filters and stats
+ * - PATCH /api/super-admin/error-logs - Bulk resolve/unresolve
+ * - DELETE /api/super-admin/error-logs - Clean up resolved errors
+ */
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -660,3 +690,66 @@ export default function ErrorLogsPage() {
     </div>
   );
 }
+
+/* =============================================================================
+ * CODE REVIEW SUMMARY
+ * =============================================================================
+ *
+ * File: src/app/super-admin/error-logs/page.tsx
+ * Type: Client Component
+ * Last Reviewed: 2026-02-01
+ *
+ * PURPOSE:
+ * Platform-wide error monitoring dashboard aggregating errors from API,
+ * client, and service sources with severity tracking and resolution workflow.
+ *
+ * ARCHITECTURE:
+ * - Client component for interactive filtering and bulk operations
+ * - Stats dashboard with critical error highlighting
+ * - Multi-dimensional filtering (type, source, severity, tenant, status)
+ * - Bulk selection for batch resolve/unresolve operations
+ * - Two-tier cleanup: 30+ days resolved, or all resolved
+ *
+ * API INTEGRATION:
+ * - GET: Fetch errors with filters and stats aggregation
+ * - PATCH: Bulk update resolution status with notes
+ * - DELETE: Clean up resolved errors (30+ days or all)
+ *
+ * ERROR CLASSIFICATION:
+ * Type:
+ * - API_ERROR: Server-side route/handler errors
+ * - CLIENT_ERROR: Browser JavaScript errors
+ * - SERVICE_ERROR: Background job/service errors
+ *
+ * Severity:
+ * - warning: Non-blocking issues
+ * - error: Standard errors needing attention
+ * - critical: Urgent platform stability issues
+ *
+ * DATA CAPTURED:
+ * - Request context (method, path, requestId)
+ * - User context (userId, email, role)
+ * - Error details (message, stack, statusCode)
+ * - Environment (userAgent, tenant)
+ *
+ * SECURITY CONSIDERATIONS:
+ * [+] Resolution audit trail (who, when, notes)
+ * [+] Stack traces available in detail view only
+ * [!] Error messages may contain sensitive data
+ * [!] Consider PII redaction in error metadata
+ *
+ * UI/UX:
+ * [+] Type-specific icons and colors
+ * [+] Severity badges with visual hierarchy
+ * [+] HTTP status code display
+ * [+] Flexible cleanup options
+ *
+ * POTENTIAL IMPROVEMENTS:
+ * - Add error grouping by signature/fingerprint
+ * - Implement alerting rules for critical errors
+ * - Add error trends chart
+ * - Create integration with external monitoring (Sentry, etc.)
+ * - Add source maps support for client error stack traces
+ * - Implement error replay/reproduction tools
+ *
+ * =========================================================================== */

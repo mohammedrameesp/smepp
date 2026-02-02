@@ -1,3 +1,21 @@
+/**
+ * @file page.tsx
+ * @description Supplier detail page - displays comprehensive supplier information
+ * @module app/admin/(operations)/suppliers/[id]
+ *
+ * Features:
+ * - Company information display (name, category, address, website)
+ * - Contact information (primary and secondary contacts)
+ * - Payment terms and additional notes
+ * - Approval status and history
+ * - Engagement records with ratings
+ *
+ * Security:
+ * - Requires authenticated session or impersonation
+ * - Requires operations access permission
+ * - Tenant isolation enforced via tenantId check on query
+ */
+
 import { prisma } from '@/lib/core/prisma';
 import { getAdminAuthContext, hasAccess } from '@/lib/core/impersonation-check';
 import { redirect, notFound } from 'next/navigation';
@@ -25,11 +43,16 @@ import { DetailCard } from '@/components/ui/detail-card';
 import { InfoField, InfoFieldGrid } from '@/components/ui/info-field';
 import { ICON_SIZES } from '@/lib/constants';
 
+/** Page component props */
 interface Props {
   params: Promise<{ id: string }>;
 }
 
-export default async function SupplierDetailPage({ params }: Props) {
+/**
+ * Supplier detail page component
+ * Displays comprehensive supplier information including contacts, engagements, and approval status
+ */
+export default async function SupplierDetailPage({ params }: Props): Promise<React.JSX.Element> {
   const auth = await getAdminAuthContext();
 
   if (!auth.isImpersonating && !auth.session) {
@@ -47,8 +70,12 @@ export default async function SupplierDetailPage({ params }: Props) {
   const tenantId = auth.tenantId;
   const { id } = await params;
 
-  const supplier = await prisma.supplier.findUnique({
-    where: { id },
+  // Query supplier with tenant isolation - ensures users can only access their own tenant's suppliers
+  const supplier = await prisma.supplier.findFirst({
+    where: {
+      id,
+      tenantId, // Critical: enforce tenant isolation to prevent cross-tenant data access
+    },
     include: {
       approvedBy: {
         select: {
@@ -388,3 +415,15 @@ export default async function SupplierDetailPage({ params }: Props) {
     </>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ * - Added JSDoc module documentation at top of file
+ * - Added function return type annotation
+ * - CRITICAL FIX: Changed findUnique to findFirst with tenantId filter for tenant isolation
+ * - Added inline comments explaining tenant isolation security measure
+ * Issues: None - tenant isolation now properly enforced
+ */

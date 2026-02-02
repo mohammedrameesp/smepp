@@ -1,3 +1,27 @@
+/**
+ * @module app/forbidden/page
+ * @description 403 Forbidden page with context-aware messaging.
+ *
+ * This page handles various access denial scenarios with tailored UI for each:
+ * - admin_only: User tried to access admin-restricted area
+ * - owner_only: Feature restricted to organization owner
+ * - module_disabled: Attempted to use a module not enabled for the org
+ * - tier_required: Feature requires higher subscription tier
+ * - permission_denied: Generic access denial
+ *
+ * Query Parameters:
+ * - reason: ForbiddenReason type (determines UI styling and messaging)
+ * - module: Module ID for module_disabled reason
+ * - required_tier: Tier name for tier_required reason
+ * - from: Original path user attempted to access
+ *
+ * Redirected here from:
+ * - middleware.ts: When access checks fail
+ * - API routes: When permission checks fail
+ *
+ * @see {@link module:middleware} - Access control middleware
+ * @see {@link module:lib/modules/registry} - Module definitions
+ */
 'use client';
 
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -306,3 +330,42 @@ export default function ForbiddenPage() {
     </Suspense>
   );
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ *
+ * Purpose:
+ * Context-aware 403 Forbidden page that provides tailored messaging and
+ * actions based on the specific access denial reason.
+ *
+ * Key Features:
+ * - Five distinct denial reasons with unique styling:
+ *   - admin_only: Amber theme, redirects to employee dashboard
+ *   - owner_only: Amber theme, redirects to admin dashboard
+ *   - module_disabled: Blue theme, links to module management
+ *   - tier_required: Purple theme, links to billing/upgrade
+ *   - permission_denied: Red theme, generic fallback
+ * - Dynamic module and tier name resolution from query params
+ * - "from" path display for debugging access issues
+ * - Suspense boundary for useSearchParams() compatibility
+ *
+ * Query Parameters:
+ * - reason: ForbiddenReason type
+ * - module: Module ID for module_disabled
+ * - required_tier: Tier for tier_required
+ * - from: Original path attempted
+ *
+ * UX Considerations:
+ * - Each reason has contextual primary action (e.g., upgrade for tier issues)
+ * - Help text guides user on next steps
+ * - Color-coded for quick visual identification
+ *
+ * Potential Improvements:
+ * - Add "request access" flow for admin_only/owner_only cases
+ * - Track forbidden access attempts for security monitoring
+ * - Add module/tier comparison UI for upgrade decisions
+ *
+ * Dependencies:
+ * - next/navigation: useSearchParams, useRouter
+ * - lucide-react: Various icons for different reasons
+ */

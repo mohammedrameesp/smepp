@@ -1,3 +1,20 @@
+/**
+ * @file page.tsx
+ * @module app/employee/(hr)/leave
+ * @description Employee leave dashboard page - displays leave balances, recent requests, and upcoming leaves.
+ *
+ * Features:
+ * - Leave balance cards showing entitlement, used, and available days
+ * - Accrual calculation for annual leave based on date of joining
+ * - Recent leave requests with status badges
+ * - Upcoming approved leaves in the next 7 days
+ * - Quick stats for total available days and pending requests
+ *
+ * Data fetching:
+ * - Uses parallel Promise.all for efficient data loading
+ * - Fetches balances filtered by gender restriction and leave category
+ * - Tenant isolation via session.user.id (TeamMember ID)
+ */
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
@@ -13,7 +30,12 @@ import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 import { DetailCard } from '@/components/ui/detail-card';
 
-export default async function EmployeeLeavePage() {
+/**
+ * Employee leave dashboard page component.
+ * Server component that fetches and displays employee's leave information.
+ * @returns The leave dashboard page with balances, requests, and upcoming leaves
+ */
+export default async function EmployeeLeavePage(): Promise<React.JSX.Element> {
   const session = await getServerSession(authOptions);
 
   if (!session) {
@@ -270,3 +292,17 @@ export default async function EmployeeLeavePage() {
     </>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation at top
+ *   - Added function documentation with return type
+ * Issues: None - code follows best practices with:
+ *   - Parallel data fetching with Promise.all
+ *   - Proper tenant isolation via session.user.id
+ *   - Type-safe Prisma queries
+ *   - No N+1 query issues
+ */

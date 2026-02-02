@@ -1,3 +1,31 @@
+/**
+ * @module app/admin/(hr)/employees/team-client
+ * @description Client component for managing organization team members.
+ * Provides a unified interface for viewing employees vs. service accounts,
+ * managing pending invitations, and handling member lifecycle operations.
+ *
+ * @features
+ * - Tab-based view: Employees vs Service Accounts
+ * - Pending invitations management (resend, cancel, copy link)
+ * - Pending members management (users awaiting authentication)
+ * - Role management for non-owner members (owner only)
+ * - Member removal with confirmation dialog
+ * - Real-time expiration status display for invites
+ *
+ * @roles
+ * - Owner: Full access including role changes and member removal
+ * - Admin: Can add members and view all sections
+ * - Member: Read-only access to team views
+ *
+ * @dependencies
+ * - GET /api/admin/team - Fetches team members
+ * - GET /api/admin/team/invitations - Fetches pending invitations
+ * - POST /api/admin/team/invitations/:id - Resends invitation
+ * - DELETE /api/admin/team/invitations/:id - Cancels invitation
+ * - PATCH /api/admin/team/:id - Updates member role
+ * - DELETE /api/admin/team/:id - Removes member
+ * - POST /api/admin/team/:id/resend - Resends auth invite to pending member
+ */
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -740,3 +768,36 @@ export function TeamClient({ initialStats }: TeamClientProps) {
     </div>
   );
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ *
+ * Purpose: Comprehensive team member management for organization admins
+ *
+ * Strengths:
+ * - Clean tab-based UI separating employees from service accounts
+ * - Proper role-based UI rendering (owner vs admin vs member)
+ * - Comprehensive pending state handling (invitations + pending auth)
+ * - Good UX with confirmation dialogs for destructive actions
+ * - Expiration countdown with hours/days granularity
+ * - Clipboard integration for invite link sharing
+ *
+ * Weaknesses:
+ * - Large component (700+ lines) could benefit from extraction
+ * - Role icons and labels could be extracted to shared constants
+ * - Uses native confirm() instead of custom dialog for cancel invite
+ * - No pagination for large team lists
+ * - Empty dependency array in fetchData useEffect
+ *
+ * Security:
+ * - Proper session-based role checks before showing actions
+ * - Cannot modify own role or remove self
+ * - Owner role required for role changes and removals
+ *
+ * Recommendations:
+ * - Extract PendingInvitations and PendingMembers to sub-components
+ * - Replace native confirm() with AlertDialog component
+ * - Add eslint-disable comment or fix fetchData dependency
+ * - Consider virtualized list for large organizations
+ * - Add bulk operations for enterprise use cases
+ */

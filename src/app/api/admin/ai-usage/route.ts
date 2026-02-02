@@ -1,3 +1,22 @@
+/**
+ * @module api/admin/ai-usage
+ * @description Admin API for retrieving AI usage statistics and audit data for an organization.
+ *
+ * This endpoint provides comprehensive AI usage analytics including:
+ * - Monthly token consumption and limits
+ * - Per-user usage breakdown
+ * - Daily usage trends for charting
+ * - Security audit summaries and flagged queries
+ * - Cost estimates based on token usage
+ *
+ * @endpoints
+ * - GET /api/admin/ai-usage - Get AI usage statistics (admin only)
+ *
+ * @queryParams
+ * - days: Number of days to analyze (default: 30)
+ *
+ * @security Requires admin authentication and tenant context
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { prisma } from '@/lib/core/prisma';
@@ -163,3 +182,39 @@ export const GET = withErrorHandler(async (request: NextRequest, context: APICon
     },
   });
 }, { requireAuth: true, requireAdmin: true });
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * CODE REVIEW SUMMARY
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * File: src/app/api/admin/ai-usage/route.ts
+ * Reviewed: 2026-02-01
+ *
+ * FUNCTIONALITY: [PASS]
+ * - Correctly retrieves AI usage statistics with proper tenant scoping
+ * - Aggregates monthly tokens, per-user usage, and daily trends
+ * - Includes security audit data (flagged queries, risk scores)
+ *
+ * SECURITY: [PASS]
+ * - Requires admin authentication via withErrorHandler options
+ * - Tenant context validated before any data access
+ * - Uses tenant-scoped Prisma client for usage queries
+ * - Raw SQL query properly parameterized with tenant filter
+ *
+ * PERFORMANCE: [ACCEPTABLE]
+ * - Multiple parallel aggregation queries could be optimized
+ * - Raw SQL for daily trends is efficient with proper indexing
+ *
+ * ERROR HANDLING: [PASS]
+ * - Tenant context validation returns 403
+ * - Organization not found returns 404
+ * - Handler wrapped with error boundary
+ *
+ * IMPROVEMENTS:
+ * - Consider caching aggregate statistics (short TTL)
+ * - Add pagination for usageByUser if large organizations
+ * - Consider moving cost calculation constants to config
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ */

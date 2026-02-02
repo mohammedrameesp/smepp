@@ -1,3 +1,10 @@
+/**
+ * @module app/super-admin/settings/page
+ * @description Super admin platform settings hub page. Provides navigation links to
+ * various platform configuration sections including security (2FA), WhatsApp integration,
+ * and platform configuration (coming soon). Server component with static content.
+ */
+
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Shield, Wrench, ChevronRight, MessageCircle } from 'lucide-react';
@@ -75,3 +82,36 @@ export default function SuperAdminSettingsPage() {
     </div>
   );
 }
+
+/*
+ * =============================================================================
+ * CODE REVIEW SUMMARY
+ * =============================================================================
+ *
+ * File: src/app/super-admin/settings/page.tsx
+ * Type: Server Component - Settings Hub Page
+ *
+ * FUNCTIONALITY:
+ * - Navigation hub for super admin platform settings
+ * - Links to Security (2FA) and WhatsApp integration pages
+ * - Placeholder for Platform Configuration (coming soon)
+ *
+ * ARCHITECTURE:
+ * - Simple server component with static navigation cards
+ * - Uses shadcn/ui Card components with hover effects
+ * - Consistent icon sizing via ICON_SIZES constants
+ *
+ * SECURITY:
+ * [OK] Page is under /super-admin route protected by middleware
+ * [OK] No sensitive operations or data exposure
+ *
+ * PERFORMANCE:
+ * [OK] Server component with no client-side JavaScript
+ * [OK] Static content, optimal for caching
+ *
+ * IMPROVEMENTS SUGGESTED:
+ * [LOW] Add breadcrumb navigation for consistency with other admin pages
+ * [LOW] Consider adding description metadata for SEO (if applicable)
+ *
+ * =============================================================================
+ */

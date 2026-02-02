@@ -1,3 +1,30 @@
+/**
+ * @module app/admin/(system)/settings/page
+ * @description Server component page for organization data management.
+ * Provides quick navigation to module management and access control,
+ * along with data export/import functionality.
+ *
+ * @dependencies
+ * - DataExportImport: Component for bulk data operations
+ * - PageHeader/PageContent: Standard layout components
+ *
+ * @routes
+ * - GET /admin/settings - Settings and data management page
+ *
+ * @access
+ * - Admins only (isAdmin check)
+ * - Development mode: Open access
+ *
+ * @features
+ * - Quick link to Module Management (/admin/modules)
+ * - Quick link to Access Control (/admin/settings/access-control)
+ * - Data export/import functionality via DataExportImport component
+ *
+ * @navigation
+ * - /admin/modules - Enable/disable organization features
+ * - /admin/settings/access-control - Team permissions management
+ */
+
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { redirect } from 'next/navigation';
@@ -66,3 +93,30 @@ export default async function SettingsPage() {
     </>
   );
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ * ===================
+ * Date: 2026-02-01
+ * Reviewer: Claude (AI Code Review)
+ *
+ * Overall Assessment: PASS
+ * Clean settings page with good navigation patterns.
+ *
+ * Strengths:
+ * 1. Admin-only access control (appropriate for settings)
+ * 2. Clear quick-link navigation with visual indicators
+ * 3. Good use of icons and descriptions for link clarity
+ * 4. Proper hover states for interactive feedback
+ * 5. Delegates complex functionality to DataExportImport component
+ *
+ * Potential Improvements:
+ * 1. Page title says "Data Management" but route is /settings
+ *    - Consider renaming page or adding more general settings options
+ * 2. Could add more settings sections (organization profile, integrations, etc.)
+ * 3. Consider adding confirmation for destructive import operations
+ *
+ * Security: Good - admin-only access, no direct data manipulation
+ * Performance: Minimal - simple render with no data fetching
+ * Maintainability: Good - clean structure, clear intent
+ */

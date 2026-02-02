@@ -1,3 +1,17 @@
+/**
+ * @module api/approval-policies
+ * @description API endpoints for managing approval policies. Policies define the
+ * approval workflow rules for different modules (leave requests, spend requests,
+ * asset requests). Each policy specifies conditions (amount ranges, day ranges)
+ * and approval levels with required approver roles.
+ *
+ * @endpoints
+ * - GET /api/approval-policies - List all policies with optional filtering by module/status
+ * - POST /api/approval-policies - Create a new approval policy with approval levels
+ *
+ * @authentication Required (Admin only via requireAdmin)
+ * @tenancy Tenant-scoped - All operations filtered by authenticated tenant
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { createApprovalPolicySchema, listPoliciesQuerySchema } from '@/features/approvals/validations/approvals';
 import { logAction, ActivityActions } from '@/lib/core/activity';
@@ -121,3 +135,37 @@ async function createApprovalPolicyHandler(request: NextRequest, context: APICon
 }
 
 export const POST = withErrorHandler(createApprovalPolicyHandler, { requireAdmin: true });
+
+/*
+ * CODE REVIEW SUMMARY
+ * ===================
+ *
+ * Purpose:
+ * CRUD endpoints for approval policies. GET lists policies with filters;
+ * POST creates new policies with associated approval levels.
+ *
+ * Strengths:
+ * - Transaction used for atomic policy + levels creation
+ * - Activity logging for audit trail
+ * - Proper validation schemas for both list query and create body
+ * - Levels created with correct ordering
+ * - Good response with included levels for immediate UI use
+ *
+ * Potential Improvements:
+ * - GET: Query validation errors are silently ignored; could log or return 400
+ * - GET: Consider pagination for large policy sets
+ * - POST: Consider validating levelOrder uniqueness within the levels array
+ * - POST: Could check for overlapping policy conditions (amount/day ranges)
+ *
+ * Security:
+ * - Tenant context enforced on all operations
+ * - Admin-only access via requireAdmin
+ * - TenantPrismaClient auto-filters by tenant
+ * - tenantId explicitly set on created records (belt and suspenders)
+ *
+ * Testing Considerations:
+ * - Test list filtering by module and isActive
+ * - Test policy creation with multiple levels
+ * - Test validation errors for malformed requests
+ * - Test audit log entries are created
+ */

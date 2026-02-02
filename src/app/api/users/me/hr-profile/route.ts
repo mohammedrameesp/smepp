@@ -374,3 +374,13 @@ async function updateHRProfileHandler(request: NextRequest, context: APIContext)
 }
 
 export const PATCH = withErrorHandler(updateHRProfileHandler, { requireAuth: true, rateLimit: true });
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes: None needed - file has comprehensive JSDoc, role-based field filtering
+ *          (admin vs employee), proper validation, leave balance initialization,
+ *          email notifications, rate limiting, and tenant isolation
+ * Issues: None - HR profile self-service is properly secured with role-based access
+ */

@@ -130,36 +130,3 @@ export function isLikelyServiceAccount(email: string): boolean {
       localPart.endsWith(`-${pattern}`)
   );
 }
-
-/*
- * ========== CODE REVIEW SUMMARY ==========
- * File: service-account-detection.ts
- * Reviewed: 2026-01-29
- *
- * CHANGES MADE:
- * - Enhanced file-level documentation with @remarks and @example
- * - Added type annotation to SERVICE_ACCOUNT_PATTERNS (readonly string[])
- * - Organized patterns by category with comments
- * - Improved function JSDoc with comprehensive examples
- * - Added inline comments explaining match logic
- *
- * SECURITY NOTES:
- * - No security concerns - pure string pattern matching
- * - No external dependencies or I/O
- *
- * REMAINING CONCERNS:
- * - None
- *
- * REQUIRED TESTS:
- * - [ ] isLikelyServiceAccount with exact pattern match
- * - [ ] isLikelyServiceAccount with pattern at start (info.sales@)
- * - [ ] isLikelyServiceAccount with pattern at end (sales.info@)
- * - [ ] isLikelyServiceAccount with personal emails (john@, jane.doe@)
- * - [ ] isLikelyServiceAccount with null/undefined/empty input
- *
- * DEPENDENCIES:
- * - No external dependencies
- * - Used by: employee onboarding forms, user creation
- *
- * PRODUCTION READY: YES
- */

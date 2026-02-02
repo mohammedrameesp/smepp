@@ -1,3 +1,27 @@
+/**
+ * @module api/admin/organization
+ * @description Admin API for retrieving and updating organization settings.
+ *
+ * Manages core organization configuration including:
+ * - Basic info: name, code prefix
+ * - Branding: primary/secondary colors, logo, website
+ * - Regional settings: currencies, weekend days
+ * - Features: multi-location support, depreciation tracking
+ * - Auth configuration: allowed methods, custom OAuth (read-only status)
+ *
+ * @endpoints
+ * - GET /api/admin/organization - Get organization details and auth config
+ * - PATCH /api/admin/organization - Update organization settings
+ *
+ * @notes
+ * - Sensitive OAuth secrets are never exposed in responses
+ * - Module management uses separate /api/modules endpoint
+ * - Updates trigger onboarding progress tracking
+ *
+ * @security
+ * - GET: Requires authenticated user
+ * - PATCH: Requires admin role
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { z } from 'zod';
@@ -165,3 +189,42 @@ export const PATCH = withErrorHandler(async (request: NextRequest, { tenant }) =
 
   return NextResponse.json({ organization: updated });
 }, { requireAuth: true, requireAdmin: true });
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * CODE REVIEW SUMMARY
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * File: src/app/api/admin/organization/route.ts
+ * Reviewed: 2026-02-01
+ *
+ * FUNCTIONALITY: [PASS]
+ * - GET: Returns org details with auth config (secrets stripped)
+ * - PATCH: Updates organization settings with validation
+ * - Tracks onboarding progress on relevant updates
+ * - Forces dynamic rendering to prevent stale cache
+ *
+ * SECURITY: [PASS]
+ * - GET requires auth, PATCH requires admin
+ * - OAuth secrets never exposed in responses (stripped before return)
+ * - Proper validation of color formats (hex)
+ * - URL validation for website field
+ *
+ * VALIDATION: [PASS]
+ * - Zod schemas for all input fields
+ * - Code prefix: 2-3 uppercase alphanumeric
+ * - Colors: valid hex format or null
+ * - Weekend days: array of 0-6 with min 1
+ *
+ * ERROR HANDLING: [PASS]
+ * - 404 for organization not found
+ * - Validation errors return structured response
+ * - Non-blocking onboarding progress updates
+ *
+ * IMPROVEMENTS:
+ * - Consider rate limiting for frequent updates
+ * - Add activity logging for settings changes
+ * - Document why enabledModules removed from schema
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ */

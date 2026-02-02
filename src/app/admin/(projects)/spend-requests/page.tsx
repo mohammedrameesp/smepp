@@ -1,3 +1,20 @@
+/**
+ * @file page.tsx
+ * @description Admin spend requests list page - displays all spend requests with statistics
+ * @module app/admin/(projects)/spend-requests
+ *
+ * Features:
+ * - Spend request statistics (total, pending, approved, under review, completed)
+ * - Total approved value calculation
+ * - Spend request list with filtering and search
+ * - Admin actions for reviewing and managing requests
+ *
+ * Security:
+ * - Requires authenticated session or impersonation
+ * - Requires admin access permission
+ * - All queries are tenant-scoped
+ */
+
 import { prisma } from '@/lib/core/prisma';
 import { redirect } from 'next/navigation';
 import { getAdminAuthContext, hasAccess } from '@/lib/core/impersonation-check';
@@ -6,7 +23,11 @@ import { SpendRequestListClient } from '@/features/spend-requests/components';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 
-export default async function AdminSpendRequestsPage() {
+/**
+ * Admin spend requests list page component
+ * Fetches spend request statistics and renders the management interface
+ */
+export default async function AdminSpendRequestsPage(): Promise<React.JSX.Element> {
   const auth = await getAdminAuthContext();
 
   // If not impersonating and no session, redirect to login
@@ -85,3 +106,13 @@ export default async function AdminSpendRequestsPage() {
     </>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ * - Added JSDoc module documentation at top of file
+ * - Added function return type annotation
+ * Issues: None - tenant isolation properly implemented with tenantId filtering
+ */

@@ -1,3 +1,14 @@
+/**
+ * @module super-admin/components/DashboardTabs
+ * @description Super admin dashboard tabbed interface providing platform-wide metrics and insights.
+ * Displays multiple dashboard views including overview, communication stats, security events,
+ * user engagement analytics, and system health monitoring.
+ *
+ * @example
+ * ```tsx
+ * <DashboardTabs stats={{ orgCount: 10, userCount: 100, pendingInvites: 5 }} />
+ * ```
+ */
 'use client';
 
 import { useState } from 'react';
@@ -668,3 +679,41 @@ function HealthStatusCard({
     </div>
   );
 }
+
+/**
+ * CODE REVIEW SUMMARY
+ *
+ * Purpose:
+ * Multi-tab dashboard interface for super admin platform monitoring. Provides comprehensive
+ * views of platform activity, communication metrics, security events, user engagement, and
+ * system health through a tabbed navigation interface.
+ *
+ * Key Components:
+ * - DashboardTabs: Main component with tab navigation (overview, communication, security, engagement, health)
+ * - OverviewTab: Recent activity feed and quick stats/alerts summary
+ * - CommunicationTab: Message delivery stats (email, WhatsApp, SMS, push) and performance metrics
+ * - SecurityTab: Failed logins, 2FA adoption, security events table
+ * - EngagementTab: DAU/WAU/MAU metrics, feature adoption, user segments
+ * - HealthTab: System status cards (API, database, jobs, errors, uptime) with response time chart
+ * - Multiple helper components for consistent stat/card/row rendering
+ *
+ * Data Flow:
+ * - Receives stats prop for initial counts (orgCount, userCount, pendingInvites)
+ * - Currently uses hardcoded mock data for dashboard displays
+ * - Tab state managed locally via useState
+ *
+ * Potential Issues:
+ * - MOCK DATA: All tab content uses hardcoded values - needs API integration for real metrics
+ * - stats prop is passed but prefixed with underscore (unused) - integration incomplete
+ * - No loading states or error handling for future data fetching
+ * - Response time chart uses static array - needs actual time-series data
+ * - Large file with many helper components - consider splitting into separate files
+ *
+ * Security Considerations:
+ * - Read-only dashboard - no mutations or sensitive operations
+ * - Super admin route protection handled at layout/middleware level
+ *
+ * Performance:
+ * - Client component with local state - renders all tab content (could lazy load)
+ * - Many small helper components are defined inline - could memoize if performance issues arise
+ */

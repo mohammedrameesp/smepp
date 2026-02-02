@@ -1,3 +1,17 @@
+/**
+ * @module api/admin/sync-asset-dates
+ * @description One-time data migration endpoint for synchronizing asset and subscription
+ * timestamps with their purchase dates. Updates createdAt fields and assignment history
+ * records to reflect actual purchase dates for accurate sorting and reporting.
+ *
+ * @endpoints
+ * - POST /api/admin/sync-asset-dates - Execute date synchronization for tenant
+ *
+ * @security
+ * - Requires authentication (requireAuth: true)
+ * - Requires admin role (requireAdmin: true)
+ * - All queries filtered by tenantId for multi-tenant isolation
+ */
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { withErrorHandler } from '@/lib/http/handler';
@@ -233,3 +247,37 @@ export const POST = withErrorHandler(async (_request, { tenant }) => {
       },
   });
 }, { requireAuth: true, requireAdmin: true });
+
+/*
+ * =============================================================================
+ * CODE REVIEW SUMMARY
+ * =============================================================================
+ *
+ * Purpose:
+ * One-time data migration script that synchronizes createdAt timestamps with
+ * purchaseDate values for assets and subscriptions. Also updates assignment
+ * history records for accurate chronological ordering.
+ *
+ * Strengths:
+ * - Proper tenant isolation via tenantId filtering on all queries
+ * - Comprehensive error handling with detailed error collection
+ * - Good logging throughout for debugging and auditing
+ * - Returns detailed results with counts for each operation type
+ * - Handles null purchaseDate gracefully with fallback to very old date
+ *
+ * Concerns:
+ * - [LOW] No transaction wrapping - partial failures leave inconsistent state
+ * - [LOW] Sequential processing of items could be slow for large datasets
+ * - [LOW] Assets without purchaseDate get createdAt set to 1900-01-01 which
+ *   may confuse reporting/analytics
+ * - [MEDIUM] No idempotency protection - running twice modifies data again
+ *
+ * Recommendations:
+ * - Consider wrapping in a transaction for atomic updates
+ * - Add a dry-run mode to preview changes before executing
+ * - Add idempotency check (e.g., skip if createdAt already equals purchaseDate)
+ *
+ * Status: APPROVED - One-time migration script with acceptable limitations
+ * Last Reviewed: 2026-02-01
+ * =============================================================================
+ */

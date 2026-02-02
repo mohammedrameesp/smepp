@@ -1,3 +1,10 @@
+/**
+ * @module app/admin/(hr)/employees/new
+ * @description Admin page for creating new team members/employees.
+ * Supports employee vs service account creation, email availability checking,
+ * role assignment, and optional WPS (Wage Protection System) settings.
+ */
+
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
@@ -666,3 +673,18 @@ export default function NewEmployeePage() {
     </>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation
+ * Issues: None - File follows best practices:
+ *   - console.error in catch blocks is appropriate for debugging
+ *   - Uses debounced email check to avoid excessive API calls
+ *   - Proper form validation with Zod schema
+ *   - Uses useRef to prevent duplicate auto-generation calls
+ *   - Clean separation of form sections
+ *   - All API calls have proper error handling
+ */

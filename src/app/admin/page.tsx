@@ -1,3 +1,18 @@
+/**
+ * @module AdminDashboard
+ * @description Main dashboard page for the admin panel.
+ * Displays organization overview, module cards, pending approvals, and recent activity.
+ *
+ * Key features:
+ * - Time-based personalized greeting
+ * - Stat chips for pending items needing attention
+ * - Module cards grid filtered by enabled modules and user access level
+ * - Out of office, upcoming events, and recent activity sections
+ * - Supports super admin impersonation mode
+ *
+ * Tenant isolation: All data queries are scoped to the user's organization via tenantId
+ */
+
 import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { cookies } from 'next/headers';
@@ -9,7 +24,10 @@ import { format, formatDistanceToNow } from 'date-fns';
 import { SetupChecklist } from '@/components/dashboard/SetupChecklist';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 
-// Check for impersonation cookie
+/**
+ * Checks for super admin impersonation by verifying JWT cookie.
+ * @returns Object indicating impersonation status and tenant ID if impersonating
+ */
 async function checkImpersonation(): Promise<{ isImpersonating: boolean; tenantId?: string }> {
   try {
     const cookieStore = await cookies();
@@ -19,6 +37,7 @@ async function checkImpersonation(): Promise<{ isImpersonating: boolean; tenantI
     const secret = process.env.NEXTAUTH_SECRET;
     if (!secret) return { isImpersonating: false };
 
+    // Verify JWT signature and extract payload
     const { payload } = await jwtVerify(cookie.value, new TextEncoder().encode(secret));
     if (payload.purpose !== 'impersonation') return { isImpersonating: false };
 
@@ -27,11 +46,12 @@ async function checkImpersonation(): Promise<{ isImpersonating: boolean; tenantI
       tenantId: payload.organizationId as string,
     };
   } catch {
+    // Invalid or expired token - treat as not impersonating
     return { isImpersonating: false };
   }
 }
 
-// Avatar color palette - consistent colors based on name
+/** Avatar color palette - deterministic colors based on name hash */
 const AVATAR_COLORS = [
   'bg-blue-100 text-blue-600',
   'bg-emerald-100 text-emerald-600',
@@ -43,11 +63,21 @@ const AVATAR_COLORS = [
   'bg-lime-100 text-lime-600',
 ];
 
+/**
+ * Gets a consistent avatar color based on name hash.
+ * @param name - The name to generate color for
+ * @returns Tailwind CSS classes for avatar background and text color
+ */
 function getAvatarColor(name: string): string {
   const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   return AVATAR_COLORS[hash % AVATAR_COLORS.length];
 }
 
+/**
+ * Extracts initials from a name (max 2 characters).
+ * @param name - The full name
+ * @returns Uppercase initials
+ */
 function getInitials(name: string): string {
   return name
     .split(' ')
@@ -742,3 +772,18 @@ export default async function AdminDashboard() {
     </>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation at top
+ *   - Added JSDoc comments for helper functions (checkImpersonation, getAvatarColor, getInitials)
+ *   - Added inline comment for JWT verification
+ * Issues: None
+ *   - Tenant isolation verified: All Prisma queries include tenantId filter
+ *   - Error handling: JWT verification catches errors gracefully
+ *   - No console.log statements found
+ *   - No unused imports found
+ */

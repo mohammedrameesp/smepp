@@ -1,3 +1,23 @@
+/**
+ * @module super-admin/page
+ * @description Super Admin Dashboard - Main landing page for platform administrators.
+ * Displays platform-wide statistics, recent organizations, activity feed, and quick actions.
+ * This is a server component that fetches data directly from the database.
+ *
+ * @features
+ * - Platform statistics (organization count, user count, weekly growth)
+ * - Recent organizations table with impersonation capability
+ * - Activity feed showing recent signups and organization creations
+ * - Quick action links to common admin tasks
+ *
+ * @dependencies
+ * - prisma: Database ORM for fetching platform-wide statistics
+ * - ImpersonateButton: Allows super admins to access tenant organizations
+ *
+ * @security
+ * - Protected by super-admin layout authentication
+ * - Direct database access (not tenant-scoped)
+ */
 import { prisma } from '@/lib/core/prisma';
 import Link from 'next/link';
 import { Building2, Users, Signal, CheckCircle, Eye, Edit, UserPlus, BarChart3, Settings } from 'lucide-react';
@@ -377,3 +397,47 @@ function StatCard({
     </div>
   );
 }
+
+/* =============================================================================
+ * CODE REVIEW SUMMARY
+ * =============================================================================
+ *
+ * File: src/app/super-admin/page.tsx
+ * Type: Server Component (Next.js App Router)
+ * Last Reviewed: 2026-02-01
+ *
+ * PURPOSE:
+ * Super Admin Dashboard providing platform-wide overview and quick access to
+ * common administrative tasks. Serves as the landing page for authenticated
+ * super admins.
+ *
+ * ARCHITECTURE:
+ * - Server component with direct database queries
+ * - Parallel data fetching for performance (organizations, stats, activity)
+ * - Error boundary with graceful degradation on database failure
+ * - Reusable StatCard component for metrics display
+ *
+ * SECURITY CONSIDERATIONS:
+ * [+] Protected by layout-level authentication (isSuperAdmin check)
+ * [+] No user input processing - read-only data display
+ * [+] Impersonation requires separate JWT token generation
+ * [!] Direct database access bypasses tenant isolation (intentional)
+ *
+ * PERFORMANCE:
+ * [+] Uses Promise.all for parallel database queries
+ * [+] Limits organization list to 5 most recent
+ * [+] Limits activity feed to 2 items per type
+ * [-] No caching strategy - consider ISR for stats
+ *
+ * DATA FLOW:
+ * 1. getOrganizations() - Recent orgs with owner info
+ * 2. getStats() - Aggregate counts with weekly delta
+ * 3. getRecentActivity() - Latest org creations and user joins
+ *
+ * POTENTIAL IMPROVEMENTS:
+ * - Add pagination or "load more" for organizations table
+ * - Implement caching for stats (revalidate every 5 minutes)
+ * - Add real-time activity stream via WebSocket
+ * - Consider moving StatCard to shared components
+ *
+ * =========================================================================== */

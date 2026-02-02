@@ -119,37 +119,3 @@ export function getDisplayInitials(
   const displayName = getDisplayName(name, email, '?');
   return displayName[0]?.toUpperCase() || '?';
 }
-
-/*
- * ========== CODE REVIEW SUMMARY ==========
- * File: user-display.ts
- * Reviewed: 2026-01-29
- *
- * CHANGES MADE:
- * - Added proper @file, @description, @module JSDoc tags
- * - Added @remarks explaining the internal email convention
- * - Extracted INTERNAL_EMAIL_SUFFIX constant
- * - Added comprehensive @example to all functions
- * - Added explicit return type documentation
- *
- * SECURITY NOTES:
- * - No security concerns - pure display utility
- * - Prevents accidental exposure of internal system emails
- *
- * REMAINING CONCERNS:
- * - None
- *
- * REQUIRED TESTS:
- * - [ ] isInternalEmail with .internal suffix
- * - [ ] isInternalEmail with regular emails
- * - [ ] isInternalEmail with null/undefined
- * - [ ] getDisplayEmail filtering
- * - [ ] getDisplayName fallback chain
- * - [ ] getDisplayInitials extraction
- *
- * DEPENDENCIES:
- * - No external dependencies
- * - Used by: employee detail pages, email client, user APIs
- *
- * PRODUCTION READY: YES
- */

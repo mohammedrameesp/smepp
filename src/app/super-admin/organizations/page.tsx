@@ -1,3 +1,29 @@
+/**
+ * @module SuperAdminOrganizationsPage
+ * @description Server component that displays a list of all organizations (tenants)
+ * registered on the platform. Part of the Super Admin dashboard for platform-wide
+ * organization management.
+ *
+ * Features:
+ * - Lists all organizations with key metrics (member count, asset count)
+ * - Shows organization owner information
+ * - Displays organization logo or initials fallback
+ * - Provides quick actions: impersonate, view details, edit
+ * - Shows creation date and active status
+ * - Responsive table with mobile-friendly column hiding
+ *
+ * Security:
+ * - Protected by super admin middleware authentication
+ * - Impersonation requires 2FA re-authentication (handled by ImpersonateButton)
+ *
+ * Data Flow:
+ * - Fetches organizations directly via Prisma (server component)
+ * - Includes team member counts and owner lookup
+ * - No tenant filtering (super admin sees all organizations)
+ *
+ * @see {@link src/app/super-admin/organizations/[id]/page.tsx} - Organization detail page
+ * @see {@link src/components/super-admin/impersonate-button.tsx} - Impersonation component
+ */
 import { prisma } from '@/lib/core/prisma';
 import Link from 'next/link';
 import { Building2, Users, Eye, Edit } from 'lucide-react';
@@ -144,3 +170,44 @@ export default async function OrganizationsPage() {
     </div>
   );
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ * ===================
+ * Date: 2026-02-01
+ * Reviewer: Claude Code Review
+ *
+ * OVERVIEW:
+ * Server component for Super Admin organization listing. Clean implementation
+ * that displays all platform organizations with key metrics and actions.
+ *
+ * STRENGTHS:
+ * 1. Efficient Prisma query with _count aggregation and owner lookup
+ * 2. Proper use of server component for data fetching
+ * 3. Good responsive design with column hiding at breakpoints
+ * 4. Appropriate empty state handling
+ * 5. Consistent use of ICON_SIZES constants
+ *
+ * POTENTIAL IMPROVEMENTS:
+ * 1. Add pagination for large organization counts (currently loads all)
+ * 2. Add search/filter functionality for organization lookup
+ * 3. Consider adding sorting options (by name, date, member count)
+ * 4. Add loading skeleton state (though server component renders on server)
+ * 5. Consider adding organization status filter (active/suspended)
+ *
+ * SECURITY NOTES:
+ * - No tenant isolation needed (super admin page)
+ * - Relies on middleware for authentication
+ * - Impersonation button handles 2FA requirement
+ *
+ * PERFORMANCE:
+ * - Single optimized query with includes
+ * - force-dynamic ensures fresh data
+ * - No client-side data fetching
+ *
+ * TESTING RECOMMENDATIONS:
+ * 1. Test with empty organization list
+ * 2. Test with organizations missing owner
+ * 3. Test responsive table at all breakpoints
+ * 4. Test impersonation flow
+ */

@@ -110,3 +110,11 @@ async function cancelSubscriptionHandler(request: NextRequest, context: APIConte
 }
 
 export const POST = withErrorHandler(cancelSubscriptionHandler, { requireAdmin: true, requireModule: 'subscriptions' });
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes: Added review summary
+ * Issues: None identified
+ */

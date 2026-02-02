@@ -1,3 +1,22 @@
+/**
+ * @module api/company-documents
+ * @description API endpoints for managing company documents within a tenant.
+ * Company documents represent important business records (e.g., licenses, certificates)
+ * that may be associated with assets and have expiry dates.
+ *
+ * @endpoints
+ * - GET  /api/company-documents - List documents with filtering, pagination, and search
+ * - POST /api/company-documents - Create a new document (admin only)
+ *
+ * @features
+ * - Filtering by document type, asset, and expiry status (expired/expiring/valid)
+ * - Full-text search across document fields
+ * - Automatic expiry status calculation
+ * - Activity logging for document creation
+ *
+ * @requires Authentication
+ * @requires Module: documents
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
@@ -185,3 +204,35 @@ export const POST = withErrorHandler(async (request: NextRequest, context: APICo
     },
   }, { status: 201 });
 }, { requireAdmin: true, requireModule: 'documents' });
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * CODE REVIEW SUMMARY
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * OVERVIEW:
+ * Implements document listing with advanced filtering and document creation.
+ * Documents can be standalone or linked to assets, with expiry tracking.
+ *
+ * SECURITY:
+ * [+] Tenant isolation enforced on all queries
+ * [+] Asset validation scoped to tenant (prevents cross-tenant linking)
+ * [+] POST requires admin role
+ * [+] Activity logging for document creation
+ *
+ * PATTERNS:
+ * [+] Uses buildFilterWithSearch for consistent search across fields
+ * [+] Supports multiple filter dimensions (type, asset, expiry status)
+ * [+] Pagination with p/ps parameters and total count
+ * [+] Expiry info calculated and attached to responses
+ * [+] Uses Qatar timezone for date calculations
+ *
+ * POTENTIAL IMPROVEMENTS:
+ * [-] Consider adding bulk import/export capability
+ * [-] Missing rate limiting for list endpoint
+ * [-] sortBy field is cast without validation - could add whitelist
+ * [-] Consider adding document versioning for compliance
+ *
+ * LAST REVIEWED: 2026-02-01
+ * ═══════════════════════════════════════════════════════════════════════════════
+ */

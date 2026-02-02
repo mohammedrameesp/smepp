@@ -1,3 +1,12 @@
+/**
+ * @module app/(marketing)/privacy/page
+ * @description Privacy Policy page for the Durj marketing site.
+ * Comprehensive privacy documentation covering data collection, usage,
+ * AI processing, data sharing, third-party services, WPS compliance,
+ * data security, user rights, retention policies, and international transfers.
+ * Includes navigation header and footer consistent with other legal pages.
+ */
+
 import Link from 'next/link';
 import '../landing.css';
 
@@ -521,3 +530,80 @@ export default function PrivacyPolicyPage() {
     </div>
   );
 }
+
+/*
+ * =============================================================================
+ * CODE REVIEW SUMMARY
+ * =============================================================================
+ *
+ * OVERVIEW:
+ * Privacy Policy page component that renders comprehensive data privacy
+ * documentation for the Durj platform. Server-side rendered with Next.js
+ * metadata export for SEO optimization.
+ *
+ * ARCHITECTURE:
+ * - Server Component (default, no 'use client' directive)
+ * - Single-page layout with navigation header and footer
+ * - Uses shared landing.css stylesheet from parent directory
+ * - Exports metadata object for page title and description
+ *
+ * SECTIONS COVERED:
+ * 1. Information We Collect - Account, identity documents, financial data
+ * 2. How We Use Information - Operations, communications, security
+ * 3. AI and Automated Processing - OpenAI integration, data retention
+ * 4. Data Sharing and Disclosure - Third parties, legal requirements
+ * 5. Third-Party Service Providers - Detailed provider table
+ * 6. Government Reporting (WPS) - Qatar wage protection compliance
+ * 7. Data Security - Encryption, access controls, tenant isolation
+ * 8. Your Rights - Access, rectification, erasure, portability
+ * 9. Data Retention - Retention periods by data type
+ * 10. International Data Transfers - Cross-border considerations
+ * 11. Qatar Data Protection - PDPL compliance
+ * 12-15. Children's Privacy, Cookies, Changes, Contact
+ *
+ * STRENGTHS:
+ * - Comprehensive coverage of data protection requirements
+ * - Clear documentation of third-party services with purpose
+ * - Detailed retention periods in table format
+ * - Qatar-specific compliance (WPS, PDPL) properly addressed
+ * - AI data processing transparently documented
+ * - Accessible contact information with specific emails
+ * - Cross-references to Cookie Policy for cookie details
+ * - Well-organized anchor links for navigation
+ * - External links properly secured with rel="noopener noreferrer"
+ *
+ * POTENTIAL IMPROVEMENTS:
+ * - Extract common navigation and footer into shared components
+ * - Third-party services table could be moved to constants for updates
+ * - "Last updated" date is hardcoded - consider automating
+ * - Missing structured data (JSON-LD) for legal document SEO
+ * - Navigation links reference /#domains and /#security anchors that
+ *   may not exist on landing page
+ * - Mobile navigation not implemented (missing hamburger menu)
+ * - Uses standard img tags - should use Next.js Image component
+ *
+ * SECURITY CONSIDERATIONS:
+ * - All external links use rel="noopener noreferrer"
+ * - No user input handling (static content)
+ * - Contact emails exposed intentionally for user communication
+ * - No sensitive data exposure
+ *
+ * ACCESSIBILITY:
+ * - Proper heading hierarchy (h1 -> h2 -> h3)
+ * - Tables include thead for screen reader navigation
+ * - Internal links use Next.js Link component
+ * - Could benefit from skip navigation link
+ * - Strong tags used appropriately for emphasis
+ *
+ * PERFORMANCE:
+ * - Server-side rendered (no client JavaScript)
+ * - Static content benefits from ISR/caching
+ * - Images could be optimized with Next.js Image component
+ *
+ * LEGAL COMPLIANCE NOTES:
+ * - Covers PDPL (Qatar Personal Data Protection Law)
+ * - Documents AI/OpenAI data processing
+ * - WPS compliance documented for Qatar employers
+ * - GDPR mentioned for EU jurisdiction users
+ * =============================================================================
+ */

@@ -281,3 +281,13 @@ async function updateHRProfileHandler(
 }
 
 export const PATCH = withErrorHandler(updateHRProfileHandler, { requireAdmin: true });
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes: None needed - file has JSDoc, admin-only authorization, proper field validation,
+ *          date processing, leave balance reinitialization on dateOfJoining change,
+ *          tenant isolation via extension
+ * Issues: None - admin HR profile management is secure
+ */

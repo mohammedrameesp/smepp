@@ -102,3 +102,11 @@ async function postHandler(request: NextRequest, context: APIContext) {
 
 export const GET = withErrorHandler(getHandler, { requireAuth: true });
 export const POST = withErrorHandler(postHandler, { requireAdmin: true });
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes: Added review summary
+ * Issues: None identified
+ */

@@ -1,6 +1,23 @@
+/**
+ * @file page.tsx
+ * @description Supplier edit form page - allows editing existing supplier information
+ * @module app/admin/(operations)/suppliers/[id]/edit
+ *
+ * Features:
+ * - Edit company information (name, category, address, website)
+ * - Edit contact details (primary and secondary contacts)
+ * - Category autocomplete suggestions
+ * - Country code selection for phone numbers
+ * - Payment terms and additional notes
+ *
+ * Security:
+ * - Client component - authentication checked via API calls
+ * - Tenant isolation enforced by API routes
+ */
+
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useForm, Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -44,7 +61,11 @@ const updateSupplierSchema = z.object({
 
 type UpdateSupplierRequest = z.infer<typeof updateSupplierSchema>;
 
-export default function EditSupplierPage() {
+/**
+ * Supplier edit form page component
+ * Fetches existing supplier data and provides form for editing
+ */
+export default function EditSupplierPage(): React.JSX.Element {
   const router = useRouter();
   const params = useParams();
   const [isLoading, setIsLoading] = useState(true);
@@ -126,26 +147,31 @@ export default function EditSupplierPage() {
     }
   }, [params.id, reset]);
 
-  // Fetch category suggestions
-  useEffect(() => {
-    if (categoryValue && categoryValue.length > 0) {
-      fetchCategories(categoryValue);
-    } else {
-      setCategorySuggestions([]);
-    }
-  }, [categoryValue]);
-
-  const fetchCategories = async (query: string) => {
+  /**
+   * Fetches category suggestions from API based on query string
+   * Used for autocomplete functionality in category input
+   */
+  const fetchCategories = useCallback(async (query: string) => {
     try {
       const response = await fetch(`/api/suppliers/categories?q=${encodeURIComponent(query)}`);
       if (response.ok) {
         const data = await response.json();
         setCategorySuggestions(data.categories || []);
       }
-    } catch (error) {
-      console.error('Error fetching categories:', error);
+    } catch {
+      // Category suggestions are non-critical - silently fail
+      setCategorySuggestions([]);
     }
-  };
+  }, []);
+
+  // Fetch category suggestions when category value changes
+  useEffect(() => {
+    if (categoryValue && categoryValue.length > 0) {
+      fetchCategories(categoryValue);
+    } else {
+      setCategorySuggestions([]);
+    }
+  }, [categoryValue, fetchCategories]);
 
   const onSubmit = async (data: UpdateSupplierRequest) => {
     setError(null);
@@ -525,3 +551,17 @@ export default function EditSupplierPage() {
     </>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ * - Added JSDoc module documentation at top of file
+ * - Added useCallback import for fetchCategories
+ * - Added function return type annotation
+ * - Removed console.error in fetchCategories catch block
+ * - Wrapped fetchCategories in useCallback to fix useEffect dependency
+ * - Added inline comments for complex logic
+ * Issues: None - tenant isolation handled by API routes
+ */

@@ -584,31 +584,3 @@ export function getYearEnd(date: Date): Date {
   return new Date(date.getFullYear(), 11, 31, 23, 59, 59, 999);
 }
 
-/*
- * ========== CODE REVIEW SUMMARY ==========
- * File: calendar-utils.ts
- * Reviewed: 2026-01-29
- *
- * CHANGES MADE:
- * - Added MS_PER_DAY constant to replace magic number
- * - Enhanced documentation with @remarks sections
- * - Added @example to all functions
- * - Improved JSDoc descriptions for clarity
- * - Added comments explaining date overlap algorithm
- *
- * SECURITY NOTES:
- * - No security concerns - pure date calculation utilities
- * - No user input, no database access, no network calls
- *
- * REMAINING CONCERNS:
- * - None
- *
- * REQUIRED TESTS:
- * - [x] All 54 tests passing (tests/unit/utils/calendar-utils.test.ts)
- *
- * DEPENDENCIES:
- * - No external dependencies (pure JavaScript Date APIs)
- * - Used by: leave-utils.ts, leave-request-validation.ts, API routes
- *
- * PRODUCTION READY: YES
- */

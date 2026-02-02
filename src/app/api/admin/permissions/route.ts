@@ -1,3 +1,22 @@
+/**
+ * @module api/admin/permissions
+ * @description Admin API for managing role-based permissions within an organization.
+ *
+ * Provides CRUD operations for configuring what actions non-admin members
+ * can perform. Permissions are organized into groups and validated against
+ * enabled modules.
+ *
+ * @endpoints
+ * - GET /api/admin/permissions - Get current permission configuration
+ * - PUT /api/admin/permissions - Update member permissions
+ * - POST /api/admin/permissions - Reset permissions to defaults
+ *
+ * @returns
+ * - GET: Member permissions, permission groups, all available permissions
+ * - PUT/POST: Success confirmation with updated permissions
+ *
+ * @security Requires admin authentication and tenant context
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { prisma } from '@/lib/core/prisma';
@@ -119,3 +138,42 @@ export const POST = withErrorHandler(
   },
   { requireAdmin: true }
 );
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * CODE REVIEW SUMMARY
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * File: src/app/api/admin/permissions/route.ts
+ * Reviewed: 2026-02-01
+ *
+ * FUNCTIONALITY: [PASS]
+ * - GET: Returns current permissions with groups and available options
+ * - PUT: Updates member permissions with validation
+ * - POST: Resets permissions to tier-based defaults
+ * - Respects enabled modules when computing permissions
+ *
+ * SECURITY: [PASS]
+ * - All endpoints require admin authentication
+ * - Tenant context validated before any operations
+ * - Permission strings validated against allowed set
+ * - Uses centralized access control library
+ *
+ * VALIDATION: [PASS]
+ * - Zod schema for permissions array
+ * - isValidPermission check for each permission string
+ * - Returns specific invalid permissions in error message
+ *
+ * ERROR HANDLING: [PASS]
+ * - 403 for missing tenant context
+ * - 400 for invalid permissions with details
+ * - Wrapped with error handler
+ *
+ * IMPROVEMENTS:
+ * - Consider adding permission change audit logging
+ * - Add confirmation for reset operation
+ * - Could show what changed after reset
+ * - Consider adding permission presets/templates
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ */

@@ -1,3 +1,24 @@
+/**
+ * @module app/admin/(hr)/leave/requests/new/page
+ * @description Admin page for creating leave requests on behalf of employees.
+ * Allows HR/admins to submit leave requests for any employee with proper
+ * balance validation and accrual-based leave support.
+ *
+ * @features
+ * - Employee selection dropdown with designation info
+ * - Dynamic balance loading based on selected employee
+ * - Accrual-based leave calculation for annual leave
+ * - Organization-specific weekend and holiday awareness
+ * - Leave balance display before submission
+ *
+ * @dependencies
+ * - GET /api/users - Fetches employees with HR profiles
+ * - GET /api/leave/types - Fetches leave type definitions
+ * - GET /api/leave/balances - Fetches employee leave balances
+ * - GET /api/admin/organization - Fetches weekend configuration
+ * - GET /api/admin/public-holidays - Fetches public holidays
+ * - LeaveRequestForm component handles submission
+ */
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -284,3 +305,35 @@ export default function AdminNewLeavePage() {
     </>
   );
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ *
+ * Purpose: Admin form to create leave requests on behalf of employees
+ *
+ * Strengths:
+ * - Clear two-step workflow: select employee, then fill form
+ * - Dynamic balance loading based on selected employee
+ * - Proper accrual calculation for annual leave types
+ * - Organization-aware weekend and holiday handling
+ * - Good empty states for no balances scenario
+ * - Proper breadcrumb navigation
+ *
+ * Weaknesses:
+ * - Native select element instead of shadcn Select component
+ * - setDateOfJoining setter is unused (state managed but not displayed)
+ * - Console.error for failures without toast notifications
+ * - No ability to select multiple employees for batch leave entry
+ *
+ * Security:
+ * - Relies on API-level authorization checks
+ * - employeeId passed to form for proper attribution
+ * - isAdmin flag properly set for form behavior
+ *
+ * Recommendations:
+ * - Use shadcn Select for consistent styling
+ * - Remove unused setDateOfJoining or add UI display
+ * - Add toast for fetch failures
+ * - Consider adding employee search/autocomplete for large orgs
+ * - Show employee's current leave summary before form
+ */

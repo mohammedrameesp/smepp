@@ -165,20 +165,12 @@ export function getTimeRemaining(): number {
  * - Failed verifications are logged without exposing sensitive details
  * - generateCurrentCode is marked as testing-only
  *
- * REMAINING CONCERNS:
- * - None
- *
- * REQUIRED TESTS:
- * - [x] TOTP generation produces valid setup data
- * - [x] Code verification works within time window
- * - [x] Clock drift tolerance (window) works correctly
- * - [ ] Integration test with real authenticator app
- *
+
  * DEPENDENCIES:
  * - otplib: TOTP generation/verification
  * - qrcode: QR code generation
  * - ./encryption: Secret encryption
  * - @/lib/core/log: Logging
  *
- * PRODUCTION READY: YES
+
  */

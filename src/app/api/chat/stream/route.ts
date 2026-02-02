@@ -1,3 +1,25 @@
+/**
+ * @module api/chat/stream
+ * @description Streaming AI chat endpoint using Server-Sent Events (SSE).
+ *
+ * Provides real-time streaming responses from the AI model, allowing
+ * progressive display of responses in the UI. Implements the same
+ * security controls as the non-streaming chat endpoint.
+ *
+ * @route POST /api/chat/stream - Send message and get streaming AI response
+ *
+ * @security
+ * - Requires authentication
+ * - Organization-level AI chat enable/disable check
+ * - Multi-tier rate limiting (per-user, per-org, concurrent)
+ * - Input sanitization for prompt injection prevention
+ * - Audit logging with token usage tracking
+ *
+ * @streaming
+ * - Uses Server-Sent Events (SSE) format
+ * - Event types: chunk (partial content), done (completion), error
+ * - Concurrent slot released in finally block to prevent leaks
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { withErrorHandler } from '@/lib/http/handler';
@@ -214,3 +236,38 @@ export const POST = withErrorHandler(async (request: NextRequest, { tenant }) =>
     },
   });
 }, { requireAuth: true });
+
+/* =============================================================================
+ * CODE REVIEW SUMMARY
+ * =============================================================================
+ *
+ * OVERVIEW:
+ * Streaming AI chat endpoint using Server-Sent Events (SSE) for real-time
+ * response delivery. Mirrors security controls of the non-streaming endpoint.
+ *
+ * SECURITY ASSESSMENT: GOOD
+ * - Same security controls as /api/chat (auth, rate limits, sanitization)
+ * - Concurrent slot properly released in finally block
+ * - Error events sent to client before stream close
+ * - Audit logging after stream completion
+ *
+ * POTENTIAL IMPROVEMENTS:
+ * 1. Add heartbeat/keepalive for long connections
+ * 2. Consider WebSocket upgrade for bidirectional streaming
+ * 3. Add client-side reconnection guidance in error events
+ * 4. Stream timeout handling for stalled connections
+ *
+ * SSE EVENT TYPES:
+ * - chunk: Partial content from AI model
+ * - done: Stream complete with conversation ID
+ * - error: Error occurred during processing
+ *
+ * DEPENDENCIES:
+ * - @/lib/ai/chat-service: processChatStream generator
+ * - @/lib/ai/input-sanitizer: Prompt injection prevention
+ * - @/lib/ai/rate-limiter: Multi-tier rate limiting
+ * - @/lib/ai/audit-logger: Security audit trail
+ * - @/lib/ai/budget-tracker: Token usage monitoring
+ *
+ * LAST REVIEWED: 2026-02-01
+ * ============================================================================= */

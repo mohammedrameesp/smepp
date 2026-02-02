@@ -1,3 +1,10 @@
+/**
+ * @module GratuityReportPage
+ * @description Displays end-of-service gratuity calculations for all employees.
+ * Calculates gratuity based on basic salary and service duration using the
+ * standard formula: 3 weeks of basic salary per year of service (pro-rated).
+ */
+
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { redirect } from 'next/navigation';
@@ -20,17 +27,33 @@ import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 import { FileText, Users, DollarSign } from 'lucide-react';
 import { ICON_SIZES } from '@/lib/constants';
 
-export default async function GratuityReportPage() {
+/**
+ * Gratuity Report Page Component
+ *
+ * Fetches all active salary structures with employee data and calculates
+ * end-of-service gratuity for each employee based on their service duration.
+ *
+ * @returns The rendered gratuity report page
+ */
+export default async function GratuityReportPage(): Promise<React.JSX.Element> {
   const session = await getServerSession(authOptions);
-  // Allow access for admins OR users with Finance access
+
+  // Authorization check: require admin role OR finance access
   const hasAccess = session?.user?.isAdmin || session?.user?.hasFinanceAccess;
   if (!session || !hasAccess) {
     redirect('/');
   }
 
-  // Get all employees with salary structures and date of joining
+  if (!session.user.organizationId) {
+    redirect('/login');
+  }
+
+  const tenantId = session.user.organizationId;
+
+  // Fetch all active salary structures with employee details
+  // Note: This query includes member data via relation for gratuity calculation
   const employees = await prisma.salaryStructure.findMany({
-    where: { isActive: true },
+    where: { tenantId, isActive: true },
     include: {
       member: {
         select: {
@@ -49,6 +72,7 @@ export default async function GratuityReportPage() {
   });
 
   // Calculate gratuity for each employee
+  // Filter employees with valid joining dates, then compute gratuity using basic salary
   const gratuityData = employees
     .filter((emp) => emp.member?.dateOfJoining)
     .map((emp) => {
@@ -61,8 +85,10 @@ export default async function GratuityReportPage() {
         gratuity: calculation,
       };
     })
+    // Sort by highest gratuity amount for easier financial review
     .sort((a, b) => b.gratuity.gratuityAmount - a.gratuity.gratuityAmount);
 
+  // Aggregate total liability for financial reporting
   const totalGratuityLiability = gratuityData.reduce(
     (sum, emp) => sum + emp.gratuity.gratuityAmount,
     0
@@ -200,3 +226,15 @@ export default async function GratuityReportPage() {
     </>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation at top of file
+ *   - Added JSDoc function documentation with return type
+ *   - FIXED: Added missing tenantId check and filtering for tenant isolation
+ *   - Added inline comments explaining gratuity calculation logic
+ * Issues: None
+ */

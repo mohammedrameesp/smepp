@@ -186,3 +186,12 @@ async function updateCurrentUserHandler(request: NextRequest, context: APIContex
 }
 
 export const PATCH = withErrorHandler(updateCurrentUserHandler, { requireAuth: true, requireTenant: false });
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes: None needed - file has JSDoc, proper Zod validation, handles both tenant
+ *          users and super admins correctly, activity logging in place
+ * Issues: None - self-service profile updates properly scoped
+ */

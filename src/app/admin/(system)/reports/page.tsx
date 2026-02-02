@@ -1,3 +1,39 @@
+/**
+ * @module app/admin/(system)/reports/page
+ * @description Server component page for comprehensive organization reports.
+ * Aggregates statistics from all modules (Assets, Subscriptions, Suppliers,
+ * Spend Requests, Employees, Users) with activity log tracking.
+ *
+ * @dependencies
+ * - prisma: Extensive parallel database queries for statistics
+ * - formatBillingCycle: Subscription billing cycle formatter
+ * - date-fns: Date calculations for expiry windows
+ *
+ * @routes
+ * - GET /admin/reports - Displays organization-wide analytics
+ *
+ * @access
+ * - Admins: Full access
+ * - Department access users (Finance/HR/Operations): Read access
+ * - Approvers: Read access
+ * - Development mode: Open access
+ *
+ * @features
+ * - Assets: Status distribution, top types
+ * - Subscriptions: Status, billing cycle, upcoming renewals (30 days)
+ * - Suppliers: Status, top categories
+ * - Spend Requests: Status, priority, cost type breakdown
+ * - Employees: Total, HR profiles, expiring documents, incomplete onboarding
+ * - Users: Admin vs member role distribution
+ * - Activity Logs: By action type, entity type, recent 20 events
+ *
+ * @performance
+ * - Uses Promise.all for parallel database queries
+ * - 30+ concurrent queries optimized for single page load
+ *
+ * @data-scope All queries are tenant-scoped via tenantId
+ */
+
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
@@ -608,3 +644,38 @@ export default async function AdminReportsPage() {
     </>
   );
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ * ===================
+ * Date: 2026-02-01
+ * Reviewer: Claude (AI Code Review)
+ *
+ * Overall Assessment: PASS with performance observations
+ * Comprehensive reports page with extensive data aggregation.
+ *
+ * Strengths:
+ * 1. Excellent use of Promise.all for parallel query execution
+ * 2. Comprehensive coverage of all business modules
+ * 3. Proper tenant scoping on all queries
+ * 4. Good access control (admin + department users + approvers)
+ * 5. Clear visual hierarchy with section headers and icons
+ * 6. Actionable insights with "View details" links
+ * 7. Useful activity log with actor attribution
+ *
+ * Potential Improvements:
+ * 1. 30+ parallel queries may strain database connections
+ *    - Consider grouping related queries or using database views
+ *    - Could implement caching for less volatile stats
+ * 2. Lines 50, 54, 59, 62-63, 66, 72: Several query results unused
+ *    - Variables like assetTotalValue, subscriptionTotalCost are fetched but not displayed
+ *    - Consider removing unused queries to reduce load
+ * 3. Hard-coded 30-day window for "upcoming" - could be configurable
+ * 4. Large component (~600 lines) - consider extracting section components
+ * 5. No caching - every page load runs all queries
+ *
+ * Security: Good - tenant-scoped, proper access control
+ * Performance: MODERATE CONCERN - many parallel queries on each load
+ *   Recommendation: Add caching layer or database views for aggregates
+ * Maintainability: Moderate - long file, could benefit from extraction
+ */

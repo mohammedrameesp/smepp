@@ -1,3 +1,10 @@
+/**
+ * @module app/admin/(hr)/employees
+ * @description Admin team/employees listing page with statistics overview.
+ * Displays team members, pending change requests, expiring documents,
+ * and employees currently on leave. Uses batched queries for performance.
+ */
+
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/core/prisma';
 import { getAdminAuthContext, hasAccess } from '@/lib/core/impersonation-check';
@@ -166,3 +173,17 @@ export default async function AdminTeamPage() {
     </>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation
+ * Issues: None - File follows best practices:
+ *   - Uses batched Promise.all for database queries (avoids N+1)
+ *   - Proper tenant isolation with tenantId filtering
+ *   - Auth checks with impersonation support
+ *   - No console.log statements
+ *   - Clean component structure with server-side data fetching
+ */

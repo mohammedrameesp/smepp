@@ -1,3 +1,24 @@
+/**
+ * @module super-admin/feedback/page
+ * @description User feedback management page for viewing bug reports and feature requests.
+ * Server component that lists all feedback submissions with status tracking.
+ *
+ * @features
+ * - List all feedback submissions (bugs and feature requests)
+ * - Visual differentiation between bug reports and feature requests
+ * - Status badges (New, Reviewed, In Progress, Done, Won't Fix)
+ * - Screenshot attachment indicators
+ * - Summary statistics (total, new, by type)
+ * - Click-through to detailed feedback view
+ *
+ * @feedback-types
+ * - BUG: User-reported issues with the platform
+ * - FEATURE_REQUEST: User suggestions for new functionality
+ *
+ * @workflow
+ * - NEW -> REVIEWED -> IN_PROGRESS -> DONE (or WONT_FIX)
+ * - Detailed view at /super-admin/feedback/[id] for status updates
+ */
 import { prisma } from '@/lib/core/prisma';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -122,3 +143,56 @@ export default async function SuperAdminFeedbackPage() {
     </div>
   );
 }
+
+/* =============================================================================
+ * CODE REVIEW SUMMARY
+ * =============================================================================
+ *
+ * File: src/app/super-admin/feedback/page.tsx
+ * Type: Server Component
+ * Last Reviewed: 2026-02-01
+ *
+ * PURPOSE:
+ * Lists all user-submitted feedback (bugs and feature requests) for platform
+ * review and management. Serves as the entry point for feedback triage.
+ *
+ * ARCHITECTURE:
+ * - Server component with direct database query
+ * - Clickable cards linking to detail view
+ * - Status-driven workflow (NEW -> REVIEWED -> IN_PROGRESS -> DONE/WONT_FIX)
+ * - Visual differentiation between feedback types
+ *
+ * DATA MODEL:
+ * - Feedback table with type, status, message, metadata
+ * - Stores submitter email and organization context
+ * - Optional screenshot attachment URL
+ * - Page URL for context on where feedback was submitted
+ *
+ * STATUS WORKFLOW:
+ * 1. NEW: Just submitted, needs review
+ * 2. REVIEWED: Acknowledged by admin
+ * 3. IN_PROGRESS: Being worked on
+ * 4. DONE: Resolved/implemented
+ * 5. WONT_FIX: Declined with reason
+ *
+ * UI ELEMENTS:
+ * - Type icons: Bug (red), Lightbulb (amber for features)
+ * - Status badges with semantic colors
+ * - Screenshot indicator badge
+ * - Truncated message preview
+ *
+ * SECURITY CONSIDERATIONS:
+ * [+] Read-only list view
+ * [+] Message truncation prevents XSS in preview
+ * [!] Screenshot URLs should be validated/sanitized
+ *
+ * POTENTIAL IMPROVEMENTS:
+ * - Add filtering by type, status, organization
+ * - Implement search functionality
+ * - Add pagination for large feedback volumes
+ * - Add bulk status update capability
+ * - Implement feedback categorization/tagging
+ * - Add priority field for triage
+ * - Consider email notifications on status change
+ *
+ * =========================================================================== */

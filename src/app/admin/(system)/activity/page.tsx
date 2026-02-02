@@ -1,3 +1,10 @@
+/**
+ * @module admin/(system)/activity
+ * @description Activity log page displaying system-wide audit trail.
+ * Shows recent user actions and system events with filtering by action type.
+ * Requires admin access for viewing.
+ */
+
 import { prisma } from '@/lib/core/prisma';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -9,7 +16,24 @@ import { formatDate } from '@/lib/core/datetime';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 
-export default async function ActivityLogPage() {
+/**
+ * Determines the badge variant based on action type.
+ * @param action - The action string from the activity log
+ * @returns Badge variant for visual indication of action severity
+ */
+function getActionBadgeVariant(action: string): 'default' | 'secondary' | 'destructive' | 'outline' {
+  if (action.includes('CREATED')) return 'default';
+  if (action.includes('UPDATED')) return 'secondary';
+  if (action.includes('DELETED')) return 'destructive';
+  if (action.includes('ALERT')) return 'outline';
+  return 'secondary';
+}
+
+/**
+ * Activity Log Page - Server Component
+ * Displays a paginated list of recent system activities with actor information.
+ */
+export default async function ActivityLogPage(): Promise<React.JSX.Element> {
   const auth = await getAdminAuthContext();
 
   // If not impersonating and no session, redirect to login
@@ -28,7 +52,8 @@ export default async function ActivityLogPage() {
 
   const tenantId = auth.tenantId;
 
-  // Fetch recent activity logs
+  // Fetch recent activity logs with actor details
+  // Note: Limited to 50 most recent entries for performance
   const activities = await prisma.activityLog.findMany({
     where: { tenantId },
     take: 50,
@@ -43,14 +68,6 @@ export default async function ActivityLogPage() {
       },
     },
   });
-
-  function getActionBadgeVariant(action: string) {
-    if (action.includes('CREATED')) return 'default';
-    if (action.includes('UPDATED')) return 'secondary';
-    if (action.includes('DELETED')) return 'destructive';
-    if (action.includes('ALERT')) return 'outline';
-    return 'secondary';
-  }
 
   return (
     <>
@@ -145,3 +162,15 @@ export default async function ActivityLogPage() {
     </>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation at top
+ *   - Extracted getActionBadgeVariant function outside component for better organization
+ *   - Added proper TypeScript return type annotation
+ *   - Added comments for database query
+ * Issues: None
+ */

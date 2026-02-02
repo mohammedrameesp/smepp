@@ -207,3 +207,12 @@ export const GET = withErrorHandler(
     rateLimit: true,
   }
 );
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes: None required - well-documented employee listing with HR profile data
+ * Issues: None - proper tenant isolation, role derivation, profile completion
+ *         calculation, expiry status tracking, pagination
+ */

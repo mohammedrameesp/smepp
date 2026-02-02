@@ -79,3 +79,11 @@ async function restoreSubscriptionHandler(request: NextRequest, context: APICont
 }
 
 export const POST = withErrorHandler(restoreSubscriptionHandler, { requireAdmin: true, requireModule: 'subscriptions' });
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes: Added review summary
+ * Issues: None identified
+ */

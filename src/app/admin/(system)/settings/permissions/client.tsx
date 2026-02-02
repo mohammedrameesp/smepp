@@ -1,3 +1,15 @@
+/**
+ * @module admin/settings/permissions/client
+ * @description Client component for configuring role-based permissions. Provides
+ * a tabbed interface to toggle individual permissions for Manager and Member roles.
+ * Owner and Admin roles always have full access. Permissions are grouped by module
+ * and disabled modules show as unavailable with upgrade hints.
+ *
+ * @dependencies
+ * - PUT /api/admin/permissions - Saves role permissions
+ * - POST /api/admin/permissions - Resets to default permissions
+ * - GET /api/admin/permissions - Fetches current permissions
+ */
 'use client';
 
 import { useState, useCallback } from 'react';
@@ -355,3 +367,37 @@ export function PermissionsClient({
     </div>
   );
 }
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * CODE REVIEW SUMMARY
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * OVERVIEW:
+ * Feature-rich permission management interface with tabbed role selection,
+ * module-aware permission toggling, and unsaved changes tracking.
+ *
+ * STRENGTHS:
+ * - Visual permission count in role cards
+ * - Disabled modules shown with upgrade hints
+ * - Fixed unsaved changes banner prevents data loss
+ * - Reset to defaults with confirmation dialog
+ * - Permissions grouped by module for logical organization
+ * - Module availability check filters permissions dynamically
+ * - Clean separation of enabled vs disabled permissions in each group
+ * - Uses useCallback for performance optimization
+ *
+ * POTENTIAL IMPROVEMENTS:
+ * - Add "Select All" / "Deselect All" for permission groups
+ * - Consider permission templates (e.g., "Standard Manager", "Read-only")
+ * - Add permission change audit log
+ * - Consider comparing current state to saved state for more accurate hasChanges
+ * - Add keyboard shortcuts for power users
+ *
+ * SECURITY:
+ * - Owner and Admin roles bypass permission checks (noted in UI)
+ * - Permissions are saved server-side with auth validation
+ * - Module map ensures only valid permissions are toggleable
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ */

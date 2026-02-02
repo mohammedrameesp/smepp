@@ -1,3 +1,9 @@
+/**
+ * @file route.ts
+ * @description Payroll salary component percentages API - manage basic, housing, transport allocations
+ * @module system/settings
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { withErrorHandler } from '@/lib/http/handler';
@@ -82,3 +88,13 @@ export const POST = withErrorHandler(async (request: NextRequest, { tenant }) =>
 
   return NextResponse.json({ success: true, percentages });
 }, { requireAuth: true, requireAdmin: true, requireModule: 'payroll' });
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes: Added JSDoc module documentation at top
+ * Issues: None - payroll percentages properly secured with admin authorization
+ *         and payroll module requirement, validation ensures total equals 100%,
+ *         tenant-scoped settings storage
+ */

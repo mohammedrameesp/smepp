@@ -1,3 +1,10 @@
+/**
+ * @module NewLoanPage
+ * @description Form page for creating new employee loans or salary advances.
+ * Includes automatic calculation of estimated repayment duration and a
+ * summary preview before submission.
+ */
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -22,6 +29,7 @@ import { toast } from 'sonner';
 import { ICON_SIZES } from '@/lib/constants';
 import { formatCurrency } from '@/lib/core/currency';
 
+/** Employee data structure for the selection dropdown */
 interface Employee {
   id: string;
   name: string | null;
@@ -29,14 +37,23 @@ interface Employee {
   employeeCode?: string | null;
 }
 
+/** Available loan type options */
 const LOAN_TYPES = [
   { value: 'ADVANCE', label: 'Salary Advance' },
   { value: 'LOAN', label: 'Personal Loan' },
   { value: 'EMERGENCY', label: 'Emergency Loan' },
   { value: 'OTHER', label: 'Other' },
-];
+] as const;
 
-export default function NewLoanPage() {
+/**
+ * New Loan Page Component
+ *
+ * Client component for creating employee loans with form validation,
+ * automatic repayment estimation, and real-time summary display.
+ *
+ * @returns The rendered new loan form page
+ */
+export default function NewLoanPage(): React.JSX.Element {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -49,6 +66,7 @@ export default function NewLoanPage() {
   const [description, setDescription] = useState('');
   const [notes, setNotes] = useState('');
 
+  // Load employees on mount - tenant filtering handled server-side in API
   useEffect(() => {
     fetch('/api/team?isEmployee=true')
       .then((res) => res.json())
@@ -56,11 +74,17 @@ export default function NewLoanPage() {
       .catch(() => toast.error('Failed to load employees'));
   }, []);
 
+  // Calculate loan metrics for summary display
   const amountNum = parseFloat(principalAmount) || 0;
   const monthlyNum = parseFloat(monthlyDeduction) || 0;
+  // Estimate repayment duration in months (rounded up)
   const estimatedMonths = monthlyNum > 0 ? Math.ceil(amountNum / monthlyNum) : 0;
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  /**
+   * Handles form submission for creating a new loan
+   * Sends loan data to the API and redirects on success
+   */
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     setIsLoading(true);
 
@@ -89,6 +113,7 @@ export default function NewLoanPage() {
       toast.success('Loan created successfully');
       router.push(`/admin/payroll/loans/${data.id}`);
     } catch (error) {
+      // Display user-friendly error message
       toast.error(error instanceof Error ? error.message : 'Failed to create loan');
     } finally {
       setIsLoading(false);
@@ -269,3 +294,18 @@ export default function NewLoanPage() {
     </>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation at top of file
+ *   - Added JSDoc documentation for Employee interface
+ *   - Added 'as const' to LOAN_TYPES for better type safety
+ *   - Added JSDoc function documentation with return type
+ *   - Added JSDoc documentation for handleSubmit function
+ *   - Added inline comments for data loading and calculations
+ *   - Verified error handling with user-friendly messages
+ * Issues: None (tenant isolation handled by API layer)
+ */

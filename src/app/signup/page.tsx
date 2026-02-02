@@ -1,3 +1,31 @@
+/**
+ * @module app/signup/page
+ * @description Signup page for invitation-only user registration.
+ *
+ * This page handles new user registration for the Durj platform. Signups are
+ * invitation-only - users must have a valid invite token from an organization
+ * administrator to create an account.
+ *
+ * Key features:
+ * - Invitation-only flow with token validation
+ * - Pre-fills email and name from invitation URL params
+ * - Supports OAuth signup (Google, Microsoft) when org has it configured
+ * - Password strength indicator with visual feedback
+ * - Email field is locked to match the invitation
+ * - Shows appropriate UI based on org's allowed auth methods
+ * - Tenant branding support via TenantBrandedPanel
+ *
+ * Flow:
+ * 1. User receives invitation email with token
+ * 2. Token is validated and invitation details fetched
+ * 3. User completes signup (credentials or OAuth)
+ * 4. Account created and user redirected to org subdomain
+ *
+ * @dependencies
+ * - next-auth/react: signIn for post-signup auto-login
+ * - useTenantBranding: Fetch org branding from invitation
+ * - TenantBrandedPanel: Left-side branding panel
+ */
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
@@ -652,3 +680,40 @@ export default function SignupPage() {
     </Suspense>
   );
 }
+
+/* =============================================================================
+ * CODE REVIEW SUMMARY
+ * =============================================================================
+ *
+ * WHAT THIS FILE DOES:
+ * Handles invitation-only user registration with support for both credentials
+ * and OAuth signup methods based on organization configuration.
+ *
+ * KEY COMPONENTS:
+ * - SignupForm: Main form with password strength indicator and OAuth options
+ * - SignupPage: Wrapper with Suspense for searchParams
+ *
+ * INVITATION FLOW:
+ * 1. No token: Shows "invitation only" message with login redirect
+ * 2. With token: Fetches invitation details and shows appropriate auth options
+ * 3. Signup: Creates account and auto-signs in, redirects to org subdomain
+ *
+ * POTENTIAL ISSUES:
+ * 1. [LOW] Password strength calculation is basic (length + character types)
+ * 2. [MEDIUM] 500ms delay before redirect (line 229) is arbitrary - could cause
+ *    race condition with session propagation
+ * 3. [LOW] Email field is disabled but not visually distinct enough from locked state
+ *
+ * SECURITY CONSIDERATIONS:
+ * - Email is locked to invitation email (prevents signup with different email)
+ * - Password requirements: minimum 8 characters, strength indicator encourages better passwords
+ * - Invite token validated server-side before account creation
+ *
+ * PERFORMANCE:
+ * - Invitation fetch happens once on mount
+ * - Form state updates are efficient (individual field updates)
+ * - Password strength calculated on every keystroke (lightweight computation)
+ *
+ * LAST REVIEWED: 2025-01-27
+ * REVIEWED BY: Code Review System
+ * =========================================================================== */

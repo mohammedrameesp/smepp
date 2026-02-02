@@ -1,3 +1,9 @@
+/**
+ * @module LoansPage
+ * @description Employee loans management page. Lists all employee loans with
+ * filtering by status, pagination, and statistics on active/paused/completed loans.
+ */
+
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { redirect } from 'next/navigation';
@@ -20,6 +26,7 @@ import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 import { ICON_SIZES } from '@/lib/constants';
 
+/** Props for the loans page including search params */
 interface PageProps {
   searchParams: Promise<{
     status?: string;
@@ -27,6 +34,11 @@ interface PageProps {
   }>;
 }
 
+/**
+ * Maps loan status to badge variant for consistent UI styling
+ * @param status - The loan status from the database
+ * @returns Badge variant string
+ */
 function getLoanStatusVariant(status: LoanStatus): 'default' | 'secondary' | 'destructive' | 'outline' {
   switch (status) {
     case 'ACTIVE':
@@ -42,9 +54,19 @@ function getLoanStatusVariant(status: LoanStatus): 'default' | 'secondary' | 'de
   }
 }
 
-export default async function LoansPage({ searchParams }: PageProps) {
+/**
+ * Loans List Page Component
+ *
+ * Server component that displays paginated list of employee loans
+ * with status filtering and aggregate statistics.
+ *
+ * @param searchParams - URL search parameters for filtering and pagination
+ * @returns The rendered loans list page
+ */
+export default async function LoansPage({ searchParams }: PageProps): Promise<React.JSX.Element> {
   const session = await getServerSession(authOptions);
-  // Allow access for admins OR users with Finance access
+
+  // Authorization check: require admin role OR finance access
   const hasAccess = session?.user?.isAdmin || session?.user?.hasFinanceAccess;
   if (!session || !hasAccess) {
     redirect('/');
@@ -56,16 +78,19 @@ export default async function LoansPage({ searchParams }: PageProps) {
 
   const tenantId = session.user.organizationId;
 
+  // Parse and validate search parameters
   const params = await searchParams;
   const statusFilter = params.status as LoanStatus | undefined;
   const page = parseInt(params.p || '1', 10);
   const pageSize = 20;
 
+  // Build tenant-scoped query with optional status filter
   const where: Record<string, unknown> = { tenantId };
   if (statusFilter && Object.values(LoanStatus).includes(statusFilter)) {
     where.status = statusFilter;
   }
 
+  // Fetch loans, total count, and statistics in parallel
   const [loans, total, stats] = await Promise.all([
     prisma.employeeLoan.findMany({
       where,
@@ -101,6 +126,7 @@ export default async function LoansPage({ searchParams }: PageProps) {
 
   const totalPages = Math.ceil(total / pageSize);
 
+  // Transform grouped stats into a lookup map for easier access
   const statsMap = stats.reduce((acc, stat) => {
     acc[stat.status] = {
       count: stat._count,
@@ -109,6 +135,7 @@ export default async function LoansPage({ searchParams }: PageProps) {
     return acc;
   }, {} as Record<string, { count: number; remaining: number }>);
 
+  // Extract individual statistics for display
   const activeLoansValue = statsMap['ACTIVE']?.remaining || 0;
   const activeLoansCount = statsMap['ACTIVE']?.count || 0;
   const pausedCount = statsMap['PAUSED']?.count || 0;
@@ -279,3 +306,18 @@ export default async function LoansPage({ searchParams }: PageProps) {
     </>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation at top of file
+ *   - Added JSDoc documentation for PageProps interface
+ *   - Added JSDoc documentation for getLoanStatusVariant helper function
+ *   - Added JSDoc function documentation with return type
+ *   - Added inline comments for query building and statistics
+ *   - Verified tenant isolation (tenantId used in all queries)
+ *   - Verified Promise.all pattern for parallel queries (no N+1 issues)
+ * Issues: None
+ */

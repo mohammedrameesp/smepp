@@ -1,3 +1,10 @@
+/**
+ * @module app/admin/(hr)/payroll/payslips/page
+ * @description Admin payslips search page - provides a searchable and filterable list
+ * of all employee payslips across payroll runs. Supports filtering by year, month,
+ * and employee name/email search. Displays payslip details including gross salary,
+ * deductions, net pay, and payment status with pagination for large datasets.
+ */
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { redirect } from 'next/navigation';
@@ -309,3 +316,39 @@ export default async function PayslipsSearchPage({ searchParams }: PageProps) {
     </>
   );
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ *
+ * Purpose: Server-side rendered page for searching and browsing all employee payslips
+ * with filtering capabilities.
+ *
+ * Key Features:
+ * - Search by employee name or email
+ * - Filter by year and month
+ * - Paginated results (20 per page)
+ * - Displays payslip summary (gross, deductions, net, status)
+ * - Quick navigation to payslip detail pages
+ * - Quick links to related payroll sections
+ *
+ * Data Flow:
+ * - Server-side data fetching with Prisma
+ * - URL-based filter state for bookmarkable searches
+ * - Parallel data fetching for payslips, count, and available years
+ *
+ * Security:
+ * - Requires authenticated session
+ * - Access restricted to admins OR users with Finance access
+ * - Tenant-scoped queries via tenantId filter
+ *
+ * Improvements Made:
+ * - Uses Promise.all for parallel database queries
+ * - Clean filter state management via search params
+ * - Good use of shared UI components (PageHeader, StatChip, Table)
+ *
+ * Potential Improvements:
+ * - Add export functionality (CSV/Excel)
+ * - Consider adding bulk actions (mark as paid)
+ * - Add sorting options for columns
+ * - Consider infinite scroll for large datasets
+ */

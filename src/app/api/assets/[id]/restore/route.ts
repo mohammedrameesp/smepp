@@ -79,3 +79,11 @@ async function restoreAssetHandler(request: NextRequest, context: APIContext) {
 }
 
 export const POST = withErrorHandler(restoreAssetHandler, { requireAdmin: true, requireModule: 'assets' });
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes: None required - file is well-documented
+ * Issues: None - proper tenant isolation, activity logging for restoration
+ */

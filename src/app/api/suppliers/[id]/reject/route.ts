@@ -80,3 +80,11 @@ async function rejectSupplierHandler(request: NextRequest, context: APIContext) 
 }
 
 export const PATCH = withErrorHandler(rejectSupplierHandler, { requireOperationsAccess: true, requireModule: 'suppliers' });
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes: Added review summary
+ * Issues: None identified
+ */

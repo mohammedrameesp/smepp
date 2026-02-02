@@ -1,3 +1,25 @@
+/**
+ * @module api/organizations/[id]/code-formats
+ * @description Manages organization-specific code format patterns for entity identifiers.
+ *
+ * Code formats define how entity codes (employee IDs, asset tags, etc.) are generated.
+ * Supports custom patterns with placeholders for dynamic values.
+ *
+ * @authentication Required - Session-based
+ * @authorization GET: Any organization member | PUT: Admin or Owner only
+ *
+ * @example
+ * GET /api/organizations/abc123/code-formats
+ *
+ * PUT /api/organizations/abc123/code-formats
+ * {
+ *   "formats": {
+ *     "employees": "EMP-{YYYY}-{SEQ:4}",
+ *     "assets": "AST-{SEQ:5}"
+ *   }
+ * }
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
@@ -157,3 +179,33 @@ export async function PUT(
     return NextResponse.json({ error: 'Failed to update code formats' }, { status: 500 });
   }
 }
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * CODE REVIEW SUMMARY
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * STRENGTHS:
+ * - Proper authentication and authorization checks
+ * - Zod validation for input data
+ * - Pattern validation before database update
+ * - Cache invalidation after format changes
+ * - Consistent error handling pattern
+ *
+ * CONCERNS:
+ * - Uses raw getServerSession instead of withErrorHandler pattern
+ * - Membership lookup queries by id instead of using session.user.organizationId
+ * - No audit logging for configuration changes
+ * - PUT should possibly be PATCH (partial update semantics)
+ *
+ * RECOMMENDATIONS:
+ * - Migrate to withErrorHandler for consistency with other endpoints
+ * - Add audit logging for admin configuration changes
+ * - Consider rate limiting to prevent cache thrashing
+ * - Add TypeScript type for formats object keys
+ *
+ * SECURITY NOTES:
+ * - Proper tenant isolation via membership check
+ * - Admin/Owner authorization enforced for writes
+ * - Format patterns are validated before storage
+ */

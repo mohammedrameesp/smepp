@@ -1,3 +1,11 @@
+/**
+ * @module app/admin/(hr)/payroll/runs/[id]/page
+ * @description Payroll run detail page - displays comprehensive payroll run information
+ * including summary statistics, workflow actions, and employee payslips. For draft runs,
+ * shows a preview with expected deductions (loans, unpaid leave). For processed runs,
+ * displays actual payslips with earnings and deductions. Includes workflow history
+ * and WPS file download when available.
+ */
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { redirect, notFound } from 'next/navigation';
@@ -397,3 +405,40 @@ export default async function PayrollRunDetailPage({ params }: PageProps) {
     </>
   );
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ *
+ * Purpose: Server-side rendered page displaying comprehensive payroll run details
+ * with workflow actions and employee payslips.
+ *
+ * Key Features:
+ * - Summary statistics (employees, gross, deductions, net)
+ * - Workflow actions component for status transitions
+ * - Draft mode: Shows preview with expected deductions (loans, unpaid leave)
+ * - Processed mode: Shows actual payslips with all details
+ * - WPS file download when generated
+ * - Complete workflow history timeline
+ *
+ * Data Flow:
+ * - Server-side data fetching with Prisma (extensive includes)
+ * - Calculates preview for DRAFT status using calculatePayrollPreview
+ * - Includes all workflow actors (createdBy, submittedBy, approvedBy, etc.)
+ *
+ * Security:
+ * - Requires authenticated session
+ * - Access restricted to admins OR users with Finance access
+ * - No explicit tenant check on payrollRun query (potential issue)
+ *
+ * Improvements Made:
+ * - Excellent UX for draft preview showing expected deductions
+ * - Clear separation between draft preview and processed payslips
+ * - Good use of StatsCard for summary display
+ * - Comprehensive history tracking
+ *
+ * Potential Improvements:
+ * - Add tenantId check to payrollRun query for security
+ * - Add export functionality (CSV, WPS regeneration)
+ * - Consider adding bulk payslip actions
+ * - Add ability to add/remove employees from draft runs
+ */

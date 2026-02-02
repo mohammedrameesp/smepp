@@ -1,3 +1,32 @@
+/**
+ * @module super-admin/seed-data
+ * @description Super admin page for seeding comprehensive test data into organizations.
+ * Generates realistic sample data for development, testing, and demo purposes.
+ *
+ * @features
+ * - Organization selector with current data counts
+ * - Comprehensive data seeding: employees, leave types, assets, subscriptions, etc.
+ * - Progress feedback during seeding operation
+ * - Success/failure result display with created item counts
+ * - Generated login credentials display for test users
+ * - Detailed list of what gets seeded
+ *
+ * @seeded_data
+ * - 15 employees with HR profiles (CEO, HR, Finance, Creative, Digital teams)
+ * - 7 leave types (Annual, Sick, Maternity, Paternity, Hajj, etc.)
+ * - 12+ leave requests in various statuses
+ * - 15+ assets (MacBooks, monitors, tablets, cameras, phones)
+ * - 12+ subscriptions (Adobe, Figma, Slack, Microsoft 365, etc.)
+ * - 10+ suppliers with engagement history
+ * - 10+ spend requests, 12+ purchase requests
+ * - Salary structures, company documents, notifications
+ *
+ * @dependencies
+ * - GET /api/super-admin/seed-comprehensive - Lists organizations with counts
+ * - POST /api/super-admin/seed-comprehensive - Executes seeding operation
+ *
+ * @access Super Admin only (protected by middleware)
+ */
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -218,3 +247,28 @@ export default function SeedDataPage() {
     </div>
   );
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ * ===================
+ * Status: APPROVED
+ *
+ * Strengths:
+ * - Clear organization selector with current data counts preview
+ * - Comprehensive seeding operation with detailed results display
+ * - Credentials display for test user accounts
+ * - Well-documented "What This Seeds" section for clarity
+ * - Proper loading states during organization fetch and seeding
+ *
+ * Minor Observations:
+ * - Error in fetchOrganizations logged but not displayed to user
+ * - result.credentials could be undefined but accessed directly
+ * - Container uses max-w-4xl but doesn't match PageContent pattern
+ * - Missing back navigation to super-admin dashboard
+ *
+ * Recommendations:
+ * - Add confirmation dialog before seeding (data may be overwritten)
+ * - Add option to seed specific modules only (e.g., just employees)
+ * - Consider adding seed data cleanup/reset functionality
+ * - Add PageHeader/PageContent pattern for consistency
+ */

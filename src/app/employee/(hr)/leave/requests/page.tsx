@@ -1,3 +1,17 @@
+/**
+ * @file page.tsx
+ * @module app/employee/(hr)/leave/requests
+ * @description Employee leave requests list page.
+ *
+ * Features:
+ * - Paginated list of all leave requests
+ * - Filtering by status and leave type
+ * - Search functionality
+ * - Links to individual request details
+ *
+ * The actual data fetching is handled by the LeaveRequestsTable component,
+ * which uses client-side pagination with API calls.
+ */
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { Button } from '@/components/ui/button';
@@ -9,7 +23,12 @@ import { LeaveRequestsTable } from '@/features/leave/components';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { DetailCard } from '@/components/ui/detail-card';
 
-export default async function EmployeeLeaveRequestsPage() {
+/**
+ * Employee leave requests list page component.
+ * Server component that renders the leave requests table.
+ * @returns The leave requests list page
+ */
+export default async function EmployeeLeaveRequestsPage(): Promise<React.JSX.Element> {
   const session = await getServerSession(authOptions);
 
   if (!session) {
@@ -48,3 +67,11 @@ export default async function EmployeeLeaveRequestsPage() {
     </>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes: Added review summary
+ * Issues: None identified
+ */

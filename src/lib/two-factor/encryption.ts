@@ -157,12 +157,6 @@ export function generateEncryptionKey(): string {
  * File: encryption.ts
  * Reviewed: 2025-01-29
  *
- * CHANGES MADE:
- * - Replaced console.warn with logger.warn for proper logging
- * - Added comprehensive JSDoc with @param, @returns, @throws, @security, @example
- * - Extracted magic numbers to named constants (KEY_LENGTH_HEX, DEV_KEY_SALT)
- * - Added file-level @example for common usage patterns
- * - Improved error messages with actionable guidance
  *
  * SECURITY NOTES:
  * - Uses AES-256-GCM authenticated encryption
@@ -171,18 +165,9 @@ export function generateEncryptionKey(): string {
  * - Production requires dedicated encryption key
  * - Development key is derived using scrypt with unique salt
  *
- * REMAINING CONCERNS:
- * - None
- *
- * REQUIRED TESTS:
- * - [x] Encryption/decryption round-trip
- * - [x] Tampering detection (modified ciphertext fails)
- * - [x] Invalid key length rejection
- * - [ ] Key rotation strategy (if needed)
  *
  * DEPENDENCIES:
  * - crypto: Node.js cryptography
  * - @/lib/core/log: Logging
  *
- * PRODUCTION READY: YES
  */

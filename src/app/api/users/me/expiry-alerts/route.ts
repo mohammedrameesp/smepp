@@ -97,3 +97,12 @@ async function getExpiryAlertsHandler(request: NextRequest, context: APIContext)
 }
 
 export const GET = withErrorHandler(getExpiryAlertsHandler, { requireAuth: true });
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes: None needed - file has JSDoc, proper tenant isolation, user-scoped alerts,
+ *          clean date handling with Qatar timezone support
+ * Issues: None - expiry alert logic is correct and well-documented
+ */

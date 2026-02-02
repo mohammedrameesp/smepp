@@ -1,3 +1,19 @@
+/**
+ * @file page.tsx
+ * @module app/employee/(hr)/leave/new
+ * @description New leave request page for employees.
+ *
+ * Features:
+ * - Leave type selection with available balance
+ * - Date range picker with weekend/holiday awareness
+ * - Accrual-based leave calculation for annual leave
+ * - Document upload for types requiring documentation
+ * - Organization-specific weekend configuration
+ *
+ * Data fetching:
+ * - Fetches leave types, balances, user profile, org settings, and holidays in parallel
+ * - Calculates accrued leave based on date of joining
+ */
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -40,7 +56,12 @@ interface LeaveBalance {
 }
 
 
-export default function EmployeeNewLeavePage() {
+/**
+ * New leave request page component.
+ * Client component that handles leave request form and submission.
+ * @returns The new leave request form page
+ */
+export default function EmployeeNewLeavePage(): React.JSX.Element {
   const router = useRouter();
   const [leaveTypes, setLeaveTypes] = useState<LeaveType[]>([]);
   const [balances, setBalances] = useState<LeaveBalance[]>([]);
@@ -210,3 +231,17 @@ export default function EmployeeNewLeavePage() {
     </>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation at top
+ *   - Added function documentation with return type
+ * Issues: None - code follows best practices with:
+ *   - Parallel data fetching in useEffect
+ *   - Proper error handling with console.error (acceptable in catch block)
+ *   - Type-safe state management
+ *   - Accrual calculation for leave types
+ */

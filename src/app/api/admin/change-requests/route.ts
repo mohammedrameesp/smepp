@@ -1,3 +1,18 @@
+/**
+ * @module api/admin/change-requests
+ * @description Admin API for managing employee profile change requests.
+ *
+ * Employees can submit requests to update their profile information,
+ * which admins review and approve or reject through this endpoint.
+ *
+ * @endpoints
+ * - GET /api/admin/change-requests - List all change requests with stats
+ *
+ * @queryParams
+ * - status: Filter by status ('all', 'PENDING', 'APPROVED', 'REJECTED')
+ *
+ * @security Requires admin authentication and tenant context
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
@@ -45,3 +60,37 @@ async function getChangeRequestsHandler(request: NextRequest, context: APIContex
 }
 
 export const GET = withErrorHandler(getChangeRequestsHandler, { requireAuth: true, requireAdmin: true });
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * CODE REVIEW SUMMARY
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * File: src/app/api/admin/change-requests/route.ts
+ * Reviewed: 2026-02-01
+ *
+ * FUNCTIONALITY: [PASS]
+ * - Lists all profile change requests with member details
+ * - Supports status filtering (all, PENDING, APPROVED, REJECTED)
+ * - Returns aggregate stats (total, pending, approved, rejected counts)
+ *
+ * SECURITY: [PASS]
+ * - Requires admin authentication
+ * - Uses tenant-scoped Prisma client (auto-filters by tenantId)
+ * - Explicit tenant context validation
+ *
+ * PERFORMANCE: [ACCEPTABLE]
+ * - Multiple count queries could be combined with groupBy
+ * - Consider pagination for large organizations
+ *
+ * ERROR HANDLING: [PASS]
+ * - Tenant context validation returns 403
+ * - Wrapped with error handler for global error boundary
+ *
+ * IMPROVEMENTS:
+ * - Add pagination support
+ * - Combine 4 count queries into single groupBy for efficiency
+ * - Consider including resolver info in response
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ */

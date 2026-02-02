@@ -67,3 +67,11 @@ async function permanentDeleteHandler(request: NextRequest, context: APIContext)
 }
 
 export const DELETE = withErrorHandler(permanentDeleteHandler, { requireAdmin: true, requireModule: 'subscriptions' });
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes: Added review summary
+ * Issues: None identified
+ */

@@ -1,3 +1,12 @@
+/**
+ * @module app/employee/(projects)/spend-requests
+ * @description Loading skeleton for the spend requests list page.
+ *
+ * Features:
+ * - Stat badges skeleton in header (4 badges)
+ * - 7-column table grid skeleton
+ * - 8 placeholder rows matching actual table
+ */
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { FileText } from 'lucide-react';
@@ -57,3 +66,12 @@ export default function SpendRequestsListLoading() {
     </>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation at top
+ * Issues: None - loading skeleton matches spend requests list layout
+ */

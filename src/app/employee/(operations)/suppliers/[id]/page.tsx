@@ -1,5 +1,9 @@
-// Employee supplier detail page - read-only view without admin actions
-
+/**
+ * @module app/employee/(operations)/suppliers/[id]/page
+ * @description Employee supplier detail page providing read-only view of supplier information.
+ * Displays company details, contact information, payment terms, approval status,
+ * and engagement history. No admin actions available - purely informational for employees.
+ */
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
@@ -299,3 +303,49 @@ export default async function EmployeeSupplierDetailPage({ params }: Props) {
     </>
   );
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ *
+ * Purpose:
+ * Server component displaying detailed supplier information for employees.
+ * Read-only view showing company info, contacts, payment terms, approval status,
+ * and engagement history without admin modification capabilities.
+ *
+ * Key Features:
+ * - Comprehensive supplier details across multiple cards
+ * - Primary and secondary contact information display
+ * - Engagement history timeline with ratings (5-star display)
+ * - Approval information for approved suppliers
+ * - Status badge and engagement count badges
+ *
+ * Critical Logic:
+ * - Session validation with redirect to login
+ * - Supplier fetch includes approvedBy and engagements with nested relations
+ * - notFound() called when supplier doesn't exist
+ * - Engagements ordered by date descending (most recent first)
+ *
+ * Edge Cases Handled:
+ * - Missing optional fields (address, city, website, etc.) show 'N/A'
+ * - No contacts case displays "No contact information provided"
+ * - Empty engagement history shows helpful message
+ * - Conditional rendering for approval section (only for APPROVED status)
+ *
+ * Potential Issues:
+ * - No tenant filtering in query - relies on Prisma extension
+ * - Unused Button import (line 6)
+ * - No access control for viewing any supplier (any employee can view any)
+ * - No pagination for engagements (could be many)
+ * - Star rating visual assumes rating 1-5 (no validation)
+ *
+ * Security Considerations:
+ * - Server-side session validation
+ * - Read-only view - no mutation capabilities
+ * - External links use noopener noreferrer for website
+ * - Email links use mailto: protocol (safe)
+ *
+ * Performance:
+ * - Single database query with nested includes
+ * - Server component - no client JS bundle impact
+ * - Consider limiting engagement history with take/skip for pagination
+ */

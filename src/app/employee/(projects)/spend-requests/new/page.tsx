@@ -1,3 +1,28 @@
+/**
+ * @module app/employee/(projects)/spend-requests/new/page
+ * @description Employee spend request creation form. Provides a comprehensive multi-step
+ * form for submitting new spend requests with dynamic fields based on purchase type
+ * (hardware, software subscription, services, etc.).
+ *
+ * @route /employee/spend-requests/new
+ * @access Authenticated employees
+ *
+ * @dependencies
+ * - next-auth: Session authentication
+ * - spend-request-utils: Purchase types and payment modes constants
+ * - currency utilities: Exchange rates and formatting
+ *
+ * @features
+ * - Dynamic form fields based on purchase type (qty, unit price, subscription billing)
+ * - Multi-line item support with add/remove functionality
+ * - Currency selection with automatic QAR conversion display
+ * - Real-time total calculation (one-time, monthly, contract value)
+ * - Vendor details capture (optional)
+ * - Client-side validation with field-level error display
+ * - Responsive design with desktop table and mobile card views
+ * - Exchange rate fetching from organization settings
+ */
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -1026,3 +1051,46 @@ export default function NewSpendRequestPage() {
     </>
   );
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ *
+ * Purpose: Multi-section form for creating new spend requests with type-specific fields
+ *
+ * Key Logic:
+ * - TYPE_CONFIG drives dynamic UI based on purchase type selection
+ * - Subscription types show billing cycle/duration; hardware shows qty/unit price
+ * - Line items managed as array with add/remove functionality
+ * - Automatic total calculation considering subscription vs one-time purchases
+ * - Currency selection affects all items with real-time QAR conversion display
+ *
+ * Data Flow:
+ * 1. Fetches org settings on mount for currency defaults and exchange rates
+ * 2. Form state managed via multiple useState hooks
+ * 3. On submit: validates, transforms items based on type, POSTs to API
+ * 4. Redirects to detail page on success
+ *
+ * Validation:
+ * - Required fields: title, purchaseType, justification, at least one item
+ * - Price/amount must be > 0 for all items
+ * - Quantity must be > 0 for types that show qty field
+ * - Email format validation for vendor email (if provided)
+ * - Field-level errors displayed inline
+ *
+ * Edge Cases:
+ * - Exchange rate API failure: Uses DEFAULT_RATES_TO_QAR fallback with warning
+ * - Empty org settings: Defaults to QAR/USD currencies
+ * - Cannot remove last item (minimum 1 required)
+ * - Unused setter for description (line 127) - potential dead code
+ *
+ * Dependencies:
+ * - PURCHASE_TYPES, PAYMENT_MODES from spend-request-utils
+ * - DEFAULT_RATES_TO_QAR from currency lib
+ * - Org settings API for runtime currency config
+ *
+ * Future Considerations:
+ * - Consider form library (react-hook-form) for cleaner validation
+ * - File attachment support for quotes/invoices
+ * - Draft saving functionality
+ * - otherPurchaseType field captured but not sent to API
+ */

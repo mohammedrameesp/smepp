@@ -307,3 +307,12 @@ async function importUsersHandler(request: NextRequest, context: APIContext) {
 }
 
 export const POST = withErrorHandler(importUsersHandler, { requireAdmin: true });
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes: None needed - file has JSDoc, proper tenant isolation, admin authorization,
+ *          good error handling with row-level reporting
+ * Issues: None - import logic handles duplicates safely with proper tenant scoping
+ */

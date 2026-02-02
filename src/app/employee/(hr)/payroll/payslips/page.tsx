@@ -1,3 +1,25 @@
+/**
+ * @module app/employee/(hr)/payroll/payslips/page
+ * @description Employee payslips list page. Displays a paginated table of all payslips
+ * for the current employee with year filtering and detailed payment information.
+ *
+ * @route /employee/payroll/payslips
+ * @access Authenticated employees
+ *
+ * @dependencies
+ * - prisma: Payslip queries with payroll run data
+ * - currency utilities: Formatting functions
+ * - payroll utilities: Month names and status colors
+ *
+ * @features
+ * - Paginated payslips table (12 per page)
+ * - Year filter buttons (dynamically generated from available data)
+ * - Gross, deductions, and net salary columns
+ * - Payment status badges (Paid/Processing)
+ * - Quick access to individual payslip details
+ * - Responsive table design
+ */
+
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { redirect } from 'next/navigation';
@@ -213,3 +235,42 @@ export default async function EmployeePayslipsPage({ searchParams }: PageProps) 
     </>
   );
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ *
+ * Purpose: Paginated list of employee's payslips with year filtering
+ *
+ * Key Logic:
+ * - URL-based pagination (?p=N) and year filtering (?year=YYYY)
+ * - Page size: 12 items per page
+ * - Sorts by year DESC, month DESC (most recent first)
+ * - Year filter buttons generated from distinct years in user's payslips
+ *
+ * Data Flow:
+ * - Server component with searchParams promise (Next.js 15 pattern)
+ * - Prisma queries filtered by memberId = session.user.id
+ * - Year filter applies nested where on payrollRun.year
+ * - Distinct query for available years uses payrollRunId deduplication
+ *
+ * Pagination:
+ * - Uses skip/take for offset pagination
+ * - Preserves year filter in pagination links
+ * - Shows page N of M indicator
+ * - Previous/Next buttons conditionally rendered
+ *
+ * Edge Cases:
+ * - No payslips: Shows "No payslips found" in table
+ * - Invalid page number: Defaults to page 1 via parseInt fallback
+ * - No year param: Shows all years
+ *
+ * Dependencies:
+ * - getMonthName, getPayrollStatusColor from payroll utils
+ * - formatCurrency from currency lib
+ *
+ * Future Considerations:
+ * - Month filtering within year
+ * - Bulk download for tax purposes
+ * - Search by payslip number
+ * - Export to CSV/Excel
+ */

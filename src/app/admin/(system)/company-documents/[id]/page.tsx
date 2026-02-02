@@ -1,3 +1,34 @@
+/**
+ * @module app/admin/(system)/company-documents/[id]/page
+ * @description Server component page for viewing company document details.
+ * Displays comprehensive document information including expiry status,
+ * linked vehicle/asset, renewal costs, and audit information.
+ *
+ * @dependencies
+ * - prisma: Database query with asset and createdBy relations
+ * - getDocumentExpiryInfo: Calculates expiry status and days remaining
+ * - date-fns: Date formatting utilities
+ *
+ * @routes
+ * - GET /admin/company-documents/[id] - Displays document details
+ *
+ * @params
+ * - id: Document ID from URL path
+ *
+ * @access Requires authentication (inherited from parent layout)
+ *
+ * @features
+ * - Expiry status visualization with color-coded badges
+ * - Days remaining/overdue countdown display
+ * - Linked vehicle navigation
+ * - Document file link (external)
+ * - Quick actions sidebar (edit, view vehicle, open file)
+ * - Audit trail (created by, last updated)
+ *
+ * @error-handling
+ * - Returns 404 if document not found
+ */
+
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { prisma } from '@/lib/core/prisma';
@@ -358,3 +389,33 @@ export default async function CompanyDocumentDetailPage({ params }: Props) {
     </>
   );
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ * ===================
+ * Date: 2026-02-01
+ * Reviewer: Claude (AI Code Review)
+ *
+ * Overall Assessment: PASS with security observation
+ *
+ * Strengths:
+ * 1. Comprehensive document detail view with excellent UX
+ * 2. Clear visual status indicators (expiry countdown, color-coded badges)
+ * 3. Proper 404 handling for missing documents
+ * 4. Well-organized responsive layout (2/3 + 1/3 grid)
+ * 5. Useful quick actions sidebar for common operations
+ * 6. Good audit trail display (created by, timestamps)
+ * 7. External link handling with proper rel attributes (noopener noreferrer)
+ *
+ * Potential Improvements:
+ * 1. No tenant validation - same concern as edit page
+ *    - Document query should include tenantId filter
+ * 2. Line 90-91: statusBadgeVariant variable is declared but could be inline
+ * 3. Consider adding delete functionality to quick actions
+ * 4. Large component - could extract ExpiryStatusCard and RecordInfoCard
+ *
+ * Security: CONCERN - Missing tenant validation in getDocument query
+ *   Same as edit page - should add tenantId to prevent cross-tenant access
+ * Performance: Good - single query with necessary relations included
+ * Maintainability: Moderate - large component, consider extraction
+ */

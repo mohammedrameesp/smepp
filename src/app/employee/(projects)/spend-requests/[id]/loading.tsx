@@ -1,3 +1,13 @@
+/**
+ * @module app/employee/(projects)/spend-requests/[id]
+ * @description Loading skeleton for the spend request detail page.
+ *
+ * Features:
+ * - Status badges skeleton in header
+ * - Request details card with 4-field grid
+ * - Line items table skeleton
+ * - Activity history timeline skeleton
+ */
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { FileText, ShoppingCart, Clock } from 'lucide-react';
@@ -103,3 +113,12 @@ export default function SpendRequestDetailLoading() {
     </>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation at top
+ * Issues: None - loading skeleton matches spend request detail layout
+ */

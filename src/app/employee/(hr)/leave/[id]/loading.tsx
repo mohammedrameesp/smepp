@@ -1,3 +1,12 @@
+/**
+ * @module app/employee/(hr)/leave/[id]
+ * @description Loading skeleton for the leave request detail page.
+ *
+ * Features:
+ * - Leave details card skeleton with date range info
+ * - Balance summary grid skeleton
+ * - Activity history timeline skeleton
+ */
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Calendar, Clock, Info } from 'lucide-react';
@@ -102,3 +111,12 @@ export default function LeaveRequestDetailLoading() {
     </>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation at top
+ * Issues: None - loading skeleton matches detail page layout
+ */

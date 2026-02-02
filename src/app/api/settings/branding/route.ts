@@ -1,3 +1,9 @@
+/**
+ * @file route.ts
+ * @description Organization branding settings API - manage logo, colors, and company name
+ * @module system/settings
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import logger from '@/lib/core/log';
@@ -81,3 +87,12 @@ export const PUT = withErrorHandler(async (request: NextRequest, { tenant }) => 
 
   return NextResponse.json({ success: true });
 }, { requireAuth: true, requireAdmin: true });
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes: Added JSDoc module documentation at top
+ * Issues: None - branding settings properly secured with admin authorization,
+ *         Zod validation for color hex codes and URLs, activity logging
+ */

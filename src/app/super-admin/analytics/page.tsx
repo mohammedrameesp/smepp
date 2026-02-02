@@ -1,3 +1,26 @@
+/**
+ * @module super-admin/analytics/page
+ * @description Platform analytics dashboard showing growth metrics, module adoption,
+ * subscription tier distribution, and onboarding funnel visualization.
+ * Server component that aggregates data across all organizations.
+ *
+ * @features
+ * - Organization and user growth statistics with period comparison
+ * - Module adoption rates across all organizations
+ * - Subscription tier distribution breakdown
+ * - Onboarding funnel tracking (profile, logo, branding, assets, team, employees)
+ * - Monthly growth trends with percentage change indicators
+ *
+ * @charts
+ * - ModuleUsageChart: Horizontal bar chart of module adoption
+ * - OrganizationBreakdown: Tier distribution visualization
+ * - OnboardingFunnel: Step-by-step conversion funnel
+ *
+ * @data
+ * - 30-day rolling statistics for growth comparison
+ * - Real-time aggregation from organization settings
+ * - Setup progress tracking from OrganizationSetupProgress table
+ */
 import { prisma } from '@/lib/core/prisma';
 import { Card } from '@/components/ui/card';
 import {
@@ -331,3 +354,54 @@ function GrowthItem({
     </div>
   );
 }
+
+/* =============================================================================
+ * CODE REVIEW SUMMARY
+ * =============================================================================
+ *
+ * File: src/app/super-admin/analytics/page.tsx
+ * Type: Server Component
+ * Last Reviewed: 2026-02-01
+ *
+ * PURPOSE:
+ * Provides platform-wide analytics dashboard with growth metrics, module
+ * adoption tracking, tier distribution, and onboarding funnel visualization.
+ *
+ * ARCHITECTURE:
+ * - Server component with parallel data fetching
+ * - Separates basic analytics from detailed analytics queries
+ * - Delegates chart rendering to client components
+ * - Uses helper components for consistent metric display
+ *
+ * DATA AGGREGATION:
+ * 1. getAnalytics(): Time-based growth metrics
+ *    - 7-day and 30-day rolling windows
+ *    - Period-over-period comparison for growth %
+ * 2. getDetailedAnalytics(): Organization feature analysis
+ *    - Module enablement across all orgs
+ *    - Subscription tier distribution
+ *    - Onboarding step completion rates
+ *
+ * CHART COMPONENTS:
+ * - ModuleUsageChart: Horizontal bar visualization
+ * - OrganizationBreakdown: Tier distribution (likely pie/donut)
+ * - OnboardingFunnel: Step conversion funnel
+ *
+ * PERFORMANCE CONSIDERATIONS:
+ * [+] Promise.all for parallel data fetching
+ * [+] Single query for organization data (used for multiple aggregations)
+ * [-] Full table scan for enabledModules analysis (no index)
+ * [-] No caching - recalculates on every page load
+ *
+ * DATA INTEGRITY:
+ * [!] Module list is hardcoded - must be updated when adding modules
+ * [!] Tier enum assumed to match Prisma schema
+ *
+ * POTENTIAL IMPROVEMENTS:
+ * - Add date range selector for custom period analysis
+ * - Implement caching with ISR (revalidate hourly)
+ * - Add export functionality for analytics data
+ * - Create API endpoint for real-time dashboard updates
+ * - Add cohort analysis for user retention
+ *
+ * =========================================================================== */

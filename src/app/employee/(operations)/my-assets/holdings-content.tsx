@@ -1,3 +1,9 @@
+/**
+ * @module app/employee/(operations)/my-assets/holdings-content
+ * @description Client component displaying an employee's asset and subscription holdings
+ * with tabbed navigation. Shows currently assigned assets, past asset assignments,
+ * active subscriptions, and previous subscriptions with usage statistics and history.
+ */
 'use client';
 
 import { useState } from 'react';
@@ -403,3 +409,45 @@ function SubscriptionsTab({
     </div>
   );
 }
+
+/*
+ * CODE REVIEW SUMMARY
+ *
+ * Purpose:
+ * Client component for employee "My Holdings" page displaying assets and subscriptions
+ * assigned to the current user, organized in a tabbed interface with active/past sections.
+ *
+ * Key Features:
+ * - Tabbed navigation between Assets and Subscriptions
+ * - Active vs past items separation for both tabs
+ * - Asset type-based icon mapping (laptop, phone, monitor, etc.)
+ * - Duration formatting (days/months/years) for assignment periods
+ * - Empty state CTAs linking to browse pages
+ *
+ * Critical Logic:
+ * - getAssetIcon: Maps asset type strings to appropriate Lucide icons
+ * - formatDuration: Converts days to human-readable duration strings
+ * - currentPeriod vs memberPeriods: Distinguishes active from historical assignments
+ * - totalMonths calculation for subscription usage tracking
+ *
+ * Edge Cases Handled:
+ * - Empty arrays render helpful empty state prompts
+ * - Optional fields (assetTag, vendor, costPerCycle) conditionally rendered
+ * - Currency fallback to 'QAR' when costCurrency is missing
+ * - Singular/plural text for counts (day/days, month/months)
+ *
+ * Potential Issues:
+ * - formatDuration uses fixed 30-day month approximation (may be imprecise)
+ * - No loading state - assumes parent handles data fetching
+ * - Asset type matching is case-insensitive but limited to hardcoded values
+ * - No error boundary for rendering failures
+ *
+ * Security Considerations:
+ * - Read-only display component with no sensitive actions
+ * - All links are internal navigation (no external URLs)
+ *
+ * Performance:
+ * - Simple component with minimal re-renders (only tab state changes)
+ * - No expensive computations or API calls
+ * - CSS transitions for smooth hover effects
+ */

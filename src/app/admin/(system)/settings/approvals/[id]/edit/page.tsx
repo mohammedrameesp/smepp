@@ -1,3 +1,18 @@
+/**
+ * @module admin/settings/approvals/[id]/edit/page
+ * @description Form page for editing existing approval policies. Allows modification
+ * of policy name, thresholds (days/amount), priority, active status, and approval
+ * chain levels. Also provides delete functionality with confirmation dialog.
+ * Module type cannot be changed after creation.
+ *
+ * @route /admin/settings/approvals/:id/edit
+ * @access Admin only
+ * @dependencies
+ * - GET /api/approval-policies/:id - Fetches policy details
+ * - PATCH /api/approval-policies/:id - Updates policy
+ * - DELETE /api/approval-policies/:id - Deletes policy
+ * - @/features/approvals - APPROVER_ROLES constant
+ */
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -395,3 +410,36 @@ export default function EditApprovalPolicyPage() {
     </>
   );
 }
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * CODE REVIEW SUMMARY
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * OVERVIEW:
+ * Edit form for existing approval policies with delete functionality.
+ * Mirrors the creation form but with pre-populated values and module locked.
+ *
+ * STRENGTHS:
+ * - Module field disabled to prevent breaking existing approval chains
+ * - Delete confirmation dialog prevents accidental deletion
+ * - Proper loading state while fetching policy data
+ * - Error handling with redirect on policy not found
+ * - Shares APPROVER_ROLES constant with new page for consistency
+ * - Delete action header placement for visibility
+ * - Breadcrumb navigation for context
+ *
+ * POTENTIAL IMPROVEMENTS:
+ * - Show history of changes to the policy
+ * - Add "Duplicate as new" functionality
+ * - Consider soft delete with archive option
+ * - Add warning if policy has pending approvals before delete
+ * - Consider optimistic UI updates for save operation
+ *
+ * SECURITY:
+ * - Delete confirmation prevents accidental data loss
+ * - Existing pending approvals unaffected by policy deletion
+ * - Server-side auth enforced via API routes
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ */

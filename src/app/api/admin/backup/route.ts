@@ -1,3 +1,26 @@
+/**
+ * @module api/admin/backup
+ * @description Admin API for creating JSON database backups with optional Supabase storage.
+ *
+ * This endpoint exports organization data as a JSON backup file including:
+ * - Team members, assets, asset histories
+ * - Subscriptions, subscription histories
+ * - Suppliers, supplier engagements
+ * - Profile change requests, activity logs
+ * - System settings, maintenance records
+ * - Spend requests
+ *
+ * Supports two modes:
+ * 1. Admin user: Downloads tenant-scoped backup as JSON file
+ * 2. Cron job: Saves full platform backup to Supabase Storage
+ *
+ * @endpoints
+ * - GET /api/admin/backup - Download database backup (admin or cron)
+ *
+ * @security
+ * - Admin users: Requires authenticated session with admin role
+ * - Cron jobs: Requires valid CRON_SECRET bearer token
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { getServerSession } from 'next-auth';
@@ -179,3 +202,41 @@ async function saveToSupabase(backupJson: string, filename: string) {
 
   logger.info(`✅ Backup saved to Supabase: ${filename}`);
 }
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * CODE REVIEW SUMMARY
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * File: src/app/api/admin/backup/route.ts
+ * Reviewed: 2026-02-01
+ *
+ * FUNCTIONALITY: [PASS]
+ * - Exports comprehensive JSON backup of organization data
+ * - Supports both admin downloads and cron-triggered storage
+ * - Includes metadata with version and record counts
+ * - Automatic cleanup of old backups in Supabase (keeps last 30)
+ *
+ * SECURITY: [PASS]
+ * - Dual auth: session-based for admins, token-based for cron
+ * - Uses timing-safe comparison for cron auth (verifyCronAuth)
+ * - Tenant-scoped data for admin requests
+ * - Supabase bucket configured as private
+ *
+ * PERFORMANCE: [ACCEPTABLE]
+ * - Uses Promise.all for parallel data fetching
+ * - safeQuery helper gracefully handles missing tables
+ *
+ * ERROR HANDLING: [PASS]
+ * - Catches and logs backup failures with details
+ * - Returns appropriate status codes (401, 403, 500)
+ * - Handles Supabase upload errors
+ *
+ * IMPROVEMENTS:
+ * - Consider streaming large backups instead of buffering
+ * - Add compression for large JSON payloads
+ * - Consider adding backup encryption for sensitive data
+ * - Does not use withErrorHandler (legacy pattern)
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ */

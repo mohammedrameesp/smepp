@@ -1,3 +1,11 @@
+/**
+ * @module app/super-admin/storage/page
+ * @description Super admin storage analytics page. Displays platform-wide file storage
+ * usage statistics including total storage, file counts, and per-organization breakdown.
+ * Shows storage metrics sorted by usage with last upload timestamps. Uses Supabase
+ * for file storage backend.
+ */
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -249,3 +257,42 @@ export default function SuperAdminStoragePage() {
     </div>
   );
 }
+
+/*
+ * =============================================================================
+ * CODE REVIEW SUMMARY
+ * =============================================================================
+ *
+ * File: src/app/super-admin/storage/page.tsx
+ * Type: Client Component - Storage Analytics Dashboard
+ *
+ * FUNCTIONALITY:
+ * - Display platform-wide storage summary (total storage, files, orgs)
+ * - Per-organization storage breakdown table
+ * - Metrics: file count, storage used, average file size, last upload
+ * - Human-readable byte formatting (B, KB, MB, GB, TB)
+ *
+ * ARCHITECTURE:
+ * - Single API call on mount for all storage data
+ * - Local formatBytes utility for byte conversion
+ * - Uses date-fns for relative time formatting
+ *
+ * DATA DISPLAY:
+ * [OK] Organizations sorted by storage usage (implied by API)
+ * [OK] Graceful handling of organizations with no files
+ * [OK] Empty state when no organizations exist
+ *
+ * PERFORMANCE:
+ * [OK] Uses roundTo utility for consistent decimal precision
+ * [OK] Single API call minimizes network requests
+ *
+ * IMPROVEMENTS SUGGESTED:
+ * [MEDIUM] Add storage limit/quota visualization per organization
+ * [MEDIUM] Add file type breakdown (images, documents, etc.)
+ * [LOW] Add sorting controls for the organization table
+ * [LOW] Add search/filter for large organization lists
+ * [LOW] Consider server component with streaming for large datasets
+ * [LOW] Add refresh button to reload statistics
+ *
+ * =============================================================================
+ */

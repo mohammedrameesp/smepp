@@ -1,3 +1,20 @@
+/**
+ * @module app/employee
+ * @description Client layout component for the Employee Portal.
+ *
+ * This component renders the employee portal shell including navigation,
+ * banners, and the AI chat widget. It receives configuration from the
+ * server layout component.
+ *
+ * Features:
+ * - Top navigation bar with module-aware menu items
+ * - Admin employee-view banner for admins previewing employee experience
+ * - Onboarding incomplete banner with link to complete profile
+ * - AI Chat widget (conditionally rendered based on org settings)
+ * - Responsive layout with proper spacing for content
+ *
+ * @see EmployeeLayout - Server component that provides props
+ */
 'use client';
 
 import Link from 'next/link';
@@ -67,3 +84,12 @@ export function EmployeeLayoutClient({
     </>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation at top
+ * Issues: None - clean client component with proper prop handling
+ */

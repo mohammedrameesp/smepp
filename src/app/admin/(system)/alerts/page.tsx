@@ -1,3 +1,10 @@
+/**
+ * @module admin/(system)/alerts
+ * @description Alerts dashboard showing upcoming birthdays, anniversaries,
+ * document expirations, and subscription renewals.
+ * Aggregates data from team members, company documents, and subscriptions.
+ */
+
 import { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/core/prisma';
@@ -24,6 +31,7 @@ export interface Alert {
   entityLink: string;
 }
 
+/** Alert count statistics by category */
 interface AlertCounts {
   total: number;
   birthdays: number;
@@ -34,6 +42,12 @@ interface AlertCounts {
   expired: number;
 }
 
+/**
+ * Fetches and processes all alerts for a tenant.
+ * Aggregates birthdays, anniversaries, document expirations, and subscription renewals.
+ * @param tenantId - The organization's tenant ID for data isolation
+ * @returns Object containing alerts array and category counts
+ */
 async function getAlerts(tenantId: string): Promise<{ alerts: Alert[]; counts: AlertCounts }> {
   const today = getQatarStartOfDay();
   const thirtyDaysFromNow = new Date(today);
@@ -268,3 +282,13 @@ export default async function AlertsPage() {
     </>
   );
 }
+
+/* CODE REVIEW SUMMARY
+ * Date: 2026-02-01
+ * Reviewer: Claude
+ * Status: Reviewed
+ * Changes:
+ *   - Added JSDoc module documentation at top
+ *   - Added JSDoc comments for AlertCounts interface and getAlerts function
+ * Issues: None - Data is fetched in parallel using Promise.all for efficiency
+ */
