@@ -34,16 +34,38 @@ export default async function ActivityLogPage(): Promise<React.JSX.Element> {
 
   const tenantId = auth.tenantId;
 
-  // Fetch team members for the actor filter dropdown
-  const teamMembers = await prisma.teamMember.findMany({
-    where: { tenantId, isDeleted: false },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-    },
-    orderBy: { name: 'asc' },
-  });
+  // Fetch filter options in parallel
+  const [teamMembers, entityTypesResult, actorsResult] = await Promise.all([
+    // Team members for actor filter dropdown
+    prisma.teamMember.findMany({
+      where: { tenantId, isDeleted: false },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+      },
+      orderBy: { name: 'asc' },
+    }),
+    // Distinct entity types that have activity logs
+    prisma.activityLog.groupBy({
+      by: ['entityType'],
+      where: { tenantId, entityType: { not: null } },
+      orderBy: { entityType: 'asc' },
+    }),
+    // Distinct actors who have activity logs
+    prisma.activityLog.groupBy({
+      by: ['actorMemberId'],
+      where: { tenantId, actorMemberId: { not: null } },
+    }),
+  ]);
+
+  // Extract entity types and filter to only actors with logs
+  const entityTypes = entityTypesResult
+    .map((r) => r.entityType)
+    .filter((t): t is string => t !== null);
+
+  const actorIds = new Set(actorsResult.map((r) => r.actorMemberId));
+  const actorsWithLogs = teamMembers.filter((m) => actorIds.has(m.id));
 
   return (
     <>
@@ -53,7 +75,10 @@ export default async function ActivityLogPage(): Promise<React.JSX.Element> {
       />
 
       <PageContent>
-        <ActivityLogClient teamMembers={teamMembers} />
+        <ActivityLogClient
+          teamMembers={actorsWithLogs}
+          entityTypes={entityTypes}
+        />
       </PageContent>
     </>
   );

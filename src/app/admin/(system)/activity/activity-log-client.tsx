@@ -48,30 +48,11 @@ interface TeamMember {
 }
 
 interface ActivityLogClientProps {
-  /** List of team members for actor filter dropdown */
+  /** List of team members who have activity logs (for actor filter dropdown) */
   teamMembers: TeamMember[];
+  /** List of entity types that have activity logs (for entity type filter dropdown) */
+  entityTypes: string[];
 }
-
-/** Entity types available for filtering */
-const ENTITY_TYPES = [
-  'Asset',
-  'AssetCategory',
-  'AssetRequest',
-  'Subscription',
-  'Supplier',
-  'TeamMember',
-  'SpendRequest',
-  'LeaveType',
-  'LeaveRequest',
-  'LeaveBalance',
-  'SalaryStructure',
-  'PayrollRun',
-  'Payslip',
-  'Loan',
-  'CompanyDocument',
-  'ApprovalPolicy',
-  'Organization',
-] as const;
 
 const PAGE_SIZE = 20;
 
@@ -86,7 +67,7 @@ function getActionBadgeVariant(action: string): 'default' | 'secondary' | 'destr
   return 'secondary';
 }
 
-export function ActivityLogClient({ teamMembers }: ActivityLogClientProps) {
+export function ActivityLogClient({ teamMembers, entityTypes }: ActivityLogClientProps) {
   const [activities, setActivities] = useState<ActivityLogEntry[]>([]);
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -203,7 +184,7 @@ export function ActivityLogClient({ teamMembers }: ActivityLogClientProps) {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Entity Types</SelectItem>
-              {ENTITY_TYPES.map((type) => (
+              {entityTypes.map((type) => (
                 <SelectItem key={type} value={type}>
                   {type}
                 </SelectItem>
